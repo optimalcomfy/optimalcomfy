@@ -1,0 +1,174 @@
+/* testimonial.css */
+
+/* Main section styles */
+.testimonial-section {
+    position: relative;
+    padding: 80px 0;
+  }
+  
+  @media (min-width: 992px) {
+    .testimonial-section {
+      padding: 120px 0;
+    }
+  }
+  
+  .container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+  }
+  
+  /* Header section */
+  .testimonial-header {
+    margin-bottom: 40px;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* Sub heading style */
+  .sub-heading {
+    font-size: 16px;
+    font-weight: 600;
+    position: relative;
+    margin-bottom: 15px;
+    padding-left: 65px;
+    color: #06c; /* Primary color */
+    display: inline-block;
+  }
+  
+  .sub-heading::before {
+    content: "";
+    position: absolute;
+    left: -65px;
+    bottom: 50%;
+    width: 52px;
+    height: 2px;
+    background-color: #06c;
+    transform: translateY(50%);
+  }
+  
+  /* Main heading style */
+  h2 {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0;
+    text-transform: capitalize;
+    color: #111;
+  }
+  
+  /* Navigation buttons */
+  .slider-navigation {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .nav-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .nav-btn:hover {
+    background-color: #06c;
+  }
+  
+  .nav-btn img {
+    width: 20px;
+    height: 20px;
+  }
+  
+  /* Testimonial slider */
+  .testimonial-slider {
+    overflow: hidden;
+    width: 100%;
+  }
+  
+  @media (min-width: 992px) {
+    .testimonial-slider {
+      width: 91.66%; /* w-11/12 in Tailwind */
+    }
+  }
+  
+  /* Testimonial item */
+  .testimonial-item {
+    display: grid;
+    gap: 30px;
+    align-items: center;
+  }
+  
+  @media (min-width: 992px) {
+    .testimonial-item {
+      display: flex;
+      gap: 60px;
+    }
+  }
+  
+  /* Author image */
+  .author-image {
+    max-height: 310px;
+  }
+
+  
+  @media (min-width: 768px) {
+    .author-photo {
+      height: 310px;
+      width: 310px;
+    }
+  }
+  
+  /* Rating stars */
+  .rating {
+    margin-bottom: 20px;
+    font-size: 25px;
+    color: #06c; /* Primary color */
+  }
+  
+  /* Quote text */
+  .quote {
+    display: block;
+    font-size: 18px;
+    line-height: 28px;
+    margin-bottom: 20px;
+  }
+  
+  @media (min-width: 992px) {
+    .quote {
+      font-size: 24px;
+      line-height: 38px;
+    }
+  }
+  
+  @media (min-width: 1200px) {
+    .quote {
+      font-size: 28px;
+      line-height: 42px;
+    }
+  }
+  
+  /* Author information */
+  .author-details h6 {
+    margin-bottom: 0;
+    font-weight: 600;
+    font-size: 18px;
+    color: #111;
+  }
+  
+  .author-details span {
+    color: #666;
+    font-size: 14px;
+  }
+  
+  /* Swiper overrides */
+  .swiper-button-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }

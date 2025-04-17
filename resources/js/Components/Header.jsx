@@ -22,7 +22,7 @@ function Header() {
                 </a>
                 <a className="flex gap-[10px] items-center text-xs" href="mailto:#">
                     <i className="flaticon-envelope relative top-[3px]" />{" "}
-                    Friendscornerhotel@gmail.com
+                    Optimalcomfy@gmail.com
                 </a>
                 </div>
                 <div>
@@ -116,9 +116,9 @@ function Header() {
                 <div className="logo grid justify-start lg:justify-center">
                 <Link href={route('home')}>
                     <img
-                    className="logo__class"
+                    className="logo__class max-w-[160px] lg:max-w-[260px] pt-3"
                     src="/image/logo/logo.png"
-                    alt="Friendscornerhotel"
+                    alt="Optimalcomfy"
                     />
                 </Link>
                 </div>
@@ -160,7 +160,7 @@ function Header() {
         <div className={`mobile-menu lg:hidden ${mobileMenuOpen ? 'block' : 'hidden'} bg-white shadow-lg fixed top-0 left-0 w-full h-screen z-50 overflow-y-auto`}>
           <div className="p-4 flex justify-between items-center border-b">
             <a href="index.html" className="block">
-              <img className="w-32" src="/image/logo/logo.png" alt="Friendscornerhotel" />
+              <img className="w-32" src="/image/logo/logo.png" alt="Optimalcomfy" />
             </a>
             <button 
               onClick={toggleMobileMenu}

@@ -10,16 +10,16 @@
 */
 
 @font-face {
-    font-family: "flaticon_Friendscornerhotel";
-    src: url("flaticon_Friendscornerhotel716c.woff2?237dfe65834f05ae55285c68505d7dff") format("woff2"),
-url("flaticon_Friendscornerhotel716c.woff?237dfe65834f05ae55285c68505d7dff") format("woff"),
-url("flaticon_Friendscornerhotel716c.eot?237dfe65834f05ae55285c68505d7dff#iefix") format("embedded-opentype"),
-url("flaticon_Friendscornerhotel716c.ttf?237dfe65834f05ae55285c68505d7dff") format("truetype"),
-url("flaticon_Friendscornerhotel716c.svg?237dfe65834f05ae55285c68505d7dff#flaticon_Friendscornerhotel") format("svg")
+    font-family: "flaticon_Optimalcomfy";
+    src: url("flaticon_Optimalcomfy716c.woff2?237dfe65834f05ae55285c68505d7dff") format("woff2"),
+url("flaticon_Optimalcomfy716c.woff?237dfe65834f05ae55285c68505d7dff") format("woff"),
+url("flaticon_Optimalcomfy716c.eot?237dfe65834f05ae55285c68505d7dff#iefix") format("embedded-opentype"),
+url("flaticon_Optimalcomfy716c.ttf?237dfe65834f05ae55285c68505d7dff") format("truetype"),
+url("flaticon_Optimalcomfy716c.svg?237dfe65834f05ae55285c68505d7dff#flaticon_Optimalcomfy") format("svg")
 }
 
 i[class^="flaticon-"]:before, i[class*=" flaticon-"]:before {
-    font-family: flaticon_Friendscornerhotel !important;
+    font-family: flaticon_Optimalcomfy !important;
     font-style: normal;
     font-weight: normal !important;
     font-variant: normal;

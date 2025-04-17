@@ -1,5 +1,5 @@
 /*
-Template Name: Friendscornerhotel - Hotel and Resturant HTML Tailwind Template
+Template Name: Optimalcomfy - Hotel and Resturant HTML Tailwind Template
 Author: Reacthemes
 Author URI: https://themeforest.net/user/reacthemes
 Tags: Hotel, Resturant, Spa, Message, Honeymoon, Booking
@@ -2204,7 +2204,7 @@ body{
   text-align: center;
 }
 .font-flaticon{
-  font-family: "flaticon_Friendscornerhotel", system-ui;
+  font-family: "flaticon_Optimalcomfy", system-ui;
 }
 .font-glida{
   font-family: "Gilda Display", system-ui;
@@ -5923,7 +5923,7 @@ textarea:focus-visible, input:focus-visible {
 .navigation__menu--item.has-arrow::before {
   position: absolute;
   content: "\f122";
-  font-family: flaticon_Friendscornerhotel !important;
+  font-family: flaticon_Optimalcomfy !important;
   top: 48%;
   right: -15px;
   transform: translateY(-50%);
@@ -5933,7 +5933,7 @@ textarea:focus-visible, input:focus-visible {
 }
 .navigation__menu--item.has-arrow:hover::before {
   content: "\f121";
-  font-family: flaticon_Friendscornerhotel !important;
+  font-family: flaticon_Optimalcomfy !important;
   transition: var(--transition);
   color: var(--rts-button-1);
 }
@@ -5985,7 +5985,7 @@ textarea:focus-visible, input:focus-visible {
 .navigation__menu--item .sub__style li.has-arrow::before {
   position: absolute;
   content: "\f121";
-  font-family: flaticon_Friendscornerhotel !important;
+  font-family: flaticon_Optimalcomfy !important;
   top: 50%;
   right: 25px;
   transform: translateY(-50%);
@@ -5996,7 +5996,7 @@ textarea:focus-visible, input:focus-visible {
 .navigation__menu--item ul.submenu li.has-arrow:hover::before,
 .navigation__menu--item .sub__style li.has-arrow:hover::before {
   content: "\f122";
-  font-family: flaticon_Friendscornerhotel !important;
+  font-family: flaticon_Optimalcomfy !important;
   transition: var(--transition);
 }
 .navigation__menu--item ul.submenu li a,

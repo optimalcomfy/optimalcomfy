@@ -41,6 +41,7 @@
         "react-select": "^5.9.0",
         "react-toastify": "^11.0.3",
         "react-transition-group": "^4.4.5",
+        "recharts": "^2.15.2",
         "sweetalert2": "^11.15.10",
         "swiper": "^11.2.5",
         "xlsx": "^0.18.5"

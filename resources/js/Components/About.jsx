@@ -23,7 +23,7 @@ function About() {
                   src="assets/images/about/about-main.webp"
                   width={312}
                   height={230}
-                  alt="Experience at Friendscornerhotel Hotel"
+                  alt="Experience at Optimalcomfy Hotel"
                 />
               </div>
             </div>

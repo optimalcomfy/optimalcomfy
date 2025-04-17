@@ -24,6 +24,7 @@ export default function Login({status, canResetPassword}) {
 
     const submit = (e) => {
         e.preventDefault();
+        sessionStorage.removeItem('hasReloaded');
         post(route('login'));
     };
 

@@ -30,7 +30,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     Our Service
                   </h1>
                   <p className="text-sm">
-                    At Friendscornerhotel we pride ourselves on delivering an exceptional
+                    At Optimalcomfy we pride ourselves on delivering an exceptional
                     experience.
                   </p>
                 </div>

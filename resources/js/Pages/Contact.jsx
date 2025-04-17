@@ -23,7 +23,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
           <HomeLayout>
           <>
   <div
-    className="relative bg-[url('../images/pages/header__bg.webp')] 
+    className="relative bg-[url('../image/contact.webp')] 
     h-[400px] lg:h-[700px] bg-cover bg-center bg-no-repeat flex items-center 
     before:absolute before:top-0 before:bottom-0 before:left-0 before:right-0 before:bg-heading before:opacity-60"
   >
@@ -141,7 +141,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
               Open Hours: Monday – Sunday <br />
               Telephone:&nbsp;+12505550199 <br />
               Fax: +12505550199 <br />
-              Email:&nbsp;info@Friendscornerhotel.com
+              Email:&nbsp;info@Optimalcomfy.com
             </p>
           </div>
           <div>
@@ -150,7 +150,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
               Address: The Ritz-Carlton (California, USA) <br />
               Telephone:&nbsp;+12505550199 <br />
               Fax: +12505550199 <br />
-              Email:&nbsp;info@Friendscornerhotel.com
+              Email:&nbsp;info@Optimalcomfy.com
             </p>
           </div>
         </div>

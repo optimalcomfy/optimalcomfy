@@ -66,10 +66,10 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                       </span>
                       <h2 className="text-heading block mb-[20px]">
                         From Farm to Fork: Enjoy Fresh, Seasonal Dishes at
-                        Friendscornerhotel
+                        Optimalcomfy
                       </h2>
                       <p className="text-sm max-w-[645px]">
-                        Welcome to Friendscornerhotel, where luxury meets comfort in the
+                        Welcome to Optimalcomfy, where luxury meets comfort in the
                         heart of canada. Since 1999, we have been dedicated to
                         providing an exceptional stay for our guests, blending
                         modern amenities with timeless elegance.Our beautifully

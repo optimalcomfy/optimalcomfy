@@ -13,6 +13,8 @@ import '../../css/main'
 export default function Welcome({ auth, laravelVersion, phpVersion }) {
 
   const { flash, pagination } = usePage().props;
+
+  // 
   
   
   return (

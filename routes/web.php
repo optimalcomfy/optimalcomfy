@@ -59,6 +59,10 @@ Route::get('/gallery', [HomeController::class, 'gallery'])->name('gallery');
 Route::get('/room-detail', [HomeController::class, 'roomDetail'])->name('room-detail');
 Route::get('/all-services', [HomeController::class, 'services'])->name('all-services');
 Route::get('/all-rooms', [HomeController::class, 'rooms'])->name('all-rooms');
+Route::get('/all-cars', [HomeController::class, 'allCars'])->name('all-cars');
+Route::get('/search-cars', [HomeController::class, 'searchCars'])->name('search-cars');
+Route::get('/rent-now', [HomeController::class, 'rentNow'])->name('rent-now');
+Route::get('/car-booking', [HomeController::class, 'carBooking'])->name('car-booking');
 
 Route::get('/joby/{job}', [HomeController::class, 'showJob'])->name('jobShow');
 

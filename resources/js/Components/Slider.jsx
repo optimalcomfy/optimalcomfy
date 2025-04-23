@@ -64,7 +64,7 @@ function Slider() {
       </div>
 
       <div className="container-full">
-        <div className="room-slider-main swiper">
+        <div className="room-slider-main swiper px-4">
           <div className="swiper-wrapper">
           {rooms.map(room => (
             room.id && (

@@ -71,6 +71,55 @@ class HomeController extends Controller
         ]);
     }
 
+    public function allCars(Request $request)
+    {
+
+        return Inertia::render('Cars', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'laravelVersion' => Application::VERSION,
+            'phpVersion' => PHP_VERSION,
+            'flash' => session('flash')
+        ]);
+    }
+
+    public function searchCars(Request $request)
+    {
+
+        return Inertia::render('SearchCars', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'laravelVersion' => Application::VERSION,
+            'phpVersion' => PHP_VERSION,
+            'flash' => session('flash')
+        ]);
+    }
+
+
+    public function rentNow(Request $request)
+    {
+
+        return Inertia::render('RentNow', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'laravelVersion' => Application::VERSION,
+            'phpVersion' => PHP_VERSION,
+            'flash' => session('flash')
+        ]);
+    }
+
+    public function carBooking(Request $request)
+    {
+
+        return Inertia::render('CarBooking', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'laravelVersion' => Application::VERSION,
+            'phpVersion' => PHP_VERSION,
+            'flash' => session('flash')
+        ]);
+    }
+
     public function activity(Request $request)
     {
         return Inertia::render('Activity', [

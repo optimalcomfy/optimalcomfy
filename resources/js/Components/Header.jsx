@@ -52,12 +52,20 @@ function Header() {
                         </Link>
                         </li>
                         <li className="navigation__menu--item has-child has-arrow  dark:before:!text-white">
-                        <Link
-                            href={route('all-rooms')}
-                            className="navigation__menu--item__link dark:text-white"
-                        >
-                            Rooms
-                        </Link>
+                          <Link
+                              href={route('all-rooms')}
+                              className="navigation__menu--item__link dark:text-white"
+                          >
+                              Rooms
+                          </Link>
+                        </li>
+                        <li className="navigation__menu--item has-child has-arrow  dark:before:!text-white">
+                          <Link
+                              href={route('all-cars')}
+                              className="navigation__menu--item__link dark:text-white"
+                          >
+                              Cars
+                          </Link>
                         </li>
                         <li className="navigation__menu--item has-child has-arrow dark:before:!text-white">
                         <a
@@ -188,6 +196,9 @@ function Header() {
               </Link>
               <Link href={route('all-rooms')} className="py-2 border-b">
                 <a href="#" className="block text-lg font-medium">Rooms</a>
+              </Link>
+              <Link href={route('all-cars')} className="py-2 border-b">
+                <a href="#" className="block text-lg font-medium">Cars</a>
               </Link>
               <Link href={route('contact')} className="py-2 border-b">
                 <a href="contact.html" className="block text-lg font-medium">Contact</a>

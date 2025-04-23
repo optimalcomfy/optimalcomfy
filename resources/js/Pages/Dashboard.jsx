@@ -5,6 +5,7 @@ import { usePage } from '@inertiajs/react';
 
 import { LayoutContext } from '@/Layouts/layout/context/layoutcontext';
 import Layout from "@/Layouts/layout/layout.jsx";
+import './Dashboard.css'
 
 // Mock data for the chart
 const data = [
@@ -136,7 +137,7 @@ const Dashboard = ({ auth }) => {
     const InfoCard = ({ title, value, icon, iconColor, description }) => {
         const Icon = icon;
         return (
-            <div className={`col-12 md:col-6 lg:col-3 p-3`}>
+            <div className={`p-3`}>
                 <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
                     <div className="flex justify-between items-center mb-3">
                         <h3 className="text-lg font-semibold">{title}</h3>
@@ -184,7 +185,7 @@ const Dashboard = ({ auth }) => {
                 </div>
                 
                 {roleId === 1 && (
-                    <>
+                    <div className="lg:flex pt-4 w-full">
                         <InfoCard 
                             title="Total Properties" 
                             value={roomCount || 24} 
@@ -216,7 +217,7 @@ const Dashboard = ({ auth }) => {
                             iconColor="green" 
                             description="Earnings this month" 
                         />
-                    </>
+                    </div>
                 )}
                 
                 <div className="col-12 mt-5">

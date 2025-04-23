@@ -76,16 +76,6 @@ export default function Register() {
         <PrimeReactProvider>
         <LayoutProvider>
             <HomeLayout>
-            <ToastContainer 
-                position="top-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-            />
             <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gray-100 text-xl">
                 <Head title="Register - Airbnb Clone" />
                 

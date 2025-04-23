@@ -75,6 +75,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jarallax/1.12.8/jarallax.min.js"></script>
 
 
+    <link href="/cars/css/style.css" rel="stylesheet" type="text/css">
+
+    <link href="/cars/css/mdb.min.css" rel="stylesheet" type="text/css" id="mdb">
+
+    <link href="/cars/css/coloring.css" rel="stylesheet" type="text/css">
+
+    <link id="colors" href="/cars/css/colors/scheme-01.css" rel="stylesheet" type="text/css">
+
+    <link href="/cars/css/plugins.css" rel="stylesheet" type="text/css">
+
+    <link href="/cars/css/bootstrap.min.css" rel="stylesheet" type="text/css" id="bootstrap">
+
+    <script src="/cars/js/designesia.js"></script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgiM7ogCAA2Y5pgSk2KXZfxF5S_1jsptA&amp;libraries=places&amp;callback=initPlaces" async="" defer=""></script>
 
     </head>
     <body class="font-sans antialiased">

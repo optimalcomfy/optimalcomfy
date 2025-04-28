@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('room_number')->unique();
             $table->string('type');
             $table->decimal('price_per_night', 10, 2);
+            $table->integer('max_guests')->default(0);
             $table->integer('max_adults')->default(0);
             $table->integer('max_children')->default(0);
             $table->enum('status', ['available', 'booked', 'maintenance'])->default('available');

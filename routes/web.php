@@ -31,6 +31,12 @@ use App\Http\Controllers\RoomAmenityController;
 use App\Http\Controllers\RoomServiceController;
 use App\Http\Controllers\RoomFeatureController;
 
+use App\Http\Controllers\CarController;
+use App\Http\Controllers\CarBookingController;
+use App\Http\Controllers\CarCategoryController;
+use App\Http\Controllers\CarFeatureController;
+use App\Http\Controllers\CarMediaController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -90,6 +96,13 @@ Route::middleware('auth')->group(function () {
     Route::resource('bookings', BookingController::class);
     Route::resource('foods', FoodController::class);
     Route::resource('foodOrders', FoodOrderController::class);
+
+    Route::resource('cars', CarController::class);
+    Route::resource('car-bookings', CarBookingController::class);
+    Route::resource('car-categories', CarCategoryController::class);
+    Route::resource('car-features', CarFeatureController::class);
+    Route::resource('car-medias', CarMediaController::class);
+
     Route::resource('foodOrderItems', FoodOrderItemController::class);
     Route::resource('payments', PaymentController::class);
     Route::resource('reviews', ReviewController::class);

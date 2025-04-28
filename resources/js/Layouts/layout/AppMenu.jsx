@@ -28,6 +28,16 @@ const AppMenu = () => {
             ]
         },
         {
+            label: 'Car hire Management',
+            items: [
+                { label: 'Cars', icon: 'pi pi-fw pi-car', to: route('cars.index'), roles: [1, 2] },
+                { label: 'Car Bookings', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index'), roles: [1, 2] },
+                { label: 'Car Categories', icon: 'pi pi-fw pi-tags', to: route('car-categories.index'), roles: [1, 2] },
+                { label: 'Car Features', icon: 'pi pi-fw pi-check-square', to: route('car-features.index'), roles: [1, 2] },
+                { label: 'Car Media', icon: 'pi pi-fw pi-image', to: route('car-medias.index'), roles: [1, 2] },                
+            ]
+        },
+        {
             label: 'Food & Orders',
             items: [
                 { label: 'Food', icon: 'pi pi-fw pi-shopping-cart', to: route('foods.index'), roles: [1, 2] },

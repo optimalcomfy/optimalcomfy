@@ -61,11 +61,15 @@ export default function Rooms({ auth, laravelVersion, phpVersion }) {
                                         KES {data.price_per_night}
                                     </h6>
                                     <img
-                                        className="lg:h-[415px] h-[320px] object-cover w-full"
-                                        src={`/storage/${data?.initial_gallery?.[0].image}`}
-                                        width={420}
-                                        height={310}
-                                        alt="room card"
+                                      className="lg:h-[415px] h-[320px] object-cover w-full"
+                                      src={
+                                        data?.initial_gallery?.length > 0 && data?.initial_gallery?.[0]?.image
+                                          ? `/storage/${data.initial_gallery[0].image}`
+                                          : "../images/pages/header__bg.webp"
+                                      }
+                                      width={420}
+                                      height={310}
+                                      alt="room card"
                                     />
                                     </Link>
                                 </div>

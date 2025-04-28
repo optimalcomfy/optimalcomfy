@@ -24,7 +24,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 className="relative h-[400px] lg:h-[700px] bg-cover bg-center bg-no-repeat flex items-center 
             before:absolute before:top-0 before:bottom-0 before:left-0 before:right-0 before:bg-heading before:opacity-60"
                 style={{
-                  backgroundImage: room?.initial_gallery?.[0]?.image
+                  backgroundImage: (room?.initial_gallery.length > 0 && room?.initial_gallery?.[0]?.image)
                     ? `url('/storage/${room.initial_gallery[0].image}')`
                     : "url('../images/pages/header__bg.webp')",
                 }}

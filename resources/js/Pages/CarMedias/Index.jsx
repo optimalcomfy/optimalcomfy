@@ -2,14 +2,14 @@ import React from 'react';
 import { Link } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 
-const IndexCarMedia = ({ carMedia }) => {
+const IndexcarMedias = ({ carMedias }) => {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-semibold">Car Media</h1>
           <Link 
-            href={route('car-media.create')}
+            href={route('car-medias.create')}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           >
             Add New Media
@@ -36,7 +36,7 @@ const IndexCarMedia = ({ carMedia }) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {carMedia.map((media) => (
+              {carMedias.map((media) => (
                 <tr key={media.id}>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{media.media_url}</td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{media.media_type}</td>
@@ -56,4 +56,4 @@ const IndexCarMedia = ({ carMedia }) => {
   );
 };
 
-export default IndexCarMedia;
+export default IndexcarMedias;

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCarFeatureRequest;
 use App\Http\Requests\UpdateCarFeatureRequest;
 use App\Models\CarFeature;
+use Inertia\Inertia;
 
 class CarFeatureController extends Controller
 {
@@ -15,8 +16,8 @@ class CarFeatureController extends Controller
     {
         $carFeatures = CarFeature::orderBy('created_at', 'desc')->paginate(10);
 
-        return view('carFeatures.index', [
-            'carFeatures' => $carFeatures,
+        return Inertia::render('CarFeatures/Index', [
+            'carFeatures' => $carFeatures->items(),
             'pagination' => $carFeatures,
         ]);
     }
@@ -26,7 +27,7 @@ class CarFeatureController extends Controller
      */
     public function create()
     {
-        return view('carFeatures.create');
+        return Inertia::render('CarFeatures/Create');
     }
 
     /**
@@ -36,7 +37,7 @@ class CarFeatureController extends Controller
     {
         CarFeature::create($request->validated());
 
-        return redirect()->route('carFeatures.index')->with('success', 'Car Feature created successfully.');
+        return redirect()->route('car-features.index')->with('success', 'Car Feature created successfully.');
     }
 
     /**
@@ -44,7 +45,7 @@ class CarFeatureController extends Controller
      */
     public function show(CarFeature $carFeature)
     {
-        return view('carFeatures.show', [
+        return Inertia::render('CarFeatures/Show', [
             'carFeature' => $carFeature,
         ]);
     }
@@ -54,7 +55,7 @@ class CarFeatureController extends Controller
      */
     public function edit(CarFeature $carFeature)
     {
-        return view('carFeatures.edit', [
+        return Inertia::render('CarFeatures/Edit', [
             'carFeature' => $carFeature,
         ]);
     }
@@ -66,7 +67,7 @@ class CarFeatureController extends Controller
     {
         $carFeature->update($request->validated());
 
-        return redirect()->route('carFeatures.index')->with('success', 'Car Feature updated successfully.');
+        return redirect()->route('car-features.index')->with('success', 'Car Feature updated successfully.');
     }
 
     /**
@@ -76,6 +77,6 @@ class CarFeatureController extends Controller
     {
         $carFeature->delete();
 
-        return redirect()->route('carFeatures.index')->with('success', 'Car Feature deleted successfully.');
+        return redirect()->route('car-features.index')->with('success', 'Car Feature deleted successfully.');
     }
 }

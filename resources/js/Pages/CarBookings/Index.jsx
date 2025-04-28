@@ -1,15 +1,33 @@
 import React from 'react';
-import { Link, usePage, Inertia } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-
+import Swal from 'sweetalert2';
 const CarBookingsIndex = () => {
-  const { bookings } = usePage().props;
+  const { carBookings } = usePage().props;
 
   const handleDelete = (id) => {
-    if (confirm('Are you sure you want to delete this booking?')) {
-      Inertia.delete(route('car-bookings.destroy', { booking: id }));
-    }
-  };
+      Swal.fire({
+        title: 'Are you sure?',
+        text: 'This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Use Inertia.delete for making the delete request
+          destroy(route('car-bookings.destroy', id), {
+            onSuccess: () => {
+              // Optionally you can handle success actions here
+            },
+            onError: (err) => {
+              console.error('Delete error:', err);
+            },
+          });
+        }
+      });
+    };
 
   return (
     <Layout>
@@ -43,7 +61,7 @@ const CarBookingsIndex = () => {
               </tr>
             </thead>
             <tbody>
-              {bookings.map((booking) => (
+              {carBookings.map((booking) => (
                 <tr key={booking.id} className="border-t">
                   <td className="px-4 py-2 border">{booking.user?.name || '-'}</td>
                   <td className="px-4 py-2 border">{booking.car?.name || '-'}</td>
@@ -87,7 +105,7 @@ const CarBookingsIndex = () => {
                   </td>
                 </tr>
               ))}
-              {bookings.length === 0 && (
+              {carBookings.length === 0 && (
                 <tr>
                   <td colSpan="9" className="text-center py-4">
                     No bookings found.

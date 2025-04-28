@@ -2,8 +2,8 @@ import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 
-const IndexCarCategories = () => {
-  const { carCategories } = usePage().props;
+const Indexcategories = () => {
+  const { categories } = usePage().props;
 
   return (
     <Layout>
@@ -30,8 +30,8 @@ const IndexCarCategories = () => {
               </tr>
             </thead>
             <tbody>
-              {carCategories.length > 0 ? (
-                carCategories.map((category, index) => (
+              {categories.length > 0 ? (
+                categories.map((category, index) => (
                   <tr key={category.id} className="hover:bg-gray-50">
                     <td className="p-3 border-b">{index + 1}</td>
                     <td className="p-3 border-b">{category.name}</td>
@@ -64,4 +64,4 @@ const IndexCarCategories = () => {
   );
 };
 
-export default IndexCarCategories;
+export default Indexcategories;

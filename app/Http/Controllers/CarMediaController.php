@@ -6,6 +6,8 @@ use App\Http\Requests\StoreCarMediaRequest;
 use App\Http\Requests\UpdateCarMediaRequest;
 use App\Models\CarMedia;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Illuminate\Http\Request;
 
 class CarMediaController extends Controller
 {
@@ -16,9 +18,10 @@ class CarMediaController extends Controller
     {
         $carMedias = CarMedia::orderBy('created_at', 'desc')->paginate(10);
 
-        return view('carMedias.index', [
-            'carMedias' => $carMedias,
+        return Inertia::render('CarMedias/Index', [
+            'carMedias' => $carMedias->items(),
             'pagination' => $carMedias,
+            'flash' => session('flash'),
         ]);
     }
 
@@ -27,7 +30,7 @@ class CarMediaController extends Controller
      */
     public function create()
     {
-        return view('carMedias.create');
+        return Inertia::render('CarMedias/Create');
     }
 
     /**
@@ -43,7 +46,7 @@ class CarMediaController extends Controller
 
         CarMedia::create($validated);
 
-        return redirect()->route('carMedias.index')->with('success', 'Car media created successfully.');
+        return redirect()->route('car-medias.index')->with('success', 'Car media created successfully.');
     }
 
     /**
@@ -51,7 +54,7 @@ class CarMediaController extends Controller
      */
     public function show(CarMedia $carMedia)
     {
-        return view('carMedias.show', [
+        return Inertia::render('CarMedias/Show', [
             'carMedia' => $carMedia,
         ]);
     }
@@ -61,7 +64,7 @@ class CarMediaController extends Controller
      */
     public function edit(CarMedia $carMedia)
     {
-        return view('carMedias.edit', [
+        return Inertia::render('CarMedias/Edit', [
             'carMedia' => $carMedia,
         ]);
     }
@@ -84,7 +87,7 @@ class CarMediaController extends Controller
 
         $carMedia->update($validated);
 
-        return redirect()->route('carMedias.index')->with('success', 'Car media updated successfully.');
+        return redirect()->route('car-medias.index')->with('success', 'Car media updated successfully.');
     }
 
     /**
@@ -99,6 +102,6 @@ class CarMediaController extends Controller
 
         $carMedia->delete();
 
-        return redirect()->route('carMedias.index')->with('success', 'Car media deleted successfully.');
+        return redirect()->route('car-medias.index')->with('success', 'Car media deleted successfully.');
     }
 }

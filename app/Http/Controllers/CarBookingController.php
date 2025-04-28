@@ -30,7 +30,7 @@ class CarBookingController extends Controller
         $carBookings = $query->paginate(10);
 
         return Inertia::render('CarBookings/Index', [
-            'CarBookings' => $carBookings->items(),
+            'carBookings' => $carBookings->items(),
             'pagination' => $carBookings,
             'flash' => session('flash'),
         ]);
@@ -64,7 +64,7 @@ class CarBookingController extends Controller
             'special_requests'=> $request->special_requests,
         ]);
 
-        return redirect()->route('CarBookings.index')->with('success', 'Car booking added successfully.');
+        return redirect()->route('car-bookings.index')->with('success', 'Car booking added successfully.');
     }
 
     /**
@@ -73,7 +73,7 @@ class CarBookingController extends Controller
     public function show(CarBooking $carBooking)
     {
         return Inertia::render('CarBookings/Show', [
-            'CarBooking' => $carBooking->load(['car', 'user']),
+            'carBooking' => $carBooking->load(['car', 'user']),
         ]);
     }
 
@@ -85,7 +85,7 @@ class CarBookingController extends Controller
         $cars = Car::all();  // Fetch all cars for editing the booking
 
         return Inertia::render('CarBookings/Edit', [
-            'CarBooking' => $carBooking,
+            'carBooking' => $carBooking,
             'cars' => $cars,
         ]);
     }
@@ -106,7 +106,7 @@ class CarBookingController extends Controller
             'special_requests'=> $request->special_requests,
         ]);
 
-        return redirect()->route('CarBookings.index')->with('success', 'Car booking updated successfully.');
+        return redirect()->route('car-bookings.index')->with('success', 'Car booking updated successfully.');
     }
 
     /**
@@ -116,6 +116,6 @@ class CarBookingController extends Controller
     {
         $carBooking->delete();
 
-        return redirect()->route('CarBookings.index')->with('success', 'Car booking deleted successfully.');
+        return redirect()->route('car-bookings.index')->with('success', 'Car booking deleted successfully.');
     }
 }

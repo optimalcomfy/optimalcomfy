@@ -23,6 +23,8 @@
         "vite-plugin-svgr": "^4.3.0"
     },
     "dependencies": {
+        "@fortawesome/free-solid-svg-icons": "^6.7.2",
+        "@fortawesome/react-fontawesome": "^0.2.2",
         "@inertiajs/inertia": "^0.11.1",
         "caniuse-lite": "^1.0.30001706",
         "chart.js": "^4.4.0",

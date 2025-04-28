@@ -10,7 +10,7 @@ export default defineConfig({
             refresh: true,
         }),
         react(),
-        svgr(), 
+        svgr(),
     ],
     css: {
         devSourcemap: false,
@@ -21,6 +21,11 @@ export default defineConfig({
             output: {
                 assetFileNames: 'assets/[name][extname]',
             },
+            external: [
+                '@fortawesome/react-fontawesome', 
+                '@fortawesome/free-solid-svg-icons', // Add any other relevant FontAwesome packages
+            ]
         },
     },
 });
+

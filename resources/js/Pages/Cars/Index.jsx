@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
 import { usePage, Link } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const CarsIndex = () => {
   const { cars } = usePage().props;
@@ -42,13 +40,13 @@ const CarsIndex = () => {
                     href={route('cars.edit', car.id)}
                     className="text-indigo-600 hover:text-indigo-800 mr-4"
                   >
-                    <FontAwesomeIcon icon={faEdit} />
+                    Edit
                   </Link>
                   <button
                     onClick={() => handleDelete(car.id)}
                     className="text-red-600 hover:text-red-800"
                   >
-                    <FontAwesomeIcon icon={faTrash} />
+                    Delete
                   </button>
                 </td>
               </tr>

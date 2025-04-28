@@ -1,8 +1,6 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 const ShowCar = ({ car }) => {
   return (
@@ -54,8 +52,8 @@ const ShowCar = ({ car }) => {
         {/* Back Link */}
         <div className="mt-6 text-center">
           <Link href={route('cars.index')} className="text-indigo-600 hover:text-indigo-800 inline-flex items-center">
-            <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
-            Back to Cars List
+            {/* Replacing FontAwesome with simple text */}
+            <span className="mr-2">&larr; Back to Cars List</span>
           </Link>
         </div>
       </div>

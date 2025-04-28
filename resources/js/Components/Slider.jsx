@@ -67,11 +67,12 @@ function Slider() {
         <div className="room-slider-main swiper px-4">
           <div className="swiper-wrapper">
           {rooms.map(room => (
-            room.id && (
+            room && room.id && (
               <Link href={route('room-detail', { id: room.id })} className="swiper-slide" key={room.id}>
                 <div className="room-card">
                   <div className="room-image">
-                    <img src={`/storage/${room?.initial_gallery?.[0].image}`} alt={room.name} />
+                    {room.initial_gallery?.length > 0 &&
+                    <img src={`/storage/${room?.initial_gallery?.[0].image}`} alt={room.name} />}
                   </div>
                   <div className="room-content">
                     <Link href={route('room-detail', { id: room.id })} className="room-name">

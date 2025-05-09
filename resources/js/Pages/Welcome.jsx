@@ -32,8 +32,6 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
           <HomeLayout>
           <Banner />
           <SearchForm />
-          <About />
-          <Facility />
           <Slider />
           </HomeLayout>
         </LayoutProvider>

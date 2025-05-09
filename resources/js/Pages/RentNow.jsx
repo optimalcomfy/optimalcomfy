@@ -122,7 +122,7 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                     <div className="col-lg-3">
                         <div className="de-price text-center">
                         Daily rate
-                        <h3>$265</h3>
+                        <h3>KES 265</h3>
                         </div>
                         <div className="spacer-30" />
                         <div className="de-box mb25">

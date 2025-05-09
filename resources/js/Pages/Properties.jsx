@@ -100,7 +100,6 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                    
                 </div>
             </div>
-            <Video />
             </>
 
           </HomeLayout>

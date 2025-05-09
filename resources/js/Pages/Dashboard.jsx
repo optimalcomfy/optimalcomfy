@@ -166,7 +166,7 @@ const Dashboard = ({ auth }) => {
                 borderColor: '#3B82F6',
             },
             {
-                label: 'Revenue ($100s)',
+                label: 'Revenue (KES 100s)',
                 data: [32, 28, 41, 43, 31, 30, 38],
                 fill: false,
                 backgroundColor: '#10B981',
@@ -212,7 +212,7 @@ const Dashboard = ({ auth }) => {
                         
                         <InfoCard 
                             title="Revenue" 
-                            value="$15,280" 
+                            value="KES 15,280" 
                             icon={DollarSign} 
                             iconColor="green" 
                             description="Earnings this month" 

@@ -12,8 +12,13 @@ import '../../css/main'
 
 export default function SearchCars({ auth, laravelVersion, phpVersion }) {
 
-  const { flash, pagination } = usePage().props;
+  const { flash, pagination, cars } = usePage().props;
   
+  // Function to get proper icon for the car type
+  const getCarTypeIcon = (body_type) => {
+    // Default to SUV icon if body_type doesn't match known types
+    return "/cars/images/icons/4-green.svg";
+  };
   
   return (
     <>
@@ -302,498 +307,68 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                     </div>
                     <div className="col-lg-9">
                     <div className="row">
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/jeep-renegade.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>Jeep Renegade</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>25</span>
+                        {/* Dynamic car listing based on cars data */}
+                        {cars && cars.length > 0 ? (
+                          cars.map((car) => (
+                            <div className="col-xl-4 col-lg-6" key={car.id}>
+                              <div className="de-item mb30">
+                                <div className="d-img">
+                                  {/* Use the first image from initial_gallery if available, otherwise use a placeholder */}
+                                  <img
+                                    src={car.initial_gallery && car.initial_gallery.length > 0 
+                                      ? `/storage/${car.initial_gallery[0].image}` 
+                                      : `/cars/images/cars/placeholder.jpg`}
+                                    className="img-fluid"
+                                    alt={`${car.brand} ${car.model}`}
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      e.target.src = "/cars/images/cars/placeholder.jpg";
+                                    }}
+                                  />
                                 </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    SUV
-                                </span>
+                                <div className="d-info">
+                                  <div className="d-text">
+                                    <h4>{car.brand} {car.model}</h4>
+                                    <div className="d-item_like">
+                                      <i className="fa fa-heart" />
+                                      <span>{Math.floor(Math.random() * 100)}</span>
+                                    </div>
+                                    <div className="d-atr-group">
+                                      <span className="d-atr">
+                                        <img src="/cars/images/icons/1-green.svg" alt="" />
+                                        {car.seats || 5}
+                                      </span>
+                                      <span className="d-atr">
+                                        <img src="/cars/images/icons/2-green.svg" alt="" />
+                                        {car.doors || 4}
+                                      </span>
+                                      <span className="d-atr">
+                                        <img src="/cars/images/icons/3-green.svg" alt="" />
+                                        {car.luggage_capacity ? Math.floor(car.luggage_capacity / 1000) : 4}
+                                      </span>
+                                      <span className="d-atr">
+                                        <img src={getCarTypeIcon(car.body_type)} alt="" />
+                                        {car.body_type || 'Sedan'}
+                                      </span>
+                                    </div>
+                                    <div className="d-price">
+                                      Daily rate from <span>KES{car.price_per_day}</span>
+                                      <Link className="btn-main" href={route('rent-now', { car_id: car.id })}>
+                                        Rent Now
+                                      </Link>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES265</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
+                              </div>
                             </div>
+                          ))
+                        ) : (
+                          <div className="col-12">
+                            <div className="alert alert-info">
+                              No cars available at the moment. Please check back later.
                             </div>
-                        </div>
-                        </div>
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/bmw-m5.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>Mini Cooper</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>79</span>
-                                </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    Sedan
-                                </span>
-                                </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES244</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/ferrari-enzo.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>Ferarri Enzo</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>55</span>
-                                </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    Exotic Car
-                                </span>
-                                </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES167</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/ford-raptor.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>Ford Raptor</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>89</span>
-                                </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    Truck
-                                </span>
-                                </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES147</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/mini-cooper.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>Mini Cooper</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>87</span>
-                                </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    Hatchback
-                                </span>
-                                </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES238</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/vw-polo.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>VW Polo</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>37</span>
-                                </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    Hatchback
-                                </span>
-                                </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES106</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/chevrolet-camaro.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>Chevrolet Camaro</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>39</span>
-                                </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    Exotic Car
-                                </span>
-                                </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES245</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/hyundai-staria.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>Hyundai Staria</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>23</span>
-                                </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    Minivan
-                                </span>
-                                </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES191</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/toyota-rav.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>Toyota Rav 4</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>63</span>
-                                </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    SUV
-                                </span>
-                                </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES114</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/bentley.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>Bentley</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>45</span>
-                                </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    SUV
-                                </span>
-                                </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES299</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/lexus.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>Lexus</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>61</span>
-                                </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    Sedan
-                                </span>
-                                </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES131</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
-                        <div className="col-xl-4 col-lg-6">
-                        <div className="de-item mb30">
-                            <div className="d-img">
-                            <img
-                                src="/cars/images/cars/range-rover.jpg"
-                                className="img-fluid"
-                                alt=""
-                            />
-                            </div>
-                            <div className="d-info">
-                            <div className="d-text">
-                                <h4>Range Rover</h4>
-                                <div className="d-item_like">
-                                <i className="fa fa-heart" />
-                                <span>69</span>
-                                </div>
-                                <div className="d-atr-group">
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/1-green.svg" alt="" />5
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/2-green.svg" alt="" />2
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/3-green.svg" alt="" />4
-                                </span>
-                                <span className="d-atr">
-                                    <img src="/cars/images/icons/4-green.svg" alt="" />
-                                    Exotic Car
-                                </span>
-                                </div>
-                                <div className="d-price">
-                                Daily rate from <span>KES228</span>
-                                <Link className="btn-main" href={route('rent-now')}>
-                                    Rent Now
-                                </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                        </div>
+                          </div>
+                        )}
                     </div>
                     </div>
                 </div>

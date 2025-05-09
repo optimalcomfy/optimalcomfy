@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use App\Models\Property;
 use App\Models\Food;
+use App\Models\Car;
 use App\Models\Service;
 use App\Models\PropertyAmenity;
 use Carbon\Carbon;
@@ -86,12 +87,15 @@ class HomeController extends Controller
     public function searchCars(Request $request)
     {
 
+        $cars = Car::with(['bookings', 'initialGallery', 'carFeatures'])->get();
+
         return Inertia::render('SearchCars', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
-            'flash' => session('flash')
+            'flash' => session('flash'),
+            'cars'=> $cars
         ]);
     }
 

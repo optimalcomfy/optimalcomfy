@@ -149,7 +149,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
           <div>
             <h4 className="heading text-heading mb-[15px]">Hotel location</h4>
             <p className="font-glida text-[20px] leading-relaxed">
-              Address: The Ritz-Carlton (California, USA) <br />
+              Address: Nairobi, Kenya <br />
               Telephone:&nbsp;+12505550199 <br />
               Fax: +12505550199 <br />
               Email:&nbsp;info@Optimalcomfy.com

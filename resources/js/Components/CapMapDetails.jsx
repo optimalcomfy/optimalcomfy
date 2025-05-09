@@ -59,7 +59,7 @@ export default function CarMapDetails({ car }) {
         <h2 className="font-bold text-lg mb-2">{car.name}</h2>
         <div className="text-sm text-gray-600 mb-1">Type: {car.brand}</div>
         <div className="text-sm text-gray-600 mb-1">Location: {car.location}</div>
-        <div className="text-sm text-gray-600">Price per night: ${car.price_per_day}</div>
+        <div className="text-sm text-gray-600">Price per night: KES {car.price_per_day}</div>
       </div>
     </div>
   );

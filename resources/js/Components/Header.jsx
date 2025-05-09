@@ -26,10 +26,6 @@ function Header() {
                 </a>
                 </div>
                 <div>
-                <a className="flex gap-[10px] items-center text-xs" href="#">
-                    <i className="flaticon-marker relative top-[2px]" />
-                    280 Augusta Avenue, M5T 2L9 Toronto, Canada
-                </a>
                 </div>
             </div>
             </div>
@@ -66,48 +62,6 @@ function Header() {
                           >
                               Cars
                           </Link>
-                        </li>
-                        <li className="navigation__menu--item has-child has-arrow dark:before:!text-white">
-                        <a
-                            href="#"
-                            className="navigation__menu--item__link dark:text-white"
-                        >
-                            Pages
-                        </a>
-                        <ul className="submenu sub__style" role="menu">
-                            <li role="menuitem">
-                                <Link
-                                href={route('about')}
-                                className="navigation__menu--item__link dark:text-white"
-                                >
-                                    About
-                                </Link>
-                            </li>
-                            <li role="menuitem">
-                                <Link
-                                href={route('restaurant')}
-                                className="navigation__menu--item__link dark:text-white"
-                                >
-                                    Restaurant
-                                </Link>
-                            </li>
-                            <li role="menuitem">
-                                <Link
-                                href={route('gallery')}
-                                className="navigation__menu--item__link dark:text-white"
-                                >
-                                    Gallery
-                                </Link>
-                            </li>
-                            <li role="menuitem">
-                                <Link
-                                href={route('all-services')}
-                                className="navigation__menu--item__link dark:text-white"
-                                >
-                                    Services
-                                </Link>
-                            </li>
-                        </ul>
                         </li>
                         <li className="navigation__menu--item">
                             <Link

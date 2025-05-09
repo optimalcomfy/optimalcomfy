@@ -21,7 +21,9 @@ class DatabaseSeeder extends Seeder
             LoanSeeder::class,
             NotificationSeeder::class,
             RepaymentSeeder::class,
-            RoomSeeder::class,
+            PropertiesSeeder::class,
+            AmenitySeeder::class,
+            PropertyAmenitySeeder::class,
             BookingSeeder::class,
             ServiceSeeder::class,
             FoodSeeder::class,
@@ -30,6 +32,9 @@ class DatabaseSeeder extends Seeder
             FoodOrderItemSeeder::class,
             PaymentSeeder::class,
             ReviewSeeder::class,
+            CarCategorySeeder::class,
+            FeatureSeeder::class,
+            CarFeatureSeeder::class
         ]);
     }
 }

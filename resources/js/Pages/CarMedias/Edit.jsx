@@ -5,7 +5,7 @@ import Select from 'react-select';
 
 const EditCarMedia = ({ carMedia, cars }) => {
   const { data, setData, put, errors, processing } = useForm({
-    media_url: carMedia.media_url,
+    image: carMedia.image,
     media_type: carMedia.media_type,
     car_id: carMedia.car_id,
   });
@@ -28,11 +28,11 @@ const EditCarMedia = ({ carMedia, cars }) => {
             <label className="block text-sm font-medium text-gray-700">Media URL</label>
             <input 
               type="text" 
-              value={data.media_url} 
-              onChange={(e) => setData('media_url', e.target.value)}
+              value={data.image} 
+              onChange={(e) => setData('image', e.target.value)}
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
             />
-            {errors.media_url && <div className="text-sm text-red-500 mt-1">{errors.media_url}</div>}
+            {errors.image && <div className="text-sm text-red-500 mt-1">{errors.image}</div>}
           </div>
 
           {/* Media Type */}

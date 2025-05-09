@@ -54,7 +54,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
           </div>
           <div>
             <h2 className="text-heading heading mb-[10px]">
-              A Night of Hope: Our Charity Gala Room.
+              A Night of Hope: Our Charity Gala Property.
             </h2>
             <p className="text-[18px] max-w-[585px]">
               At our Fitness &amp; Yoga Services, we are dedicated to helping
@@ -73,7 +73,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
               </div>
               <div className="block">
                 <span className="h5 block heading text-primary">10+</span>
-                <p>Special Room</p>
+                <p>Special Property</p>
               </div>
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
               </div>
               <div className="block">
                 <span className="h5 block heading text-primary">16+</span>
-                <p>Special Room</p>
+                <p>Special Property</p>
               </div>
             </div>
           </div>

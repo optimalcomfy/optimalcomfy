@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('car_media', function (Blueprint $table) {
             $table->id();
             $table->foreignId('car_id')->constrained()->cascadeOnDelete();
-            $table->string('media_url');
+            $table->string('image');
             $table->enum('media_type', ['image', 'thumbnail'])->default('image');
             $table->timestamps();
         });

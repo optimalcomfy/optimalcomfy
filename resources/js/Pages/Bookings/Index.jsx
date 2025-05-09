@@ -26,7 +26,7 @@ const BookingsIndex = () => {
             <thead>
               <tr className="bg-gray-100 text-left">
                 <th className="px-4 py-2 border">User</th>
-                <th className="px-4 py-2 border">Room</th>
+                <th className="px-4 py-2 border">Property</th>
                 <th className="px-4 py-2 border">Check-in</th>
                 <th className="px-4 py-2 border">Check-out</th>
                 <th className="px-4 py-2 border">Total Price</th>
@@ -38,7 +38,7 @@ const BookingsIndex = () => {
               {bookings.map((booking) => (
                 <tr key={booking.id} className="border-t">
                   <td className="px-4 py-2 border">{booking.user.name}</td>
-                  <td className="px-4 py-2 border">{booking.room.name}</td>
+                  <td className="px-4 py-2 border">{booking.property.name}</td>
                   <td className="px-4 py-2 border">{booking.check_in_date}</td>
                   <td className="px-4 py-2 border">{booking.check_out_date}</td>
                   <td className="px-4 py-2 border">${booking.total_price}</td>

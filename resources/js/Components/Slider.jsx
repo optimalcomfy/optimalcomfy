@@ -8,11 +8,11 @@ import { Link, usePage, router } from '@inertiajs/react';
 function Slider() {
   const swiperRef = useRef(null);
 
-  const { rooms, flash, pagination } = usePage().props;
+  const { properties, flash, pagination } = usePage().props;
 
   useEffect(() => {
     // Initialize Swiper when component mounts
-    swiperRef.current = new Swiper('.room-slider-main', {
+    swiperRef.current = new Swiper('.property-slider-main', {
       slidesPerView: 'auto',
       spaceBetween: 30,
       loop: true,
@@ -45,17 +45,17 @@ function Slider() {
   }, []);
 
   return (
-    <div className="room-section">
+    <div className="property-section">
       <div className="container">
-        <div className="room-header">
-          <div className="room-title">
-            <span className="sub-heading">Room</span>
-            <h2>Our rooms</h2>
+        <div className="property-header">
+          <div className="property-title">
+            <span className="sub-heading">Property</span>
+            <h2>Our properties</h2>
           </div>
-          <div className="room-description">
+          <div className="property-description">
             <p>
-              Our rooms offer a harmonious blend of comfort and elegance, designed
-              to provide an exceptional stay for every guest. Each room features
+              Our properties offer a harmonious blend of comfort and elegance, designed
+              to provide an exceptional stay for every guest. Each property features
               plush bedding, high-quality linens, and a selection of pillows to
               ensure a restful night's sleep.
             </p>
@@ -64,27 +64,27 @@ function Slider() {
       </div>
 
       <div className="container-full">
-        <div className="room-slider-main swiper px-4">
+        <div className="property-slider-main swiper px-4">
           <div className="swiper-wrapper">
-          {rooms.map(room => (
-            room && room.id && (
-              <Link href={route('room-detail', { id: room.id })} className="swiper-slide" key={room.id}>
-                <div className="room-card">
-                  <div className="room-image">
-                    {room.initial_gallery?.length > 0 &&
-                    <img src={`/storage/${room?.initial_gallery?.[0].image}`} alt={room.name} />}
+          {properties.map(property => (
+            property && property.id && (
+              <Link href={route('property-detail', { id: property.id })} className="swiper-slide" key={property.id}>
+                <div className="property-card">
+                  <div className="property-image">
+                    {property.initial_gallery?.length > 0 &&
+                    <img src={`/storage/${property?.initial_gallery?.[0].image}`} alt={property.name} />}
                   </div>
-                  <div className="room-content">
-                    <Link href={route('room-detail', { id: room.id })} className="room-name">
-                      {room.name}
+                  <div className="property-content">
+                    <Link href={route('property-detail', { id: property.id })} className="property-name">
+                      {property.name}
                     </Link>
-                    <div className="room-details">
-                      <span className="room-capacity">
+                    <div className="property-details">
+                      <span className="property-capacity">
                         <i className="flaticon-user"></i>
-                        {room.max_guests} Person
+                        {property.max_guests} Person
                       </span>
                     </div>
-                    <span className="room-price">KES {room.price_per_night}</span>
+                    <span className="property-price">KES {property.price_per_night}</span>
                   </div>
                 </div>
               </Link>

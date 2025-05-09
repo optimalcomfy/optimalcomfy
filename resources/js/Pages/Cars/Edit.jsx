@@ -1,200 +1,355 @@
-import React, { useEffect } from 'react';
-import { useForm, usePage, Link } from '@inertiajs/react';
-import Layout from "@/Layouts/layout/layout.jsx";
+import React, { useState, useEffect } from 'react';
+import { useForm } from '@inertiajs/react';
 import Select from 'react-select';
+import { 
+  Plus, 
+  Logs, 
+  MapPin, 
+  Star as StarIcon, 
+  Car, 
+  Fuel, 
+  Settings, 
+  DollarSign, 
+  Info, 
+  Check, 
+  X,
+  Calendar,
+  Gauge
+} from 'lucide-react';
+import Layout from "@/Layouts/layout/layout.jsx";
+import './Edit.css'; // Import custom CSS
 
-const EditCar = ({ car }) => {
-  const { categories, features } = usePage().props;
-
-  const { data, setData, put, errors, processing } = useForm({
-    car_category_id: car.car_category_id,
-    name: car.name,
-    brand: car.brand,
-    model: car.model,
-    year: car.year,
-    mileage: car.mileage,
-    body_type: car.body_type,
-    seats: car.seats,
-    doors: car.doors,
-    luggage_capacity: car.luggage_capacity,
-    fuel_type: car.fuel_type,
-    engine_capacity: car.engine_capacity,
-    transmission: car.transmission,
-    drive_type: car.drive_type,
-    fuel_economy: car.fuel_economy,
-    exterior_color: car.exterior_color,
-    interior_color: car.interior_color,
-    price_per_day: car.price_per_day,
-    description: car.description,
-    is_available: car.is_available,
-    location_address: car.location_address,
-    latitude: car.latitude,
-    longitude: car.longitude,
-    features: car.features.map(feature => feature.id),
+const EditCar = ({ car, categories }) => {
+  const { data, setData, post, errors, processing } = useForm({
+    car_category_id: car.car_category_id || '',
+    name: car.name || '',
+    brand: car.brand || '',
+    model: car.model || '',
+    year: car.year || '',
+    mileage: car.mileage || '',
+    body_type: car.body_type || '',
+    seats: car.seats || '',
+    doors: car.doors || '',
+    luggage_capacity: car.luggage_capacity || '',
+    fuel_type: car.fuel_type || '',
+    engine_capacity: car.engine_capacity || '',
+    transmission: car.transmission || '',
+    drive_type: car.drive_type || '',
+    fuel_economy: car.fuel_economy || '',
+    exterior_color: car.exterior_color || '',
+    interior_color: car.interior_color || '',
+    price_per_day: car.price_per_day || '',
+    description: car.description || '',
+    is_available: car.is_available || false,
+    location_address: car.location_address || '',
+    latitude: car.latitude || '',
+    longitude: car.longitude || '',
   });
+
+  const [locationAddressSuggestions, setlocationAddressSuggestions] = useState([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    put(route('cars.update', car.id));
+    post(route('cars.update', car.id));
   };
 
-  const categoryOptions = categories.map(category => ({
-    value: category.id, label: category.name
+  const carCategoryOptions = categories.map((category) => ({
+    value: category.id,
+    label: category.name,
   }));
 
-  const featureOptions = features.map(feature => ({
-    value: feature.id, label: feature.feature_name
-  }));
+  useEffect(() => {
+    const fetchlocationAddressSuggestions = async () => {
+      if (data.location_address.length < 3) {
+        setlocationAddressSuggestions([]);
+        return;
+      }
+
+      setIsLoadingSuggestions(true);
+      try {
+        const response = await fetch(`/locations?query=${encodeURIComponent(data.location_address)}`);
+        if (!response.ok) throw new Error('Failed to fetch suggestions');
+        const result = await response.json();
+        setlocationAddressSuggestions(result);
+      } catch (error) {
+        console.error('Error fetching location_address suggestions:', error);
+        setlocationAddressSuggestions([]);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      if (data.location_address) {
+        fetchlocationAddressSuggestions();
+      } else {
+        setlocationAddressSuggestions([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [data.location_address]);
+
+  const handleLocation_addressSelect = (suggestion) => {
+    setData('location_address', suggestion);
+    setlocationAddressSuggestions([]);
+  };
+
+  // Custom styles for react-select
+  const selectStyles = {
+    control: (provided) => ({
+      ...provided,
+      boxShadow: 'none',
+      '&:hover': {
+        borderColor: '#3373dc',
+      }
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? '#3373dc' : state.isFocused ? '#ebf2ff' : null,
+      color: state.isSelected ? 'white' : '#363636',
+    }),
+  };
+
+  const InputField = ({ label, name, type = "text", icon: Icon, ...props }) => (
+    <div className="form-field">
+      <label className="form-label">
+        {Icon && <Icon className="form-field-icon" />}
+        {label}
+      </label>
+      <input
+        type={type}
+        name={name}
+        value={data[name]}
+        onChange={(e) => setData(name, e.target.value)}
+        className="form-input"
+        {...props}
+      />
+      {errors[name] && <div className="form-error">{errors[name]}</div>}
+    </div>
+  );
 
   return (
     <Layout>
-      <div className="max-w-2xl bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-3xl font-semibold mb-6">Edit Car</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="edit-car-container">
+        <div className="edit-car-header">
+          <h1 className="page-title">
+            <Car className="title-icon" />
+            Edit Car Details
+          </h1>
+          <div className="availability-badge-container">
+            <span className={`availability-badge ${data.is_available ? 'available' : 'unavailable'}`}>
+              {data.is_available ? (
+                <>
+                  <Check className="badge-icon" />
+                  Available
+                </>
+              ) : (
+                <>
+                  <X className="badge-icon" />
+                  Unavailable
+                </>
+              )}
+            </span>
+          </div>
+        </div>
+        
+        <div className="edit-car-card">
+          <div className="edit-car-card-header">
+            <h2 className="car-title">
+              {data.brand} {data.model} {data.year}
+            </h2>
+          </div>
           
-          {/* Car Category Select */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Car Category</label>
-            <Select
-              options={categoryOptions}
-              value={categoryOptions.find(option => option.value === data.car_category_id)}
-              onChange={(selected) => setData('car_category_id', selected ? selected.value : '')}
-              placeholder="Select a category"
-            />
-            {errors.car_category_id && <div className="text-sm text-red-500 mt-1">{errors.car_category_id}</div>}
-          </div>
-
-          {/* Car Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Car Name</label>
-            <input
-              type="text"
-              value={data.name}
-              onChange={(e) => setData('name', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-              placeholder="Car Name"
-            />
-            {errors.name && <div className="text-sm text-red-500 mt-1">{errors.name}</div>}
-          </div>
-
-          {/* Brand */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Brand</label>
-            <input
-              type="text"
-              value={data.brand}
-              onChange={(e) => setData('brand', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-              placeholder="Brand"
-            />
-            {errors.brand && <div className="text-sm text-red-500 mt-1">{errors.brand}</div>}
-          </div>
-
-          {/* Model */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Model</label>
-            <input
-              type="text"
-              value={data.model}
-              onChange={(e) => setData('model', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-              placeholder="Model"
-            />
-            {errors.model && <div className="text-sm text-red-500 mt-1">{errors.model}</div>}
-          </div>
-
-          {/* Year */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Year</label>
-            <input
-              type="number"
-              value={data.year}
-              onChange={(e) => setData('year', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-              placeholder="Year"
-            />
-            {errors.year && <div className="text-sm text-red-500 mt-1">{errors.year}</div>}
-          </div>
-
-          {/* Mileage */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Mileage</label>
-            <input
-              type="number"
-              value={data.mileage}
-              onChange={(e) => setData('mileage', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-              placeholder="Mileage"
-            />
-            {errors.mileage && <div className="text-sm text-red-500 mt-1">{errors.mileage}</div>}
-          </div>
-
-          {/* Fuel Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Fuel Type</label>
-            <input
-              type="text"
-              value={data.fuel_type}
-              onChange={(e) => setData('fuel_type', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-              placeholder="Fuel Type"
-            />
-            {errors.fuel_type && <div className="text-sm text-red-500 mt-1">{errors.fuel_type}</div>}
-          </div>
-
-          {/* Transmission */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Transmission</label>
-            <input
-              type="text"
-              value={data.transmission}
-              onChange={(e) => setData('transmission', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-              placeholder="Transmission"
-            />
-            {errors.transmission && <div className="text-sm text-red-500 mt-1">{errors.transmission}</div>}
-          </div>
-
-          {/* Location Address */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Location Address</label>
-            <input
-              type="text"
-              value={data.location_address}
-              onChange={(e) => setData('location_address', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-              placeholder="Location Address"
-            />
-            {errors.location_address && <div className="text-sm text-red-500 mt-1">{errors.location_address}</div>}
-          </div>
-
-          {/* Features Select */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Car Features</label>
-            <Select
-              isMulti
-              options={featureOptions}
-              value={featureOptions.filter(option => data.features.includes(option.value))}
-              onChange={(selected) => setData('features', selected.map(s => s.value))}
-              placeholder="Select Features"
-            />
-            {errors.features && <div className="text-sm text-red-500 mt-1">{errors.features}</div>}
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full mt-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            disabled={processing}
-          >
-            {processing ? 'Updating Car...' : 'Update Car'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <Link href={route('cars.index')} className="text-indigo-600 hover:text-indigo-800">
-            Back to Cars List
-          </Link>
+          <form onSubmit={handleSubmit} className="edit-car-form">
+            <div className="form-grid">
+              {/* Section 1: Basic Information */}
+              <div className="form-section">
+                <h3 className="section-title">
+                  <Car className="section-icon" />
+                  Basic Information
+                </h3>
+                <div className="form-grid-3">
+                  <div className="form-field">
+                    <label className="form-label">Car Category</label>
+                    <Select
+                      options={carCategoryOptions}
+                      value={carCategoryOptions.find(option => option.value === data.car_category_id)}
+                      onChange={(selected) => setData('car_category_id', selected.value)}
+                      styles={selectStyles}
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                    />
+                    {errors.car_category_id && <div className="form-error">{errors.car_category_id}</div>}
+                  </div>
+                  <InputField label="Name" name="name" />
+                  <InputField label="Brand" name="brand" />
+                  <InputField label="Model" name="model" />
+                  <InputField label="Year" name="year" icon={Calendar} />
+                  <InputField label="Mileage" name="mileage" icon={Gauge} />
+                </div>
+              </div>
+  
+              {/* Section 2: Physical Characteristics */}
+              <div className="form-section">
+                <h3 className="section-title">
+                  <Car className="section-icon" />
+                  Physical Characteristics
+                </h3>
+                <div className="form-grid-3">
+                  <InputField label="Body Type" name="body_type" />
+                  <InputField label="Seats" name="seats" type="number" min="1" max="20" />
+                  <InputField label="Doors" name="doors" type="number" min="1" max="10" />
+                  <InputField label="Luggage Capacity" name="luggage_capacity" />
+                  <InputField label="Exterior Color" name="exterior_color" />
+                  <InputField label="Interior Color" name="interior_color" />
+                </div>
+              </div>
+  
+              {/* Section 3: Technical Specifications */}
+              <div className="form-section">
+                <h3 className="section-title">
+                  <Settings className="section-icon" />
+                  Technical Specifications
+                </h3>
+                <div className="form-grid-3">
+                  <InputField label="Fuel Type" name="fuel_type" icon={Fuel} />
+                  <InputField label="Engine Capacity" name="engine_capacity" />
+                  <InputField label="Transmission" name="transmission" />
+                  <InputField label="Drive Type" name="drive_type" />
+                  <InputField label="Fuel Economy" name="fuel_economy" />
+                </div>
+              </div>
+  
+              {/* Section 4: Pricing and Availability */}
+              <div className="form-section">
+                <h3 className="section-title">
+                  <DollarSign className="section-icon" />
+                  Pricing and Availability
+                </h3>
+                <div className="form-grid-2">
+                  <InputField 
+                    label="Price Per Day" 
+                    name="price_per_day" 
+                    icon={DollarSign}
+                    placeholder="0.00"
+                  />
+                  
+                  <div className="form-field">
+                    <label className="form-label">
+                      <Info className="form-field-icon" />
+                      Availability Status
+                    </label>
+                    <div className="checkbox-wrapper">
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={data.is_available}
+                          onChange={(e) => setData('is_available', e.target.checked)}
+                          className="checkbox-input"
+                        />
+                        <span className="checkbox-text">
+                          {data.is_available ? 'Available for Rent' : 'Not Available'}
+                        </span>
+                      </label>
+                      {errors.is_available && <div className="form-error">{errors.is_available}</div>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Section 5: Location */}
+              <div className="form-section">
+                <h3 className="section-title">
+                  <MapPin className="section-icon" />
+                  Location
+                </h3>
+                <div className="form-field location-field">
+                  <label className="form-label">
+                    <MapPin className="form-field-icon" />
+                    Location Address
+                  </label>
+                  <div className="location-input-wrapper">
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Search for a location..."
+                      value={data.location_address}
+                      onChange={(e) => setData("location_address", e.target.value)}
+                    />
+                    {isLoadingSuggestions && (
+                      <div className="loader"></div>
+                    )}
+                  </div>
+                  {locationAddressSuggestions.length > 0 && (
+                    <div className="location-suggestions">
+                      <ul className="suggestions-list">
+                        {locationAddressSuggestions.map((suggestion, index) => (
+                          <li
+                            key={index}
+                            className="suggestion-item"
+                            onClick={() => handleLocation_addressSelect(suggestion)}
+                          >
+                            <MapPin className="suggestion-icon" />
+                            {suggestion}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {errors.location_address && <p className="form-error">{errors.location_address}</p>}
+                </div>
+              </div>
+              
+              {/* Section 6: Description */}
+              <div className="form-section">
+                <h3 className="section-title">
+                  <Info className="section-icon" />
+                  Description
+                </h3>
+                <div className="form-field">
+                  <label className="form-label">
+                    Car Description
+                  </label>
+                  <textarea 
+                    value={data.description} 
+                    onChange={(e) => setData('description', e.target.value)}
+                    rows="5"
+                    className="form-textarea"
+                    placeholder="Provide a detailed description of the car..."
+                  />
+                  {errors.description && <div className="form-error">{errors.description}</div>}
+                </div>
+              </div>
+            </div>
+            
+            <div className="form-actions">
+              <button 
+                type="button" 
+                className="cancel-button"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={processing} 
+                className="submit-button"
+              >
+                {processing ? (
+                  <span className="button-content">
+                    <span className="spinner"></span>
+                    Updating...
+                  </span>
+                ) : (
+                  <span className="button-content">
+                    <Check className="button-icon" />
+                    Update Car
+                  </span>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </Layout>

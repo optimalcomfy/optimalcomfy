@@ -23,10 +23,10 @@ function Facility() {
           className="mx-auto mb-[25px]"
         />
         <a href="#" className="heading-6 heading text-heading mb-[15px] block">
-          Rooms and Suites
+          Properties and Suites
         </a>
         <p>
-          Varied types of rooms, from standard to luxury suites, equipped with
+          Varied types of properties, from standard to luxury suites, equipped with
           essentials like beds.
         </p>
       </div>

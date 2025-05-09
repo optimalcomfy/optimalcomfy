@@ -23,6 +23,7 @@
     },
     "dependencies": {
         "@inertiajs/inertia": "^0.11.1",
+        "@react-google-maps/api": "^2.20.6",
         "caniuse-lite": "^1.0.30001706",
         "chart.js": "^4.4.0",
         "jspdf": "^2.5.2",

@@ -5,7 +5,7 @@ import Layout from "@/Layouts/layout/layout.jsx";
 const IndexcarMedias = ({ carMedias }) => {
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div className="max-w-full bg-white p-8 rounded-lg shadow-md mt-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-semibold">Car Media</h1>
           <Link 
@@ -38,7 +38,7 @@ const IndexcarMedias = ({ carMedias }) => {
             <tbody className="bg-white divide-y divide-gray-200">
               {carMedias.map((media) => (
                 <tr key={media.id}>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{media.media_url}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{media.image}</td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{media.media_type}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{media.car ? media.car.name : 'No Car Assigned'}</td>
                   <td className="px-6 py-4 text-sm font-medium text-right">

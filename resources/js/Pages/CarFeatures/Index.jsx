@@ -7,7 +7,7 @@ const IndexCarFeature = () => {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md mt-8">
+      <div className="max-w-full bg-white p-8 rounded-lg shadow-md mt-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Car Features</h1>
           <Link

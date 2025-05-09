@@ -14,9 +14,9 @@ class ServiceSeeder extends Seeder
     {
         DB::table('services')->insert([
             [
-                'name' => 'Room Cleaning',
+                'name' => 'Property Cleaning',
                 'image' => 'images/services/cleaning.jpg',
-                'description' => 'Daily room cleaning service to keep your stay comfortable.',
+                'description' => 'Daily property cleaning service to keep your stay comfortable.',
                 'price' => 15.00,
                 'created_at' => now(),
                 'updated_at' => now(),

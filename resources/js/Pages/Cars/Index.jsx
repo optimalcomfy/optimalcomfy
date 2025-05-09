@@ -7,11 +7,11 @@ const CarsIndex = () => {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-md">
+      <div className="max-w-full p-6 bg-white rounded-lg shadow-md">
         <h1 className="text-3xl font-semibold mb-6">Cars List</h1>
 
         <div className="mb-6 text-right">
-          <Link href={route('cars.create')} className="text-indigo-600 hover:text-indigo-800">
+          <Link href={route('main-cars.create')} className="text-indigo-600 hover:text-indigo-800">
             Add New Car
           </Link>
         </div>
@@ -28,7 +28,7 @@ const CarsIndex = () => {
             </tr>
           </thead>
           <tbody>
-            {cars.data.map(car => (
+            {cars?.map(car => (
               <tr key={car.id}>
                 <td className="py-2 px-4 border-b">{car.name}</td>
                 <td className="py-2 px-4 border-b">{car.brand}</td>
@@ -37,7 +37,13 @@ const CarsIndex = () => {
                 <td className="py-2 px-4 border-b">{car.price_per_day}</td>
                 <td className="py-2 px-4 border-b">
                   <Link
-                    href={route('cars.edit', car.id)}
+                    href={route('main-cars.show', car.id)}
+                    className="text-green-600 hover:text-green-800 mr-4"
+                  >
+                    View
+                  </Link>
+                  <Link
+                    href={route('main-cars.edit', car.id)}
                     className="text-indigo-600 hover:text-indigo-800 mr-4"
                   >
                     Edit

@@ -99,7 +99,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                               {data.description}
                             </p>
                             <Link
-                              href={route('room-detail', { id: data.id })}
+                              href={route('property-detail', { id: data.id })}
                               className="text-primary underline text-[18px] font-medium mt-[20px] block"
                             >
                               Read More

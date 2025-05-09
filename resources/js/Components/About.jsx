@@ -35,7 +35,7 @@ function About() {
               Welcome to where luxury meets comfort.
               We have been dedicated to providing an exceptional stay
               for our guests, blending modern amenities with timeless elegance. Our
-              beautifully designed rooms and suites offer stunning views and plush
+              beautifully designed properties and suites offer stunning views and plush
               accommodations, ensuring a restful retreat whether you're here for
               business or leisure.
             </p>

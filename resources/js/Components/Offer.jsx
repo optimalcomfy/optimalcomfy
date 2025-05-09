@@ -67,7 +67,7 @@ function Offer() {
             </a>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-[20px] leading-none text-white">
               <li className="flex items-center gap-2">
-                <i className="flaticon-check-circle" /> A two-night a room
+                <i className="flaticon-check-circle" /> A two-night a property
               </li>
               <li className="flex items-center gap-2">
                 <i className="flaticon-check-circle" /> Daily spa treatments
@@ -105,7 +105,7 @@ function Offer() {
             </a>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-[20px] leading-none text-white">
               <li className="flex items-center gap-2">
-                <i className="flaticon-check-circle" /> A two-night a room
+                <i className="flaticon-check-circle" /> A two-night a property
               </li>
               <li className="flex items-center gap-2">
                 <i className="flaticon-check-circle" /> Daily spa treatments

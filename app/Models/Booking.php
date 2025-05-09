@@ -11,7 +11,7 @@ class Booking extends Model
 
     protected $fillable = [
         'user_id',
-        'room_id',
+        'property_id',
         'check_in_date',
         'check_out_date',
         'total_price',
@@ -23,9 +23,9 @@ class Booking extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function room()
+    public function property()
     {
-        return $this->belongsTo(Room::class);
+        return $this->belongsTo(Property::class);
     }
 
     public function payments()

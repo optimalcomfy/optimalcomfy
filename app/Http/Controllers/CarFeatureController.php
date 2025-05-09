@@ -6,19 +6,29 @@ use App\Http\Requests\StoreCarFeatureRequest;
 use App\Http\Requests\UpdateCarFeatureRequest;
 use App\Models\CarFeature;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CarFeatureController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $carFeatures = CarFeature::orderBy('created_at', 'desc')->paginate(10);
+        $query = CarFeature::orderBy('created_at', 'desc');
+
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->where('name', 'LIKE', "%$search%");
+        }
+
+        $carFeatures = $query->paginate(10);
 
         return Inertia::render('CarFeatures/Index', [
             'carFeatures' => $carFeatures->items(),
             'pagination' => $carFeatures,
+            'flash' => session('flash'),
         ]);
     }
 
@@ -35,9 +45,23 @@ class CarFeatureController extends Controller
      */
     public function store(StoreCarFeatureRequest $request)
     {
-        CarFeature::create($request->validated());
+        $validatedData = $request->validated();
 
-        return redirect()->route('car-features.index')->with('success', 'Car Feature created successfully.');
+        // Handle Image Upload
+        if ($request->hasFile('icon')) {
+            $validatedData['icon'] = $request->file('icon')->store('features', 'public');
+        }
+
+        $carFeature = CarFeature::create($validatedData);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'feature' => $carFeature
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Car feature added successfully.');
     }
 
     /**
@@ -46,7 +70,7 @@ class CarFeatureController extends Controller
     public function show(CarFeature $carFeature)
     {
         return Inertia::render('CarFeatures/Show', [
-            'carFeature' => $carFeature,
+            'feature' => $carFeature,
         ]);
     }
 
@@ -65,9 +89,27 @@ class CarFeatureController extends Controller
      */
     public function update(UpdateCarFeatureRequest $request, CarFeature $carFeature)
     {
-        $carFeature->update($request->validated());
+        $validatedData = $request->validated();
 
-        return redirect()->route('car-features.index')->with('success', 'Car Feature updated successfully.');
+        // Handle Image Update
+        if ($request->hasFile('icon')) {
+            // Delete old image
+            if ($carFeature->image) {
+                Storage::disk('public')->delete($carFeature->icon);
+            }
+            $validatedData['icon'] = $request->file('icon')->store('features', 'public');
+        }
+
+        $carFeature->update($validatedData);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'feature' => $carFeature
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Car feature updated successfully.');
     }
 
     /**
@@ -75,8 +117,13 @@ class CarFeatureController extends Controller
      */
     public function destroy(CarFeature $carFeature)
     {
+        // Delete the image file if it exists
+        if ($carFeature->icon) {
+            Storage::disk('public')->delete($carFeature->icon);
+        }
+
         $carFeature->delete();
 
-        return redirect()->route('car-features.index')->with('success', 'Car Feature deleted successfully.');
+        return redirect()->back()->with('success', 'Car feature deleted successfully.');
     }
 }

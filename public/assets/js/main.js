@@ -155,7 +155,7 @@
           });
 
           // APARTMENT SLIDER
-          var apartMent = new Swiper(".room__slider", {
+          var apartMent = new Swiper(".property__slider", {
             slidesPerView: 3,
             spaceBetween: 30,
             loop: true,
@@ -187,7 +187,7 @@
           });
 
           // APARTMENT SLIDER
-          var mainApartment = new Swiper(".room__slider__main", {
+          var mainApartment = new Swiper(".property__slider__main", {
             slidesPerView: 4,
             spaceBetween: 30,
             loop: true,
@@ -247,8 +247,8 @@
               }
             }
           });
-          // ROOM SLIDER FOUR
-          let RoomFour = new Swiper(".room__slider.is__home__four", {
+          // PROPERTY SLIDER FOUR
+          let PropertyFour = new Swiper(".property__slider.is__home__four", {
             slidesPerView: 2,
             spaceBetween: 30,
             loop: true,

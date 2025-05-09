@@ -79,7 +79,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
             Welcome to Optimalcomfy, where luxury meets comfort in the heart of
             canada. Since 1999, we have been dedicated to providing an
             exceptional stay for our guests, blending modern amenities with
-            timeless elegance.Our beautifully designed rooms and suites offer
+            timeless elegance.Our beautifully designed properties and suites offer
             stunning views and plush accommodations, ensuring a restful retreat
             whether you're here for business or leisure.
           </p>
@@ -116,10 +116,10 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 alt=""
               />
               <a href="#" className="h6 heading text-heading mb-[15px] block">
-                Rooms and Suites
+                Properties and Suites
               </a>
               <p>
-                Varied types of rooms, from standard to luxury suites, equipped
+                Varied types of properties, from standard to luxury suites, equipped
                 with essentials like beds.
               </p>
             </div>

@@ -26,7 +26,7 @@ class UpdateReviewRequest extends FormRequest
             'booking_id' => 'nullable',
             'service_id' => 'nullable',
             'food_id' => 'nullable',
-            'room_id' => 'nullable',
+            'property_id' => 'nullable',
             'rating' => 'nullable',
             'comment' => 'nullable'
         ];

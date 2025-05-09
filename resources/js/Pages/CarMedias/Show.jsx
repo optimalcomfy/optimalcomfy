@@ -20,7 +20,7 @@ const ShowCarMedia = ({ carMedia }) => {
         <div className="bg-white shadow rounded-lg p-6">
           <div className="mb-4">
             <h3 className="text-xl font-semibold text-gray-700">Media URL</h3>
-            <p className="text-gray-600">{carMedia.media_url}</p>
+            <p className="text-gray-600">{carMedia.image}</p>
           </div>
 
           <div className="mb-4">

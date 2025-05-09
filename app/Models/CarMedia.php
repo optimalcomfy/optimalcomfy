@@ -10,7 +10,7 @@ class CarMedia extends Model
     use HasFactory;
 
     protected $fillable = [
-        'media_url',
+        'image',
         'media_type',
         'car_id'
     ];

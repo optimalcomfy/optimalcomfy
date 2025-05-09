@@ -22,7 +22,7 @@ class StoreCarMediaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'media_url' => 'nullable|url|max:2048', 
+            'image' => 'nullable|url|max:2048', 
             'media_type' => 'nullable|string|in:image,video',  
             'car_id' => 'required|exists:cars,id',  
         ];

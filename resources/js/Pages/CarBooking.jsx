@@ -12,7 +12,7 @@ import '../../css/main'
 
 export default function CarBooking({ auth, laravelVersion, phpVersion }) {
 
-  const { flash, pagination, rooms } = usePage().props;
+  const { flash, pagination, properties } = usePage().props;
   
   
   return (

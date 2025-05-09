@@ -6,7 +6,7 @@ use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
 use App\Models\User;
-use App\Models\Room;
+use App\Models\Property;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +17,7 @@ class BookingController extends Controller
     {
         $user = Auth::user();
 
-        $query = Booking::with('user', 'room');
+        $query = Booking::with('user', 'property');
 
         if ($user->role_id == 2) {
             $query->whereHas('user', function ($q) use ($user) {
@@ -49,11 +49,11 @@ class BookingController extends Controller
     public function create()
     {
         $users = User::all();
-        $rooms = Room::where('status', 'available')->get();
+        $properties = Property::where('status', 'available')->get();
 
         return Inertia::render('Bookings/Create', [
             'users' => $users,
-            'rooms' => $rooms,
+            'properties' => $properties,
         ]);
     }
 
@@ -67,19 +67,19 @@ class BookingController extends Controller
     public function show(Booking $booking)
     {
         return Inertia::render('Bookings/Show', [
-            'booking' => $booking->load('user', 'room'),
+            'booking' => $booking->load('user', 'property'),
         ]);
     }
 
     public function edit(Booking $booking)
     {
         $users = User::all();
-        $rooms = Room::where('status', 'available')->get();
+        $properties = Property::where('status', 'available')->get();
 
         return Inertia::render('Bookings/Edit', [
             'booking' => $booking,
             'users' => $users,
-            'rooms' => $rooms,
+            'properties' => $properties,
         ]);
     }
 

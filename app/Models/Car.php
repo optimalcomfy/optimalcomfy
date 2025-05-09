@@ -58,4 +58,14 @@ class Car extends Model
     {
         return $this->hasMany(CarBooking::class);
     }
+
+    public function initialGallery()
+    {
+        return $this->hasMany(CarMedia::class);
+    }
+
+    public function carFeatures()
+    {
+        return $this->hasMany(CarFeature::class);
+    }
 }

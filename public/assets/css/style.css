@@ -6607,12 +6607,12 @@ textarea:focus-visible, input:focus-visible {
   fill: var(--rts-heading);
 }
 
-.is__room__slider .slider-button-next svg path,
-.is__room__slider .slider-button-prev svg path {
+.is__property__slider .slider-button-next svg path,
+.is__property__slider .slider-button-prev svg path {
   transition: var(--transition);
 }
-.is__room__slider .slider-button-next:hover svg path,
-.is__room__slider .slider-button-prev:hover svg path {
+.is__property__slider .slider-button-next:hover svg path,
+.is__property__slider .slider-button-prev:hover svg path {
   fill: var(--rts-white);
 }
 

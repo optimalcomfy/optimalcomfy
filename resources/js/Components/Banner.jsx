@@ -58,7 +58,7 @@ function Banner() {
                 <div className="banner-content">
                   <h1 className="anim-2">{slide.title}</h1>
                   <p className="anim-3">{slide.description}</p>
-                  <a href="#" className="theme-btn anim-4">Discover Room</a>
+                  <a href="#" className="theme-btn anim-4">Discover Property</a>
                 </div>
               </div>
             </div>

@@ -19,7 +19,7 @@ class ReviewSeeder extends Seeder
                 'service_id' => null,
                 'food_id' => null,
                 'rating' => 5,
-                'comment' => 'Fantastic stay! The room was clean and cozy.',
+                'comment' => 'Fantastic stay! The property was clean and cozy.',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

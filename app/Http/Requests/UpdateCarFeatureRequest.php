@@ -23,8 +23,8 @@ class UpdateCarFeatureRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'feature_name' => 'nullable|string|max:255',
-            'car_id' => 'nullable|exists:cars,id',  
+            'feature_id' => 'nullable',
+            'car_id' => 'nullable',  
         ];
     }
 }

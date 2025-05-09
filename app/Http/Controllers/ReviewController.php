@@ -6,7 +6,7 @@ use App\Http\Requests\StoreReviewRequest;
 use App\Http\Requests\UpdateReviewRequest;
 use App\Models\Review;
 use App\Models\User;
-use App\Models\Room;
+use App\Models\Property;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +18,7 @@ class ReviewController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Review::with(['user', 'room'])->orderBy('created_at', 'desc');
+        $query = Review::with(['user', 'property'])->orderBy('created_at', 'desc');
 
         if ($request->has('search')) {
             $search = $request->input('search');
@@ -42,10 +42,10 @@ class ReviewController extends Controller
      */
     public function create()
     {
-        $rooms = Room::all();
+        $properties = Property::all();
 
         return Inertia::render('Reviews/Create', [
-            'rooms' => $rooms,
+            'properties' => $properties,
         ]);
     }
 
@@ -56,7 +56,7 @@ class ReviewController extends Controller
     {
         Review::create([
             'user_id' => Auth::id(),
-            'room_id' => $request->room_id,
+            'property_id' => $request->property_id,
             'rating' => $request->rating,
             'comment' => $request->comment,
         ]);
@@ -70,7 +70,7 @@ class ReviewController extends Controller
     public function show(Review $review)
     {
         return Inertia::render('Reviews/Show', [
-            'review' => $review->load(['user', 'room']),
+            'review' => $review->load(['user', 'property']),
         ]);
     }
 
@@ -79,11 +79,11 @@ class ReviewController extends Controller
      */
     public function edit(Review $review)
     {
-        $rooms = Room::all();
+        $properties = Property::all();
 
         return Inertia::render('Reviews/Edit', [
             'review' => $review,
-            'rooms' => $rooms,
+            'properties' => $properties,
         ]);
     }
 
@@ -93,7 +93,7 @@ class ReviewController extends Controller
     public function update(UpdateReviewRequest $request, Review $review)
     {
         $review->update([
-            'room_id' => $request->room_id,
+            'property_id' => $request->property_id,
             'rating' => $request->rating,
             'comment' => $request->comment,
         ]);

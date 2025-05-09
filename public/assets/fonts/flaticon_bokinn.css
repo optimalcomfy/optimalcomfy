@@ -32,7 +32,7 @@ i[class^="flaticon-"]:before, i[class*=" flaticon-"]:before {
 .flaticon-calendar:before {
     content: "\f101";
 }
-.flaticon-hotel-room:before {
+.flaticon-hotel-property:before {
     content: "\f102";
 }
 .flaticon-hamburger:before {

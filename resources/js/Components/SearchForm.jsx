@@ -37,7 +37,7 @@ function SearchForm() {
       checkOut: formData.checkOut ? formData.checkOut.toISOString().split('T')[0] : '',
     };
     
-    router.get('/all-rooms', formattedData);
+    router.get('/all-properties', formattedData);
   };
 
   return (

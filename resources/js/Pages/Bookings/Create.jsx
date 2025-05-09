@@ -4,11 +4,11 @@ import Layout from "@/Layouts/layout/layout.jsx";
 import Select from 'react-select';
 
 const EditBooking = ({ booking }) => {
-  const { users, rooms } = usePage().props;
+  const { users, properties } = usePage().props;
 
   const { data, setData, put, errors, processing } = useForm({
     user_id: booking.user_id,
-    room_id: booking.room_id,
+    property_id: booking.property_id,
     check_in_date: booking.check_in_date,
     check_out_date: booking.check_out_date,
     total_price: booking.total_price,
@@ -21,7 +21,7 @@ const EditBooking = ({ booking }) => {
   };
 
   const userOptions = users.map(user => ({ value: user.id, label: user.name }));
-  const roomOptions = rooms.map(room => ({ value: room.id, label: room.name }));
+  const propertyOptions = properties.map(property => ({ value: property.id, label: property.name }));
 
   return (
     <Layout>
@@ -41,16 +41,16 @@ const EditBooking = ({ booking }) => {
             {errors.user_id && <div className="text-sm text-red-500 mt-1">{errors.user_id}</div>}
           </div>
 
-          {/* Room Select */}
+          {/* Property Select */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Room</label>
+            <label className="block text-sm font-medium text-gray-700">Property</label>
             <Select
-              options={roomOptions}
-              value={roomOptions.find(option => option.value === data.room_id)}
-              onChange={(selected) => setData('room_id', selected ? selected.value : '')}
-              placeholder="Select a room"
+              options={propertyOptions}
+              value={propertyOptions.find(option => option.value === data.property_id)}
+              onChange={(selected) => setData('property_id', selected ? selected.value : '')}
+              placeholder="Select a property"
             />
-            {errors.room_id && <div className="text-sm text-red-500 mt-1">{errors.room_id}</div>}
+            {errors.property_id && <div className="text-sm text-red-500 mt-1">{errors.property_id}</div>}
           </div>
 
           {/* Check-in Date */}

@@ -12,7 +12,7 @@ class Review extends Model
     protected $fillable = [
         'user_id',
         'booking_id',
-        'room_id',
+        'property_id',
         'service_id',
         'food_id',
         'rating',
@@ -29,9 +29,9 @@ class Review extends Model
         return $this->belongsTo(Booking::class);
     }
 
-    public function room()
+    public function property()
     {
-        return $this->belongsTo(Room::class);
+        return $this->belongsTo(Property::class);
     }
 
     public function service()

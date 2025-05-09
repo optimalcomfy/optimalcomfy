@@ -22,8 +22,8 @@ class StoreCarFeatureRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'feature_name' => 'required|string|max:255',
-            'car_id' => 'required|exists:cars,id',  
+            'feature_id' => 'nullable',
+            'car_id' => 'nullable',  
         ];
     }
 }

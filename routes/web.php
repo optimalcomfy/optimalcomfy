@@ -19,23 +19,25 @@ use App\Http\Controllers\HomeController;
 
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FoodController;
+use App\Http\Controllers\CarController;
 use App\Http\Controllers\FoodOrderController;
 use App\Http\Controllers\FoodOrderItemController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\RoomController;
+use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceBookingController;
-use App\Http\Controllers\RoomGalleryController;
-use App\Http\Controllers\RoomAmenityController;
-use App\Http\Controllers\RoomServiceController;
-use App\Http\Controllers\RoomFeatureController;
+use App\Http\Controllers\PropertyGalleryController;
+use App\Http\Controllers\PropertyAmenityController;
+use App\Http\Controllers\AmenityController;
+use App\Http\Controllers\PropertyServiceController;
+use App\Http\Controllers\PropertyFeatureController;
 
-use App\Http\Controllers\CarController;
 use App\Http\Controllers\CarBookingController;
 use App\Http\Controllers\CarCategoryController;
 use App\Http\Controllers\CarFeatureController;
 use App\Http\Controllers\CarMediaController;
+use App\Http\Controllers\LocationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,9 +64,9 @@ Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/event', [HomeController::class, 'event'])->name('event');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::get('/gallery', [HomeController::class, 'gallery'])->name('gallery');
-Route::get('/room-detail', [HomeController::class, 'roomDetail'])->name('room-detail');
+Route::get('/property-detail', [HomeController::class, 'propertyDetail'])->name('property-detail');
 Route::get('/all-services', [HomeController::class, 'services'])->name('all-services');
-Route::get('/all-rooms', [HomeController::class, 'rooms'])->name('all-rooms');
+Route::get('/all-properties', [HomeController::class, 'properties'])->name('all-properties');
 Route::get('/all-cars', [HomeController::class, 'allCars'])->name('all-cars');
 Route::get('/search-cars', [HomeController::class, 'searchCars'])->name('search-cars');
 Route::get('/rent-now', [HomeController::class, 'rentNow'])->name('rent-now');
@@ -72,6 +74,7 @@ Route::get('/car-booking', [HomeController::class, 'carBooking'])->name('car-boo
 
 Route::get('/joby/{job}', [HomeController::class, 'showJob'])->name('jobShow');
 
+Route::get('/locations','App\Http\Controllers\LocationController@locations');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -97,39 +100,45 @@ Route::middleware('auth')->group(function () {
     Route::resource('foods', FoodController::class);
     Route::resource('foodOrders', FoodOrderController::class);
 
-    Route::resource('cars', CarController::class);
+    Route::resource('main-cars', CarController::class)->parameters([
+        'main-cars' => 'car', 
+    ]);
+
     Route::resource('car-bookings', CarBookingController::class);
     Route::resource('car-categories', CarCategoryController::class);
-    Route::resource('car-features', CarFeatureController::class);
-    Route::resource('car-medias', CarMediaController::class);
+    Route::resource('carFeatures', CarFeatureController::class);
+    Route::resource('carMedias', CarMediaController::class);
+
+    Route::get('/api/car-media/by-car/{carId}', [CarMediaController::class, 'getByCar']);
 
     Route::resource('foodOrderItems', FoodOrderItemController::class);
     Route::resource('payments', PaymentController::class);
     Route::resource('reviews', ReviewController::class);
-    Route::resource('rooms', RoomController::class);
+    Route::resource('properties', PropertyController::class);
     Route::resource('services', ServiceController::class);
     Route::resource('serviceBookings', ServiceBookingController::class);
-    Route::resource('roomGalleries', RoomGalleryController::class);
-    Route::resource('roomAmenities', RoomAmenityController::class);
-    Route::resource('roomFeatures', RoomFeatureController::class);
-    Route::resource('roomServices', RoomServiceController::class);
+    Route::resource('propertyGalleries', PropertyGalleryController::class);
+    Route::resource('propertyAmenities', PropertyAmenityController::class);
+    Route::resource('amenities', AmenityController::class);
+    Route::resource('propertyFeatures', PropertyFeatureController::class);
+    Route::resource('PropertyServices', PropertyServiceController::class);
 
     // Add these within your auth middleware group in web.php
-    Route::post('/rooms/gallery/store', [RoomGalleryController::class, 'store'])->name('rooms.gallery.store');
-    Route::delete('/rooms/gallery/{roomGallery}', [RoomGalleryController::class, 'destroy'])->name('rooms.gallery.destroy');
-    Route::get('/rooms/{room}/gallery', [RoomGalleryController::class, 'getByRoom'])->name('rooms.gallery.byRoom');
+    Route::post('/properties/gallery/store', [PropertyGalleryController::class, 'store'])->name('properties.gallery.store');
+    Route::delete('/properties/gallery/{propertyGallery}', [PropertyGalleryController::class, 'destroy'])->name('properties.gallery.destroy');
+    Route::get('/properties/{property}/gallery', [PropertyGalleryController::class, 'getByProperty'])->name('properties.gallery.byProperty');
 
-    Route::post('/rooms/amenities/store', [RoomAmenityController::class, 'store'])->name('rooms.amenities.store');
-    Route::delete('/rooms/amenities/{roomAmenity}', [RoomAmenityController::class, 'destroy'])->name('rooms.amenities.destroy');
-    Route::get('/rooms/{room}/amenities', [RoomAmenityController::class, 'getByRoom'])->name('rooms.amenities.byRoom');
+    Route::post('/properties/amenities/store', [PropertyAmenityController::class, 'store'])->name('properties.amenities.store');
+    Route::delete('/properties/amenities/{propertyAmenity}', [PropertyAmenityController::class, 'destroy'])->name('properties.amenities.destroy');
+    Route::get('/properties/{property}/amenities', [PropertyAmenityController::class, 'getByProperty'])->name('properties.amenities.byProperty');
 
-    Route::post('/rooms/services/store', [RoomServiceController::class, 'store'])->name('rooms.services.store');
-    Route::delete('/rooms/services/{roomService}', [RoomServiceController::class, 'destroy'])->name('rooms.services.destroy');
-    Route::get('/rooms/{room}/services', [RoomServiceController::class, 'getByRoom'])->name('rooms.services.byRoom');
+    Route::post('/properties/services/store', [PropertyServiceController::class, 'store'])->name('properties.services.store');
+    Route::delete('/properties/services/{PropertyService}', [PropertyServiceController::class, 'destroy'])->name('properties.services.destroy');
+    Route::get('/properties/{property}/services', [PropertyServiceController::class, 'getByProperty'])->name('properties.services.byProperty');
 
-    Route::post('/rooms/features/store', [RoomFeatureController::class, 'store'])->name('rooms.features.store');
-    Route::delete('/rooms/features/{roomFeature}', [RoomFeatureController::class, 'destroy'])->name('rooms.features.destroy');
-    Route::get('/rooms/{room}/features', [RoomFeatureController::class, 'getByRoom'])->name('rooms.features.byRoom');
+    Route::post('/properties/features/store', [PropertyFeatureController::class, 'store'])->name('properties.features.store');
+    Route::delete('/properties/features/{propertyFeature}', [PropertyFeatureController::class, 'destroy'])->name('properties.features.destroy');
+    Route::get('/properties/{property}/features', [PropertyFeatureController::class, 'getByProperty'])->name('properties.features.byProperty');
 
 });
 

@@ -27,7 +27,7 @@ return new class extends Migration
             $table->integer('engine_capacity')->nullable();
             $table->string('transmission')->nullable();
             $table->string('drive_type')->nullable(); // e.g. 4WD, FWD, AWD
-            $table->decimal('fuel_economy', 5, 2)->nullable(); // e.g. 18.5
+            $table->string('fuel_economy')->nullable(); // e.g. 18.5
             $table->string('exterior_color')->nullable();
             $table->string('interior_color')->nullable();
             $table->decimal('price_per_day', 10, 2);

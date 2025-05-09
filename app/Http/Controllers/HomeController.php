@@ -7,10 +7,10 @@ use Inertia\Inertia;
 use App\Models\Job;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
-use App\Models\Room;
+use App\Models\Property;
 use App\Models\Food;
 use App\Models\Service;
-use App\Models\RoomAmenity;
+use App\Models\PropertyAmenity;
 use Carbon\Carbon;
 
 class HomeController extends Controller
@@ -35,7 +35,7 @@ class HomeController extends Controller
         $query->orderBy('created_at', 'desc');
         $jobs = $query->paginate(10);
 
-        $query = Room::with(['bookings','initialGallery','roomAmenities','roomFeatures','roomServices'])->orderBy('created_at', 'desc');
+        $query = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])->orderBy('created_at', 'desc');
 
         if ($request->has('search')) {
             $search = $request->input('search');
@@ -44,7 +44,7 @@ class HomeController extends Controller
                   ->orWhere('price', 'LIKE', "%$search%");
         }
 
-        $rooms = $query->get();
+        $properties = $query->get();
 
         return Inertia::render('Welcome', [
             'canLogin' => Route::has('login'),
@@ -52,7 +52,7 @@ class HomeController extends Controller
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
             'jobs' => $jobs,
-            'rooms'=> $rooms,
+            'properties'=> $properties,
             'flash' => session('flash'),
         ]);
     }
@@ -175,14 +175,14 @@ class HomeController extends Controller
         ]);
     }
 
-    public function roomDetail(Request $request)
+    public function propertyDetail(Request $request)
     {
-        $query = Room::with([
+        $query = Property::with([
             'bookings',
             'initialGallery',
-            'roomAmenities',
-            'roomFeatures',
-            'roomServices'
+            'propertyAmenities',
+            'propertyFeatures',
+            'PropertyServices'
         ])->orderBy('created_at', 'desc');
     
         if ($request->has('id')) {
@@ -190,26 +190,26 @@ class HomeController extends Controller
             $query->where('id', '=', $id);
         }
     
-        $room = $query->first();
+        $property = $query->first();
     
-        $similarRooms = [];
-        if ($room) {
-            $similarRooms = Room::with('initialGallery')
-                ->where('type', $room->type)
-                ->where('id', '!=', $room->id) 
+        $similarProperties = [];
+        if ($property) {
+            $similarProperties = Property::with('initialGallery')
+                ->where('type', $property->type)
+                ->where('id', '!=', $property->id) 
                 ->orderBy('created_at', 'desc')
                 ->limit(4) 
                 ->get();
         }
     
-        return Inertia::render('RoomDetail', [
+        return Inertia::render('PropertyDetail', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
             'flash' => session('flash'),
-            'room' => $room,
-            'similarRooms' => $similarRooms
+            'property' => $property,
+            'similarProperties' => $similarProperties
         ]);
     }
     
@@ -217,7 +217,7 @@ class HomeController extends Controller
     public function services(Request $request)
     {
 
-        $amenities = RoomAmenity::select('name', 'icon')->distinct()->get();
+        $amenities = PropertyAmenity::select('name', 'icon')->distinct()->get();
         $services = Service::all();
 
         return Inertia::render('Services', [
@@ -232,9 +232,9 @@ class HomeController extends Controller
     }
 
 
-    public function rooms(Request $request)
+    public function properties(Request $request)
     {
-        $query = Room::with(['bookings','initialGallery','roomAmenities','roomFeatures','roomServices'])
+        $query = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])
             ->orderBy('created_at', 'desc');
     
         // Search by name/type/price
@@ -269,10 +269,10 @@ class HomeController extends Controller
             });
         }
     
-        $rooms = $query->get();
+        $properties = $query->get();
     
-        return Inertia::render('Rooms', [
-            'rooms'=> $rooms,
+        return Inertia::render('Properties', [
+            'properties'=> $properties,
             'filters' => $request->all(),
         ]);
     }

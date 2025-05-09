@@ -13,7 +13,7 @@ const BookingShow = () => {
         {/* Booking Info */}
         <div className="space-y-4">
           <p><strong>User:</strong> {booking.user.name}</p>
-          <p><strong>Room:</strong> {booking.room.name}</p>
+          <p><strong>Property:</strong> {booking.property.name}</p>
           <p><strong>Check-in Date:</strong> {booking.check_in_date}</p>
           <p><strong>Check-out Date:</strong> {booking.check_out_date}</p>
           <p><strong>Total Price:</strong> ${booking.total_price}</p>

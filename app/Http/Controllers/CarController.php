@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCarRequest;
 use App\Http\Requests\UpdateCarRequest;
+use App\Models\CarCategory;
 use App\Models\Car;
+use App\Models\CarFeature;
+use App\Models\Feature;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -34,12 +37,38 @@ class CarController extends Controller
         ]);
     }
 
+    private function getCoordinatesFromLocation($location)
+    {
+        $url = "https://nominatim.openstreetmap.org/search?format=json&q=" . urlencode($location);
+    
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'User-Agent' => 'LaravelApp/1.0'
+        ])->get($url);
+    
+        if ($response->ok() && count($response->json()) > 0) {
+            $data = $response->json()[0];
+            return [
+                'latitude' => $data['lat'],
+                'longitude' => $data['lon']
+            ];
+        }
+    
+        return null;
+    }
+   
+
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        return Inertia::render('Cars/Create');
+       $categories = CarCategory::all();
+       $features = Feature::all();
+
+        return Inertia::render('Cars/Create', [
+            'categories' => $categories,
+            'features'=> $features
+        ]);
     }
 
     /**
@@ -54,10 +83,18 @@ class CarController extends Controller
             $validated['image'] = $request->file('image')->store('cars', 'public');
         }
 
+        if (!empty($validated['location_address'])) {
+            $coordinates = $this->getCoordinatesFromLocation($validated['location_address']);
+            if ($coordinates) {
+                $validated['latitude'] = $coordinates['latitude'];
+                $validated['longitude'] = $coordinates['longitude'];
+            }
+        }
+
         // Create the car record in the database
         Car::create($validated);
 
-        return redirect()->route('cars.index')->with('success', 'Car item created successfully.');
+        return redirect()->route('main-cars.index')->with('success', 'Car item created successfully.');
     }
 
     /**
@@ -65,8 +102,14 @@ class CarController extends Controller
      */
     public function show(Car $car)
     {
+
+        $car->load('bookings', 'initialGallery', 'carFeatures');
+
+        $features = Feature::all();
+
         return Inertia::render('Cars/Show', [
             'car' => $car,
+            'features'=> $features
         ]);
     }
 
@@ -75,8 +118,13 @@ class CarController extends Controller
      */
     public function edit(Car $car)
     {
+        $features = Feature::all();
+        $categories = CarCategory::all();
+
         return Inertia::render('Cars/Edit', [
             'car' => $car,
+            'features'=> $features,
+            'categories'=>$categories
         ]);
     }
 
@@ -97,10 +145,18 @@ class CarController extends Controller
             $validated['image'] = $request->file('image')->store('cars', 'public');
         }
 
+        if (!empty($validated['location_address'])) {
+            $coordinates = $this->getCoordinatesFromLocation($validated['location_address']);
+            if ($coordinates) {
+                $validated['latitude'] = $coordinates['latitude'];
+                $validated['longitude'] = $coordinates['longitude'];
+            }
+        }
+
         // Update the car record with the validated data
         $car->update($validated);
 
-        return redirect()->route('cars.index')->with('success', 'Car item updated successfully.');
+        return redirect()->route('main-cars.index')->with('success', 'Car item updated successfully.');
     }
 
     /**
@@ -116,6 +172,6 @@ class CarController extends Controller
         // Delete the car record
         $car->delete();
 
-        return redirect()->route('cars.index')->with('success', 'Car item deleted successfully.');
+        return redirect()->route('main-cars.index')->with('success', 'Car item deleted successfully.');
     }
 }

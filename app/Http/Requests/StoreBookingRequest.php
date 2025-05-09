@@ -23,7 +23,7 @@ class StoreBookingRequest extends FormRequest
     {
         return [
             'user_id' => 'nullable',
-            'room_id' => 'nullable',
+            'property_id' => 'nullable',
             'check_in_date' => 'nullable',
             'check_out_date' => 'nullable',
             'total_price' => 'nullable',

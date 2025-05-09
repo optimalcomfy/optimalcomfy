@@ -11,7 +11,7 @@ const FoodShow = () => {
   const { auth } = usePage().props;
   const roleId = auth.user?.role_id;
 
-  const handleDelete = (roomId) => {
+  const handleDelete = (propertyId) => {
     Swal.fire({
       title: 'Are you sure?',
       text: 'This action cannot be undone.',
@@ -23,7 +23,7 @@ const FoodShow = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         // Use Inertia.delete for making the delete request
-        destroy(route('foods.destroy', roomId), {
+        destroy(route('foods.destroy', propertyId), {
           onSuccess: () => {
             // Optionally you can handle success actions here
           },

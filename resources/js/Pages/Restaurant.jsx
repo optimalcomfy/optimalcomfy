@@ -73,7 +73,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                         heart of canada. Since 1999, we have been dedicated to
                         providing an exceptional stay for our guests, blending
                         modern amenities with timeless elegance.Our beautifully
-                        designed rooms and suites offer stunning views and plush
+                        designed properties and suites offer stunning views and plush
                         accommodations, ensuring a restful retreat whether
                         you're here for business or leisure.
                       </p>
@@ -116,9 +116,9 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                       Our Restaurant Gallery
                     </h2>
                     <p className="max-w-[645px] mx-auto">
-                      Our rooms offer a harmonious blend of comfort and
+                      Our properties offer a harmonious blend of comfort and
                       elegance, designed to provide an exceptional stay for
-                      every guest Each room features plush bedding.
+                      every guest Each property features plush bedding.
                     </p>
                   </div>
                   <div>

@@ -1,59 +1,74 @@
-import React from 'react';
-import { Link } from '@inertiajs/react';
+import React, { useState } from 'react';
+import { Link, usePage } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
+import CarGallery from './components/CarGallery';
+import CarFeature from './components/CarFeature';
+import CarMap from './components/CarMap';
 
 const ShowCar = ({ car }) => {
+  const [activeTab, setActiveTab] = useState("details");
+  const { auth, features } = usePage().props;
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-3xl font-semibold mb-6">Car Details</h1>
-
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-xl font-medium">Name: {car.name}</h2>
-            <p className="text-gray-600">Brand: {car.brand}</p>
-            <p className="text-gray-600">Model: {car.model}</p>
-            <p className="text-gray-600">Year: {car.year}</p>
-            <p className="text-gray-600">Mileage: {car.mileage} km</p>
-            <p className="text-gray-600">Fuel Type: {car.fuel_type}</p>
-            <p className="text-gray-600">Transmission: {car.transmission}</p>
-            <p className="text-gray-600">Location: {car.location_address}</p>
-            <p className="text-gray-600">Price per day: {car.price_per_day}</p>
-            <p className="text-gray-600">Description: {car.description}</p>
-            <p className="text-gray-600">Availability: {car.is_available ? 'Available' : 'Not Available'}</p>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-semibold">Car: {car.name}</h1>
+          <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+            {car.is_available ? 'Available' : 'Not Available'}
           </div>
-
-          {/* Car Features */}
-          <div>
-            <h3 className="text-lg font-medium">Features:</h3>
-            <ul className="list-disc pl-5">
-              {car.features.map(feature => (
-                <li key={feature.id} className="text-gray-600">{feature.feature_name}</li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Car Images */}
-          {car.media.length > 0 && (
-            <div>
-              <h3 className="text-lg font-medium">Car Media:</h3>
-              <div className="grid grid-cols-3 gap-4">
-                {car.media.map(media => (
-                  <div key={media.id} className="w-full">
-                    <img src={media.media_url} alt={`Car image ${media.id}`} className="w-full h-auto rounded-md" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
         </div>
+
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="flex space-x-6">
+            {["details", "features", "gallery", "map"].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 font-medium text-sm ${
+                  activeTab === tab
+                    ? "border-b-2 border-indigo-600 text-indigo-600"
+                    : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === "details" && (
+          <div className="space-y-2">
+            <p><strong>Brand:</strong> {car.brand}</p>
+            <p><strong>Model:</strong> {car.model}</p>
+            <p><strong>Year:</strong> {car.year}</p>
+            <p><strong>Mileage:</strong> {car.mileage} km</p>
+            <p><strong>Fuel Type:</strong> {car.fuel_type}</p>
+            <p><strong>Transmission:</strong> {car.transmission}</p>
+            <p><strong>Location:</strong> {car.location_address}</p>
+            <p><strong>Price/Day:</strong> KES {car.price_per_day}</p>
+            <p><strong>Description:</strong> {car.description}</p>
+          </div>
+        )}
+
+        {activeTab === "features" && (
+          <CarFeature car={car} features={features} />
+        )}
+
+        {activeTab === "gallery" && (
+          <CarGallery car={car} />
+        )}
+
+        {activeTab === "map" && (
+          <CarMap car={car} />
+        )}
 
         {/* Back Link */}
         <div className="mt-6 text-center">
-          <Link href={route('cars.index')} className="text-indigo-600 hover:text-indigo-800 inline-flex items-center">
-            {/* Replacing FontAwesome with simple text */}
-            <span className="mr-2">&larr; Back to Cars List</span>
+          <Link href={route('main-cars.index')} className="text-indigo-600 hover:text-indigo-800 inline-flex items-center">
+            <span className="mr-2">&larr;</span> Back to Cars List
           </Link>
         </div>
       </div>

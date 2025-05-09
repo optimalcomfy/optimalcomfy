@@ -57,7 +57,7 @@ function Footer() {
               />
             </a>
             <p className="max-w-[290px] mt-[20px]">
-              Each room features plush bedding, high-quality linens, and a selection
+              Each property features plush bedding, high-quality linens, and a selection
               of ensure a restful night's sleep.
             </p>
           </div>
@@ -68,7 +68,7 @@ function Footer() {
             <ul className="flex flex-col gap-[10px]">
               <li>
                 <a className="hover:text-primary" href="#">
-                  Room &amp; Suites
+                  Property &amp; Suites
                 </a>
               </li>
               <li>
@@ -95,7 +95,7 @@ function Footer() {
             <ul className="flex flex-col gap-[10px]">
               <li>24/7 Front Desk</li>
               <li>Parking</li>
-              <li>Room Service</li>
+              <li>Property Service</li>
               <li>Free Wi-Fi</li>
               <li>Concierge Service</li>
             </ul>

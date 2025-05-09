@@ -53,10 +53,10 @@ function Header() {
                         </li>
                         <li className="navigation__menu--item has-child has-arrow  dark:before:!text-white">
                           <Link
-                              href={route('all-rooms')}
+                              href={route('all-properties')}
                               className="navigation__menu--item__link dark:text-white"
                           >
-                              Rooms
+                              Properties
                           </Link>
                         </li>
                         <li className="navigation__menu--item has-child has-arrow  dark:before:!text-white">
@@ -147,7 +147,7 @@ function Header() {
                 </Link>
                 <Link
                     className="theme-btn btn-style sm-btn fill rounded-[6px]"
-                    href={route('all-rooms')}
+                    href={route('all-properties')}
                 >
                     <span>Book Now</span>
                 </Link>
@@ -194,8 +194,8 @@ function Header() {
               <Link href={route('all-services')} className="py-2 border-b">
                 <a href="#" className="block text-lg font-medium">Services</a>
               </Link>
-              <Link href={route('all-rooms')} className="py-2 border-b">
-                <a href="#" className="block text-lg font-medium">Rooms</a>
+              <Link href={route('all-properties')} className="py-2 border-b">
+                <a href="#" className="block text-lg font-medium">Properties</a>
               </Link>
               <Link href={route('all-cars')} className="py-2 border-b">
                 <a href="#" className="block text-lg font-medium">Cars</a>
@@ -215,7 +215,7 @@ function Header() {
               >
                 Sign Up
               </Link>
-              <Link href={route('all-rooms')}
+              <Link href={route('all-properties')}
                 className="theme-btn btn-style w-full py-3 fill rounded-[6px] text-center"
               >
                 <span>Book Now</span>

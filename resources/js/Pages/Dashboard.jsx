@@ -20,7 +20,7 @@ const data = [
 
 const Dashboard = ({ auth }) => {
     // Get data from the page props - adapted to Airbnb context
-    const { roomCount, bookingCount } = usePage().props;
+    const { propertyCount, bookingCount } = usePage().props;
     
     const [lineOptions, setLineOptions] = useState({});
     const { layoutConfig } = useContext(LayoutContext);
@@ -188,7 +188,7 @@ const Dashboard = ({ auth }) => {
                     <div className="lg:flex pt-4 w-full">
                         <InfoCard 
                             title="Total Properties" 
-                            value={roomCount || 24} 
+                            value={propertyCount || 24} 
                             icon={Home} 
                             iconColor="rose" 
                             description="Active listings on platform" 

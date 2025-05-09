@@ -262,7 +262,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                         </div>
                     </div>
                     <div className="item_filter_group">
-                        <h4>Price ($)</h4>
+                        <h4>Price (KES)</h4>
                         <div className="price-input">
                         <div className="field">
                             <span>Min</span>
@@ -334,7 +334,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$265</span>
+                                Daily rate from <span>KES265</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>
@@ -375,7 +375,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$244</span>
+                                Daily rate from <span>KES244</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>
@@ -416,7 +416,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$167</span>
+                                Daily rate from <span>KES167</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>
@@ -457,7 +457,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$147</span>
+                                Daily rate from <span>KES147</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>
@@ -498,7 +498,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$238</span>
+                                Daily rate from <span>KES238</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>
@@ -539,7 +539,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$106</span>
+                                Daily rate from <span>KES106</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>
@@ -580,7 +580,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$245</span>
+                                Daily rate from <span>KES245</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>
@@ -621,7 +621,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$191</span>
+                                Daily rate from <span>KES191</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>
@@ -662,7 +662,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$114</span>
+                                Daily rate from <span>KES114</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>
@@ -703,7 +703,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$299</span>
+                                Daily rate from <span>KES299</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>
@@ -744,7 +744,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$131</span>
+                                Daily rate from <span>KES131</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>
@@ -785,7 +785,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                 </span>
                                 </div>
                                 <div className="d-price">
-                                Daily rate from <span>$228</span>
+                                Daily rate from <span>KES228</span>
                                 <Link className="btn-main" href={route('rent-now')}>
                                     Rent Now
                                 </Link>

@@ -9,7 +9,6 @@ import React, { useContext } from "react";
 import HomeLayout from "@/Layouts/HomeLayout";
 import '../../css/main'
 import SearchForm from "@/Components/SearchForm";
-import Testimonial from "@/Components/Testimonial";
 import Video from "@/Components/Video";
 
 
@@ -101,8 +100,6 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                    
                 </div>
             </div>
-
-            <Testimonial />
             <Video />
             </>
 

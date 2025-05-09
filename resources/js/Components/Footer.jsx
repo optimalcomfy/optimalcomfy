@@ -68,36 +68,19 @@ function Footer() {
             <ul className="flex flex-col gap-[10px]">
               <li>
                 <a className="hover:text-primary" href="#">
-                  Property &amp; Suites
+                  Home
                 </a>
               </li>
               <li>
                 <a className="hover:text-primary" href="#">
-                  Dining
+                  Property
                 </a>
               </li>
               <li>
                 <a className="hover:text-primary" href="#">
-                  Spa &amp; Wellness
+                  Cars
                 </a>
               </li>
-              <li>
-                <a className="hover:text-primary" href="#">
-                  Special Offers
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div className="rts__widget">
-            <span className="block text-[20px] heading text-heading capitalize mb-[20px]">
-              Guest Service
-            </span>
-            <ul className="flex flex-col gap-[10px]">
-              <li>24/7 Front Desk</li>
-              <li>Parking</li>
-              <li>Property Service</li>
-              <li>Free Wi-Fi</li>
-              <li>Concierge Service</li>
             </ul>
           </div>
           <div className="rts__widget">
@@ -131,7 +114,7 @@ function Footer() {
                   href="#"
                 >
                   <i className="flaticon-marker" />
-                  M5T 2L9 Toronto, Canada
+                  Nairobi, Kenya
                 </a>
               </li>
             </ul>

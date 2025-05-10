@@ -44,16 +44,8 @@ function Header() {
                           href={route('home')}
                           className="navigation__menu--item__link dark:text-white"
                           >
-                            Home
+                            Properties
                         </Link>
-                        </li>
-                        <li className="navigation__menu--item has-child has-arrow  dark:before:!text-white">
-                          <Link
-                              href={route('all-properties')}
-                              className="navigation__menu--item__link dark:text-white"
-                          >
-                              Properties
-                          </Link>
                         </li>
                         <li className="navigation__menu--item has-child has-arrow  dark:before:!text-white">
                           <Link
@@ -90,12 +82,6 @@ function Header() {
                     id="signupModal"
                 >
                     Sign Up
-                </Link>
-                <Link
-                    className="theme-btn btn-style sm-btn fill rounded-[6px]"
-                    href={route('all-properties')}
-                >
-                    <span>Book Now</span>
                 </Link>
                 <button
                     className="theme-btn btn-style sm-btn fill menu__btn rounded-[6px] lg:hidden block"

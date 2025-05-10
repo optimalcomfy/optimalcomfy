@@ -1,0 +1,155 @@
+/* Container Styles */
+.search-form-container {
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  /* Tabs */
+  .search-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .tab-button {
+    background: none;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.2s ease-in-out;
+    color: #666;
+  }
+  
+  .tab-button.active {
+    color: #222;
+    border-bottom: 3px solid #007BFF;
+    font-weight: bold;
+  }
+  
+  .tab-button:hover {
+    color: #007BFF;
+  }
+  
+  /* Fields Layout */
+  .search-fields {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  .field-group {
+    position: relative;
+  }
+  
+  label {
+    display: block;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    color: #555;
+  }
+  
+  label.focused {
+    color: #007BFF;
+  }
+  
+  /* Inputs */
+  .field-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #fafafa;
+    transition: border-color 0.2s ease-in-out;
+  }
+  
+  .field-input.focused {
+    border-color: #007BFF;
+  }
+  
+  .field-input input,
+  .field-input select,
+  .datepicker-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 1rem;
+    color: #333;
+  }
+  
+  .select-input {
+    padding: 0.5rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  
+  .icon,
+  .clear-icon,
+  .loader-icon {
+    width: 20px;
+    height: 20px;
+    color: #888;
+    cursor: pointer;
+  }
+  
+  .clear-icon:hover {
+    color: #ff4d4f;
+  }
+  
+  /* Suggestions */
+  .suggestions-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 0 0 8px 8px;
+  }
+  
+  .suggestions-list li {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .suggestions-list li:hover {
+    background-color: #f1f1f1;
+  }
+  
+  /* Submit */
+  .submit-container {
+    grid-column: 1 / -1;
+    text-align: right;
+  }
+  
+  .submit-button {
+    background-color: #007BFF;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+  }
+  
+  .submit-button:hover {
+    background-color: #0056b3;
+  }
+  

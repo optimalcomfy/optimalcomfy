@@ -184,7 +184,7 @@ class HomeController extends Controller
         $query = Property::with([
             'bookings',
             'initialGallery',
-            'propertyAmenities',
+            'propertyAmenities.amenity',
             'propertyFeatures',
             'PropertyServices'
         ])->orderBy('created_at', 'desc');

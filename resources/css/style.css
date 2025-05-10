@@ -8121,12 +8121,6 @@ textarea:focus-visible, input:focus-visible {
   z-index: 10;
 }
 
-@media (min-width: 640px) {
-  .search-form-container {
-    margin-top: -50px;
-  }
-}
-
 .container {
   padding-left: 15px;
   padding-right: 15px;

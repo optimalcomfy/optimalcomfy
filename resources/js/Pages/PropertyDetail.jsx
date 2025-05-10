@@ -60,6 +60,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                           <i className="flaticon-user" />
                           {property?.max_guests}{" "}
                           {property?.max_guests > 1 ? "People" : "Person"}
+                          {property?.location}
                         </span>
                       </div>
 
@@ -70,7 +71,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
 
                       {/* Property Images */}
                       <div className="flex max-w-max gap-[30px] mt-[50px] mb-[50px] flex-wrap md:flex-nowrap">
-                        {property?.initial_gallery?.slice(1).map((data, index) => (
+                        {property?.initial_gallery?.map((data, index) => (
                           <div key={index}>
                             <img
                               className="rounded-[6px] max-h-[40vh]"
@@ -91,49 +92,11 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                             className="flex gap-[30px] items-center text-heading font-glida"
                             key={index}
                           >
-                            <img
-                              src={data?.icon ? `/storage/${data.icon}` : fallbackImage}
-                              height={30}
-                              width={36}
-                              alt=""
-                            />
-                            <span>{data?.name}</span>
+                            <i className={`${data?.amenity?.icon} w-5 text-black`}></i>
+                            <span>{data?.amenity?.name}</span>
                           </div>
                         ))}
                       </div>
-
-                      {/* Property Features */}
-                      <span className="h4 block text-heading mb-[40px]">
-                        Property Features
-                      </span>
-                      <img
-                        className="rounded-[6px] h-[revert-layer]"
-                        src={property?.initial_gallery?.[0]?.image ? `/storage/${property.initial_gallery[0].image}` : fallbackImage}
-                        height={520}
-                        alt=""
-                      />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[30px] mb-[20px] pb-[20px] border-b-[0.5px] border-[rgba(101,103,107,0.3)] text-[20px] mt-4">
-                        {property?.property_features?.map((data, index) => (
-                          <div
-                            className="flex gap-[30px] items-center text-heading font-glida"
-                            key={index}
-                          >
-                            <img
-                              src={data?.icon ? `/storage/${data.icon}` : fallbackImage}
-                              height={30}
-                              width={36}
-                              alt=""
-                            />
-                            <span>{data?.name}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <p className="text-sm">
-                        Our elegantly appointed properties and suites are designed to
-                        offer the utmost in comfort and style...
-                      </p>
                     </div>
 
                     {/* Sidebar */}

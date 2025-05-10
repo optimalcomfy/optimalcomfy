@@ -3,15 +3,14 @@ import Swiper from 'swiper';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import './slider.css';
-import { Link, usePage, router } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 function Slider() {
   const swiperRef = useRef(null);
-
-  const { properties, flash, pagination } = usePage().props;
+  const { properties } = usePage().props;
 
   useEffect(() => {
-    // Initialize Swiper when component mounts
+    // Main property slider
     swiperRef.current = new Swiper('.property-slider-main', {
       slidesPerView: 'auto',
       spaceBetween: 30,
@@ -21,75 +20,86 @@ function Slider() {
         clickable: true,
       },
       breakpoints: {
-        320: {
-          slidesPerView: 1,
-        },
-        768: {
-          slidesPerView: 2,
-        },
-        1024: {
-          slidesPerView: 3,
-        },
-        1440: {
-          slidesPerView: 4,
-        },
+        320: { slidesPerView: 1 },
+        768: { slidesPerView: 2 },
+        1024: { slidesPerView: 3 },
+        1440: { slidesPerView: 4 },
       },
     });
 
-    // Cleanup function to destroy Swiper instance when component unmounts
+    // Nested gallery sliders (per property)
+    setTimeout(() => {
+      document.querySelectorAll('.property-gallery-slider').forEach((el, index) => {
+        new Swiper(el, {
+          slidesPerView: 1,
+          loop: true,
+          pagination: {
+            el: `.gallery-pagination-${index}`,
+            clickable: true,
+          },
+        });
+      });
+    }, 100); // Wait for DOM
+
     return () => {
-      if (swiperRef.current) {
-        swiperRef.current.destroy();
-      }
+      if (swiperRef.current) swiperRef.current.destroy();
     };
   }, []);
 
   return (
     <div className="property-section">
-      <div className="container">
-        <div className="property-header">
-          <div className="property-title">
-            <span className="sub-heading">Property</span>
-            <h2>Our properties</h2>
-          </div>
-          <div className="property-description">
-            <p>
-              Our properties offer a harmonious blend of comfort and elegance, designed
-              to provide an exceptional stay for every guest. Each property features
-              plush bedding, high-quality linens, and a selection of pillows to
-              ensure a restful night's sleep.
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="container-full">
         <div className="property-slider-main swiper px-4">
           <div className="swiper-wrapper">
-          {properties.map(property => (
-            property && property.id && (
-              <Link href={route('property-detail', { id: property.id })} className="swiper-slide" key={property.id}>
-                <div className="property-card">
-                  <div className="property-image">
-                    {property.initial_gallery?.length > 0 &&
-                    <img src={`/storage/${property?.initial_gallery?.[0].image}`} alt={property.name} />}
-                  </div>
-                  <div className="property-content">
-                    <Link href={route('property-detail', { id: property.id })} className="property-name">
-                      {property.name}
-                    </Link>
-                    <div className="property-details">
-                      <span className="property-capacity">
-                        <i className="flaticon-user"></i>
-                        {property.max_guests} Person
-                      </span>
+            {properties.map((property, idx) => (
+              property && property.id && (
+                <Link
+                  href={route('property-detail', { id: property.id })}
+                  className="swiper-slide"
+                  key={property.id}
+                >
+                  <div className="property-card">
+                    <div className="property-image">
+                      <div className="swiper property-gallery-slider">
+                        <div className="swiper-wrapper">
+                          {property.initial_gallery?.map((img, i) => (
+                            <div className="swiper-slide" key={i}>
+                              <img
+                                src={`/storage/${img.image}`}
+                                alt={`${property.property_name} ${i}`}
+                                className="property-image-slide"
+                              />
+
+                              <div className={`gallery-pagination-${i}`}></div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className={`gallery-pagination-${idx}`}></div>
+                      </div>
                     </div>
-                    <span className="property-price">KES {property.price_per_night}</span>
+                    <div className="property-content bg-black/30">
+                      <Link
+                        href={route('property-detail', { id: property.id })}
+                        className="property-name"
+                      >
+                        {property.property_name}
+                      </Link>
+                      <div className="property-details">
+                        <span className="property-capacity">
+                          <i className="flaticon-user"></i> {property.max_guests} Person
+                        </span>
+                      </div>
+                      <div className="property-details">
+                        <span className="property-capacity">
+                          <i className="flaticon-user"></i> {property.location}
+                        </span>
+                      </div>
+                      <span className="property-price">KES {property.price_per_night} / night</span>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            )
-          ))}
+                </Link>
+              )
+            ))}
           </div>
         </div>
         <div className="slider-pagination">

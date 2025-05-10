@@ -26,27 +26,6 @@ function Footer() {
         />
       </div>
       <div className="container">
-        <div className="newsletter flex flex-wrap justify-center gap-[30px] lg:justify-center items-center mb-[80px] relative z-[1]">
-          <h2 className="heading text-heading mb-0 capitalize">
-            Join Our newsletter
-          </h2>
-          <form
-            action="#"
-            className="sm:min-w-[490px] max-w-full bg-white relative rounded-[6px]"
-          >
-            <input
-              type="email"
-              placeholder="Enter Your Email"
-              className="p-[13px_20px] pr-[120px] w-full relative rounded-[4px] border-[1px] border-solid border-[#e5e5e5] outline-none shadow-[0_30px_30px_rgba(132,132,132,0.16)]"
-            />
-            <button
-              type="submit"
-              className="absolute right-[10px] top-[8px] p-[6px_15px] rounded-[6px] border-0 text-white bg-primary"
-            >
-              Subscribe
-            </button>
-          </form>
-        </div>
         <div className="grid sm:grid-cols-2 gap-[30px] lg:flex justify-between mb-[60px] relative z-[1] ">
           <div className="rts__widget">
             <a href="index.html">

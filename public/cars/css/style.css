@@ -676,7 +676,7 @@ header .header-col.mid .social-icons {
     color:#ffffff;
 }
 
-.rtl #mainmenu li.has-child:after {x
+.rtl #mainmenu li.has-child:after {
     position: absolute;
     left: 25px;
 }
@@ -1344,7 +1344,6 @@ header.header-mobile.header-light #menu-btn {
 /* ================================================== */
 
 section {
-    padding: 90px 0 90px 0;
     position: relative;
 }
 
@@ -5815,7 +5814,6 @@ i.font60 {
 
 .ul-style-4 li {
     margin: 2px 0 2px 0;
-    display: ;
     font-weight: 500;
 }
 
@@ -6353,9 +6351,8 @@ header.smaller{
 }
 
 .pricing-s2.text-light .top .price,
-.pricing-s2.text-white .top .price, {
-    color: #ffffff;
-}
+.pricing-s2.text-white .top .price {
+    color: #ffffff;}
 
 .pricing-s2 .top .price .currency {
     font-size: 24px;
@@ -11227,9 +11224,6 @@ a.img-icon-zoom {
     width: 100%;
 }
 
-margin:5px;
-}
-
 /* clear fix */
 .grid:after {
     content: '';
@@ -11470,7 +11464,7 @@ margin:5px;
     border-color: #555;
 }
 
-.widget_tags li a:hover border-color: #eceff3;
+.widget_tags li a:hover {border-color: #eceff3;
 }
 
 footer .widget {
@@ -11939,7 +11933,7 @@ i.bg-color-secondary {
 .dark-scheme .input-max{
     color: #fff;
     background: none;
-    background: rgba(255, 255, 255, .05);x
+    background: rgba(255, 255, 255, .05);
 }
 
 .text-uppercae{
@@ -17080,7 +17074,7 @@ a.btn-slider:hover {
     margin: 0 6px;
     display: inline-block;
     zoom: 1;
-    *display: inline;
+    display: inline;
 }
 
 .testi-slider .flex-control-paging li a {

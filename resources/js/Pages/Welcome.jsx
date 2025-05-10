@@ -30,7 +30,6 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         <LayoutProvider>
           <Head title="Welcome" />
           <HomeLayout>
-          <Banner />
           <SearchForm />
           <Slider />
           </HomeLayout>

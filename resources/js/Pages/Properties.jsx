@@ -25,19 +25,10 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
           <HomeLayout>
           <>
             <div
-                className="relative bg-[url('/image/gallery/1.jpg')] 
-                h-full lg:h-[700px] p-[60px] lg:p-[0] bg-cover bg-center bg-no-repeat flex items-center 
-                before:absolute before:top-0 before:bottom-0 before:left-0 before:right-0 before:bg-heading before:opacity-60"
+                className="relative flex items-center"
             >
                 <div className="container text-center text-white relative min-h-[50vh] mt-8">
-                <h1 className="heading text-white mb-[20px] text-[40px] lg:text-[70px] md:text-[60px] sm:text-[50px] leading-none">
-                Experience Unmatched Comfort
-                </h1>
-                <p className="text-sm">
-                Discover elegantly designed properties with breathtaking views, premium amenities, and a touch of sophistication for your perfect stay.
-                </p>
-                {/* advance form */}
-                <div className="relative  pt-[60px]">
+                <div className="relative">
                     <SearchForm />
                 </div>
                 {/* advance form end */}
@@ -45,7 +36,7 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
             </div>
             {/* breadcrumb area end */}
             {/* property  */}
-            <div className="relative py-[100px] lg:py-[120px]">
+            <div className="relative pb-[100px] lg:pb-[120px]">
                 <div className="container">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-[30px]">
                     {/* item */}

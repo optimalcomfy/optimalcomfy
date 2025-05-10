@@ -63,14 +63,6 @@ function Header() {
                               Cars
                           </Link>
                         </li>
-                        <li className="navigation__menu--item">
-                            <Link
-                            href={route('contact')}
-                            className="navigation__menu--item__link dark:text-white"
-                            >
-                                Contact
-                            </Link>
-                        </li>
                     </ul>
                     </nav>
                 </div>

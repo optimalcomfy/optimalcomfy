@@ -46,7 +46,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
               {/* Property details */}
               <div className="relative p-[100px_0] lg:p-[120px_0]">
                 <div className="container">
-                  <div className="flex justify-between gap-[30px] flex-wrap lg:flex-nowrap">
+                  <div className="flex flex-col lg:flex-row justify-between gap-[30px]">
                     <div className="details__content max-w-[820px]">
                       <span className="block h4 heading text-primary leading-none">
                         KES {property?.price_per_night}
@@ -59,7 +59,13 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                         <span className="flex gap-2">
                           <i className="flaticon-user" />
                           {property?.max_guests}{" "}
-                          {property?.max_guests > 1 ? "People" : "Person"}
+                          {property?.max_guests > 1 ? "People" : "Person"}{" "}
+                        </span>
+                      </div>
+
+                      <div className="flex gap-[20px] items-center mt-2 mb-3 text-[24px] font-glida">
+                        <span className="flex gap-2">
+                          <i className="flaticon-user" />
                           {property?.location}
                         </span>
                       </div>
@@ -89,11 +95,13 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[30px] mb-[20px] pb-[20px] border-b-[0.5px] border-[rgba(101,103,107,0.3)] text-[20px]">
                         {property?.property_amenities?.map((data, index) => (
                           <div
-                            className="flex gap-[30px] items-center text-heading font-glida"
+                            className="flex items-center text-left text-heading font-glida"
                             key={index}
                           >
-                            <i className={`${data?.amenity?.icon} w-5 text-black`}></i>
-                            <span>{data?.amenity?.name}</span>
+                            <>
+                              <i className={`${data?.amenity?.icon} w-5 text-black`}></i>
+                              <span>{data?.amenity?.name}</span>
+                            </>
                           </div>
                         ))}
                       </div>

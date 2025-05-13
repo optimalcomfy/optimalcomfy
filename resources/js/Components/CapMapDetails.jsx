@@ -18,7 +18,7 @@ export default function CarMapDetails({ car }) {
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: "AIzaSyAgAITjwA6LmkBKzzeJ1gTt9VWAJEgn9jk", // Replace with env var in prod
+    googleMapsApiKey: "", // Replace with env var in prod
   });
 
   useEffect(() => {

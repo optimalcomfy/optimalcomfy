@@ -32,7 +32,7 @@ function Header() {
         </div>
         {/* header top end */}
         {/* header menu */}
-        <div className="header transition header__function">
+        <div className="header transition header__function border-b-[.5px] border-[#E5E5E5]">
             <div className="container transition ">
             <div className="grid lg:grid-cols-3 grid-cols-2 justify-center items-center py-[20px] lg:py-[0]">
                 <div className="menu hidden lg:block">
@@ -69,20 +69,13 @@ function Header() {
                 </Link>
                 </div>
                 <div className="main__right flex justify-end gap-[15px]">
-                <Link
-                    href={route('login')}
-                    className="theme-btn btn-style sm-btn rounded-[6px] border hidden lg:flex hover:text-white"
-                    id="loginModal"
-                >
-                    Sign In
-                </Link>
-                <Link
-                    href={route('register')}
-                    className="theme-btn btn-style sm-btn rounded-[6px] border hidden lg:flex hover:text-white"
-                    id="signupModal"
-                >
-                    Sign Up
-                </Link>
+                <div class="flex justify-end items-center pr-15 gap-8">
+                    <p class="text-sm font-medium">Airbnb your home</p>
+                    <div class="flex justify-evenly items-center py-1.25 pr-1.25 pl-3 gap-2 rounded-full shadow-md h-10 w-20 border">
+                        <i class="fa-solid fa-bars"></i>
+                        <p class="bg-black text-white rounded-full w-7 h-7 text-center pt-1.5 text-[10px] font-semibold">E</p>
+                    </div>
+                </div>
                 <button
                     className="theme-btn btn-style sm-btn fill menu__btn rounded-[6px] lg:hidden block"
                     onClick={toggleMobileMenu}

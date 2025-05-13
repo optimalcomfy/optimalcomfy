@@ -17,7 +17,7 @@ class LocationController extends Controller
         }
 
         $client = new Client();
-        $apiKey = ''; 
+        $apiKey = env('GOOGLE_MAP_API');
         $apiEndpoint = 'https://maps.googleapis.com/maps/api/place/autocomplete/json';
 
         try {

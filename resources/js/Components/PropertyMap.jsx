@@ -18,7 +18,7 @@ export default function PropertyMap({ property }) {
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: "", // Replace with env var in prod
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API, // Replace with env var in prod
   });
 
   useEffect(() => {

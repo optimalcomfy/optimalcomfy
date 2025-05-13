@@ -90,7 +90,7 @@ function Header() {
                 </div>
                 <div className="main__right flex justify-end gap-[15px]">
                 <div className="flex justify-end items-center pr-15 gap-8">
-                    <p className="text-sm font-medium">Airbnb your home</p>
+                    <p className="text-sm font-medium hidden lg:flex">Airbnb your home</p>
                     <div 
                       className="flex justify-evenly items-center py-1.25 pr-1.25 pl-3 gap-2 rounded-full shadow-md h-10 w-20 border cursor-pointer relative"
                       onClick={toggleProfileDropdown}

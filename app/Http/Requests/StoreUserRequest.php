@@ -22,24 +22,35 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'nullable',
-            'phone' => 'nullable',
-            'role_id' => 'nullable',
-            'position' => 'nullable',
+            'name' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'role_id' => 'nullable|integer',
+            'position' => 'nullable|string',
             'email' => 'nullable|email',
-            'password' => 'nullable',
-            'company_id' => 'nullable',
-            'date_of_birth' => 'nullable|date',          // Added and made nullable
-            'nationality' => 'nullable|string',          // Added and made nullable
-            'current_location' => 'nullable|string',     // Added and made nullable
-            'preferred_countries' => 'nullable|array',    // Added and made nullable (array validation)
-            'work_experience' => 'nullable|integer',      // Added and made nullable
-            'education' => 'nullable|string',            // Added and made nullable
-            'languages' => 'nullable|string',            // Added and made nullable
-            'passport_number' => 'nullable|string',      // Added and made nullable
-            'cv' => 'nullable|file',                      // Added and made nullable (file validation)
-            'cover_letter' => 'nullable|file',            // Added and made nullable (file validation)
-            'references' => 'nullable|string',           // Added and made nullable
+            'password' => 'nullable|string',
+            'company_id' => 'nullable|integer',
+            'date_of_birth' => 'nullable|date',
+            'nationality' => 'nullable|string',
+            'current_location' => 'nullable|string',
+            'preferred_countries' => 'nullable|array',
+            'work_experience' => 'nullable|integer',
+            'education' => 'nullable|string',
+            'languages' => 'nullable|string',
+            'passport_number' => 'nullable|string',
+            'cv' => 'nullable|file',
+            'cover_letter' => 'nullable|file',
+            'references' => 'nullable|string',
+
+            'address' => 'nullable|string',
+            'city' => 'nullable|string',
+            'country' => 'nullable|string',
+            'postal_code' => 'nullable|string',
+            'profile_picture' => 'nullable|file',
+            'id_verification' => 'nullable|file',
+            'bio' => 'nullable|string',
+            'preferred_payment_method' => 'nullable|string',
+            'emergency_contact' => 'nullable|string',
+            'user_type' => 'nullable|string'
         ];
     }
 }

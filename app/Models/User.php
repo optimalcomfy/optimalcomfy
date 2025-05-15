@@ -36,7 +36,18 @@ class User extends Authenticatable
         'cv',
         'cover_letter',
         'references',
-        'position'
+        'position',
+        // Additional fields from registration form
+        'address',
+        'city',
+        'country',
+        'postal_code',
+        'profile_picture',
+        'id_verification',
+        'bio',
+        'preferred_payment_method',
+        'emergency_contact',
+        'user_type'
     ];
 
     /**

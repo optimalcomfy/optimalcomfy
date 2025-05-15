@@ -36,6 +36,18 @@ return new class extends Migration
             $table->text('cv')->nullable(); // Added CV (could be file path or content)
             $table->text('cover_letter')->nullable(); // Added cover letter (could be file path or content)
             $table->text('references')->nullable(); // Added references
+            
+            // Additional fields from the registration form
+            $table->string('address')->nullable();
+            $table->string('city')->nullable();
+            $table->string('country')->nullable();
+            $table->string('postal_code')->nullable();
+            $table->string('profile_picture')->nullable();
+            $table->string('id_verification')->nullable();
+            $table->text('bio')->nullable();
+            $table->string('preferred_payment_method')->nullable();
+            $table->string('emergency_contact')->nullable();
+            $table->string('user_type')->nullable(); // 'guest' or 'host'
         });
     }
 

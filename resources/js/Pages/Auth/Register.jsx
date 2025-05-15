@@ -26,25 +26,12 @@ export default function Register() {
         preferred_payment_method: '',
         emergency_contact: '',
         user_type: 'guest', // 'guest' or 'host'
-        // Host-specific fields
-        property_type: '',
-        property_address: '',
-        property_description: '',
-        property_photos: null,
-        amenities: '',
-        pricing: '',
-        availability: '',
     });
 
     const { notification } = usePage().props;
 
     const [step, setStep] = useState(1);
     const [totalSteps, setTotalSteps] = useState(4);
-
-    // Update total steps based on user type selection
-    useEffect(() => {
-        setTotalSteps(data.user_type === 'host' ? 5 : 4);
-    }, [data.user_type]);
 
     const nextStep = () => setStep((prev) => Math.min(prev + 1, totalSteps));
     const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
@@ -315,96 +302,6 @@ export default function Register() {
                                             placeholder="Tell us a bit about yourself..." 
                                             className="w-full p-2 border rounded h-24" 
                                         />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {step === 5 && data.user_type === 'host' && (
-                            <div>
-                                <h3 className="text-xl font-semibold mb-4">Property Details</h3>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label htmlFor="property_type" className="block mb-1">Property Type</label>
-                                        <select 
-                                            name="property_type" 
-                                            id="property_type" 
-                                            value={data.property_type} 
-                                            onChange={(e) => setData('property_type', e.target.value)} 
-                                            className="w-full p-2 border rounded" 
-                                        >
-                                            <option value="">Select property type</option>
-                                            <option value="apartment">Apartment</option>
-                                            <option value="house">House</option>
-                                            <option value="condo">Condo</option>
-                                            <option value="villa">Villa</option>
-                                            <option value="cabin">Cabin</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label htmlFor="pricing" className="block mb-1">Price per Night ($)</label>
-                                        <input 
-                                            type="number" 
-                                            name="pricing" 
-                                            id="pricing" 
-                                            value={data.pricing} 
-                                            onChange={(e) => setData('pricing', e.target.value)} 
-                                            placeholder="Price in USD" 
-                                            className="w-full p-2 border rounded" 
-                                        />
-                                    </div>
-
-                                    <div className="col-span-2">
-                                        <label htmlFor="property_address" className="block mb-1">Property Address</label>
-                                        <input 
-                                            type="text" 
-                                            name="property_address" 
-                                            id="property_address" 
-                                            value={data.property_address} 
-                                            onChange={(e) => setData('property_address', e.target.value)} 
-                                            placeholder="Full property address" 
-                                            className="w-full p-2 border rounded" 
-                                        />
-                                    </div>
-
-                                    <div className="col-span-2">
-                                        <label htmlFor="property_description" className="block mb-1">Property Description</label>
-                                        <textarea 
-                                            name="property_description" 
-                                            id="property_description" 
-                                            value={data.property_description} 
-                                            onChange={(e) => setData('property_description', e.target.value)} 
-                                            placeholder="Describe your property..." 
-                                            className="w-full p-2 border rounded h-24" 
-                                        />
-                                    </div>
-
-                                    <div className="col-span-2">
-                                        <label htmlFor="amenities" className="block mb-1">Amenities (comma separated)</label>
-                                        <input 
-                                            type="text" 
-                                            name="amenities" 
-                                            id="amenities" 
-                                            value={data.amenities} 
-                                            onChange={(e) => setData('amenities', e.target.value)} 
-                                            placeholder="WiFi, Pool, Kitchen, etc." 
-                                            className="w-full p-2 border rounded" 
-                                        />
-                                    </div>
-
-                                    <div className="col-span-2">
-                                        <label htmlFor="property_photos" className="block mb-1">Property Photos</label>
-                                        <input 
-                                            type="file" 
-                                            id="property_photos" 
-                                            onChange={(e) => setData('property_photos', e.target.files)} 
-                                            className="w-full p-2 border rounded"
-                                            multiple 
-                                        />
-                                        <p className="text-sm text-gray-500 mt-1">Upload up to 5 photos of your property</p>
                                     </div>
                                 </div>
                             </div>

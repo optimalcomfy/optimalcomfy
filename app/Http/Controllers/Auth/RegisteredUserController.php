@@ -19,6 +19,8 @@ use Inertia\Response;
 use App\Mail\WelcomeMail;
 use Illuminate\Support\Facades\Mail;
 
+use Spatie\Permission\Models\Role;
+
 use App\Mail\AdminUserRegistrationMail;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,7 +28,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
-
+use App\Http\Requests\StoreUserRequest;
+use Illuminate\Support\Facades\DB;
 
 class RegisteredUserController extends Controller
 {
@@ -48,101 +51,64 @@ class RegisteredUserController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      */
 
-     public function store(Request $request)
-    {
-        try {
-            // Validate the request data. On failure, a ValidationException is thrown.
-            $validated = $request->validate([
-                'name'               => 'required|string|max:255',
-                'role_id'            => 'nullable',
-                'phone'              => 'required',
-                'email'              => 'required|string|lowercase|email|max:255|unique:' . User::class,
-                'password'           => ['nullable'],
-                'date_of_birth'      => 'nullable|date',
-                'nationality'        => 'nullable|string',
-                'current_location'   => 'nullable|string',
-                'preferred_countries'=> 'nullable|array',
-                'position'           => 'nullable',
-                'education'          => 'nullable|string',
-                'languages'          => 'nullable|string',
-                'passport_number'    => 'nullable|string',
-                'cv'                 => 'nullable|file|mimes:pdf,doc,docx|max:2048',
-                'cover_letter'       => 'nullable|file|mimes:pdf,doc,docx|max:2048',
-                'references'         => 'nullable|string',
-                'job_id'             => 'nullable|string',
-            ]);
+        public function store(StoreUserRequest $request)
+        {
+            try {
+                $validated = $request->validated();
 
-            // Store uploaded files if provided.
-            $cvPath = $request->file('cv')
-                ? $request->file('cv')->store('cvs', 'public')
-                : null;
-            $coverLetterPath = $request->file('cover_letter')
-                ? $request->file('cover_letter')->store('cover_letters', 'public')
-                : null;
+                // Handle profile picture upload
+                if ($request->hasFile('profile_picture')) {
+                    $validated['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
+                }
 
-            $job = Job::find($validated['job_id']);
+                // Handle ID verification upload
+                if ($request->hasFile('id_verification')) {
+                    $validated['id_verification'] = $request->file('id_verification')->store('id_verifications', 'public');
+                }
 
-            // Create the user.
-            $user = User::create([
-                'name'               => $validated['name'],
-                'email'              => $validated['email'],
-                'phone'              => $validated['phone'],
-                'role_id'            => 3,
-                'password'           => Hash::make($validated['password']),
-                'date_of_birth'      => $validated['date_of_birth'] ?? null,
-                'nationality'        => $validated['nationality'] ?? null,
-                'current_location'   => $validated['current_location'] ?? null,
-                'preferred_countries'=> $validated['preferred_countries'] ?? null,
-                'education'          => $validated['education'] ?? null,
-                'languages'          => $validated['languages'] ?? null,
-                'passport_number'    => $validated['passport_number'] ?? null,
-                'cv'                 => $cvPath,
-                'cover_letter'       => $coverLetterPath,
-                'references'         => $validated['references'] ?? null,
-            ]);
+                // Hash the password if provided
+                if (!empty($validated['password'])) {
+                    $validated['password'] = Hash::make($validated['password']);
+                }
 
-            Application::create([
-                'job_id' => $validated['job_id'],
-                'user_id' => $user->id
-            ]);
+                // Create the user
+                $user = User::create($validated);
 
-            // Fire the Registered event and log the user in.
-            event(new Registered($user));
-            Auth::login($user);
+                 if ($user->role_id) {
+                    $role = Role::find($user->role_id);
 
-            // Notify admin by email.
-            Mail::to('info@emiratesedgecareers.agency')
-                ->send(new AdminUserRegistrationMail(
-                    $user,
-                    $cvPath ? storage_path('app/public/' . $cvPath) : null,
-                    $coverLetterPath ? storage_path('app/public/' . $coverLetterPath) : null
-                ));
 
-            // Retrieve the latest notification.
-            $notification = Notification::orderBy('created_at', 'desc')->first();
+                    if ($role) {
+                        $user->assignRole($role);
+                        
+                        DB::table('model_has_roles')->where('model_id', $user->id)->update([
+                            'model_type' => User::class
+                        ]);
+                    
+                        $user->syncPermissions($role->permissions);
+                    
+                        DB::table('model_has_permissions')->where('model_id', $user->id)->update([
+                            'model_type' => User::class
+                        ]);
+                    }
+                    
+                }
 
-            // Return an Inertia response on success.
-            return Inertia::render('Employees/ProcessedRequest', [
-                'user'         => $user,
-                'notification' => $notification,
-            ]);
+                // Optional: Redirect to login page with a success message
+                return Inertia::render('Auth/Login', [
+                    'user'         => $user,
+                    'notification' => 'Account created successfully. Please login.',
+                ]);
 
-        } catch (ValidationException $e) {
-            // If this is an Inertia request, rethrow the exception so that Inertia's middleware can handle it.
-            if ($request->header('X-Inertia')) {
-                throw $e;
+            } catch (\Exception $e) {
+                Log::error('User creation failed: ' . $e->getMessage());
+
+                // Return an Inertia-friendly error response
+                return back()->withErrors([
+                    'message' => 'An unexpected error occurred. Please try again later.'
+                ])->withInput();
             }
-            // Otherwise, return a JSON response.
-            return response()->json(['errors' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            // Log the error.
-            Log::error('Registration Error: ' . $e->getMessage());
-            if ($request->header('X-Inertia')) {
-                throw $e;
-            }
-            return response()->json(['message' => 'An unexpected error occurred. Please try again later.'], 500);
         }
-    }
      
     
 }

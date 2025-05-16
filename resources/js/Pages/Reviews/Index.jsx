@@ -7,9 +7,6 @@ const IndexReviews = ({ reviews }) => {
     <Layout>
       <div className="w-full mr-auto bg-white p-6 rounded-lg shadow-md">
         <h1 className="text-lg font-bold mb-4">Reviews</h1>
-        <Link href={route("reviews.create")} className="mb-4 inline-block bg-blue-500 text-white px-4 py-2 rounded">
-          Add Review
-        </Link>
         <table className="w-full border-collapse border">
           <thead>
             <tr className="bg-gray-200">

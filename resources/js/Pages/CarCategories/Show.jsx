@@ -7,7 +7,7 @@ const ShowCarCategory = () => {
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
+      <div className="max-w-3xl p-6 bg-white rounded-lg shadow-md">
         <h1 className="text-3xl font-semibold mb-6">Car Category Details</h1>
 
         <div className="space-y-4">

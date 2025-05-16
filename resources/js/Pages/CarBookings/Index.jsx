@@ -35,12 +35,6 @@ const CarBookingsIndex = () => {
 
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-semibold mb-6">Car Bookings</h1>
-          <Link 
-            href={route('car-bookings.create')} 
-            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-          >
-            Add New Car Booking
-          </Link>
         </div>
 
         {/* Table */}

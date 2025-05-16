@@ -10,16 +10,6 @@ const BookingsIndex = () => {
       <div className="w-full mr-auto bg-white p-6 rounded-lg shadow-md">
         <h1 className="text-3xl font-semibold mb-6">Bookings</h1>
 
-        {/* Add New Booking Button */}
-        <div className="mb-4">
-          <Link 
-            href={route('bookings.create')} 
-            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-          >
-            Add New Booking
-          </Link>
-        </div>
-
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white border border-gray-300">

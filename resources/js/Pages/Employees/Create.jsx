@@ -5,7 +5,7 @@ import Select from 'react-select';
 
 const Create = () => {
     const { companies, users, auth } = usePage().props; 
-    const roleId = auth.user?.role_id;
+    const roleId = parseInt(auth.user?.role_id);
 
     const companyOptions = companies.map(company => ({
         value: company.id,

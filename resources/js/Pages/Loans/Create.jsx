@@ -6,7 +6,7 @@ import DashboardInfoCard from "@/Components/DashboardInfoCard.jsx";
 
 const Create = () => {
     const { employees, auth, companies } = usePage().props; 
-    const roleId = auth.user?.role_id;
+    const roleId = parseInt(auth.user?.role_id);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [selectedCompany, setSelectedCompany] = useState(null);
 

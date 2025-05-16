@@ -24,7 +24,7 @@ const Dashboard = ({ auth }) => {
     
     const [lineOptions, setLineOptions] = useState({});
     const { layoutConfig } = useContext(LayoutContext);
-    const roleId = auth.user?.role_id;
+    const roleId = parseInt(auth.user?.role_id);
     const isDarkMode = layoutConfig.colorScheme === 'dark';
     const [isLoading, setIsLoading] = useState(false);
 

@@ -6,7 +6,7 @@ import { usePage } from '@inertiajs/react';
 const AppMenu = () => {
     const { auth } = usePage().props;
 
-    const roleId = auth.user?.role_id;
+    const roleId = parseInt(auth.user?.role_id);
 
     const model = [
         {

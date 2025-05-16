@@ -12,7 +12,7 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const roleId = auth.user?.role_id;
+  const roleId = parseInt(auth.user?.role_id);
 
     const {
       delete: destroy,

@@ -6,7 +6,7 @@ import Layout from "@/Layouts/layout/layout.jsx";
 import Documents from './Partials/Documents';
 
 export default function Edit({ auth, mustVerifyEmail, status, employee }) {
-    const roleId = auth.user?.role_id;
+    const roleId = parseInt(auth.user?.role_id);
     return (
         <Layout>
             <Head title="Profile" />

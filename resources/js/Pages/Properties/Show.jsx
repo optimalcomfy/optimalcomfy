@@ -13,7 +13,7 @@ const ShowProperty = ({ property }) => {
   const { delete: destroy } = useForm();
 
   const { auth, amenities } = usePage().props;
-  const roleId = auth.user?.role_id;
+  const roleId = parseInt(auth.user?.role_id);
 
   const handleDelete = (propertyId) => {
     Swal.fire({

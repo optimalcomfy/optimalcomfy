@@ -5,7 +5,7 @@ import Select from 'react-select';
 
 const EditEmployee = ({ errors }) => {
   const { companies, employee, users, auth } = usePage().props; 
-  const roleId = auth.user?.role_id;
+  const roleId = parseInt(auth.user?.role_id);
 
   const { data, setData, put, processing } = useForm({
     salary: employee.salary,

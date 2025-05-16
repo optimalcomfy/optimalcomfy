@@ -22,15 +22,15 @@ class UpdateCarBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'nullable|exists:users,id',
-            'car_id' => 'required|exists:cars,id',
-            'start_date' => 'required|date|after_or_equal:today',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'total_price' => 'nullable|numeric|min:0',
-            'pickup_location' => 'nullable|string|max:255',
-            'dropoff_location' => 'nullable|string|max:255',
-            'status' => 'nullable|string|in:pending,confirmed,cancelled,completed',
-            'special_requests' => 'nullable|string|max:1000',
+            'user_id' => 'nullable',
+            'car_id' => 'nullable',
+            'start_date' => 'nullable',
+            'end_date' => 'nullable',
+            'total_price' => 'nullable',
+            'pickup_location' => 'nullable',
+            'dropoff_location' => 'nullable',
+            'status' => 'nullable',
+            'special_requests' => 'nullable',
         ];
     }
 }

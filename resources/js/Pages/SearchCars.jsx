@@ -353,6 +353,8 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                                     </div>
                                     <div className="d-price">
                                       Daily rate from <span>KES{car.price_per_day}</span>
+                                    </div>
+                                    <div className="mt-2">
                                       <Link className="btn-main" href={route('rent-now', { car_id: car.id })}>
                                         Rent Now
                                       </Link>

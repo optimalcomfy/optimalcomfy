@@ -1,0 +1,98 @@
+/* Example CSS - Adapt to your project's styling */
+.field-group {
+  position: relative; /* Needed for absolute positioning of suggestions */
+  margin-bottom: 1rem; /* Or your preferred spacing */
+}
+
+.field-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-input .lucide-icon { /* General styling for lucide icons within the input */
+  /* Adjust size and color as needed */
+}
+
+.field-input input[type="text"] {
+  /* Ensure your input styling from CarBookingForm is applied or add specific styles here */
+  /* Example: padding-left to make space for the icon */
+  padding-left: 2.5rem; /* Adjust if icon size changes */
+}
+
+
+.icon.lucide-icon { /* For the search icon */
+  position: absolute;
+  left: 0.75rem; /* 12px */
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af; /* gray-400 */
+  pointer-events: none; /* Allow clicks to pass through to the input */
+}
+
+.clear-icon.lucide-icon { /* For the X icon */
+  position: absolute;
+  right: 0.75rem; /* 12px */
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #9ca3af; /* gray-400 */
+}
+.clear-icon.lucide-icon:hover {
+  color: #4b5563; /* gray-600 */
+}
+
+.loader-icon.lucide-icon { /* For the loader icon */
+  position: absolute;
+  right: 0.75rem; /* Adjust if clear icon is also present */
+  top: 50%;
+  transform: translateY(-50%);
+  color: #3b82f6; /* blue-500 */
+  animation: spin 1s linear infinite;
+}
+
+
+@keyframes spin {
+  from {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+.suggestions-list {
+  position: absolute;
+  z-index: 10; /* Ensure it's above other elements */
+  width: 100%;
+  background-color: white; /* Or your dark mode equivalent */
+  border: 1px solid #d1d5db; /* gray-300 */
+  border-top: none; /* Optional: if you want it to look connected */
+  border-radius: 0 0 0.375rem 0.375rem; /* rounded-md bottom */
+  margin-top: -1px; /* To align with the input bottom border */
+  max-height: 15rem; /* 240px */
+  overflow-y: auto;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+}
+
+.suggestions-list li {
+  padding: 0.75rem 1rem; /* p-3 */
+  cursor: pointer;
+}
+
+.suggestions-list li:hover {
+  background-color: #f3f4f6; /* gray-100 */
+  /* Add dark mode hover style as needed */
+}
+
+/* Dark mode specific suggestion list styles if needed */
+.dark .suggestions-list {
+    background-color: #2D2D2D; /* Or your dark input background */
+    border-color: #4b5563; /* gray-700 */
+}
+.dark .suggestions-list li:hover {
+    background-color: #374151; /* gray-600 or similar */
+}
+.dark .suggestions-list li {
+    color: white;
+}

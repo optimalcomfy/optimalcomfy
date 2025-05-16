@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('total_price', 10, 2);
             $table->string('pickup_location')->nullable();
             $table->string('dropoff_location')->nullable();
-            $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed'])->default('pending');
+            $table->string('status')->nullable();
             $table->text('special_requests')->nullable();
             $table->timestamps();
         });

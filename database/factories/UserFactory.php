@@ -6,30 +6,40 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-
 class UserFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
             'name' => fake()->name(),
+            'phone' => fake()->phoneNumber(),
+            'role_id' => rand(1, 3),
             'email' => fake()->unique()->safeEmail(),
+            'password' => Hash::make('password101'),
+            'company_id' => rand(1, 10),
+            'date_of_birth' => fake()->date('Y-m-d', '-18 years'),
+            'nationality' => fake()->country(),
+            'current_location' => fake()->city(),
+            'preferred_countries' => json_encode([fake()->country(), fake()->country()]),
+            'education' => fake()->sentence(6),
+            'languages' => json_encode([fake()->languageCode(), fake()->languageCode()]),
+            'passport_number' => strtoupper(fake()->bothify('??######')),
+            'address' => fake()->address(),
+            'city' => fake()->city(),
+            'country' => fake()->country(),
+            'postal_code' => fake()->postcode(),
+            'profile_picture' => 'uploads/profile_pictures/default.jpg',
+            'id_verification' => 'uploads/id_verifications/sample_id.jpg',
+            'bio' => fake()->paragraph(),
+            'preferred_payment_method' => fake()->randomElement(['paypal', 'bank_transfer', 'crypto']),
+            'emergency_contact' => fake()->name(),
+            'contact_phone' => fake()->phoneNumber(),
+            'user_type' => fake()->randomElement(['guest', 'host']),
             'email_verified_at' => now(),
-            'role_id' => rand(1, 9),
-            'company_id' => rand(1, 9),
-            'password' => Hash::make('password101'), 
             'remember_token' => Str::random(10),
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [

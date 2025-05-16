@@ -1,311 +1,358 @@
-import React, { useState, useEffect } from 'react';
+// resources/js/Pages/Property/PropertyBookingForm.jsx
+
+import React, { useEffect, useState } from 'react';
+import { useForm } from '@inertiajs/react';
+import axios from 'axios';
 
 const PropertyBookingForm = ({ property }) => {
-  const [formData, setFormData] = useState({
-    checkIn: '',
-    checkOut: '',
-    adult: 1,
-    child: 0,
-    property: 1,
-    ebed: 0,
-    selectedServices: [],
+  const { data, setData, post, processing, errors } = useForm({
+    property_id: property.id,
+    check_in_date: '',
+    check_out_date: '',
+    total_price: 0,
+    nights: 0,
+    status: 'Booked',
+
+    // User fields
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    nationality: '',
+    current_location: '',
+    passport_number: '',
+    address: '',
+    city: '',
+    country: '',
+    emergency_contact: '',
+    contact_phone:'',
+    is_registered: true,
+    user_type: 'guest'
   });
 
-  const [totalPrice, setTotalPrice] = useState(property?.price_per_night || 0);
-  const [nights, setNights] = useState(0);
-
-  // Calculate the difference in days between checkIn and checkOut
-  const calculateDays = (checkIn, checkOut) => {
-    if (checkIn && checkOut) {
-      const checkInDate = new Date(checkIn);
-      const checkOutDate = new Date(checkOut);
-      const timeDifference = checkOutDate - checkInDate;
-      return Math.max(1, Math.ceil(timeDifference / (1000 * 3600 * 24))); // Convert milliseconds to days, minimum 1 night
+  const calculateDays = (check_in_date, check_out_date) => {
+    if (check_in_date && check_out_date) {
+      const check_in_dateDate = new Date(check_in_date);
+      const check_out_dateDate = new Date(check_out_date);
+      const timeDifference = check_out_dateDate - check_in_dateDate;
+      return Math.max(1, Math.ceil(timeDifference / (1000 * 3600 * 24)));
     }
     return 0;
   };
 
-  // Update form data state
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  // Handle date changes with validation
   const handleDateChange = (e) => {
     const { name, value } = e.target;
-    
-    // Ensure checkout is after checkin
-    if (name === "checkOut" && formData.checkIn && new Date(value) <= new Date(formData.checkIn)) {
-      alert("Check-out date must be after check-in date");
+
+    if (name === 'check_out_date' && data.check_in_date && new Date(value) <= new Date(data.check_in_date)) {
+      alert('Check-out date must be after check-in date');
       return;
     }
-    
-    // Ensure checkin is before checkout if checkout is already set
-    if (name === "checkIn" && formData.checkOut && new Date(value) >= new Date(formData.checkOut)) {
-      alert("Check-in date must be before check-out date");
+
+    if (name === 'check_in_date' && data.check_out_date && new Date(value) >= new Date(data.check_out_date)) {
+      alert('Check-in date must be before check-out date');
       return;
     }
-    
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value,
-    }));
+
+    setData(name, value);
   };
 
-  // Update selected services
-  const handleServiceChange = (service, servicePrice) => {
-    setFormData(prevData => {
-      let updatedServices = [...prevData.selectedServices];
-      
-      if (updatedServices.includes(service)) {
-        updatedServices = updatedServices.filter(item => item !== service);
-      } else {
-        updatedServices.push(service);
-      }
-      
-      return {
-        ...prevData,
-        selectedServices: updatedServices,
-      };
-    });
-  };
-
-  // Calculate total price whenever relevant form data changes
   useEffect(() => {
-    if (formData.checkIn && formData.checkOut) {
-      const daysCount = calculateDays(formData.checkIn, formData.checkOut);
-      setNights(daysCount);
-      
-      // Base property price calculation
-      const basePrice = (property?.price_per_night || 0) * formData.property * daysCount;
-      
-      // Calculate service prices
-      const servicePrices = formData.selectedServices.reduce((total, service) => {
-        // Find the service in property services to get its price
-        const serviceData = property?.property_services?.find(s => s.name === service);
-        return total + (serviceData?.price || 500); // Default to 500 if price not found
-      }, 0);
-      
-      // Extra bed price
-      const extraBedPrice = formData.ebed * 500;
-      
-      setTotalPrice(basePrice + servicePrices + extraBedPrice);
+    if (data.check_in_date && data.check_out_date) {
+      const nights = calculateDays(data.check_in_date, data.check_out_date);
+      setData('nights', nights);
+      setData('total_price', nights * (property.price_per_night || 0));
     } else {
-      setTotalPrice(0);
-      setNights(0);
+      setData('nights', 0);
+      setData('total_price', 0);
     }
-  }, [formData, property?.price_per_night, property?.property_services]);
+  }, [data.check_in_date, data.check_out_date]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.checkIn || !formData.checkOut) {
-      alert('Please select check-in and check-out dates');
-      return;
-    }
-    
-    if (nights <= 0) {
+
+    if (!data.check_in_date || !data.check_out_date || data.nights <= 0) {
       alert('Please select valid check-in and check-out dates');
       return;
     }
-    
-    // Process the form data (e.g., send to a server)
-    console.log({...formData, totalPrice, nights});
-    alert('Property booked successfully!');
+
+    try {
+      let userId = null;
+      
+      if(data.is_registered === false) {
+        const response = await axios.post(route('register'), {
+          email: data.email,
+          password: data.password,
+          name: data.name,
+          user_type: data.user_type,
+          phone: data.phone,
+          nationality: data.nationality,
+          current_location: data.current_location,
+          passport_number: data.passport_number,
+          address: data.address,
+          city: data.city,
+          country: data.country,
+          emergency_contact: data.emergency_contact,
+        });
+        userId = response.data.user_id;
+      }
+
+      axios.post(route('login'), {
+        email: data.email,
+        password: data.password
+      });
+
+      if (userId) {
+        setData('user_id', userId);
+      }
+      
+      post(route('bookings.store'));
+    } catch (error) {
+      alert(error.response?.data?.message || 'User creation failed.');
+    }
   };
 
   return (
     <div className="bg-gray dark:bg-[#1B1B1B] dark:text-white py-6 px-2 rounded-lg relative z-10 dark:shadow-none">
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6">
-          {/* Check In Input */}
-          <div className="flex justify-between relative w-full p-4 bg-white rounded-md">
-            <label htmlFor="checkIn" className="block text-xl font-medium text-heading dark:text-white">
+          {/* Check In */}
+          <div className="flex justify-between relative w-full p-4 bg-white dark:bg-[#2D2D2D] rounded-md">
+            <label htmlFor="check_in_date" className="block text-xl font-medium text-heading dark:text-white">
               Check In
             </label>
-            <div className="relative min-w-[160px] max-w-[160px]">
-              <input
-                type="date"
-                id="checkIn"
-                name="checkIn"
-                className="relative z-10 w-full bg-white dark:bg-[#1B1B1B] appearance-none outline-none"
-                value={formData.checkIn}
-                onChange={handleDateChange}
-                min={new Date().toISOString().split('T')[0]} // Prevent past dates
-                required
-              />
-            </div>
+            <input
+              type="date"
+              id="check_in_date"
+              name="check_in_date"
+              className="w-full max-w-[160px] bg-white dark:bg-[#2D2D2D] appearance-none outline-none dark:text-white"
+              value={data.check_in_date}
+              onChange={handleDateChange}
+              min={new Date().toISOString().split('T')[0]}
+              required
+            />
+            {errors.check_in_date && <div className="text-red-500 text-sm mt-1">{errors.check_in_date}</div>}
           </div>
 
-          {/* Check Out Input */}
-          <div className="flex justify-between relative w-full p-4 bg-white rounded-md">
-            <label htmlFor="checkOut" className="block text-xl font-medium text-heading dark:text-white">
+          {/* Check Out */}
+          <div className="flex justify-between relative w-full p-4 bg-white dark:bg-[#2D2D2D] rounded-md">
+            <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
               Check Out
             </label>
-            <div className="relative min-w-[160px] max-w-[160px]">
-              <input
-                type="date"
-                id="checkOut"
-                name="checkOut"
-                className="relative z-10 w-full bg-white dark:bg-[#1B1B1B] appearance-none outline-none"
-                value={formData.checkOut}
-                onChange={handleDateChange}
-                min={formData.checkIn || new Date().toISOString().split('T')[0]} // Prevent dates before check-in
-                required
-              />
-            </div>
+            <input
+              type="date"
+              id="check_out_date"
+              name="check_out_date"
+              className="w-full max-w-[160px] bg-white dark:bg-[#2D2D2D] appearance-none outline-none dark:text-white"
+              value={data.check_out_date}
+              onChange={handleDateChange}
+              min={data.check_in_date || new Date().toISOString().split('T')[0]}
+              required
+            />
+            {errors.check_out_date && <div className="text-red-500 text-sm mt-1">{errors.check_out_date}</div>}
           </div>
 
-          {/* Stay Duration Display */}
-          {nights > 0 && (
+          {/* Stay Duration */}
+          {data.nights > 0 && (
             <div className="text-center font-medium">
-              Your stay: <span className="font-bold">{nights} night{nights !== 1 ? 's' : ''}</span>
-            </div>
-          )}
-
-          {/* Adult Count */}
-          <div className="flex justify-between relative w-full p-4 bg-white rounded-md">
-            <label htmlFor="adult" className="block text-xl font-medium text-heading dark:text-white">
-              Adults
-            </label>
-            <input
-              type="number"
-              id="adult"
-              name="adult"
-              className="w-20 text-center bg-white dark:bg-[#1B1B1B] border border-gray-300 rounded"
-              min="1"
-              max="10"
-              value={formData.adult}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Child Count */}
-          <div className="flex justify-between relative w-full p-4 bg-white rounded-md">
-            <label htmlFor="child" className="block text-xl font-medium text-heading dark:text-white">
-              Children
-            </label>
-            <input
-              type="number"
-              id="child"
-              name="child"
-              className="w-20 text-center bg-white dark:bg-[#1B1B1B] border border-gray-300 rounded"
-              min="0"
-              max="10"
-              value={formData.child}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Property Count */}
-          <div className="flex justify-between relative w-full p-4 bg-white rounded-md">
-            <label htmlFor="property" className="block text-xl font-medium text-heading dark:text-white">
-              Properties
-            </label>
-            <input
-              type="number"
-              id="property"
-              name="property"
-              className="w-20 text-center bg-white dark:bg-[#1B1B1B] border border-gray-300 rounded"
-              min="1"
-              max="5"
-              value={formData.property}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Extra Bed */}
-          <div className="flex justify-between relative w-full p-4 bg-white rounded-md">
-            <label htmlFor="ebed" className="block text-xl font-medium text-heading dark:text-white">
-              Extra Beds
-            </label>
-            <input
-              type="number"
-              id="ebed"
-              name="ebed"
-              className="w-20 text-center bg-white dark:bg-[#1B1B1B] border border-gray-300 rounded"
-              min="0"
-              max="5"
-              value={formData.ebed}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Extra Services */}
-          {property?.property_services && property.property_services.length > 0 && (
-            <>
-              <h5 className="text-heading text-center text-xl font-medium my-2">Extra Services</h5>
-              <div className="space-y-3">
-                {property.property_services.map((service, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-white rounded-md">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id={`service-${index}`}
-                        checked={formData.selectedServices.includes(service.name)}
-                        onChange={() => handleServiceChange(service.name, service.price)}
-                      />
-                      <label htmlFor={`service-${index}`} className="text-lg cursor-pointer">
-                        {service.name}
-                      </label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {service.icon && (
-                        <img
-                          src={`/storage/${service.icon}`}
-                          alt={service.name}
-                          className="h-6"
-                        />
-                      )}
-                      <span className="font-medium">KES {service.price} / Night</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* Price Breakdown */}
-          {nights > 0 && (
-            <div className="space-y-2 border-t border-gray-200 pt-4">
-              <div className="flex justify-between text-sm">
-                <span>Property ({nights} night{nights !== 1 ? 's' : ''})</span>
-                <span>KES {(property?.price_per_night || 0) * formData.property * nights}</span>
-              </div>
-              {formData.ebed > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Extra Beds ({formData.ebed})</span>
-                  <span>KES {formData.ebed * 500}</span>
-                </div>
-              )}
-              {formData.selectedServices.length > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Extra Services</span>
-                  <span>KES {formData.selectedServices.reduce((total, service) => {
-                    const serviceData = property?.property_services?.find(s => s.name === service);
-                    return total + (serviceData?.price || 500);
-                  }, 0)}</span>
-                </div>
-              )}
+              Your stay: <span className="font-bold">{data.nights} night{data.nights !== 1 ? 's' : ''}</span>
             </div>
           )}
 
           {/* Total Price */}
           <div className="flex justify-between border-t border-gray-200 pt-4">
-            <span className="text-xl font-bold text-heading">Total Price</span>
-            <span className="text-xl font-bold text-heading">KES {totalPrice}</span>
+            <span className="text-xl font-bold text-heading dark:text-white">Total Price</span>
+            <span className="text-xl font-bold text-heading dark:text-white">KES {data.total_price}</span>
           </div>
 
-          {/* Submit Button */}
-          <button 
-            type="submit" 
-            className="w-full py-3 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+          {/* User Info */}
+          {(data.check_in_date !== '' && data.check_out_date !== '') &&
+          <>
+            <h3 className="text-lg font-bold mt-4 mb-2">Guest Information</h3>
+            
+            {/* Registration Toggle */}
+            <div className="flex items-center justify-between mb-4 bg-white p-3 rounded-md">
+              <span className="font-medium">I am a:</span>
+              <div className="flex gap-4">
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="userStatus"
+                    value="registered"
+                    checked={data.is_registered}
+                    onChange={() => setData({ ...data, is_registered: true })}
+                    className="form-radio text-blue-600"
+                  />
+                  <span className="ml-2">Registered</span>
+                </label>
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="userStatus"
+                    value="new"
+                    checked={!data.is_registered}
+                    onChange={() => setData({ ...data, is_registered: false })}
+                    className="form-radio text-blue-600"
+                  />
+                  <span className="ml-2">New</span>
+                </label>
+              </div>
+            </div>
+
+            
+            {/* Form fields */}
+            <div className="grid gap-4">
+              {!data.is_registered && (
+                <>
+                  <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
+                    Full name
+                  </label>
+
+                  <input 
+                    type="text" 
+                    placeholder="Full Name" 
+                    value={data.name} 
+                    onChange={(e) => setData('name', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D]"
+                    required={!data.is_registered} 
+                  />
+                </>
+              )}
+
+              <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
+                Email
+              </label>
+              
+              <input 
+                type="email" 
+                placeholder="Email" 
+                value={data.email} 
+                onChange={(e) => setData('email', e.target.value)} 
+                className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D]"
+                required 
+              />
+
+              <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
+                Password
+              </label>
+              
+              <input 
+                type="password" 
+                placeholder="Password" 
+                value={data.password} 
+                onChange={(e) => setData('password', e.target.value)} 
+                className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D]"
+                required={!data.is_registered} 
+              />
+              
+              {!data.is_registered && (
+                <>
+                  <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
+                    Phone
+                  </label>
+
+                  <input 
+                    type="text" 
+                    placeholder="Phone" 
+                    value={data.phone} 
+                    onChange={(e) => setData('phone', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D]"
+                  />
+
+                  <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
+                    Nationality
+                  </label>
+                  
+                  <input 
+                    type="text" 
+                    placeholder="Nationality" 
+                    value={data.nationality} 
+                    onChange={(e) => setData('nationality', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D]"
+                  />
+                
+                   <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
+                    ID/Passport number
+                  </label>
+
+                  <input 
+                    type="text" 
+                    placeholder="Passport Number" 
+                    value={data.passport_number} 
+                    onChange={(e) => setData('passport_number', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D]"
+                  />
+                  
+                  <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
+                    Address
+                  </label>
+
+                  <input 
+                    type="text" 
+                    placeholder="Address" 
+                    value={data.address} 
+                    onChange={(e) => setData('address', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D]"
+                  />
+                  
+                  <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
+                    City
+                  </label>
+
+                  <input 
+                    type="text" 
+                    placeholder="City" 
+                    value={data.city} 
+                    onChange={(e) => setData('city', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D]"
+                  />
+                  
+                  <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
+                    Country
+                  </label>
+
+                  <input 
+                    type="text" 
+                    placeholder="Country" 
+                    value={data.country} 
+                    onChange={(e) => setData('country', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D]"
+                  />
+                  
+                  <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
+                    Emergency contact name
+                  </label>
+
+                  <input 
+                    type="text" 
+                    placeholder="Emergency Contact" 
+                    value={data.emergency_contact} 
+                    onChange={(e) => setData('emergency_contact', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D]"
+                  />
+
+                  <label htmlFor="check_out_date" className="block text-xl font-medium text-heading dark:text-white">
+                    Emergency contact phone
+                  </label>
+
+                  <input 
+                    type="text" 
+                    placeholder="Emergency Contact Phone" 
+                    value={data.contact_phone} 
+                    onChange={(e) => setData('contact_phone', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D]"
+                  />
+                </>
+              )}
+            </div>
+          </>}
+          
+          {/* Submit */}
+          <button
+            type="submit"
+            className="w-full py-3 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors mt-4"
+            disabled={processing}
           >
-            Book Your Property
+            {processing ? 'Booking...' : 'Book Your Property'}
           </button>
         </div>
       </form>

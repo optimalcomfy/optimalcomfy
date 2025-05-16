@@ -9,6 +9,7 @@ use App\Models\Amenity;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class PropertyController extends Controller
 {
@@ -78,6 +79,10 @@ class PropertyController extends Controller
                 $validatedData['longitude'] = $coordinates['longitude'];
             }
         }
+
+        $user = Auth::user();
+
+        $validatedData['user_id'] = $user->id;
     
         $property = Property::create($validatedData);
     

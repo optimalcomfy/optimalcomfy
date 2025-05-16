@@ -33,6 +33,7 @@ class Car extends Model
         'location_address',
         'latitude',
         'longitude',
+        'user_id'
     ];
 
     /**
@@ -67,5 +68,10 @@ class Car extends Model
     public function carFeatures()
     {
         return $this->hasMany(CarFeature::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

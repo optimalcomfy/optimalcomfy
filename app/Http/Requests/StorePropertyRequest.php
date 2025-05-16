@@ -30,7 +30,8 @@ class StorePropertyRequest extends FormRequest
             'status' => 'nullable',
             'location' => 'nullable',
             'latitude' => 'nullable',
-            'longitude' => 'nullable'           
+            'longitude' => 'nullable',
+            'user_id' => 'nullable'             
         ];
     }
 }

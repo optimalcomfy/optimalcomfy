@@ -12,6 +12,12 @@ class PropertiesSeeder extends Seeder
      */
     public function run(): void
     {
+        // Get all user IDs where role_id = 2
+        $userIds = DB::table('users')->where('role_id', 2)->pluck('id')->toArray();
+
+        // Fallback in case there are fewer users than properties
+        $userId = $userIds[0] ?? null;
+
         DB::table('properties')->insert([
             [
                 'property_name' => 'Night pride',
@@ -24,6 +30,7 @@ class PropertiesSeeder extends Seeder
                 'location' => '123 Safari Drive, Nairobi, Kenya',
                 'latitude' => -1.2921,
                 'longitude' => 36.8219,
+                'user_id' => $userIds[0] ?? null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -38,6 +45,7 @@ class PropertiesSeeder extends Seeder
                 'location' => '456 Coastal Road, Mombasa, Kenya',
                 'latitude' => -4.0435,
                 'longitude' => 39.6682,
+                'user_id' => $userIds[1] ?? $userId,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -52,6 +60,7 @@ class PropertiesSeeder extends Seeder
                 'location' => '789 Lakeside Ave, Kisumu, Kenya',
                 'latitude' => -0.0917,
                 'longitude' => 34.7679,
+                'user_id' => $userIds[2] ?? $userId,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -66,6 +75,7 @@ class PropertiesSeeder extends Seeder
                 'location' => '321 Valley Rd, Eldoret, Kenya',
                 'latitude' => 0.5204,
                 'longitude' => 35.2698,
+                'user_id' => $userIds[3] ?? $userId,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]

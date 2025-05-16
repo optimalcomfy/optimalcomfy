@@ -153,34 +153,24 @@ class DashboardController extends Controller
             ];
         });
 
-        if($user->role_id == "3") {
-            $notification = Notification::orderBy('created_at', 'desc')->first();
-            return Inertia::render('Employees/ProcessedRequest', [
-                'user'=>$user,
-                'notification'=>$notification
-            ]);
 
-        }else {
+        $employee = Employee::where('user_id', '=', $user->id)->first();
 
-            $employee = Employee::where('user_id', '=', $user->id)->first();
+        $employeesCount = 0; 
 
-            $employeesCount = 0; 
-
-            if ($user->role_id == "2") {
-                $employeesCount = Employee::where('company_id', $user->company_id)->count();
-            }
-            
-            if ($user->role_id == "1") {
-                $employeesCount = Employee::count();
-            }
-            
-            return Inertia::render('Dashboard', [
-                'userCount' => $userCount,
-                'applicationCount'=> $applicationCount,
-                'jobCount'=> $jobCount,
-                'employee'=>$employee
-            ]);
-            
+        if ($user->role_id == "2") {
+            $employeesCount = Employee::where('company_id', $user->company_id)->count();
         }
+        
+        if ($user->role_id == "1") {
+            $employeesCount = Employee::count();
+        }
+        
+        return Inertia::render('Dashboard', [
+            'userCount' => $userCount,
+            'applicationCount'=> $applicationCount,
+            'jobCount'=> $jobCount,
+            'employee'=>$employee
+        ]);
     }
 }

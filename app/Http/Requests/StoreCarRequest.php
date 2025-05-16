@@ -46,6 +46,7 @@ class StoreCarRequest extends FormRequest
             'location_address'  => 'nullable',
             'latitude'          => 'nullable',
             'longitude'         => 'nullable',
+            'user_id'         => 'nullable',
         ];
     }
 }

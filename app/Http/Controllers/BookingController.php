@@ -59,7 +59,13 @@ class BookingController extends Controller
 
     public function store(StoreBookingRequest $request)
     {
-        Booking::create($request->validated());
+        $user = Auth::user();
+
+        $validatedData = $request->validated();
+
+        $validatedData['user_id'] = $user->id;
+
+        Booking::create($validatedData);
 
         return redirect()->route('bookings.index')->with('success', 'Booking created successfully.');
     }

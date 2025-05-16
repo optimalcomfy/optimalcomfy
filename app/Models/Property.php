@@ -18,12 +18,18 @@ class Property extends Model
         'status',
         'location',
         'latitude',
-        'longitude'
+        'longitude',
+        'user_id'
     ];
 
     protected $casts = [
         'price_per_night' => 'decimal:2',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function bookings()
     {

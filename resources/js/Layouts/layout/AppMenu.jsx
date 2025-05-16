@@ -21,21 +21,21 @@ const AppMenu = () => {
             label: 'Property Management',
             items: [
                 { label: 'Properties', icon: 'pi pi-fw pi-building', to: route('properties.index'), roles: [1, 2] },
-                { label: 'Property Bookings', icon: 'pi pi-fw pi-calendar', to: route('bookings.index'), roles: [1, 2] }
+                { label: 'Property Bookings', icon: 'pi pi-fw pi-calendar', to: route('bookings.index'), roles: [1, 2,3] }
             ]
         },
         {
             label: 'Car hire Management',
             items: [
                 { label: 'Cars', icon: 'pi pi-fw pi-car', to: route('main-cars.index'), roles: [1, 2] },
-                { label: 'Car Bookings', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index'), roles: [1, 2] },
+                { label: 'Car Bookings', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index'), roles: [1, 2, 3] },
                 { label: 'Car Categories', icon: 'pi pi-fw pi-tags', to: route('car-categories.index'), roles: [1, 2] }               
             ]
         },
         {
             label: 'Payments & Reviews',
             items: [
-                { label: 'Payments', icon: 'pi pi-fw pi-credit-card', to: route('payments.index'), roles: [1, 2] },
+                { label: 'Payments', icon: 'pi pi-fw pi-credit-card', to: route('payments.index'), roles: [1, 2,3] },
                 { label: 'Reviews', icon: 'pi pi-fw pi-star', to: route('reviews.index'), roles: [1, 2, 3] },
             ]
         },

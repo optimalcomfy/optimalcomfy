@@ -11,6 +11,7 @@ use App\Models\Feature;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class CarController extends Controller
 {
@@ -90,6 +91,10 @@ class CarController extends Controller
                 $validated['longitude'] = $coordinates['longitude'];
             }
         }
+
+        $user = Auth::user();
+
+        $validatedData['user_id'] = $user->id;
 
         // Create the car record in the database
         Car::create($validated);

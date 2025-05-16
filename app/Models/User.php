@@ -47,6 +47,7 @@ class User extends Authenticatable
         'bio',
         'preferred_payment_method',
         'emergency_contact',
+        'contact_phone',
         'user_type'
     ];
 

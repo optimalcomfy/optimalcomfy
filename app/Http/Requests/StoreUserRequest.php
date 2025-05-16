@@ -50,6 +50,7 @@ class StoreUserRequest extends FormRequest
             'bio' => 'nullable|string',
             'preferred_payment_method' => 'nullable|string',
             'emergency_contact' => 'nullable|string',
+            'contact_phone' => 'nullable|string',
             'user_type' => 'nullable|string'
         ];
     }

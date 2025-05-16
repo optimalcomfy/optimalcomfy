@@ -25,6 +25,7 @@ export default function Register() {
         bio: '',
         preferred_payment_method: '',
         emergency_contact: '',
+        contact_phone: '',
         user_type: 'guest', // 'guest' or 'host'
     });
 
@@ -199,7 +200,7 @@ export default function Register() {
                                     </div>
 
                                     <div className="col-span-2">
-                                        <label htmlFor="emergency_contact" className="block mb-1">Emergency Contact (Name and Phone)</label>
+                                        <label htmlFor="emergency_contact" className="block mb-1">Emergency Contact name</label>
                                         <input 
                                             type="text" 
                                             name="emergency_contact" 
@@ -207,6 +208,19 @@ export default function Register() {
                                             value={data.emergency_contact} 
                                             onChange={(e) => setData('emergency_contact', e.target.value)} 
                                             placeholder="Name and phone number" 
+                                            className="w-full p-2 border rounded" 
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="contact_phone" className="block mb-1">Emergency Contact Phone</label>
+                                        <input 
+                                            type="tel" 
+                                            name="contact_phone" 
+                                            id="contact_phone" 
+                                            value={data.contact_phone} 
+                                            onChange={(e) => setData('contact_phone', e.target.value)} 
+                                            placeholder="Contact Phone" 
                                             className="w-full p-2 border rounded" 
                                         />
                                     </div>

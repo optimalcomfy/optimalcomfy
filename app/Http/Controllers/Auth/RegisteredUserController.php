@@ -51,64 +51,48 @@ class RegisteredUserController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      */
 
-        public function store(StoreUserRequest $request)
-        {
-            try {
-                $validated = $request->validated();
+    public function store(StoreUserRequest $request)
+    {
+        try {
+            $validated = $request->validated();
 
-                // Handle profile picture upload
-                if ($request->hasFile('profile_picture')) {
-                    $validated['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
-                }
-
-                // Handle ID verification upload
-                if ($request->hasFile('id_verification')) {
-                    $validated['id_verification'] = $request->file('id_verification')->store('id_verifications', 'public');
-                }
-
-                // Hash the password if provided
-                if (!empty($validated['password'])) {
-                    $validated['password'] = Hash::make($validated['password']);
-                }
-
-                // Create the user
-                $user = User::create($validated);
-
-                 if ($user->role_id) {
-                    $role = Role::find($user->role_id);
-
-
-                    if ($role) {
-                        $user->assignRole($role);
-                        
-                        DB::table('model_has_roles')->where('model_id', $user->id)->update([
-                            'model_type' => User::class
-                        ]);
-                    
-                        $user->syncPermissions($role->permissions);
-                    
-                        DB::table('model_has_permissions')->where('model_id', $user->id)->update([
-                            'model_type' => User::class
-                        ]);
-                    }
-                    
-                }
-
-                // Optional: Redirect to login page with a success message
-                return Inertia::render('Auth/Login', [
-                    'user'         => $user,
-                    'notification' => 'Account created successfully. Please login.',
-                ]);
-
-            } catch (\Exception $e) {
-                Log::error('User creation failed: ' . $e->getMessage());
-
-                // Return an Inertia-friendly error response
-                return back()->withErrors([
-                    'message' => 'An unexpected error occurred. Please try again later.'
-                ])->withInput();
+            // Handle profile picture upload
+            if ($request->hasFile('profile_picture')) {
+                $validated['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
             }
+
+            // Handle ID verification upload
+            if ($request->hasFile('id_verification')) {
+                $validated['id_verification'] = $request->file('id_verification')->store('id_verifications', 'public');
+            }
+
+            // Hash the password if provided
+            if (!empty($validated['password'])) {
+                $validated['password'] = Hash::make($validated['password']);
+            }
+
+            // Set role_id based on user_type
+            if (!empty($validated['user_type'])) {
+                $validated['role_id'] = $validated['user_type'] === 'guest' ? 3 : 2;
+            }
+
+            // Create the user
+            $user = User::create($validated);
+
+            // 🔐 Log the user in immediately
+            Auth::login($user);
+
+            // ✅ Redirect to the intended or home page
+            return redirect()->intended(RouteServiceProvider::HOME);
+
+        } catch (\Exception $e) {
+            Log::error('User creation failed: ' . $e->getMessage());
+
+            return back()->withErrors([
+                'message' => 'An unexpected error occurred. Please try again later.'
+            ])->withInput();
         }
+    }
      
     
 }

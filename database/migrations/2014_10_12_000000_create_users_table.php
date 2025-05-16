@@ -47,6 +47,7 @@ return new class extends Migration
             $table->text('bio')->nullable();
             $table->string('preferred_payment_method')->nullable();
             $table->string('emergency_contact')->nullable();
+            $table->string('contact_phone')->nullable();
             $table->string('user_type')->nullable(); // 'guest' or 'host'
         });
     }

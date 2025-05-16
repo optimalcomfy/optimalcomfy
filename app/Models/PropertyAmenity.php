@@ -16,11 +16,11 @@ class PropertyAmenity extends Model
 
     public function property()
     {
-        return $this->hasOne('App\Models\Property', 'id', 'property_id');
+        return $this->belongsTo(Property::class);
     }
 
     public function amenity()
     {
-        return $this->hasOne('App\Models\Amenity', 'id', 'amenity_id');
+        return $this->belongsTo(Amenity::class);
     }
 }

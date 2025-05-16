@@ -94,7 +94,7 @@ class CarController extends Controller
 
         $user = Auth::user();
 
-        $validatedData['user_id'] = $user->id;
+        $validated['user_id'] = $user->id;
 
         // Create the car record in the database
         Car::create($validated);

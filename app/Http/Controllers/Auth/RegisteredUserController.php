@@ -56,6 +56,15 @@ class RegisteredUserController extends Controller
         try {
             $validated = $request->validated();
 
+            // Check if user already exists
+            $existingUser = User::where('email', $validated['email'])->first();
+
+            if ($existingUser) {
+                // Attempt to login the user (you can decide to check password if needed)
+                Auth::login($existingUser);
+                return redirect()->intended(RouteServiceProvider::HOME);
+            }
+
             // Handle profile picture upload
             if ($request->hasFile('profile_picture')) {
                 $validated['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
@@ -93,6 +102,7 @@ class RegisteredUserController extends Controller
             ])->withInput();
         }
     }
+
      
     
 }

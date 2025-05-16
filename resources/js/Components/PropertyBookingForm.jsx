@@ -78,23 +78,22 @@ const PropertyBookingForm = ({ property }) => {
     try {
       let userId = null;
       
-      if(data.is_registered === false) {
-        const response = await axios.post(route('register'), {
-          email: data.email,
-          password: data.password,
-          name: data.name,
-          user_type: data.user_type,
-          phone: data.phone,
-          nationality: data.nationality,
-          current_location: data.current_location,
-          passport_number: data.passport_number,
-          address: data.address,
-          city: data.city,
-          country: data.country,
-          emergency_contact: data.emergency_contact,
-        });
-        userId = response.data.user_id;
-      }
+      const response = await axios.post(route('register'), {
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        user_type: data.user_type,
+        phone: data.phone,
+        nationality: data.nationality,
+        current_location: data.current_location,
+        passport_number: data.passport_number,
+        address: data.address,
+        city: data.city,
+        country: data.country,
+        emergency_contact: data.emergency_contact,
+      });
+      
+      userId = response.data.user_id;
 
       axios.post(route('login'), {
         email: data.email,

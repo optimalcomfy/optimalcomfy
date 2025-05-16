@@ -7,7 +7,7 @@ const BookingShow = () => {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+      <div className="max-w-4xl bg-white p-6 rounded-lg shadow-md">
         <h1 className="text-3xl font-semibold mb-4">Booking Details</h1>
 
         {/* Booking Info */}

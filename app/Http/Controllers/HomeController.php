@@ -103,11 +103,16 @@ class HomeController extends Controller
     public function rentNow(Request $request)
     {
 
+        $car_id = $request->input('car_id');
+
+        $car = Car::with(['category','media','bookings','initialGallery','carFeatures','user'])->where('id','=',$car_id)->first();
+
         return Inertia::render('RentNow', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
+            'car'=>$car,
             'flash' => session('flash')
         ]);
     }

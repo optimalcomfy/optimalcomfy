@@ -38,6 +38,7 @@ use App\Http\Controllers\CarCategoryController;
 use App\Http\Controllers\CarFeatureController;
 use App\Http\Controllers\CarMediaController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\PesapalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -141,6 +142,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/properties/{property}/features', [PropertyFeatureController::class, 'getByProperty'])->name('properties.features.byProperty');
 
 });
+
+
+// Route to initiate the payment (usually triggered by a logged-in user)
+Route::middleware('auth')->post('/pesapal/initiate', [PesapalController::class, 'initiatePayment'])->name('pesapal.initiate');
+
 
 Route::resource('employees', EmployeeController::class);
 Route::get('/companies/{company}/employees', [EmployeeController::class, 'getEmployeesByCompany'])

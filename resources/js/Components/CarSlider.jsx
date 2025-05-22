@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const CarSlider = ({ images }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const intervalRef = useRef(null);
   
-  // Default images if none provided
   const defaultImages = [
     "/cars/images/car-single/1.jpg",
     "/cars/images/car-single/2.jpg",
@@ -12,49 +12,34 @@ const CarSlider = ({ images }) => {
     "/cars/images/car-single/4.jpg"
   ];
   const sliderImages = images || defaultImages;
-  
+
   const nextSlide = () => {
     if (!isTransitioning) {
       setIsTransitioning(true);
-      setCurrentIndex((prevIndex) => 
+      setCurrentIndex((prevIndex) =>
         prevIndex === sliderImages.length - 1 ? 0 : prevIndex + 1
       );
-      // Reset transition state after animation
       setTimeout(() => setIsTransitioning(false), 300);
     }
   };
-  
-  const prevSlide = () => {
-    if (!isTransitioning) {
-      setIsTransitioning(true);
-      setCurrentIndex((prevIndex) => 
-        prevIndex === 0 ? sliderImages.length - 1 : prevIndex - 1
-      );
-      
-      // Reset transition state after animation
-      setTimeout(() => setIsTransitioning(false), 300);
-    }
-  };
-  
+
   const goToSlide = (index) => {
     if (!isTransitioning && index !== currentIndex) {
       setIsTransitioning(true);
       setCurrentIndex(index);
-      
-      // Reset transition state after animation
       setTimeout(() => setIsTransitioning(false), 300);
     }
   };
-  
-  // Auto-advance slides
+
+  // Auto-advance on mount
   useEffect(() => {
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       nextSlide();
     }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [currentIndex]);
-  
+
+    return () => clearInterval(intervalRef.current);
+  }, []); // only on mount
+
   return (
     <div className="car-slider-container">
       {/* Main image display */}
@@ -70,14 +55,14 @@ const CarSlider = ({ images }) => {
             }`}
           >
             <img 
-              src={image} 
+              src={`/storage/${image.image}`} 
               alt={`Car Image ${index + 1}`} 
               className="w-full h-full object-cover"
             />
           </div>
         ))}
       </div>
-      
+
       {/* Thumbnails row */}
       <div className="thumbnails-container flex gap-2 overflow-x-auto">
         {sliderImages.map((image, index) => (
@@ -92,7 +77,7 @@ const CarSlider = ({ images }) => {
             style={{ flex: "0 0 80px", height: "60px" }}
           >
             <img 
-              src={image} 
+              src={`/storage/${image.image}`} 
               alt={`Car Thumbnail ${index + 1}`} 
               className="w-full h-full object-cover"
             />

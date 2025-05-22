@@ -11,7 +11,7 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-
+use App\Http\Controllers\PesapalController;
 
 class BookingController extends Controller
 {
@@ -59,43 +59,40 @@ class BookingController extends Controller
         ]);
     }
 
-    public function store(StoreBookingRequest $request)
+
+    public function store(Request $request)
     {
+        $request->validate([
+            'property_id' => 'required|exists:properties,id',
+            'check_in_date' => 'required|date',
+            'check_out_date' => 'required|date|after:check_in_date',
+            'total_price' => 'required|numeric|min:1',
+        ]);
+
         $user = Auth::user();
 
-        $validatedData = $request->validated();
-
-        $validatedData['user_id'] = $user->id;
-
-
-        $phone = $user->phone; 
-
-        $mpesaKey = env('MPESA_KEY');
-
-        // Convert +254 format to 07 format
-        if (preg_match('/^\+254[7-9][0-9]{8}$/', $phone)) {
-            $phone = '0' . substr($phone, 4); // Remove +254 and replace with 0
-        }
-    
-        // Define the API URL
-        $apiUrl = 'https://lipia-api.kreativelabske.com/api/request/stk';
-    
-        // Make STK Push request with authentication token
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer '.$mpesaKey,
-            'Content-Type' => 'application/json',
-        ])->post($apiUrl, [
-            'phone' => $phone, 
-            'amount' => 10,
+        $booking = Booking::create([
+            'user_id' => $user->id,
+            'property_id' => $request->property_id,
+            'check_in_date' => $request->check_in_date,
+            'check_out_date' => $request->check_out_date,
+            'total_price' => $request->total_price,
+            'status' => 'pending',
         ]);
-    
-        if ($response->successful()) {
-            Booking::create($validatedData);
 
-            return redirect()->route('bookings.index')->with('success', 'Booking created successfully.');
-        } else {
-            return back()->with('error', 'Payment request failed: ' . $response->json('message', 'Unknown error'));
+        // Initiate payment with Pesapal
+        $pesapal = new PesapalController();
+
+        $paymentResponse = $pesapal->initiatePayment(new Request([
+            'amount' => $booking->total_price,
+            'booking_id' => $booking->id,
+        ]));
+
+        if (isset($paymentResponse->original['redirect_url'])) {
+            return redirect($paymentResponse->original['redirect_url']);
         }
+
+        return back()->withErrors('Payment initiation failed');
     }
 
     public function show(Booking $booking)

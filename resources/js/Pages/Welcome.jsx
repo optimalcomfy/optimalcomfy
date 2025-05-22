@@ -17,11 +17,12 @@ import Testimonial from "@/Components/Testimonial";
 import Video from "@/Components/Video";
 import Gallery from "@/Components/Gallery";
 import '../../css/main'
+import Product from "@/Components/Product";
 
 
 export default function Welcome({ auth, laravelVersion, phpVersion }) {
 
-  const { flash, pagination } = usePage().props;
+  const { flash, pagination, properties } = usePage().props;
   
   
   return (
@@ -30,8 +31,12 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         <LayoutProvider>
           <Head title="Welcome" />
           <HomeLayout>
-          <SearchForm />
-          <Slider />
+            <SearchForm />
+            <div className="padding-container px-8 my-6 xl:mt-6 xl:mb-10 gap-x-6 gap-y-10 grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 grid-flow-row-dense">
+              {properties.map((data, index) => (
+                <Product key={index} {...data} />
+              ))}
+            </div>
           </HomeLayout>
         </LayoutProvider>
       </PrimeReactProvider>

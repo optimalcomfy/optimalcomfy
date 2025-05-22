@@ -107,10 +107,10 @@ export default function SearchForm() {
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
-      <div className="search-form-container max-w-6xl">
-        <div className="search-fields">
+      <div className="search-form-container container mx-auto mt-4 px-4 py-4">
+        <div className="search-fields flex flex-col lg:flex-row lg:items-end lg:gap-4">
           {/* Location */}
-          <div className="field-group" ref={suggestionRef}>
+          <div className="field-group flex-1" ref={suggestionRef}>
             <label>Where are you going?</label>
             <div className="field-input">
               <Search className="icon" />
@@ -138,7 +138,7 @@ export default function SearchForm() {
           </div>
 
           {/* Date Range Picker */}
-          <div className="field-group">
+          <div className="field-group flex-1">
             <label>Dates</label>
             <div className="field-input">
               <Calendar className="icon" />
@@ -146,6 +146,7 @@ export default function SearchForm() {
                 selectsRange
                 startDate={dateRange[0]}
                 endDate={dateRange[1]}
+                minDate={new Date()}
                 onChange={(update) => setDateRange(update)}
                 placeholderText="Select your stay dates"
                 className="datepicker-input"
@@ -158,7 +159,7 @@ export default function SearchForm() {
           </div>
 
           {/* Guests */}
-          <div className="field-group">
+          <div className="field-group flex-1">
             <label>Guests</label>
             <div className="field-input">
               <Users className="icon" />
@@ -172,7 +173,7 @@ export default function SearchForm() {
           </div>
 
           {/* Submit */}
-          <div className="submit-container">
+          <div className="submit-container flex-shrink-0">
             <button className="submit-button" onClick={handleSubmit}>Search</button>
           </div>
         </div>

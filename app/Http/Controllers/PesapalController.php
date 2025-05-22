@@ -123,6 +123,7 @@ class PesapalController extends Controller
     }
 
     // Get Bearer token from Pesapal
+    
     private function getToken(Client $client)
     {
         $response = $client->post("{$this->pesapalBaseUrl}/Auth/RequestToken", [
@@ -136,9 +137,22 @@ class PesapalController extends Controller
             ],
         ]);
 
-        $data = json_decode($response->getBody()->getContents(), true);
+        $body = $response->getBody()->getContents();
+        $data = json_decode($body, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            // JSON decode failed
+            throw new \Exception('Invalid JSON response from Pesapal: ' . json_last_error_msg());
+        }
+
+        if (!isset($data['token'])) {
+            // Token missing from response, throw exception or handle error
+            throw new \Exception('Token not found in Pesapal response: ' . $body);
+        }
+
         return $data['token'];
     }
+
 
     // Register Instant Payment Notification (IPN) URL with Pesapal
     public function registerIPN(Client $client, $token, $user_id, $booking_id, $cycle)

@@ -38,34 +38,52 @@ class PesapalController extends Controller
         // Register IPN callback URL with Pesapal
         $ipn = $this->registerIPN($client, $token, $user->id, $booking->id, $request->cycle ?? 'Monthly');
 
-        $response = $client->post("{$this->pesapalBaseUrl}/Transactions/SubmitOrderRequest", [
-            'headers' => [
-                'Authorization' => "Bearer {$token}",
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ],
-            'json' => [
-                'id' => uniqid(),
-                'currency' => 'KES',
-                'amount' => $amount,
-                'description' => "Booking Payment #{$booking->id}",
-                'callback_url' => url('/api/pesapal/confirm/' . $user->id . '/' . $booking->id . '/' . ($request->cycle ?? 'Monthly')),
-                'notification_id' => $ipn['ipn_id'],
-                'redirect_mode' => 'PARENT_WINDOW',
-                'billing_address' => [
-                    'email_address' => $user->email,
-                    'phone_number' => $user->phone,
-                    'country_code' => 'KE',
-                    'first_name' => $user->name,
-                    'last_name' => $user->name,
+        try {
+            $response = $client->post("{$this->pesapalBaseUrl}/Transactions/SubmitOrderRequest", [
+                'headers' => [
+                    'Authorization' => "Bearer {$token}",
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
                 ],
-            ],
-        ]);
+                'json' => [
+                    'id' => uniqid(),
+                    'currency' => 'KES',
+                    'amount' => $amount,
+                    'description' => "Booking Payment #{$booking->id}",
+                    'callback_url' => url('/api/pesapal/confirm/' . $user->id . '/' . $booking->id . '/' . ($request->cycle ?? 'Monthly')),
+                    'notification_id' => $ipn['ipn_id'],
+                    'redirect_mode' => 'PARENT_WINDOW',
+                    'billing_address' => [
+                        'email_address' => $user->email,
+                        'phone_number' => $user->phone,
+                        'country_code' => 'KE',
+                        'first_name' => $user->name,
+                        'last_name' => $user->name,
+                    ],
+                ],
+            ]);
 
-        $data = json_decode($response->getBody()->getContents(), true);
+            $data = json_decode($response->getBody()->getContents(), true);
 
-        return response(['url' => $data['redirect_url'], 'success' => true]);
+            // Log full response for debugging
+            \Log::info('Pesapal SubmitOrderRequest response:', $data);
+
+            if (!isset($data['redirect_url'])) {
+                return response([
+                    'success' => false,
+                    'message' => 'Redirect URL missing in Pesapal response',
+                    'response' => $data
+                ], 500);
+            }
+
+            return response(['url' => $data['redirect_url'], 'success' => true]);
+
+        } catch (\Exception $e) {
+            \Log::error('Pesapal payment initiation error: ' . $e->getMessage());
+            return response(['success' => false, 'message' => 'Payment initiation failed', 'error' => $e->getMessage()], 500);
+        }
     }
+
 
     // Verify payment status from Pesapal and update booking accordingly
     public function verifyPayment(Request $request, $user_id, $booking_id, $cycle)

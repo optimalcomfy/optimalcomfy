@@ -87,6 +87,10 @@ class BookingController extends Controller
                 'amount' => $booking->total_price,
                 'booking_id' => $booking->id,
             ]));
+
+
+            dd($paymentResponse);
+            
         } catch (\Exception $e) {
             \Log::error('Pesapal payment initiation failed: ' . $e->getMessage());
 
@@ -95,7 +99,6 @@ class BookingController extends Controller
 
         if (!empty($paymentResponse->original['redirect_url']) && filter_var($paymentResponse->original['redirect_url'], FILTER_VALIDATE_URL)) {
 
-            dd($paymentResponse->original['redirect_url']);
 
             return redirect($paymentResponse->original['redirect_url']);
         }

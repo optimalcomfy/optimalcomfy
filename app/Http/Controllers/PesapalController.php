@@ -17,8 +17,8 @@ class PesapalController extends Controller
 
     public function __construct()
     {
-        $this->consumerKey = config('app.pesapal_consumer_key');
-        $this->consumerSecret = config('app.pesapal_consumer_secret');
+        $this->consumerKey = env('PESAPAL_CONSUMER_KEY');
+        $this->consumerSecret = env('PESAPAL_CONSUMER_SECRET');
     }
 
     // Initiate payment for a booking

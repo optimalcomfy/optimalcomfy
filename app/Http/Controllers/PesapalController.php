@@ -33,7 +33,7 @@ class PesapalController extends Controller
             return response(['success' => false, 'message' => 'Booking not found'], 404);
         }
 
-        $amount = $booking->amount_due ?? 0; // adjust field name to your booking amount
+        $amount = $booking->total_price ?? 0; // adjust field name to your booking amount
 
         // Register IPN callback URL with Pesapal
         $ipn = $this->registerIPN($client, $token, $user->id, $booking->id, $request->cycle ?? 'Monthly');

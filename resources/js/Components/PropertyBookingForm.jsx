@@ -105,6 +105,12 @@ const PropertyBookingForm = ({ property }) => {
       }
       
       post(route('bookings.store'));
+
+      post(route('bookings.store'), {
+        onSuccess: () => {
+          window.location.href = route('booking.confirmation'); // simple redirect
+        },
+      });
     } catch (error) {
       alert(error.response?.data?.message || 'User creation failed.');
     }

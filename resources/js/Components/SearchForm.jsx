@@ -107,7 +107,7 @@ export default function SearchForm() {
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
-      <div className="search-form-container container mx-auto mt-4 px-4 py-4">
+      <div className="search-form-container max-w-7xl z-10 mx-auto px-4 py-4">
         <div className="search-fields flex flex-col lg:flex-row lg:items-end lg:gap-4">
           {/* Location */}
           <div className="field-group flex-1" ref={suggestionRef}>
@@ -146,11 +146,11 @@ export default function SearchForm() {
                 selectsRange
                 startDate={dateRange[0]}
                 endDate={dateRange[1]}
-                minDate={new Date()}
                 onChange={(update) => setDateRange(update)}
                 placeholderText="Select your stay dates"
                 className="datepicker-input"
                 isClearable
+                minDate={new Date()}
               />
               {(formData.checkIn || formData.checkOut) && (
                 <X className="clear-icon" onClick={() => clearField('dates')} />

@@ -11,9 +11,6 @@
   /* Tabs */
   .search-tabs {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid #e0e0e0;
   }
   
   .tab-button {

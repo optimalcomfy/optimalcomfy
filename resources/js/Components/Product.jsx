@@ -67,7 +67,7 @@ const Product = (props) => {
         <div className="text-[#717171] col-span-2">{location}</div>
         <div className="text-[#717171] col-span-2">{dayRange}</div>
         <div className="mt-[6px] col-span-2">
-          <span className="font-semibold">{price_per_night}</span> {time}
+          <span className="font-semibold">KES {price_per_night}</span> {time}
         </div>
       </Link>
     </div>

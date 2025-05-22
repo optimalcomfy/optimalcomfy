@@ -16,7 +16,8 @@ class Payment extends Model
         'service_booking_id',
         'amount',
         'method',
-        'status'
+        'status',
+        'car_booking_id'
     ];
 
     public function user()
@@ -27,6 +28,11 @@ class Payment extends Model
     public function booking()
     {
         return $this->belongsTo(Booking::class);
+    }
+
+    public function carBooking()
+    {
+        return $this->belongsTo(CarBooking::class);
     }
 
     public function foodOrder()

@@ -28,7 +28,8 @@ class StorePaymentRequest extends FormRequest
             'service_booking_id' => 'nullable',
             'amount' => 'nullable',
             'method' => 'nullable',
-            'status' => 'nullable'
+            'status' => 'nullable',
+            'car_booking_id' => 'nullable'
         ];
     }
 }

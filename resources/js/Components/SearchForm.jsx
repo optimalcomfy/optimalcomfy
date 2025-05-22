@@ -108,19 +108,6 @@ export default function SearchForm() {
     <>
       <ToastContainer position="top-right" autoClose={3000} />
       <div className="search-form-container max-w-6xl">
-        <div className="search-tabs">
-          {['properties', 'cars'].map(mode => (
-            <button
-              key={mode}
-              type="button"
-              className={`tab-button ${searchMode === mode ? 'active' : ''}`}
-              onClick={() => setSearchMode(mode)}
-            >
-              {mode.charAt(0).toUpperCase() + mode.slice(1)}
-            </button>
-          ))}
-        </div>
-
         <div className="search-fields">
           {/* Location */}
           <div className="field-group" ref={suggestionRef}>

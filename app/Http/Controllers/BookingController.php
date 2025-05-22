@@ -80,20 +80,29 @@ class BookingController extends Controller
             'status' => 'pending',
         ]);
 
-        // Initiate payment with Pesapal
-        $pesapal = new PesapalController();
+        try {
+            $pesapal = new PesapalController();
 
-        $paymentResponse = $pesapal->initiatePayment(new Request([
-            'amount' => $booking->total_price,
-            'booking_id' => $booking->id,
-        ]));
+            $paymentResponse = $pesapal->initiatePayment(new Request([
+                'amount' => $booking->total_price,
+                'booking_id' => $booking->id,
+            ]));
+        } catch (\Exception $e) {
+            \Log::error('Pesapal payment initiation failed: ' . $e->getMessage());
 
-        if (isset($paymentResponse->original['redirect_url'])) {
+            return back()->withErrors('Payment initiation failed due to a system error.');
+        }
+
+        if (!empty($paymentResponse->original['redirect_url']) && filter_var($paymentResponse->original['redirect_url'], FILTER_VALIDATE_URL)) {
+
+            dd($paymentResponse->original['redirect_url']);
+
             return redirect($paymentResponse->original['redirect_url']);
         }
 
         return back()->withErrors('Payment initiation failed');
     }
+
 
     public function show(Booking $booking)
     {

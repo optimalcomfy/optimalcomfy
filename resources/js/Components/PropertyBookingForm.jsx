@@ -104,7 +104,6 @@ const PropertyBookingForm = ({ property }) => {
         setData('user_id', userId);
       }
       
-      post(route('bookings.store'));
 
       post(route('bookings.store'), {
         onSuccess: () => {

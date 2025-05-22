@@ -97,7 +97,7 @@ class BookingController extends Controller
         }
 
         if (!empty($paymentResponse->original['url']) && filter_var($paymentResponse->original['url'], FILTER_VALIDATE_URL)) {
-            return redirect($paymentResponse->original['url']);
+            return redirect()->away($paymentResponse->original['url']);
         }
 
 

@@ -42,12 +42,14 @@ class Payment extends Model
     public function booking()
     {
         if ($this->booking_type === 'property') {
-            return $this->relatedBooking;
+            return $this->relatedBooking();
         } elseif ($this->booking_type === 'car') {
-            return $this->carBooking;
+            return $this->carBooking();
         }
-        return null;
+        // fallback to a dummy relation to avoid errors
+        return $this->belongsTo(Booking::class, 'booking_id')->whereRaw('1=0'); // empty relation
     }
+
 
 
     public function foodOrder()

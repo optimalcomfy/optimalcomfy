@@ -159,6 +159,13 @@ Route::get('/uikit/button', function () {
 })->name('button');
 
 
+Route::get('/booking/success', function () {
+    return view('success');
+})->name('bookings.success');
+
+Route::get('/booking/failed', function () {
+    return view('failed');
+})->name('bookings.failed');
 
 
 

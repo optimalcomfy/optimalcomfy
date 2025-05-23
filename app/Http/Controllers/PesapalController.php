@@ -89,14 +89,14 @@ class PesapalController extends Controller
     {
         $transactionStatus = $this->getTransactionStatus($request->OrderTrackingId);
 
-        if ($transactionStatus['status_code'] == 1) { 
+        if ($transactionStatus['status_code'] == 1) {
             $booking = Booking::find($booking_id);
 
             if (!$booking) {
-                return response(['success' => false, 'message' => 'Booking not found'], 404);
+                return redirect()->route('bookings.failed')->with('error', 'Booking not found.');
             }
 
-            $booking->status = $transactionStatus['payment_status'] ?? 'Paid';  
+            $booking->status = $transactionStatus['payment_status'] ?? 'Paid';
             $booking->total_price = $transactionStatus['amount'] ?? $booking->total_price;
             $booking->save();
 
@@ -109,9 +109,9 @@ class PesapalController extends Controller
                 ]
             );
 
-            return response(['success' => true, 'message' => 'Booking payment verified']);
+            return redirect()->route('bookings.success')->with('message', 'Booking payment verified!');
         } else {
-            return response(['success' => false, 'message' => 'Payment verification failed']);
+            return redirect()->route('bookings.failed')->with('error', 'Payment verification failed.');
         }
     }
 

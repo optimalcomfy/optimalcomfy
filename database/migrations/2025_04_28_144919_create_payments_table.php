@@ -20,8 +20,8 @@ return new class extends Migration
             $table->foreignId('service_booking_id')->nullable()->constrained('service_bookings')->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->string('');
-            $table->enum('method', ['cash', 'card', 'mpesa', 'paypal']);
-            $table->enum('status', ['pending', 'successful', 'failed'])->default('pending');
+            $table->string('method')->nullable();
+            $table->string('status')->nullable();
             $table->timestamps();
         });
     }

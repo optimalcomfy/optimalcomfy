@@ -97,13 +97,13 @@ class PesapalController extends Controller
             }
 
             $booking->status = $transactionStatus['payment_status'] ?? 'Paid';  
-            $booking->amount_paid = $transactionStatus['amount'] ?? $booking->amount_paid;
+            $booking->total_price = $transactionStatus['amount'] ?? $booking->total_price;
             $booking->save();
 
             Payment::updateOrCreate(
                 ['booking_id' => $booking_id, 'user_id' => $user_id],
                 [
-                    'amount' => $transactionStatus['amount'] ?? $booking->amount_paid,
+                    'amount' => $transactionStatus['amount'] ?? $booking->total_price,
                     'method' => 'pesapal',
                     'status' => $transactionStatus['payment_status'] ?? 'Paid'
                 ]

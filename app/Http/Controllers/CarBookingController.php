@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\PesapalController;
+use Carbon\Carbon;
 
 class CarBookingController extends Controller
 {
@@ -52,56 +53,58 @@ class CarBookingController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCarBookingRequest $request)
-    {
+	public function store(StoreCarBookingRequest $request)
+	{
+	    $validatedData = $request->validated();
+	    $user = Auth::user();
+	    $validatedData['user_id'] = $user->id;
 
+	    $car = Car::findOrFail($request->car_id); // Use findOrFail for safety
 
-        $validatedData = $request->validated();
+	    // Calculate number of days
+	    $startDate = Carbon::parse($request->start_date);
+	    $endDate = Carbon::parse($request->end_date);
+	    $days = $startDate->diffInDays($endDate);
 
-        $user = Auth::user();
+	    // Ensure at least 1 day
+	    $days = max($days, 1);
 
-        $validatedData['user_id'] = $user->id;
+	    $totalPrice = $car->price_per_day * $days;
 
+	    $booking = CarBooking::create([
+	        'user_id'         => $user->id,
+	        'car_id'          => $request->car_id,
+	        'start_date'      => $request->start_date,
+	        'end_date'        => $request->end_date,
+	        'total_price'     => $totalPrice,
+	        'pickup_location' => $request->pickup_location,
+	        'dropoff_location'=> $request->dropoff_location,
+	        'status'          => 'pending',
+	        'special_requests'=> $request->special_requests,
+	    ]);
 
-        $phone = $user->phone; 
-    
-        $booking = CarBooking::create([
-            'user_id'         => Auth::id(),
-            'car_id'          => $request->car_id, 
-            'start_date'      => $request->start_date,
-            'end_date'        => $request->end_date,
-            'total_price'     => $request->total_price,
-            'pickup_location' => $request->pickup_location,
-            'dropoff_location'=> $request->dropoff_location,
-            'status'          => 'pending',  
-            'special_requests'=> $request->special_requests,
-        ]);
+	    try {
+	        $pesapal = new PesapalController();
 
-        try {
-            $pesapal = new PesapalController();
+	        $paymentResponse = $pesapal->initiatePayment(new Request([
+	            'amount' => $booking->total_price,
+	            'booking_id' => $booking->id,
+	            'booking_type' => 'car'
+	        ]));
 
-            $paymentResponse = $pesapal->initiatePayment(new Request([
-                'amount' => $booking->total_price,
-                'booking_id' => $booking->id,
-                'booking_type' => 'car'
-            ]));
+	    } catch (\Exception $e) {
+	        \Log::error('Pesapal payment initiation failed: ' . $e->getMessage());
+	        return back()->withErrors('Payment initiation failed due to a system error.');
+	    }
 
+	    if (!empty($paymentResponse->original['url']) && filter_var($paymentResponse->original['url'], FILTER_VALIDATE_URL)) {
+	        return view('iframe', [
+	            'iframeUrl' => $paymentResponse->original['url'],
+	        ]);
+	    }
 
-
-        } catch (\Exception $e) {
-            \Log::error('Pesapal payment initiation failed: ' . $e->getMessage());
-
-            return back()->withErrors('Payment initiation failed due to a system error.');
-        }
-
-        if (!empty($paymentResponse->original['url']) && filter_var($paymentResponse->original['url'], FILTER_VALIDATE_URL)) {
-            return view('iframe', [
-                'iframeUrl' => $paymentResponse->original['url'],
-            ]);
-        }
-
-        return back()->withErrors('Payment initiation failed');
-    }
+	    return back()->withErrors('Payment initiation failed');
+	}
 
     /**
      * Display the specified resource.

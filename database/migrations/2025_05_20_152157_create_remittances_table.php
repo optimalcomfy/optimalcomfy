@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('remittances', function (Blueprint $table) {
             $table->id();
+            $table->string('remittance_number')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

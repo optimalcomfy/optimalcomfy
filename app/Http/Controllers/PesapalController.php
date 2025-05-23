@@ -65,7 +65,6 @@ class PesapalController extends Controller
 
             $data = json_decode($response->getBody()->getContents(), true);
 
-            // Log full response for debugging
             \Log::info('Pesapal SubmitOrderRequest response:', $data);
 
             if (!isset($data['redirect_url'])) {
@@ -85,34 +84,28 @@ class PesapalController extends Controller
     }
 
 
-    // Verify payment status from Pesapal and update booking accordingly
+
     public function verifyPayment(Request $request, $user_id, $booking_id, $cycle)
     {
         $transactionStatus = $this->getTransactionStatus($request->OrderTrackingId);
 
-        if ($transactionStatus['status_code'] == 1) { // Successful payment
+        if ($transactionStatus['status_code'] == 1) { 
             $booking = Booking::find($booking_id);
 
             if (!$booking) {
                 return response(['success' => false, 'message' => 'Booking not found'], 404);
             }
 
-            // Update booking payment info
-            $booking->status = $transactionStatus['payment_status'] ?? 'Paid';  // update with actual field names
-            $booking->payment_reference = $transactionStatus['orderTrackingId'] ?? null;
+            $booking->status = $transactionStatus['payment_status'] ?? 'Paid';  
             $booking->amount_paid = $transactionStatus['amount'] ?? $booking->amount_paid;
-            $booking->payment_method = 'pesapal';
-            $booking->payment_date = now();
             $booking->save();
 
-            // Update or create payment record linked to this booking
             Payment::updateOrCreate(
                 ['booking_id' => $booking_id, 'user_id' => $user_id],
                 [
                     'amount' => $transactionStatus['amount'] ?? $booking->amount_paid,
                     'method' => 'pesapal',
-                    'status' => $transactionStatus['payment_status'] ?? 'Paid',
-                    'transaction_id' => $transactionStatus['orderTrackingId'] ?? null,
+                    'status' => $transactionStatus['payment_status'] ?? 'Paid'
                 ]
             );
 
@@ -122,7 +115,8 @@ class PesapalController extends Controller
         }
     }
 
-    // Get transaction status from Pesapal
+
+
     public function getTransactionStatus($orderTrackingId)
     {
         $client = new Client();
@@ -139,8 +133,6 @@ class PesapalController extends Controller
         $data = json_decode($response->getBody()->getContents(), true);
         return $data;
     }
-
-    // Get Bearer token from Pesapal
     
     private function getToken(Client $client)
     {

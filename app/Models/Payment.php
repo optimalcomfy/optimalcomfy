@@ -17,7 +17,8 @@ class Payment extends Model
         'amount',
         'method',
         'status',
-        'car_booking_id'
+        'car_booking_id',
+        'booking_type'
     ];
 
     public function user()

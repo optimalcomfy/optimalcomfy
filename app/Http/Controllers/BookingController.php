@@ -86,6 +86,7 @@ class BookingController extends Controller
             $paymentResponse = $pesapal->initiatePayment(new Request([
                 'amount' => $booking->total_price,
                 'booking_id' => $booking->id,
+                'booking_type' => 'property'
             ]));
 
 

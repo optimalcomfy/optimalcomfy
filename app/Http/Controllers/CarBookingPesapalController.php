@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Booking;
 use App\Models\CarBooking;
 use App\Models\Payment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use Auth;
 
-class PesapalController extends Controller
+class CarBookingPesapalController extends Controller
 {
     private $consumerKey;
     private $consumerSecret;
@@ -21,22 +21,22 @@ class PesapalController extends Controller
         $this->consumerSecret = env('PESAPAL_CONSUMER_SECRET');
     }
 
+    // Initiate payment for a booking
     public function initiatePayment(Request $request)
     {
         $client = new Client();
         $token = $this->getToken($client);
         $user = Auth::user();
 
-        $booking = $this->resolveBooking($request->booking_type, $request->booking_id);
-
+        $booking = CarBooking::find($request->booking_id);
         if (!$booking) {
-            return response(['success' => false, 'message' => 'Invalid booking type or booking not found'], 404);
+            return response(['success' => false, 'message' => 'Booking not found'], 404);
         }
 
-        $amount = $booking->total_price ?? 0;
-        $cycle = $request->cycle ?? 'Monthly';
+        $amount = $booking->total_price ?? 0; // adjust field name to your booking amount
 
-        $ipn = $this->registerIPN($client, $token, $user->id, $request->booking_type, $booking->id, $cycle);
+        // Register IPN callback URL with Pesapal
+        $ipn = $this->registerIPN($client, $token, $user->id, $booking->id, $request->cycle ?? 'Monthly');
 
         try {
             $response = $client->post("{$this->pesapalBaseUrl}/Transactions/SubmitOrderRequest", [
@@ -49,8 +49,8 @@ class PesapalController extends Controller
                     'id' => uniqid(),
                     'currency' => 'KES',
                     'amount' => $amount,
-                    'description' => "Payment for {$request->booking_type} booking #{$booking->id}",
-                    'callback_url' => url("/api/pesapal/confirm/{$user->id}/{$request->booking_type}/{$booking->id}/{$cycle}"),
+                    'description' => "Booking Payment #{$booking->id}",
+                    'callback_url' => url('/api/pesapal/confirm/' . $user->id . '/' . $booking->id . '/' . ($request->cycle ?? 'Monthly')),
                     'notification_id' => $ipn['ipn_id'],
                     'redirect_mode' => 'PARENT_WINDOW',
                     'billing_address' => [
@@ -64,6 +64,8 @@ class PesapalController extends Controller
             ]);
 
             $data = json_decode($response->getBody()->getContents(), true);
+
+            \Log::info('Pesapal SubmitOrderRequest response:', $data);
 
             if (!isset($data['redirect_url'])) {
                 return response([
@@ -81,12 +83,14 @@ class PesapalController extends Controller
         }
     }
 
-    public function verifyPayment(Request $request, $user_id, $booking_type, $booking_id, $cycle)
+
+
+    public function verifyPayment(Request $request, $user_id, $booking_id, $cycle)
     {
         $transactionStatus = $this->getTransactionStatus($request->OrderTrackingId);
 
         if ($transactionStatus['status_code'] == 1) {
-            $booking = $this->resolveBooking($booking_type, $booking_id);
+            $booking = CarBooking::find($booking_id);
 
             if (!$booking) {
                 return redirect()->route('bookings.failed')->with('error', 'Booking not found.');
@@ -97,12 +101,11 @@ class PesapalController extends Controller
             $booking->save();
 
             Payment::updateOrCreate(
-                ['booking_id' => $booking_id, 'user_id' => $user_id],
+                ['service_booking_id' => $booking_id, 'user_id' => $user_id],
                 [
                     'amount' => $transactionStatus['amount'] ?? $booking->total_price,
                     'method' => 'pesapal',
-                    'status' => $transactionStatus['payment_status'] ?? 'Paid',
-                    'booking_type' => $booking_type
+                    'status' => $transactionStatus['payment_status'] ?? 'Paid'
                 ]
             );
 
@@ -112,14 +115,7 @@ class PesapalController extends Controller
         }
     }
 
-    private function resolveBooking($type, $id)
-    {
-        return match ($type) {
-            'car' => CarBooking::find($id),
-            'property' => Booking::find($id),
-            default => null,
-        };
-    }
+
 
     public function getTransactionStatus($orderTrackingId)
     {
@@ -134,9 +130,10 @@ class PesapalController extends Controller
             ],
         ]);
 
-        return json_decode($response->getBody()->getContents(), true);
+        $data = json_decode($response->getBody()->getContents(), true);
+        return $data;
     }
-
+    
     private function getToken(Client $client)
     {
         $response = $client->post("{$this->pesapalBaseUrl}/Auth/RequestToken", [
@@ -150,19 +147,26 @@ class PesapalController extends Controller
             ],
         ]);
 
-        $data = json_decode($response->getBody()->getContents(), true);
+        $body = $response->getBody()->getContents();
+        $data = json_decode($body, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            // JSON decode failed
+            throw new \Exception('Invalid JSON response from Pesapal: ' . json_last_error_msg());
+        }
 
         if (!isset($data['token'])) {
-            throw new \Exception('Token not found in Pesapal response');
+            // Token missing from response, throw exception or handle error
+            throw new \Exception('Token not found in Pesapal response: ' . $body);
         }
 
         return $data['token'];
     }
 
-    public function registerIPN(Client $client, $token, $user_id, $booking_type, $booking_id, $cycle)
-    {
-        $url = url("/api/pesapal/confirm/{$user_id}/{$booking_type}/{$booking_id}/{$cycle}");
 
+    // Register Instant Payment Notification (IPN) URL with Pesapal
+    public function registerIPN(Client $client, $token, $user_id, $booking_id, $cycle)
+    {
         $response = $client->post("{$this->pesapalBaseUrl}/URLSetup/RegisterIPN", [
             'headers' => [
                 'Authorization' => "Bearer {$token}",
@@ -170,11 +174,12 @@ class PesapalController extends Controller
                 'Accept' => 'application/json',
             ],
             'json' => [
-                'url' => $url,
+                'url' => url('/api/pesapal/confirm/' . $user_id . '/' . $booking_id . '/' . $cycle),
                 'ipn_notification_type' => 'POST',
             ],
         ]);
 
-        return json_decode($response->getBody()->getContents(), true);
+        $data = json_decode($response->getBody()->getContents(), true);
+        return $data;
     }
 }

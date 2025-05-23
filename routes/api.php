@@ -19,7 +19,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
-
-Route::get('/pesapal/confirm/{user_id}/{booking_id}/{cycle}', [PesapalController::class, 'verifyPayment']);
-
+Route::get('/pesapal/confirm/{user_id}/{booking_type}/{booking_id}/{cycle}', [PesapalController::class, 'verifyPayment']);

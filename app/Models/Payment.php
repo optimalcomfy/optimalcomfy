@@ -26,15 +26,29 @@ class Payment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function booking()
+    public function relatedBooking()
     {
-        return $this->belongsTo(Booking::class);
+        return $this->belongsTo(Booking::class, 'booking_id');
     }
 
     public function carBooking()
     {
-        return $this->belongsTo(CarBooking::class);
+        return $this->belongsTo(CarBooking::class, 'booking_id');
     }
+
+    /**
+     * Return the related booking instance depending on booking_type
+     */
+    public function booking()
+    {
+        if ($this->booking_type === 'property') {
+            return $this->relatedBooking;
+        } elseif ($this->booking_type === 'car') {
+            return $this->carBooking;
+        }
+        return null;
+    }
+
 
     public function foodOrder()
     {

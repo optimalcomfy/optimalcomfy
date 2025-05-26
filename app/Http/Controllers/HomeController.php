@@ -10,6 +10,8 @@ use Illuminate\Foundation\Application;
 use App\Models\Property;
 use App\Models\Food;
 use App\Models\Car;
+use App\Models\CarBooking;
+use App\Models\Booking;
 use App\Models\Service;
 use App\Models\PropertyAmenity;
 use Carbon\Carbon;
@@ -126,6 +128,22 @@ class HomeController extends Controller
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
             'flash' => session('flash')
+        ]);
+    }
+
+    public function hostWallet(Request $request)
+    {
+        $propertyBookingTotal = Booking::where('status','=','Booked')->sum('total_price');
+        $carBookingTotal = Booking::where('status','=','Booked')->sum('total_price');
+
+        return Inertia::render('Wallet/Wallet', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'laravelVersion' => Application::VERSION,
+            'phpVersion' => PHP_VERSION,
+            'flash' => session('flash'),
+            'propertyBookingTotal'=>$propertyBookingTotal,
+            'carBookingTotal'=>$carBookingTotal
         ]);
     }
 

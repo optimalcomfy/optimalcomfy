@@ -82,6 +82,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('/wallet', [HomeController::class, 'hostWallet'])->name('wallet');
+
     Route::resource('companies', CompanyController::class);
     Route::get('/companies/list', [CompanyController::class, 'list'])->name('companies.list');
 

@@ -7,7 +7,6 @@ const Show = ({ employee, user, company }) => {
   const [previews] = useState({
       id_front: employee?.id_front ? `/storage/${employee?.id_front}` : null,
       id_back: employee?.id_back ? `/storage/${employee?.id_back}` : null,
-      passport_front: employee?.passport_front ? `/storage/${employee?.passport_front}` : null,
       passport_front: employee?.passport_front ? `/storage/${employee?.passport_front}` : null
   });
 

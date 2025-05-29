@@ -7,7 +7,6 @@ import {
 import { PrimeReactProvider } from "primereact/api";
 import React, { useContext } from "react";
 import Layout from "@/Layouts/Layout";
-import "../../css/main";
 import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, ArrowDownToLine, Search, X, Filter } from 'lucide-react';
 
 export default function Wallet({ auth, laravelVersion, phpVersion }) {

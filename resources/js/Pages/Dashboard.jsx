@@ -7,20 +7,10 @@ import { LayoutContext } from '@/Layouts/layout/context/layoutcontext';
 import Layout from "@/Layouts/layout/layout.jsx";
 import './Dashboard.css'
 
-// Mock data for the chart
-const data = [
-  { name: 'Jan', bookings: 65, revenue: 3200 },
-  { name: 'Feb', bookings: 59, revenue: 2800 },
-  { name: 'Mar', bookings: 80, revenue: 4100 },
-  { name: 'Apr', bookings: 81, revenue: 4300 },
-  { name: 'May', bookings: 56, revenue: 3100 },
-  { name: 'Jun', bookings: 55, revenue: 3000 },
-  { name: 'Jul', bookings: 70, revenue: 3800 },
-];
 
 const Dashboard = ({ auth }) => {
     // Get data from the page props - adapted to Airbnb context
-    const { propertyCount, bookingCount } = usePage().props;
+    const { propertiesCount, totalBookingsCount, monthlyEarnings, averagePropertyBookingValue } = usePage().props;
     
     const [lineOptions, setLineOptions] = useState({});
     const { layoutConfig } = useContext(LayoutContext);
@@ -184,11 +174,11 @@ const Dashboard = ({ auth }) => {
                     <h2 className="text-2xl font-bold mb-4">Property Overview</h2>
                 </div>
                 
-                {roleId === 1 && (
+                {parseInt(roleId) !== 3 && (
                     <div className="lg:flex pt-4 w-full">
                         <InfoCard 
                             title="Total Properties" 
-                            value={propertyCount || 24} 
+                            value={propertiesCount} 
                             icon={Home} 
                             iconColor="rose" 
                             description="Active listings on platform" 
@@ -196,23 +186,15 @@ const Dashboard = ({ auth }) => {
                         
                         <InfoCard 
                             title="Total Bookings" 
-                            value={bookingCount || 146} 
+                            value={totalBookingsCount} 
                             icon={Calendar} 
                             iconColor="blue" 
                             description="Reservations this year" 
                         />
                         
                         <InfoCard 
-                            title="Average Rating" 
-                            value="4.8" 
-                            icon={Star} 
-                            iconColor="amber" 
-                            description="Based on 458 reviews" 
-                        />
-                        
-                        <InfoCard 
                             title="Revenue" 
-                            value="KES 15,280" 
+                            value={averagePropertyBookingValue}
                             icon={DollarSign} 
                             iconColor="green" 
                             description="Earnings this month" 
@@ -225,15 +207,15 @@ const Dashboard = ({ auth }) => {
                         <h3 className="text-xl font-semibold mb-3">Booking Analytics</h3>
                         <div className="h-80">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={data}>
+                                <LineChart data={monthlyEarnings}>
                                     <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
-                                    <XAxis dataKey="name" />
+                                    <XAxis dataKey="month" />
                                     <YAxis yAxisId="left" />
                                     <YAxis yAxisId="right" orientation="right" />
                                     <Tooltip />
                                     <Legend />
-                                    <Line yAxisId="left" type="monotone" dataKey="bookings" stroke="#3B82F6" activeDot={{ r: 8 }} strokeWidth={2} />
-                                    <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2} />
+                                    <Line yAxisId="left" type="monotone" dataKey="total" stroke="#3B82F6" activeDot={{ r: 8 }} strokeWidth={2} />
+                                    <Line yAxisId="right" type="monotone" dataKey="property_earnings" stroke="#10B981" strokeWidth={2} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>

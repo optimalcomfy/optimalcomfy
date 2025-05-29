@@ -54,9 +54,6 @@ use App\Http\Controllers\PesapalController;
 
 Route::post('/send-comment', [ProfileController::class, 'sendComment'])->name('profile.sendComment');
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->name('dashboard');
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/restaurant', [HomeController::class, 'restaurant'])->name('restaurant');
@@ -78,6 +75,9 @@ Route::get('/joby/{job}', [HomeController::class, 'showJob'])->name('jobShow');
 Route::get('/locations','App\Http\Controllers\LocationController@locations');
 
 Route::middleware('auth')->group(function () {
+    
+    Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -153,8 +153,6 @@ Route::middleware('auth')->post('/pesapal/initiate', [PesapalController::class, 
 Route::resource('employees', EmployeeController::class);
 Route::get('/companies/{company}/employees', [EmployeeController::class, 'getEmployeesByCompany'])
     ->name('company.employees');
-
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::get('/uikit/button', function () {
     return Inertia::render('main/uikit/button/page');

@@ -15,50 +15,10 @@ use App\Models\Booking;
 use App\Models\Service;
 use App\Models\PropertyAmenity;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = Job::query();
-
-        if ($request->has('search')) {
-            $search = trim($request->input('search'));
-
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'LIKE', "%$search%")
-                  ->orWhere('company_name', 'LIKE', "%$search%")
-                  ->orWhere('location', 'LIKE', "%$search%")
-                  ->orWhere('job_type', 'LIKE', "%$search%")
-                  ->orWhere('salary_min', 'LIKE', "%$search%")
-                  ->orWhere('salary_max', 'LIKE', "%$search%");
-            });
-        }
-
-        $query->orderBy('created_at', 'desc');
-        $jobs = $query->paginate(10);
-
-        $query = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])->orderBy('created_at', 'desc');
-
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where('name', 'LIKE', "%$search%")
-                  ->orWhere('type', 'LIKE', "%$search%")
-                  ->orWhere('price', 'LIKE', "%$search%");
-        }
-
-        $properties = $query->get();
-
-        return Inertia::render('Welcome', [
-            'canLogin' => Route::has('login'),
-            'canRegister' => Route::has('register'),
-            'laravelVersion' => Application::VERSION,
-            'phpVersion' => PHP_VERSION,
-            'jobs' => $jobs,
-            'properties'=> $properties,
-            'flash' => session('flash'),
-        ]);
-    }
 
     public function restaurant(Request $request)
     {
@@ -131,10 +91,231 @@ class HomeController extends Controller
         ]);
     }
 
+
+    public function dashboard(Request $request)
+    {
+        $user = Auth::user();
+
+        // Calculate total revenue from property bookings
+        $propertyBookingTotal = Booking::where('status', '=', 'Booked')
+            ->whereHas('property', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->sum('total_price');
+
+        // Calculate total revenue from car bookings  
+        $carBookingTotal = CarBooking::where('status', '=', 'Booked')
+            ->whereHas('car', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->sum('total_price');
+
+        // Count user's cars and properties
+        $carsCount = Car::where('user_id', '=', $user->id)->count();
+        $propertiesCount = Property::where('user_id', '=', $user->id)->count();
+
+        // Calculate pending payouts
+        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal) * 0.85; // Assuming 15% platform fee
+
+        // Recent transactions
+        $recentTransactions = collect([
+            // Property bookings
+            ...Booking::where('status', 'Booked')
+                ->whereHas('property', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->with(['property', 'user'])
+                ->latest()
+                ->take(5)
+                ->get()
+                ->map(function($booking) {
+                    return [
+                        'type' => 'property',
+                        'title' => $booking->property->title,
+                        'amount' => $booking->total_price,
+                        'guest' => $booking->user->name,
+                        'date' => $booking->created_at,
+                        'status' => 'completed'
+                    ];
+                }),
+            
+            // Car bookings
+            ...CarBooking::where('status', 'Booked')
+                ->whereHas('car', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->with(['car', 'user'])
+                ->latest()
+                ->take(5)
+                ->get()
+                ->map(function($booking) {
+                    return [
+                        'type' => 'car',
+                        'title' => $booking->car->make . ' ' . $booking->car->model,
+                        'amount' => $booking->total_price,
+                        'guest' => $booking->user->name,
+                        'date' => $booking->created_at,
+                        'status' => 'completed'
+                    ];
+                })
+        ])->sortByDesc('date')->take(10);
+
+        // Monthly earnings data for chart
+        $monthlyEarnings = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthStart = $month->startOfMonth()->toDateString();
+            $monthEnd = $month->endOfMonth()->toDateString();
+            
+            $propertyEarnings = Booking::where('status', 'Booked')
+                ->whereHas('property', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->sum('total_price');
+                
+            $carEarnings = CarBooking::where('status', 'Booked')
+                ->whereHas('car', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->sum('total_price');
+                
+            $monthlyEarnings[] = [
+                'month' => $month->format('M Y'),
+                'property_earnings' => $propertyEarnings,
+                'car_earnings' => $carEarnings,
+                'total' => $propertyEarnings + $carEarnings
+            ];
+        }
+
+        return Inertia::render('Dashboard', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'laravelVersion' => Application::VERSION,
+            'phpVersion' => PHP_VERSION,
+            'flash' => session('flash'),
+            
+            // Wallet specific data
+            'carsCount' => $carsCount,
+            'propertiesCount' => $propertiesCount,
+            'propertyBookingTotal' => $propertyBookingTotal,
+            'carBookingTotal' => $carBookingTotal,
+            'totalEarnings' => $propertyBookingTotal + $carBookingTotal,
+            'pendingPayouts' => $pendingPayouts,
+            'availableBalance' => $pendingPayouts * 0.6, // Assuming some amount is available
+            'monthlyEarnings' => $monthlyEarnings,
+            'recentTransactions' => $recentTransactions,
+            
+            // Performance metrics
+            'averagePropertyBookingValue' => $propertiesCount > 0 ? $propertyBookingTotal / max($propertiesCount, 1) : 0,
+            'averageCarBookingValue' => $carsCount > 0 ? $carBookingTotal / max($carsCount, 1) : 0,
+            'totalBookingsCount' => Booking::whereHas('property', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })->count() + 
+                CarBooking::whereHas('car', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })->count(),
+        ]);
+    }
+
+
     public function hostWallet(Request $request)
     {
-        $propertyBookingTotal = Booking::where('status','=','Booked')->sum('total_price');
-        $carBookingTotal = Booking::where('status','=','Booked')->sum('total_price');
+        $user = Auth::user();
+
+        // Calculate total revenue from property bookings
+        $propertyBookingTotal = Booking::where('status', '=', 'Booked')
+            ->whereHas('property', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->sum('total_price');
+
+        // Calculate total revenue from car bookings  
+        $carBookingTotal = CarBooking::where('status', '=', 'Booked')
+            ->whereHas('car', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->sum('total_price');
+
+        // Count user's cars and properties
+        $carsCount = Car::where('user_id', '=', $user->id)->count();
+        $propertiesCount = Property::where('user_id', '=', $user->id)->count();
+
+        // Calculate pending payouts
+        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal) * 0.85; // Assuming 15% platform fee
+
+        // Recent transactions
+        $recentTransactions = collect([
+            // Property bookings
+            ...Booking::where('status', 'Booked')
+                ->whereHas('property', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->with(['property', 'user'])
+                ->latest()
+                ->take(5)
+                ->get()
+                ->map(function($booking) {
+                    return [
+                        'type' => 'property',
+                        'title' => $booking->property->title,
+                        'amount' => $booking->total_price,
+                        'guest' => $booking->user->name,
+                        'date' => $booking->created_at,
+                        'status' => 'completed'
+                    ];
+                }),
+            
+            // Car bookings
+            ...CarBooking::where('status', 'Booked')
+                ->whereHas('car', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->with(['car', 'user'])
+                ->latest()
+                ->take(5)
+                ->get()
+                ->map(function($booking) {
+                    return [
+                        'type' => 'car',
+                        'title' => $booking->car->make . ' ' . $booking->car->model,
+                        'amount' => $booking->total_price,
+                        'guest' => $booking->user->name,
+                        'date' => $booking->created_at,
+                        'status' => 'completed'
+                    ];
+                })
+        ])->sortByDesc('date')->take(10);
+
+        // Monthly earnings data for chart
+        $monthlyEarnings = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthStart = $month->startOfMonth()->toDateString();
+            $monthEnd = $month->endOfMonth()->toDateString();
+            
+            $propertyEarnings = Booking::where('status', 'Booked')
+                ->whereHas('property', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->sum('total_price');
+                
+            $carEarnings = CarBooking::where('status', 'Booked')
+                ->whereHas('car', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->sum('total_price');
+                
+            $monthlyEarnings[] = [
+                'month' => $month->format('M Y'),
+                'property_earnings' => $propertyEarnings,
+                'car_earnings' => $carEarnings,
+                'total' => $propertyEarnings + $carEarnings
+            ];
+        }
 
         return Inertia::render('Wallet/Wallet', [
             'canLogin' => Route::has('login'),
@@ -142,8 +323,27 @@ class HomeController extends Controller
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
             'flash' => session('flash'),
-            'propertyBookingTotal'=>$propertyBookingTotal,
-            'carBookingTotal'=>$carBookingTotal
+            
+            // Wallet specific data
+            'carsCount' => $carsCount,
+            'propertiesCount' => $propertiesCount,
+            'propertyBookingTotal' => $propertyBookingTotal,
+            'carBookingTotal' => $carBookingTotal,
+            'totalEarnings' => $propertyBookingTotal + $carBookingTotal,
+            'pendingPayouts' => $pendingPayouts,
+            'availableBalance' => $pendingPayouts * 0.6, // Assuming some amount is available
+            'monthlyEarnings' => $monthlyEarnings,
+            'recentTransactions' => $recentTransactions,
+            
+            // Performance metrics
+            'averagePropertyBookingValue' => $propertiesCount > 0 ? $propertyBookingTotal / max($propertiesCount, 1) : 0,
+            'averageCarBookingValue' => $carsCount > 0 ? $carBookingTotal / max($carsCount, 1) : 0,
+            'totalBookingsCount' => Booking::whereHas('property', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })->count() + 
+                CarBooking::whereHas('car', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })->count(),
         ]);
     }
 

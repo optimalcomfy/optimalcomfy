@@ -1,10 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link, Head, router, usePage } from "@inertiajs/react";
-import {
-  LayoutContext,
-  LayoutProvider,
-} from "@/Layouts/layout/context/layoutcontext.jsx";
-import { PrimeReactProvider } from "primereact/api";
 import React, { useContext } from "react";
 import Layout from "@/Layouts/Layout";
 import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, ArrowDownToLine, Search, X, Filter } from 'lucide-react';

@@ -8,7 +8,7 @@ import { PrimeReactProvider } from "primereact/api";
 import React, { useContext } from "react";
 import Layout from "@/Layouts/Layout";
 import "../../css/main";
-import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, ArrowDownToLine } from 'lucide-react';
+import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, ArrowDownToLine, Search, X, Filter } from 'lucide-react';
 
 export default function Wallet({ auth, laravelVersion, phpVersion }) {
   const { flash, pagination, amenities, services } = usePage().props;
@@ -17,6 +17,10 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [currentBalance] = useState(2847.50);
+    
+    // Search state
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filteredTransactions, setFilteredTransactions] = useState([]);
 
     const toggleBalanceVisibility = () => {
         setBalanceVisible(!balanceVisible);
@@ -42,6 +46,9 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
         { id: 2, date: '2024-05-24', description: 'Service Fee', amount: -22.50, status: 'completed', type: 'fee' },
         { id: 3, date: '2024-05-23', description: 'Booking Payment - Mountain Cabin', amount: 320.00, status: 'pending', type: 'income' },
         { id: 4, date: '2024-05-22', description: 'Cleaning Fee Deduction', amount: -45.00, status: 'completed', type: 'fee' },
+        { id: 5, date: '2024-05-21', description: 'Booking Payment - City Apartment', amount: 280.00, status: 'completed', type: 'income' },
+        { id: 6, date: '2024-05-20', description: 'Platform Fee', amount: -14.00, status: 'completed', type: 'fee' },
+        { id: 7, date: '2024-05-19', description: 'Booking Payment - Beach House', amount: 520.00, status: 'completed', type: 'income' },
     ];
 
     const upcomingPayouts = [
@@ -49,11 +56,43 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
         { date: '2024-05-30', amount: 480.00, property: 'Mountain Cabin' },
     ];
 
+    // Search functionality
+    const handleSearch = (value) => {
+        setSearchTerm(value);
+        
+        if (value.trim() === '') {
+            setFilteredTransactions(transactions);
+            return;
+        }
+
+        const filtered = transactions.filter(transaction =>
+            transaction.description.toLowerCase().includes(value.toLowerCase()) ||
+            transaction.status.toLowerCase().includes(value.toLowerCase()) ||
+            transaction.type.toLowerCase().includes(value.toLowerCase()) ||
+            new Date(transaction.date).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+            }).toLowerCase().includes(value.toLowerCase())
+        );
+        setFilteredTransactions(filtered);
+    };
+
+    const clearSearch = () => {
+        setSearchTerm('');
+        setFilteredTransactions(transactions);
+    };
+
+    // Initialize filtered transactions
+    useEffect(() => {
+        setFilteredTransactions(transactions);
+    }, []);
+
   return (
     <>
       <PrimeReactProvider>
         <LayoutProvider>
-          <Head title="Services" />
+          <Head title="Wallet" />
           <Layout>
             <>
                <div style={{
@@ -396,23 +435,97 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                     gridTemplateColumns: '2fr 1fr',
                     gap: '20px'
                     }}>
-                    {/* Recent Transactions */}
+                    {/* Recent Transactions with Search */}
                     <div style={{
                         backgroundColor: 'white',
                         borderRadius: '20px',
                         padding: '30px',
                         boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
                     }}>
-                        <h2 style={{
-                        fontSize: '20px',
-                        fontWeight: '700',
-                        color: '#2c3e50',
-                        marginBottom: '25px'
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '25px'
                         }}>
-                        Recent Transactions
-                        </h2>
+                            <h2 style={{
+                                fontSize: '20px',
+                                fontWeight: '700',
+                                color: '#2c3e50',
+                                margin: 0
+                            }}>
+                                Recent Transactions
+                            </h2>
+                            
+                            {/* Search Input */}
+                            <div style={{ position: 'relative', width: '250px' }}>
+                                <Search 
+                                    size={16} 
+                                    style={{
+                                        position: 'absolute',
+                                        left: '12px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        color: '#7f8c8d'
+                                    }}
+                                />
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    placeholder="Search transactions..."
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px 8px 35px',
+                                        border: '2px solid #ecf0f1',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        outline: 'none',
+                                        transition: 'border-color 0.3s ease'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                                    onBlur={(e) => e.target.style.borderColor = '#ecf0f1'}
+                                />
+                                {searchTerm && (
+                                    <button
+                                        onClick={clearSearch}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '8px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#7f8c8d',
+                                            padding: '2px'
+                                        }}
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Search Results Summary */}
+                        {searchTerm && (
+                            <div style={{
+                                backgroundColor: '#f8f9fa',
+                                borderRadius: '8px',
+                                padding: '10px 15px',
+                                marginBottom: '20px',
+                                fontSize: '14px',
+                                color: '#495057'
+                            }}>
+                                {filteredTransactions.length > 0 
+                                    ? `Found ${filteredTransactions.length} transaction${filteredTransactions.length !== 1 ? 's' : ''} matching "${searchTerm}"`
+                                    : `No transactions found matching "${searchTerm}"`
+                                }
+                            </div>
+                        )}
+
                         <div>
-                        {transactions.map((transaction) => (
+                        {filteredTransactions.map((transaction) => (
                             <div key={transaction.id} style={{
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -461,6 +574,22 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                             </div>
                             </div>
                         ))}
+                        
+                        {filteredTransactions.length === 0 && searchTerm && (
+                            <div style={{
+                                textAlign: 'center',
+                                padding: '40px 20px',
+                                color: '#7f8c8d'
+                            }}>
+                                <Filter size={48} style={{ marginBottom: '15px', opacity: 0.5 }} />
+                                <p style={{ fontSize: '16px', fontWeight: '500', marginBottom: '5px' }}>
+                                    No transactions found
+                                </p>
+                                <p style={{ fontSize: '14px' }}>
+                                    Try adjusting your search terms
+                                </p>
+                            </div>
+                        )}
                         </div>
                     </div>
 

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, Head, router, usePage } from "@inertiajs/react";
 import React, { useContext } from "react";
-import Layout from "@/Layouts/Layout";
+
+import { LayoutContext } from '@/Layouts/layout/context/layoutcontext';
+import Layout from "@/Layouts/layout/layout.jsx";
 import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, ArrowDownToLine, Search, X, Filter } from 'lucide-react';
 
 export default function Wallet({ auth, laravelVersion, phpVersion }) {
@@ -11,6 +13,7 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [currentBalance] = useState(2847.50);
+   const { layoutConfig } = useContext(LayoutContext);
     
     // Search state
     const [searchTerm, setSearchTerm] = useState('');
@@ -76,6 +79,14 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
         setSearchTerm('');
         setFilteredTransactions(transactions);
     };
+
+    useEffect(() => {
+        if (layoutConfig.colorScheme === 'light') {
+            applyLightTheme();
+        } else {
+            applyDarkTheme();
+        }
+    }, [layoutConfig.colorScheme]);
 
     // Initialize filtered transactions
     useEffect(() => {

@@ -12,7 +12,6 @@ const Wallet = ({ user }) => {
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [currentBalance] = useState(availableBalance);
 
-    console.log(availableBalance);
     
 
     const toggleBalanceVisibility = () => {
@@ -71,7 +70,7 @@ const Wallet = ({ user }) => {
     };
 
     const formatCurrency = (amount) => {
-        return balanceVisible ? `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••';
+        return balanceVisible ? `KES: ${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••';
     };
 
     const transactions = [
@@ -160,7 +159,7 @@ const Wallet = ({ user }) => {
                         Current Balance
                         </h3>
                         <div style={{ fontSize: '36px', fontWeight: '700', marginBottom: '10px' }}>
-                        {formatCurrency(2847.50)}
+                        {formatCurrency(currentBalance)}
                         </div>
                         <div style={{ fontSize: '14px', opacity: 0.8, marginBottom: '20px' }}>
                         Available for withdrawal
@@ -222,7 +221,7 @@ const Wallet = ({ user }) => {
                         Total Ledger Balance
                         </h3>
                         <div style={{ fontSize: '36px', fontWeight: '700', marginBottom: '10px' }}>
-                        {formatCurrency(3125.75)}
+                        {formatCurrency(currentBalance)}
                         </div>
                         <div style={{ fontSize: '14px', opacity: 0.8 }}>
                         Including pending payments

@@ -18,6 +18,7 @@ import Video from "@/Components/Video";
 import Gallery from "@/Components/Gallery";
 import '../../css/main'
 import Product from "@/Components/Product";
+import './Welcome.css'
 
 
 export default function Welcome({ auth, laravelVersion, phpVersion }) {
@@ -32,7 +33,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
           <Head title="Welcome" />
           <HomeLayout>
             <SearchForm />
-            <div className="padding-container px-8 my-6 xl:mt-6 xl:mb-10 gap-x-6 gap-y-10 grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 grid-flow-row-dense container mx-auto">
+            <div class="product-grid padding-container">
               {properties.map((data, index) => (
                 <Product key={index} {...data} />
               ))}

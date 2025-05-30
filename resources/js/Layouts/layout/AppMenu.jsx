@@ -37,7 +37,7 @@ const AppMenu = () => {
             items: [
                 { label: 'Payments', icon: 'pi pi-fw pi-credit-card', to: route('payments.index'), roles: [1, 2,3] },
                 { label: 'Host wallet', icon: 'pi pi-fw pi-credit-card', to: route('wallet'), roles: [1, 2] },
-                { label: 'Reviews', icon: 'pi pi-fw pi-star', to: route('reviews.index'), roles: [1, 2, 3] },
+                // { label: 'Reviews', icon: 'pi pi-fw pi-star', to: route('reviews.index'), roles: [1, 2, 3] },
             ]
         },
     ];    

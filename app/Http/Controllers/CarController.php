@@ -22,6 +22,12 @@ class CarController extends Controller
     {
         $query = Car::query();
 
+        $user = Auth::user();
+
+        if ($user->role_id == 2) {
+            $query->where('user_id', '=', $user->id);
+        }
+
         if ($request->has('search')) {
             $search = $request->input('search');
             $query->where('name', 'LIKE', "%$search%")

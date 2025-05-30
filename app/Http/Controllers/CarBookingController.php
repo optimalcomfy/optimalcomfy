@@ -22,6 +22,16 @@ class CarBookingController extends Controller
     {
         $query = CarBooking::with(['car', 'user'])->orderBy('created_at', 'desc');
 
+        $user = Auth::user();
+
+        if ($user->role_id == 2) {
+            $query->whereHas('car', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        } elseif ($user->role_id == 3) {
+            $query->where('user_id', '=', $user->id);
+        }
+
         if ($request->has('search')) {
             $search = $request->input('search');
             $query->whereHas('user', function ($q) use ($search) {

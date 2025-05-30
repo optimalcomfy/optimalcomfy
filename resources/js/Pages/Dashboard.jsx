@@ -184,6 +184,7 @@ const Dashboard = () => {
                         />
                     </div>
                 
+                 {parseInt(roleId) !== 3 && (
                 <div className="col-12 mt-5">
                     <div className={`p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                         <h3 className="text-xl font-semibold mb-3">Booking Analytics</h3>
@@ -202,7 +203,7 @@ const Dashboard = () => {
                             </ResponsiveContainer>
                         </div>
                     </div>
-                </div>
+                </div>)}
             </div>
         </Layout>
     );

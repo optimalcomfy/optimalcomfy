@@ -18,7 +18,13 @@ class PropertyController extends Controller
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
+
         $query = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])->orderBy('created_at', 'desc');
+
+        if ($user->role_id == 2) {
+            $query->where('user_id', '=', $user->id);
+        }
 
         if ($request->has('search')) {
             $search = $request->input('search');

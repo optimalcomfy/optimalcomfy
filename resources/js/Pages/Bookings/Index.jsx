@@ -28,10 +28,10 @@ const BookingsIndex = () => {
               {bookings.map((booking) => (
                 <tr key={booking.id} className="border-t">
                   <td className="px-4 py-2 border">{booking.user.name}</td>
-                  <td className="px-4 py-2 border">{booking.property.name}</td>
+                  <td className="px-4 py-2 border">{booking.property.property_name}</td>
                   <td className="px-4 py-2 border">{booking.check_in_date}</td>
                   <td className="px-4 py-2 border">{booking.check_out_date}</td>
-                  <td className="px-4 py-2 border">${booking.total_price}</td>
+                  <td className="px-4 py-2 border">{booking.total_price}</td>
                   <td className="px-4 py-2 border">
                     <span 
                       className={`px-2 py-1 rounded text-white ${booking.status === 'confirmed' ? 'bg-green-500' : booking.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'}`}
@@ -40,12 +40,6 @@ const BookingsIndex = () => {
                     </span>
                   </td>
                   <td className="px-4 py-2 border">
-                    <Link 
-                      href={route('bookings.edit', { booking: booking.id })} 
-                      className="text-blue-600 hover:text-blue-800 mr-2"
-                    >
-                      Edit
-                    </Link>
                     <Link 
                       href={route('bookings.show', { booking: booking.id })} 
                       className="text-green-600 hover:text-green-800 mr-2"

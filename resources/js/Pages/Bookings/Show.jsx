@@ -13,7 +13,7 @@ const BookingShow = () => {
         {/* Booking Info */}
         <div className="space-y-4">
           <p><strong>User:</strong> {booking.user.name}</p>
-          <p><strong>Property:</strong> {booking.property.name}</p>
+          <p><strong>Property:</strong> {booking.property.property_name}</p>
           <p><strong>Check-in Date:</strong> {booking.check_in_date}</p>
           <p><strong>Check-out Date:</strong> {booking.check_out_date}</p>
           <p><strong>Total Price:</strong> ${booking.total_price}</p>
@@ -51,12 +51,6 @@ const BookingShow = () => {
 
         {/* Action Buttons */}
         <div className="mt-6 flex space-x-4">
-          <Link
-            href={route('bookings.edit', { booking: booking.id })}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-          >
-            Edit Booking
-          </Link>
           <Link
             href={route('bookings.index')}
             className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"

@@ -19,6 +19,14 @@ class PaymentController extends Controller
     {
         $query = Payment::with(['user', 'booking'])->orderBy('created_at', 'desc');
 
+        $user = Auth::user();
+
+        if ($user->role_id == 3) {
+            $query->whereHas('booking', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        } 
+
         if ($request->has('search')) {
             $search = $request->input('search');
             $query->whereHas('user', function ($q) use ($search) {

@@ -1,15 +1,19 @@
 import React, {useState} from 'react';
-import { Link, useForm, router } from '@inertiajs/react';
+import { Link, useForm, router, usePage } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, ArrowDownToLine } from 'lucide-react';
 import Swal from "sweetalert2";
 
 const Wallet = ({ user }) => {
 
+     const { users, flash, pagination, availableBalance } = usePage().props;
     const [balanceVisible, setBalanceVisible] = useState(true);
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
-    const [currentBalance] = useState(2847.50);
+    const [currentBalance] = useState(availableBalance);
+
+    console.log(availableBalance);
+    
 
     const toggleBalanceVisibility = () => {
         setBalanceVisible(!balanceVisible);

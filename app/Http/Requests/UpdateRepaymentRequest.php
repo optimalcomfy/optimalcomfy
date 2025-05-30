@@ -24,7 +24,8 @@ class UpdateRepaymentRequest extends FormRequest
         return [
             'amount' => 'nullable',
             'payment_date' => 'nullable',
-            'loan_id' => 'nullable'
+            'user_id' => 'nullable',
+            'status' => 'nullable',
         ];
     }
 }

@@ -39,6 +39,7 @@ use App\Http\Controllers\CarFeatureController;
 use App\Http\Controllers\CarMediaController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\PesapalController;
+use App\Http\Controllers\WithdrawalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -143,6 +144,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/properties/features/{propertyFeature}', [PropertyFeatureController::class, 'destroy'])->name('properties.features.destroy');
     Route::get('/properties/{property}/features', [PropertyFeatureController::class, 'getByProperty'])->name('properties.features.byProperty');
 
+        Route::post('/withdraw', [WithdrawalController::class, 'processDisbursement'])->name('withdraw');
 });
 
 

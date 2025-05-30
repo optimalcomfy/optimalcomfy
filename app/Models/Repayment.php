@@ -12,12 +12,13 @@ class Repayment extends Model
     protected $fillable = [
         'amount',
         'payment_date',
-        'loan_id',
-        'number'
+        'user_id',
+        'number',
+        'status'
     ];
 
-    public function loan(){
-        return $this->hasOne('App\Models\Loan', 'id', 'loan_id');
+    public function user(){
+        return $this->hasOne('App\Models\User', 'id', 'user_id');
     }
 
     protected static function boot()

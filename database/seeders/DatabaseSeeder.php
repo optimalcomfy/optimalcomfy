@@ -20,7 +20,6 @@ class DatabaseSeeder extends Seeder
             LoanProviderSeeder::class,
             LoanSeeder::class,
             NotificationSeeder::class,
-            RepaymentSeeder::class,
             PropertiesSeeder::class,
             AmenitySeeder::class,
             PropertyAmenitySeeder::class,

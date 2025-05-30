@@ -4,15 +4,28 @@ import React, { useContext } from "react";
 
 import { LayoutContext } from '@/Layouts/layout/context/layoutcontext';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, ArrowDownToLine, Search, X, Filter } from 'lucide-react';
+import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, ArrowDownToLine, Search, X, Filter, Car, Home } from 'lucide-react';
 
 export default function Wallet({ auth, laravelVersion, phpVersion }) {
-  const { flash, pagination, amenities, services } = usePage().props;
+  const { 
+    flash, 
+    carsCount,
+    propertiesCount,
+    propertyBookingTotal,
+    carBookingTotal,
+    totalEarnings,
+    pendingPayouts,
+    availableBalance,
+    monthlyEarnings,
+    recentTransactions,
+    averagePropertyBookingValue,
+    averageCarBookingValue,
+    totalBookingsCount
+  } = usePage().props;
 
    const [balanceVisible, setBalanceVisible] = useState(true);
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
-    const [currentBalance] = useState(2847.50);
    const { layoutConfig } = useContext(LayoutContext);
     
     // Search state
@@ -35,37 +48,45 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
     };
 
     const formatCurrency = (amount) => {
-        return balanceVisible ? `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••';
+        const numAmount = parseFloat(amount) || 0;
+        return balanceVisible ? `$${numAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••';
     };
 
-    const transactions = [
-        { id: 1, date: '2024-05-25', description: 'Booking Payment - Ocean View Suite', amount: 450.00, status: 'completed', type: 'income' },
-        { id: 2, date: '2024-05-24', description: 'Service Fee', amount: -22.50, status: 'completed', type: 'fee' },
-        { id: 3, date: '2024-05-23', description: 'Booking Payment - Mountain Cabin', amount: 320.00, status: 'pending', type: 'income' },
-        { id: 4, date: '2024-05-22', description: 'Cleaning Fee Deduction', amount: -45.00, status: 'completed', type: 'fee' },
-        { id: 5, date: '2024-05-21', description: 'Booking Payment - City Apartment', amount: 280.00, status: 'completed', type: 'income' },
-        { id: 6, date: '2024-05-20', description: 'Platform Fee', amount: -14.00, status: 'completed', type: 'fee' },
-        { id: 7, date: '2024-05-19', description: 'Booking Payment - Beach House', amount: 520.00, status: 'completed', type: 'income' },
-    ];
+    // Transform backend transactions data for display
+    const transformedTransactions = recentTransactions ? recentTransactions.map((transaction, index) => ({
+        id: index + 1,
+        date: transaction.date,
+        description: `${transaction.type === 'property' ? 'Property' : 'Car'} Booking - ${transaction.title}`,
+        amount: parseFloat(transaction.amount),
+        status: transaction.status,
+        type: 'income',
+        guest: transaction.guest
+    })) : [];
 
-    const upcomingPayouts = [
-        { date: '2024-05-28', amount: 725.50, property: 'Ocean View Suite' },
-        { date: '2024-05-30', amount: 480.00, property: 'Mountain Cabin' },
-    ];
+    // Calculate upcoming payouts based on recent transactions
+    const upcomingPayouts = transformedTransactions
+        .filter(transaction => transaction.status === 'completed')
+        .slice(0, 2)
+        .map((transaction, index) => ({
+            date: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            amount: transaction.amount * 0.85, // After platform fee
+            property: transaction.description.replace('Property Booking - ', '').replace('Car Booking - ', '')
+        }));
 
     // Search functionality
     const handleSearch = (value) => {
         setSearchTerm(value);
         
         if (value.trim() === '') {
-            setFilteredTransactions(transactions);
+            setFilteredTransactions(transformedTransactions);
             return;
         }
 
-        const filtered = transactions.filter(transaction =>
+        const filtered = transformedTransactions.filter(transaction =>
             transaction.description.toLowerCase().includes(value.toLowerCase()) ||
             transaction.status.toLowerCase().includes(value.toLowerCase()) ||
             transaction.type.toLowerCase().includes(value.toLowerCase()) ||
+            (transaction.guest && transaction.guest.toLowerCase().includes(value.toLowerCase())) ||
             new Date(transaction.date).toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric',
@@ -77,7 +98,7 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
 
     const clearSearch = () => {
         setSearchTerm('');
-        setFilteredTransactions(transactions);
+        setFilteredTransactions(transformedTransactions);
     };
 
     useEffect(() => {
@@ -90,8 +111,11 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
 
     // Initialize filtered transactions
     useEffect(() => {
-        setFilteredTransactions(transactions);
-    }, []);
+        setFilteredTransactions(transformedTransactions);
+    }, [recentTransactions]);
+
+    // Get latest transaction amount for stats
+    const latestTransactionAmount = transformedTransactions.length > 0 ? transformedTransactions[0].amount : 0;
 
   return (
     <>
@@ -125,7 +149,7 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
             gap: '20px',
             marginBottom: '30px'
             }}>
-            {/* Current Balance Card */}
+            {/* Available Balance Card */}
             <div style={{
                 background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
                 borderRadius: '20px',
@@ -165,10 +189,10 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                 </button>
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: '500', marginBottom: '10px', opacity: 0.9 }}>
-                Current Balance
+                Available Balance
                 </h3>
                 <div style={{ fontSize: '36px', fontWeight: '700', marginBottom: '10px' }}>
-                {formatCurrency(2847.50)}
+                {formatCurrency(availableBalance)}
                 </div>
                 <div style={{ fontSize: '14px', opacity: 0.8, marginBottom: '20px' }}>
                 Available for withdrawal
@@ -204,7 +228,7 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                 </button>
             </div>
 
-            {/* Ledger Balance Card */}
+            {/* Total Earnings Card */}
             <div style={{
                 background: 'linear-gradient(135deg, #4834d4, #686de0)',
                 borderRadius: '20px',
@@ -227,13 +251,13 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                 <TrendingUp size={32} />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: '500', marginBottom: '10px', opacity: 0.9 }}>
-                Total Ledger Balance
+                Total Earnings
                 </h3>
                 <div style={{ fontSize: '36px', fontWeight: '700', marginBottom: '10px' }}>
-                {formatCurrency(3125.75)}
+                {formatCurrency(totalEarnings)}
                 </div>
                 <div style={{ fontSize: '14px', opacity: 0.8 }}>
-                Including pending payments
+                Including all bookings
                 </div>
             </div>
             </div>
@@ -281,7 +305,7 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                     Available Balance
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#27ae60' }}>
-                    ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {formatCurrency(availableBalance)}
                     </div>
                 </div>
 
@@ -300,6 +324,7 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
                     placeholder="Enter amount"
+                    max={availableBalance}
                     style={{
                         width: '100%',
                         padding: '15px',
@@ -343,7 +368,7 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                     </button>
                     <button
                     onClick={processWithdrawal}
-                    disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > currentBalance}
+                    disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > availableBalance}
                     style={{
                         flex: 1,
                         padding: '15px',
@@ -353,8 +378,8 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                         color: 'white',
                         fontSize: '16px',
                         fontWeight: '600',
-                        cursor: withdrawAmount && parseFloat(withdrawAmount) > 0 && parseFloat(withdrawAmount) <= currentBalance ? 'pointer' : 'not-allowed',
-                        opacity: withdrawAmount && parseFloat(withdrawAmount) > 0 && parseFloat(withdrawAmount) <= currentBalance ? 1 : 0.5,
+                        cursor: withdrawAmount && parseFloat(withdrawAmount) > 0 && parseFloat(withdrawAmount) <= availableBalance ? 'pointer' : 'not-allowed',
+                        opacity: withdrawAmount && parseFloat(withdrawAmount) > 0 && parseFloat(withdrawAmount) <= availableBalance ? 1 : 0.5,
                         transition: 'all 0.3s ease'
                     }}
                     onMouseEnter={(e) => {
@@ -391,12 +416,15 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                 boxShadow: '0 5px 20px rgba(0,0,0,0.1)',
                 textAlign: 'center'
             }}>
-                <DollarSign style={{ color: '#27ae60', marginBottom: '10px' }} size={32} />
+                <Home style={{ color: '#27ae60', marginBottom: '10px' }} size={32} />
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#2c3e50', marginBottom: '5px' }}>
-                {formatCurrency(450.00)}
+                {formatCurrency(propertyBookingTotal)}
                 </div>
                 <div style={{ fontSize: '14px', color: '#7f8c8d' }}>
-                Last Booking Payment
+                Property Earnings
+                </div>
+                <div style={{ fontSize: '12px', color: '#95a5a6', marginTop: '5px' }}>
+                {propertiesCount} {propertiesCount === 1 ? 'Property' : 'Properties'}
                 </div>
             </div>
 
@@ -407,12 +435,15 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                 boxShadow: '0 5px 20px rgba(0,0,0,0.1)',
                 textAlign: 'center'
             }}>
-                <Calendar style={{ color: '#3498db', marginBottom: '10px' }} size={32} />
+                <Car style={{ color: '#3498db', marginBottom: '10px' }} size={32} />
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#2c3e50', marginBottom: '5px' }}>
-                {formatCurrency(1205.50)}
+                {formatCurrency(carBookingTotal)}
                 </div>
                 <div style={{ fontSize: '14px', color: '#7f8c8d' }}>
-                Next Payout
+                Car Rental Earnings
+                </div>
+                <div style={{ fontSize: '12px', color: '#95a5a6', marginTop: '5px' }}>
+                {carsCount} {carsCount === 1 ? 'Car' : 'Cars'}
                 </div>
             </div>
 
@@ -425,10 +456,32 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
             }}>
                 <Clock style={{ color: '#e67e22', marginBottom: '10px' }} size={32} />
                 <div style={{ fontSize: '24px', fontWeight: '700', color: '#2c3e50', marginBottom: '5px' }}>
-                {formatCurrency(278.25)}
+                {formatCurrency(pendingPayouts)}
                 </div>
                 <div style={{ fontSize: '14px', color: '#7f8c8d' }}>
-                Pending Amount
+                Pending Payouts
+                </div>
+                <div style={{ fontSize: '12px', color: '#95a5a6', marginTop: '5px' }}>
+                After platform fees
+                </div>
+            </div>
+
+            <div style={{
+                backgroundColor: 'white',
+                borderRadius: '15px',
+                padding: '25px',
+                boxShadow: '0 5px 20px rgba(0,0,0,0.1)',
+                textAlign: 'center'
+            }}>
+                <Calendar style={{ color: '#9b59b6', marginBottom: '10px' }} size={32} />
+                <div style={{ fontSize: '24px', fontWeight: '700', color: '#2c3e50', marginBottom: '5px' }}>
+                {totalBookingsCount}
+                </div>
+                <div style={{ fontSize: '14px', color: '#7f8c8d' }}>
+                Total Bookings
+                </div>
+                <div style={{ fontSize: '12px', color: '#95a5a6', marginTop: '5px' }}>
+                All time
                 </div>
             </div>
             </div>
@@ -528,7 +581,7 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                 )}
 
                 <div>
-                {filteredTransactions.map((transaction) => (
+                {filteredTransactions.length > 0 ? filteredTransactions.map((transaction) => (
                     <div key={transaction.id} style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -547,7 +600,8 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                         </div>
                         <div style={{
                         fontSize: '14px',
-                        color: '#7f8c8d'
+                        color: '#7f8c8d',
+                        marginBottom: '2px'
                         }}>
                         {new Date(transaction.date).toLocaleDateString('en-US', { 
                             month: 'short', 
@@ -555,6 +609,14 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                             year: 'numeric'
                         })}
                         </div>
+                        {transaction.guest && (
+                            <div style={{
+                                fontSize: '12px',
+                                color: '#95a5a6'
+                            }}>
+                                Guest: {transaction.guest}
+                            </div>
+                        )}
                     </div>
                     <div style={{ textAlign: 'right' }}>
                         <div style={{
@@ -576,7 +638,21 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                         </div>
                     </div>
                     </div>
-                ))}
+                )) : (
+                    <div style={{
+                        textAlign: 'center',
+                        padding: '40px 20px',
+                        color: '#7f8c8d'
+                    }}>
+                        <DollarSign size={48} style={{ marginBottom: '15px', opacity: 0.5 }} />
+                        <p style={{ fontSize: '16px', fontWeight: '500', marginBottom: '5px' }}>
+                            No transactions yet
+                        </p>
+                        <p style={{ fontSize: '14px' }}>
+                            Your booking transactions will appear here
+                        </p>
+                    </div>
+                )}
                 
                 {filteredTransactions.length === 0 && searchTerm && (
                     <div style={{
@@ -612,7 +688,7 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                 Upcoming Payouts
                 </h2>
                 <div>
-                {upcomingPayouts.map((payout, index) => (
+                {upcomingPayouts.length > 0 ? upcomingPayouts.map((payout, index) => (
                     <div key={index} style={{
                     padding: '20px',
                     backgroundColor: '#f8f9fa',
@@ -644,7 +720,21 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
                         })}
                     </div>
                     </div>
-                ))}
+                )) : (
+                    <div style={{
+                        textAlign: 'center',
+                        padding: '40px 20px',
+                        color: '#7f8c8d'
+                    }}>
+                        <Calendar size={48} style={{ marginBottom: '15px', opacity: 0.5 }} />
+                        <p style={{ fontSize: '16px', fontWeight: '500', marginBottom: '5px' }}>
+                            No upcoming payouts
+                        </p>
+                        <p style={{ fontSize: '14px' }}>
+                            Payouts will be scheduled after bookings
+                        </p>
+                    </div>
+                )}
                 </div>
             </div>
             </div>

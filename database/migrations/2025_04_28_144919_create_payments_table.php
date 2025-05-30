@@ -18,8 +18,8 @@ return new class extends Migration
             $table->foreignId('car_booking_id')->nullable()->constrained('car_bookings')->onDelete('cascade');
             $table->foreignId('food_order_id')->nullable()->constrained('food_orders')->onDelete('cascade');
             $table->foreignId('service_booking_id')->nullable()->constrained('service_bookings')->onDelete('cascade');
-            $table->decimal('amount', 10, 2);
-            $table->string('');
+            $table->double('amount')->nullable();
+            $table->string('booking_type')->nullable();
             $table->string('method')->nullable();
             $table->string('status')->nullable();
             $table->timestamps();

@@ -1,7 +1,8 @@
 import React, {useState} from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, useForm, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, ArrowDownToLine } from 'lucide-react';
+import Swal from "sweetalert2";
 
 const Wallet = ({ user }) => {
 
@@ -20,9 +21,41 @@ const Wallet = ({ user }) => {
 
     const processWithdrawal = () => {
         // Process withdrawal logic here
-        alert(`Withdrawal of ${withdrawAmount} initiated successfully!`);
         setShowWithdrawModal(false);
         setWithdrawAmount('');
+
+         const formData = {
+            amount: withdrawAmount,
+        };
+
+        Swal.fire({
+            title: `Are you sure you want to withdraw?`,
+            text: 'This action will withdraw money from your wallet.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#gray',
+            confirmButtonText: `Yes, withdraw it!`,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.post(route('withdraw'), formData, {
+                    onSuccess: () => {
+                        Swal.fire(
+                            `${status}!`, 
+                            `The withdrawal has been initiated.`, 
+                            'success'
+                        );
+                    },
+                    onError: (err) => {
+                        // Capture the error message from the response
+                        const errorMessage = err?.response?.data?.error || 'There was a problem updating the loan status.';
+                        setError(errorMessage);
+                        console.error(`${status} error:`, err);
+                        Swal.fire('Error', errorMessage, 'error');
+                    }
+                });
+            }
+        });
     };
 
     const formatCurrency = (amount) => {

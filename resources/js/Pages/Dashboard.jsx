@@ -8,9 +8,9 @@ import Layout from "@/Layouts/layout/layout.jsx";
 import './Dashboard.css'
 
 
-const Dashboard = ({ auth }) => {
+const Dashboard = () => {
     // Get data from the page props - adapted to Airbnb context
-    const { propertiesCount, totalBookingsCount, monthlyEarnings, averagePropertyBookingValue } = usePage().props;
+    const { propertiesCount, totalBookingsCount, monthlyEarnings, averagePropertyBookingValue, auth } = usePage().props;
     
     const [lineOptions, setLineOptions] = useState({});
     const { layoutConfig } = useContext(LayoutContext);
@@ -129,7 +129,7 @@ const Dashboard = ({ auth }) => {
         return (
             <div className={`p-3`}>
                 <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
-                    <div className="flex justify-between items-center mb-3">
+                    <div className="flex justify-between gap-4 items-center mb-3">
                         <h3 className="text-lg font-semibold">{title}</h3>
                         <div className={`p-2 rounded-full bg-${iconColor}-100 text-${iconColor}-500`}>
                             <Icon size={20} />
@@ -143,27 +143,7 @@ const Dashboard = ({ auth }) => {
             </div>
         );
     };
-    
-    // Chart data configuration
-    const chartData = {
-        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-        datasets: [
-            {
-                label: 'Bookings',
-                data: [65, 59, 80, 81, 56, 55, 70],
-                fill: false,
-                backgroundColor: '#3B82F6',
-                borderColor: '#3B82F6',
-            },
-            {
-                label: 'Revenue (KES 100s)',
-                data: [32, 28, 41, 43, 31, 30, 38],
-                fill: false,
-                backgroundColor: '#10B981',
-                borderColor: '#10B981',
-            }
-        ]
-    };
+
 
     return (
         <Layout>
@@ -174,15 +154,26 @@ const Dashboard = ({ auth }) => {
                     <h2 className="text-2xl font-bold mb-4">Property Overview</h2>
                 </div>
                 
-                {parseInt(roleId) !== 3 && (
+                
                     <div className="lg:flex pt-4 w-full">
-                        <InfoCard 
-                            title="Total Properties" 
-                            value={propertiesCount} 
-                            icon={Home} 
-                            iconColor="rose" 
-                            description="Active listings on platform" 
-                        />
+                        {parseInt(roleId) !== 3 && (
+                        <>
+                            <InfoCard 
+                                title="Total Properties" 
+                                value={propertiesCount} 
+                                icon={Home} 
+                                iconColor="rose" 
+                                description="Active listings on platform" 
+                            />  
+                            <InfoCard 
+                                title="Revenue" 
+                                value={averagePropertyBookingValue}
+                                icon={DollarSign} 
+                                iconColor="green" 
+                                description="Earnings this month" 
+                            />  
+                        </>            
+                        )}
                         
                         <InfoCard 
                             title="Total Bookings" 
@@ -191,16 +182,7 @@ const Dashboard = ({ auth }) => {
                             iconColor="blue" 
                             description="Reservations this year" 
                         />
-                        
-                        <InfoCard 
-                            title="Revenue" 
-                            value={averagePropertyBookingValue}
-                            icon={DollarSign} 
-                            iconColor="green" 
-                            description="Earnings this month" 
-                        />
                     </div>
-                )}
                 
                 <div className="col-12 mt-5">
                     <div className={`p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
@@ -218,125 +200,6 @@ const Dashboard = ({ auth }) => {
                                     <Line yAxisId="right" type="monotone" dataKey="property_earnings" stroke="#10B981" strokeWidth={2} />
                                 </LineChart>
                             </ResponsiveContainer>
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="col-12 lg:col-6 mt-5">
-                    <div className={`p-4 rounded-lg shadow-md h-full ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-semibold">Top Performing Properties</h3>
-                            <button className="text-sm text-blue-500 font-medium">View All</button>
-                        </div>
-                        <div className="space-y-4">
-                            {[
-                                { name: 'Oceanfront Villa', location: 'Malibu, CA', bookings: 18, rating: 4.9, image: '/api/placeholder/60/60' },
-                                { name: 'Downtown Loft', location: 'New York, NY', bookings: 15, rating: 4.8, image: '/api/placeholder/60/60' },
-                                { name: 'Mountain Cabin', location: 'Aspen, CO', bookings: 12, rating: 4.7, image: '/api/placeholder/60/60' }
-                            ].map((property, index) => (
-                                <div key={index} className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} flex items-center`}>
-                                    <img src={property.image} alt={property.name} className="rounded-lg w-16 h-16 object-cover mr-3" />
-                                    <div className="flex-grow">
-                                        <h4 className="font-medium">{property.name}</h4>
-                                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{property.location}</p>
-                                        <div className="flex items-center mt-1">
-                                            <Star size={14} className="text-amber-500 mr-1" />
-                                            <span className="text-sm">{property.rating}</span>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className={`text-sm font-medium ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                                            {property.bookings} bookings
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="col-12 lg:col-6 mt-5">
-                    <div className={`p-4 rounded-lg shadow-md h-full ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-semibold">Recent Bookings</h3>
-                            <button className="text-sm text-blue-500 font-medium">View All</button>
-                        </div>
-                        <div className="space-y-4">
-                            {[
-                                { guest: 'Emma Wilson', property: 'Beachside Cottage', date: 'Apr 22 - Apr 27', status: 'Confirmed', avatar: 'EW' },
-                                { guest: 'Michael Brown', property: 'Downtown Loft', date: 'Apr 18 - Apr 20', status: 'Checked In', avatar: 'MB' },
-                                { guest: 'Sarah Davis', property: 'Mountain View Cabin', date: 'Apr 25 - May 2', status: 'Pending', avatar: 'SD' }
-                            ].map((booking, index) => (
-                                <div key={index} className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} flex justify-between items-center`}>
-                                    <div className="flex items-center">
-                                        <div className="h-10 w-10 rounded-full bg-rose-200 text-rose-800 mr-3 flex items-center justify-center">
-                                            {booking.avatar}
-                                        </div>
-                                        <div>
-                                            <h4 className="font-medium">{booking.guest}</h4>
-                                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                {booking.property} • {booking.date}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                        booking.status === 'Confirmed' 
-                                            ? (isDarkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800')
-                                            : booking.status === 'Checked In'
-                                                ? (isDarkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800')
-                                                : (isDarkMode ? 'bg-amber-900 text-amber-200' : 'bg-amber-100 text-amber-800')
-                                    }`}>
-                                        {booking.status}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="col-12 mt-5">
-                    <div className={`p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                        <h3 className="text-xl font-semibold mb-4">Upcoming Calendar</h3>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full">
-                                <thead>
-                                    <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                                        <th className="text-left py-3 px-4 font-medium">Property</th>
-                                        <th className="text-left py-3 px-4 font-medium">Guest</th>
-                                        <th className="text-left py-3 px-4 font-medium">Check-in</th>
-                                        <th className="text-left py-3 px-4 font-medium">Check-out</th>
-                                        <th className="text-left py-3 px-4 font-medium">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {[
-                                        { property: 'Oceanfront Villa', guest: 'James Wilson', checkin: 'Apr 20, 2025', checkout: 'Apr 25, 2025', status: 'Upcoming' },
-                                        { property: 'City Apartment', guest: 'Laura Miller', checkin: 'Apr 22, 2025', checkout: 'Apr 24, 2025', status: 'Confirmed' },
-                                        { property: 'Mountain Retreat', guest: 'Robert Taylor', checkin: 'Apr 23, 2025', checkout: 'Apr 30, 2025', status: 'Pending' },
-                                        { property: 'Lake House', guest: 'Jennifer Brown', checkin: 'Apr 24, 2025', checkout: 'Apr 28, 2025', status: 'Payment Due' }
-                                    ].map((booking, index) => (
-                                        <tr key={index} className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                                            <td className="py-3 px-4">{booking.property}</td>
-                                            <td className="py-3 px-4">{booking.guest}</td>
-                                            <td className="py-3 px-4">{booking.checkin}</td>
-                                            <td className="py-3 px-4">{booking.checkout}</td>
-                                            <td className="py-3 px-4">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    booking.status === 'Confirmed' 
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : booking.status === 'Upcoming'
-                                                            ? 'bg-blue-100 text-blue-800'
-                                                            : booking.status === 'Pending'
-                                                                ? 'bg-amber-100 text-amber-800'
-                                                                : 'bg-red-100 text-red-800'
-                                                }`}>
-                                                    {booking.status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
                         </div>
                     </div>
                 </div>

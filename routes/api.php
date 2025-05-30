@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PesapalController;
+use App\Http\Controllers\WithdrawalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,3 +21,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::get('/pesapal/confirm/{user_id}/{booking_type}/{booking_id}/{cycle}', [PesapalController::class, 'verifyPayment']);
+
+Route::post('/mpesa/result', [WithdrawalController::class, 'handleMpesaCallback']);
+
+
+Route::post('/mpesa/timeout', [WithdrawalController::class, 'handleTimeout'])->name('mpesa.timeout');

@@ -160,11 +160,6 @@ Route::get('/uikit/button', function () {
     return Inertia::render('main/uikit/button/page');
 })->name('button');
 
-Route::post('/mpesa/result', [WithdrawalController::class, 'handleMpesaCallback']);
-
-
-Route::post('/mpesa/timeout', [WithdrawalController::class, 'handleTimeout'])->name('mpesa.timeout');
-
 
 Route::get('/booking/success', function () {
     return view('success');

@@ -53,13 +53,13 @@ class WithdrawalController extends Controller
     {
         $user = Auth::user();
         $input = $request->all();
-
+        
         $amount = (int) $input['amount']; // Ensure this is sent in the request
-
+        
         DB::beginTransaction();
         try {
             $phone = $user->phone;
-
+            
             // Create repayment record
             $repayment = Repayment::create([
                 'amount' => $amount,
@@ -67,16 +67,21 @@ class WithdrawalController extends Controller
                 'user_id' => $user->id,
                 'status'=> 'Pending'
             ]);
-
+            
             // Use user ID instead of loan ID
             $response = $this->mpesaService->sendB2CPayment($phone, $amount, $repayment->id);
-
+            
             DB::commit();
-            return response()->json(['success' => true]);
+            
+            // Return Inertia response instead of JSON
+            return redirect()->back()->with('success', 'Withdrawal initiated successfully');
+            
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Disbursement failed:', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => 'Disbursement failed.'], 500);
+            
+            // Return Inertia response with error
+            return redirect()->back()->withErrors(['error' => 'Disbursement failed: ' . $e->getMessage()]);
         }
     }
 

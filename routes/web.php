@@ -144,7 +144,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/properties/features/{propertyFeature}', [PropertyFeatureController::class, 'destroy'])->name('properties.features.destroy');
     Route::get('/properties/{property}/features', [PropertyFeatureController::class, 'getByProperty'])->name('properties.features.byProperty');
 
-        Route::post('/withdraw', [WithdrawalController::class, 'processDisbursement'])->name('withdraw');
+    Route::post('/withdraw', [WithdrawalController::class, 'processDisbursement'])->name('withdraw');
 });
 
 
@@ -159,6 +159,11 @@ Route::get('/companies/{company}/employees', [EmployeeController::class, 'getEmp
 Route::get('/uikit/button', function () {
     return Inertia::render('main/uikit/button/page');
 })->name('button');
+
+Route::post('/mpesa/result', [WithdrawalController::class, 'handleMpesaCallback']);
+
+
+Route::post('/mpesa/timeout', [WithdrawalController::class, 'handleTimeout'])->name('mpesa.timeout');
 
 
 Route::get('/booking/success', function () {

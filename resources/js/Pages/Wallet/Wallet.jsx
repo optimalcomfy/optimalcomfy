@@ -20,11 +20,7 @@ const Wallet = ({ user }) => {
     };
 
     const processWithdrawal = () => {
-        // Process withdrawal logic here
-        setShowWithdrawModal(false);
-        setWithdrawAmount('');
-
-         const formData = {
+        const formData = {
             amount: withdrawAmount,
         };
 
@@ -38,19 +34,31 @@ const Wallet = ({ user }) => {
             confirmButtonText: `Yes, withdraw it!`,
         }).then((result) => {
             if (result.isConfirmed) {
+                // Close modal first
+                setShowWithdrawModal(false);
+                setWithdrawAmount('');
+                
                 router.post(route('withdraw'), formData, {
-                    onSuccess: () => {
-                        Swal.fire(
-                            `${status}!`, 
-                            `The withdrawal has been initiated.`, 
-                            'success'
-                        );
+                    onSuccess: (page) => {
+                        // Check if there's a success message in the session
+                        if (page.props.flash?.success) {
+                            Swal.fire(
+                                'Success!', 
+                                page.props.flash.success, 
+                                'success'
+                            );
+                        } else {
+                            Swal.fire(
+                                'Success!', 
+                                'The withdrawal has been initiated.', 
+                                'success'
+                            );
+                        }
                     },
-                    onError: (err) => {
-                        // Capture the error message from the response
-                        const errorMessage = err?.response?.data?.error || 'There was a problem updating the loan status.';
-                        setError(errorMessage);
-                        console.error(`${status} error:`, err);
+                    onError: (errors) => {
+                        // Handle validation or other errors
+                        const errorMessage = errors.error || 'There was a problem processing the withdrawal.';
+                        console.error('Withdrawal error:', errors);
                         Swal.fire('Error', errorMessage, 'error');
                     }
                 });

@@ -7,6 +7,7 @@ import './Header.css'; // Import custom CSS
 function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef(null);
 
   const toggleMobileMenu = () => {
@@ -16,6 +17,17 @@ function Header() {
   const toggleProfileDropdown = () => {
     setProfileDropdownOpen(!profileDropdownOpen);
   };
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      setIsScrolled(scrollTop > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -33,7 +45,7 @@ function Header() {
 
   return (
     <>
-        <div className="header-top">
+        <div className={`header-top ${isScrolled ? 'header-scrolled' : ''}`}>
             <div className="header-container">
             <div className="header-top-content">
                 <div className="contact-info">
@@ -52,7 +64,7 @@ function Header() {
         </div>
         
         {/* header menu */}
-        <div className="header-main">
+        <div className={`header-main ${isScrolled ? 'header-scrolled' : ''}`}>
             <div className="header-container">
             <div className="header-grid">
                 <div className="navigation-menu">
@@ -83,7 +95,7 @@ function Header() {
                 <div className="logo-container">
                 <Link href={route('home')}>
                     <img
-                    className="logo-image"
+                    className={`logo-image ${isScrolled ? 'logo-scrolled' : ''}`}
                     src="/image/logo/logo.png"
                     alt="Optimalcomfy"
                     />
@@ -139,71 +151,9 @@ function Header() {
                         )}
                     </div>
                 </div>
-                <button
-                    className="mobile-menu-button"
-                    onClick={toggleMobileMenu}
-                >
-                    <span>
-                    <img src="assets/images/icon/menu-icon.svg" alt="" />
-                    </span>
-                </button>
                 </div>
             </div>
             </div>
-        </div>
-
-        {/* Mobile Menu */}
-        <div className={`mobile-menu ${mobileMenuOpen ? 'mobile-menu-open' : 'mobile-menu-closed'}`}>
-          <div className="mobile-menu-header">
-            <a href="index.html" className="mobile-logo-link">
-              <img className="mobile-logo" src="/image/logo/logo.png" alt="Optimalcomfy" />
-            </a>
-            <button 
-              onClick={toggleMobileMenu}
-              className="mobile-close-button"
-            >
-              ✕
-            </button>
-          </div>
-          <nav className="mobile-nav">
-            <ul className="mobile-nav-list">
-              <li className="mobile-nav-item">
-                <Link href={route('home')} className="mobile-nav-link">Home</Link>
-              </li>
-              <li className="mobile-nav-item">
-                <Link href={route('about')} className="mobile-nav-link">About</Link>
-              </li>
-              <li className="mobile-nav-item">
-                <Link href={route('restaurant')} className="mobile-nav-link">Restaurant</Link>
-              </li>
-              <li className="mobile-nav-item">
-                <Link href={route('gallery')} className="mobile-nav-link">Gallery</Link>
-              </li>
-              <li className="mobile-nav-item">
-                <Link href={route('all-services')} className="mobile-nav-link">Services</Link>
-              </li>
-              <li className="mobile-nav-item">
-                <Link href={route('all-properties')} className="mobile-nav-link">Properties</Link>
-              </li>
-              <li className="mobile-nav-item">
-                <Link href={route('all-cars')} className="mobile-nav-link">Cars</Link>
-              </li>
-              <li className="mobile-nav-item">
-                <Link href={route('contact')} className="mobile-nav-link">Contact</Link>
-              </li>
-            </ul>
-            <div className="mobile-buttons">
-              <Link href={route('login')} className="mobile-button mobile-button-outline">
-                Sign In
-              </Link>
-              <Link href={route('register')} className="mobile-button mobile-button-outline">
-                Sign Up
-              </Link>
-              <Link href={route('all-properties')} className="mobile-button mobile-button-filled">
-                <span>Book Now</span>
-              </Link>
-            </div>
-          </nav>
         </div>
     </>
   )

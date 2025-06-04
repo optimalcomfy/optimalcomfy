@@ -2,12 +2,20 @@
 .header-top {
   border-bottom: 0.5px solid #E5E5E5;
   display: none;
+  transition: all 0.3s ease;
+  background-color: white;
+  z-index: 999;
 }
 
 @media (min-width: 768px) {
   .header-top {
     display: block;
   }
+}
+
+/* Fixed header styles when scrolled */
+.header-top.header-scrolled {
+  display: none !important;
 }
 
 .header-container {
@@ -46,6 +54,35 @@
 .header-main {
   transition: all 0.3s ease;
   border-bottom: 0.5px solid #E5E5E5;
+  background-color: white;
+  z-index: 1000;
+}
+
+/* Fixed header when scrolled */
+.header-main.header-scrolled {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.95);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Add body padding when header is fixed to prevent content jump */
+body.header-fixed {
+  padding-top: 80px;
 }
 
 .header-grid {
@@ -54,12 +91,22 @@
   justify-content: center;
   align-items: center;
   padding: 20px 0;
+  transition: all 0.3s ease;
+}
+
+/* Smaller padding when scrolled */
+.header-main.header-scrolled .header-grid {
+  padding: 12px 0;
 }
 
 @media (min-width: 1024px) {
   .header-grid {
     grid-template-columns: 1fr 1fr 1fr;
     padding: 0;
+  }
+  
+  .header-main.header-scrolled .header-grid {
+    padding: 8px 0;
   }
 }
 
@@ -88,11 +135,22 @@
 .logo-image {
   max-width: 160px;
   padding-top: 12px;
+  transition: all 0.3s ease;
+}
+
+/* Smaller logo when scrolled */
+.logo-image.logo-scrolled {
+  max-width: 120px;
+  padding-top: 8px;
 }
 
 @media (min-width: 1024px) {
   .logo-image {
     max-width: 260px;
+  }
+  
+  .logo-image.logo-scrolled {
+    max-width: 200px;
   }
 }
 
@@ -325,4 +383,17 @@
 
 .dark .navigation__menu--item.has-arrow:before {
   color: white !important;
+}
+
+/* Ensure proper stacking order */
+.header-main.header-scrolled {
+  z-index: 1000;
+}
+
+.profile-dropdown {
+  z-index: 1001;
+}
+
+.mobile-menu {
+  z-index: 1002;
 }

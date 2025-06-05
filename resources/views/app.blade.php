@@ -77,6 +77,8 @@
 
     <link href="/cars/css/style.css" rel="stylesheet" type="text/css">
 
+    <link href="/css/airbnb.css" rel="stylesheet" type="text/css">
+
     <link href="/cars/css/mdb.min.css" rel="stylesheet" type="text/css" id="mdb">
 
     <link href="/cars/css/coloring.css" rel="stylesheet" type="text/css">

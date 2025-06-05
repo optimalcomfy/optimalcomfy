@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Booking;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {

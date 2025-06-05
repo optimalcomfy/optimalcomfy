@@ -22,162 +22,371 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         <LayoutProvider>
           <Head title="Welcome" />
           <HomeLayout>
-            <>
-              <div
-                className="relative h-[400px] lg:h-[700px] bg-cover bg-center bg-no-repeat flex items-center 
-            before:absolute before:top-0 before:bottom-0 before:left-0 before:right-0 before:bg-heading before:opacity-60"
-                style={{
-                  backgroundImage: property?.initial_gallery?.[0]?.image
-                    ? `url('/storage/${property.initial_gallery[0].image}')`
-                    : `url('${fallbackImage}')`,
-                }}
-              >
-                <div className="container text-center text-white relative">
-                  <h1 className="heading text-white mb-[25px] text-[40px] lg:text-[70px] md:text-[60px] sm:text-[50px] leading-none">
-                    {property?.property_name} - {property?.type} Detail
-                  </h1>
-                  <p className="text-sm">
-                    Whether you're in the mood for a leisurely breakfast, a
-                    business lunch, or a romantic dinner{" "}
-                  </p>
+            <div className="py-8">
+              {/* Main Section */}
+              <section className="main">
+                <div className="container f-reverse">
+                  <h2 className="hero__heading">
+                    {property?.property_name} - {property?.type}
+                  </h2>
+                  {/* meta datas */}
+                  <div className="meta-data__container">
+                    <div className="meta-data">
+                      <span className="rating">
+                        <div className="rating-img__container">
+                          <img src="/images/icons/rating.svg" alt="rating-star" />
+                        </div>
+                        <span>4.88</span>
+                        <span className="dot">.</span>
+                        <a href="#" className="reviews">
+                          249 reviews
+                        </a>
+                      </span>
+                      <span className="dot">.</span>
+                      <a href="#" className="location">
+                        {property?.location}
+                      </a>
+                    </div>
+                    <div className="buttons">
+                      <div className="share">
+                        <div className="img__container">
+                          <img src="/images/icons/share.png" alt="share" />
+                        </div>
+                        <a href="#">Share</a>
+                      </div>
+                      <div className="save">
+                        <div className="img__container">
+                          <img src="images/icons/heart.svg" alt="heart" />
+                        </div>
+                        <a href="#">Save</a>
+                      </div>
+                    </div>
+                  </div>
+                  {/* images */}
+                  <div className="hero-images">
+                    <a href="#" className="image__link">
+                      <div className="img__container">
+                        <img src="/images/icons/menu1.png" alt="9 dots" />
+                      </div>
+                      <span className="image__link-text">Show all photos</span>
+                    </a>
+                    <div className="img__container--hero">
+                      <img src="/images/room1.webp" alt="room" />
+                    </div>
+                    <div className="img__collage">
+                      <div className="img__container">
+                        <img src="/images/room2.webp" alt="room" />
+                      </div>
+                      <div className="img__container">
+                        <img src="/images/room3.webp" alt="room" />
+                      </div>
+                      <div className="img__container">
+                        <img src="/images/room4.webp" alt="room" />
+                      </div>
+                      <div className="img__container">
+                        <img src="/images/romm5.webp" alt="room" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </section>
+              <div className="container-m">
+                <hr />
               </div>
-
-              {/* Property details */}
-              <div className="relative p-[100px_0] lg:p-[120px_0]">
-                <div className="container">
-                  <div className="flex flex-col lg:flex-row justify-between gap-[30px]">
-                    <div className="details__content max-w-[820px]">
-                      <span className="block h4 heading text-primary leading-none">
-                        KES {property?.price_per_night}
-                      </span>
-                      <h2 className="heading text-heading mt-[15px]">
-                        {property?.type}
-                      </h2>
-
-                      <div className="flex gap-[20px] items-center mt-2 mb-3 text-[24px] font-glida">
-                        <span className="flex gap-2">
-                          <i className="flaticon-user" />
-                          {property?.max_guests}{" "}
-                          {property?.max_guests > 1 ? "People" : "Person"}{" "}
-                        </span>
+              {/* Details Section */}
+              <section className="section">
+                <div className="container container--details container-m">
+                  <div className="section__content">
+                    <div className="heading">
+                      <div className="heading__title">
+                        <h3 className="content-title">
+                          Hosted by {property?.user?.name}
+                        </h3>
                       </div>
-
-                      <div className="flex gap-[20px] items-center mt-2 mb-3 text-[24px] font-glida">
-                        <span className="flex gap-2">
-                          <i className="flaticon-user" />
-                          {property?.location}
-                        </span>
+                      <div className="section__img">
+                        <img
+                          src="https://a0.muscache.com/im/pictures/user/bfe2dd3c-e72f-4e46-ba38-5c0bac2cc2e2.jpg?im_w=240"
+                          alt="woman sitting"
+                        />
                       </div>
-
-                      <p className="text-sm">
-                        Our elegantly appointed properties and suites are designed to
-                        offer the utmost in comfort and style...
-                      </p>
-
-                      {/* Property Images */}
-                      <div className="flex max-w-max gap-[30px] mt-[50px] mb-[50px] flex-wrap md:flex-nowrap">
-                        {property?.initial_gallery?.map((data, index) => (
-                          <div key={index}>
-                            <img
-                              className="rounded-[6px] max-h-[40vh]"
-                              src={data?.image ? `/storage/${data.image}` : fallbackImage}
-                              alt=""
-                            />
-                          </div>
-                        ))}
+                    </div>
+                    <hr />
+                    {/* details */}
+                    {property.property_amenities.some(amenity => amenity.amenity_id === 8) && (
+                      <div className="small-detail">
+                        <div className="img__container">
+                          <img src="/images/icons/parking.svg" alt="parking" />
+                        </div>
+                        <div className="small-detail__detail">
+                          <h4 className="small-detail__heading">Park for free</h4>
+                          <p className="small-detail__paragraph">
+                            This is one of the few places in the area with free parking.
+                          </p>
+                        </div>
                       </div>
+                    )}
 
-                      {/* Amenities */}
-                      <span className="h4 block mb-[25px] text-heading">
-                        Property Amenities
-                      </span>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[30px] mb-[20px] pb-[20px] border-b-[0.5px] border-[rgba(101,103,107,0.3)] text-[20px]">
+                    <hr />
+                    {/* paragraphs */}
+                    <p className="section__content-paragraph">
+                      Stay at safe and clean place during your stay in {property.property_name}!
+                    </p>
+                    <p className="section__content-paragraph">
+                      Lazimpat is popular residential area for both foreign and wealthy
+                      local people because of its very clean, convenient and safe
+                      environment. The city center, Durbar Marg and Thamel, is all located
+                      in walking distance. Convenient location, safe area, super clean house
+                      with beautiful garden and good foods, any reason to hesitate?;)
+                    </p>
+                    <button className="show-more">
+                      Show More
+                      <div className="img__container">
+                        <img src="/images/icons/small-arrow.svg" alt="arrow" />
+                      </div>
+                    </button>
+                    <div className="image-group-m">
+                      <div className="img__container">
+                        <img src="/images/room1-1.webp" alt="room" />
+                      </div>
+                      <div className="img__container">
+                        <img src="/images/room1-3.webp" alt="room" />
+                      </div>
+                      <div className="img__container">
+                        <img src="/images/room1-2.webp" alt="room" />
+                      </div>
+                      <div className="img__container">
+                        <img src="/images/room1-4.webp" alt="room" />
+                      </div>
+                      <div className="img__container">
+                        <img src="/images/room4.webp" alt="room" />
+                      </div>
+                      <div className="img__container">
+                        <img src="/images/romm5.webp" alt="room" />
+                      </div>
+                    </div>
+                    <hr />
+                    <div className="card">
+                      <div className="card-images">
+                        <div className="img__container">
+                          <img src="/images/icons/bed.svg" alt="bed" />
+                        </div>
+                        <div className="img__container">
+                          <img src="/images/icons/bed.svg" alt="bed" />
+                        </div>
+                      </div>
+                      <h5>Bedroom</h5>
+                      <p>2 single beds</p>
+                    </div>
+                    <hr />
+                    {/* amenities list */}
+                    <h3 className="heading--amenities">Amenities</h3>
+                    <div className="list">
+                      <ul className="amenities-list flex flex-wrap gap-4 items-center">
                         {property?.property_amenities?.map((data, index) => (
-                          <div
-                            className="flex items-center text-left text-heading font-glida"
-                            key={index}
-                          >
-                            <>
-                              <i className={`${data?.amenity?.icon} w-5 text-black`}></i>
-                              <span>{data?.amenity?.name}</span>
-                            </>
-                          </div>
+                          <li key={index} className="flex justify-start items-center gap-4">
+                            <i className={`${data?.amenity?.icon} w-5 text-black`}></i>
+                            <span className="flex items-center min-w-[200px]">{data?.amenity?.name}</span>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     </div>
-
-                    {/* Sidebar */}
-                    <div className="sidebar__content lg:max-w-[420px] lg:min-w-[420px] w-full">
-                      <div className="sidebar">
-                        <div className="bg-gray dark:bg-[#1B1B1B] dark:text-white p-[30px] rounded-[10px] relative z-10 dark:shadow-none">
-                          <h5 className="heading text-heading text-center mb-[30px] mt-[5px]">
-                            Book Your Stay
-                          </h5>
-                          <PropertyBookingForm property={property} />
+                    <hr />
+                    <div className="calendar">
+                      <h3 className="calendar-heading">1 night in {property.property_name}</h3>
+                      <span className="selected-date">Aug 4, 2023 - Aug 5, 2023</span>
+                      <div className="months-content-wrapper">
+                        <div className="months-heading-container">
+                          <div className="img__container img__container--rotate">
+                            <img src="/images/icons/small-arrow.svg" alt="icon" />
+                          </div>
+                          <h4>August 2023</h4>
+                          <h4 className="sep">September 2023</h4>
+                          <div className="img__container">
+                            <img src="/images/icons/small-arrow.svg" alt="icon" />
+                          </div>
+                        </div>
+                        <div className="months-wrapper">
+                          <table className="month">
+                            <tbody>
+                              <tr className="days">
+                                <td>Su</td>
+                                <td>Mo</td>
+                                <td>Tu</td>
+                                <td>We</td>
+                                <td>Th</td>
+                                <td>Fr</td>
+                                <td>Sa</td>
+                              </tr>
+                              <tr>
+                                <td />
+                                <td />
+                                <td>1</td>
+                                <td>2</td>
+                                <td>3</td>
+                                <td className="active">4</td>
+                                <td className="active">5</td>
+                              </tr>
+                              <tr>
+                                <td>6</td>
+                                <td>7</td>
+                                <td>8</td>
+                                <td>9</td>
+                                <td>10</td>
+                                <td>11</td>
+                                <td>12</td>
+                              </tr>
+                              <tr>
+                                <td>13</td>
+                                <td>14</td>
+                                <td>15</td>
+                                <td>16</td>
+                                <td>17</td>
+                                <td>18</td>
+                                <td>19</td>
+                              </tr>
+                              <tr>
+                                <td>20</td>
+                                <td>21</td>
+                                <td>22</td>
+                                <td>23</td>
+                                <td>24</td>
+                                <td>25</td>
+                                <td>26</td>
+                              </tr>
+                              <tr>
+                                <td>27</td>
+                                <td>28</td>
+                                <td>29</td>
+                                <td>30</td>
+                                <td>31</td>
+                                <td />
+                                <td />
+                              </tr>
+                            </tbody>
+                          </table>
+                          <table className="month sep">
+                            <tbody>
+                              <tr className="days">
+                                <td>Su</td>
+                                <td>Mo</td>
+                                <td>Tu</td>
+                                <td>We</td>
+                                <td>Th</td>
+                                <td>Fr</td>
+                                <td>Sa</td>
+                              </tr>
+                              <tr>
+                                <td />
+                                <td />
+                                <td />
+                                <td />
+                                <td />
+                                <td>1</td>
+                                <td>2</td>
+                              </tr>
+                              <tr>
+                                <td>3</td>
+                                <td>4</td>
+                                <td>5</td>
+                                <td>6</td>
+                                <td>7</td>
+                                <td>8</td>
+                                <td>9</td>
+                              </tr>
+                              <tr>
+                                <td>10</td>
+                                <td>11</td>
+                                <td>12</td>
+                                <td>13</td>
+                                <td>14</td>
+                                <td>15</td>
+                                <td>16</td>
+                              </tr>
+                              <tr>
+                                <td>17</td>
+                                <td>18</td>
+                                <td>19</td>
+                                <td>20</td>
+                                <td>21</td>
+                                <td>22</td>
+                                <td>23</td>
+                              </tr>
+                              <tr>
+                                <td>24</td>
+                                <td>25</td>
+                                <td>26</td>
+                                <td>27</td>
+                                <td>28</td>
+                                <td>29</td>
+                                <td>30</td>
+                              </tr>
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Similar Properties */}
-              {similarProperties?.length > 0 && (
-                <div className="relative pb-[100px] lg:pb-[120px]">
-                  <div className="container">
-                    <div className="text-center mb-[40px]">
-                      <span className="subtitle font-glida heading-6 heading text-primary">
-                        Similar Properties
-                      </span>
-                      <h2 className="text-heading mt-[10px]">Similar Properties</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[30px]">
-                      {similarProperties.map((data, index) => (
-                        <div
-                          className="overflow-hidden rounded-[10px] max-w-full border-[1px] border-solid border-[#F1F1F1] xl:max-w-[420px]"
-                          key={index}
-                        >
-                          <div className="relative">
-                            <a href="#">
-                              <img
-                                className="h-[300px] w-full"
-                                src={data?.initial_gallery?.[0]?.image ? `/storage/${data.initial_gallery[0].image}` : fallbackImage}
-                                width={420}
-                                height={310}
-                                alt="property card"
-                              />
-                            </a>
-                          </div>
-
-                          <div className="relative p-[30px] pt-[20px]">
-                            <a href="#" className="heading h5 text-heading">
-                              {data?.type}
-                            </a>
-                            <div className="flex gap-[20px] items-center mt-2 mb-3 text-[18px] font-jost">
-                              <span className="flex gap-2">
-                                <i className="flaticon-user" />
-                                {data?.max_guests} {data?.max_guests > 1 ? "People" : "Person"}
-                              </span>
-                            </div>
-                            <span className="block h6 text-primary mb-[10px]">
-                              KES {data?.price_per_night}
-                            </span>
-                            <Link
-                              href={route('property-detail', { id: data?.id })}
-                              className="text-[18px] text-primary border-b-[#ab8a62] border-solid border-b-[1px] font-jost"
-                            >
-                              Discover More
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="calendar-extra">
+                      <div className="img__container">
+                        <img src="/images/icons/keyboard.svg" alt="keyboard" />
+                      </div>
+                      <a href="#" className="link">
+                        Clear Dates
+                      </a>
                     </div>
                   </div>
+
+                  <PropertyBookingForm property={property} />
                 </div>
-              )}
-            </>
+                <div className="container">
+                  <hr />
+                </div>
+              </section>
+              <section>
+                <div className="container container-m">
+                  <span className="rating rating--large">
+                    <div className="rating-img__container">
+                      <img src="/images/icons/rating.svg" alt="rating-star" />
+                    </div>
+                    <span>4.88 (249 reviews)</span>
+                  </span>
+                  <div className="detailed-rating">
+                    <ul className="rating-list">
+                      <li className="rating-list__item">
+                        <p className="item-title">Cleanliness</p>
+                        <span className="rating-bar" />
+                        <span className="rating-list__rating">4.9</span>
+                      </li>
+                      <li className="rating-list__item">
+                        <p className="item-title">Communication</p>
+                        <span className="rating-bar" />
+                        <span className="rating-list__rating">4.9</span>
+                      </li>
+                      <li className="rating-list__item">
+                        <p className="item-title">Check-in</p>
+                        <span className="rating-bar" />
+                        <span className="rating-list__rating">4.9</span>
+                      </li>
+                      <li className="rating-list__item">
+                        <p className="item-title">Accuracy</p>
+                        <span className="rating-bar" />
+                        <span className="rating-list__rating">4.9</span>
+                      </li>
+                      <li className="rating-list__item">
+                        <p className="item-title">Location</p>
+                        <span className="rating-bar" />
+                        <span className="rating-list__rating">4.8</span>
+                      </li>
+                      <li className="rating-list__item">
+                        <p className="item-title">Value</p>
+                        <span className="rating-bar" />
+                        <span className="rating-list__rating">4.8</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </section>
+            </div>
+
           </HomeLayout>
         </LayoutProvider>
       </PrimeReactProvider>

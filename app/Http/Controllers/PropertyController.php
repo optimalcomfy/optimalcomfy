@@ -101,7 +101,7 @@ class PropertyController extends Controller
      */
     public function show(Property $property)
     {
-        $property->load('bookings', 'initialGallery', 'propertyAmenities.amenity', 'propertyFeatures', 'PropertyServices');
+        $property->load('bookings', 'initialGallery', 'propertyAmenities.amenity', 'propertyFeatures', 'PropertyServices', 'user');
 
         $amenities = Amenity::all();
 

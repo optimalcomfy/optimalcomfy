@@ -455,7 +455,8 @@ class HomeController extends Controller
             'initialGallery',
             'propertyAmenities.amenity',
             'propertyFeatures',
-            'PropertyServices'
+            'PropertyServices',
+            'user'
         ])->orderBy('created_at', 'desc');
     
         if ($request->has('id')) {

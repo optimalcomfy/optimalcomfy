@@ -83,7 +83,7 @@ function Footer() {
                   href="mailto:UjJw6@example.com"
                 >
                   <i className="flaticon-envelope" />
-                  Optimalcomfy@gmail.com
+                  Ristay@gmail.com
                 </a>
               </li>
               <li>
@@ -103,7 +103,7 @@ function Footer() {
       <div className="border-t-[1px] border-[#e5e5e5] p-[40px_0] relative z-10">
         <div className="container">
           <div className="flex flex-wrap md:justify-between justify-center items-center gap-[30px]">
-            <p className="mb-0">Copyright © 2024 Optimalcomfy. All rights reserved.</p>
+            <p className="mb-0">Copyright © 2024 Ristay. All rights reserved.</p>
             <div className="flex items-center gap-[30px]">
               <a
                 className="pr-[25px] border-r-[1px] border-[#65676b] leading-4"

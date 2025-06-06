@@ -145,7 +145,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
               Reservation By Email
             </h6>
             <a href="#" className="flex gap-[10px] items-center text-sm">
-              <img src="assets/images/icon/mail.svg" alt="" /> Optimalcomfy@gmail.com
+              <img src="assets/images/icon/mail.svg" alt="" /> Ristay@gmail.com
             </a>
           </div>
         </div>

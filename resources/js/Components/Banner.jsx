@@ -34,14 +34,14 @@ function Banner() {
       image: "assets/images/banner/home-1.1.webp",
       subtitle: "Welcome to our spa",
       title: "Luxury Stay Hotel Experience Comfort & Elegance",
-      description: "Choosing Optimalcomfy was one of the best decisions we've ever made. They have proven to be a reliable and innovative partner"
+      description: "Choosing Ristay was one of the best decisions we've ever made. They have proven to be a reliable and innovative partner"
     },
     {
       id: 2,
       image: "assets/images/banner/home-1-2.webp",
       subtitle: "Welcome to our spa",
       title: "Luxury Stay Hotel Experience Comfort & Elegance",
-      description: "Choosing Optimalcomfy was one of the best decisions we've ever made. They have proven to be a reliable and innovative partner"
+      description: "Choosing Ristay was one of the best decisions we've ever made. They have proven to be a reliable and innovative partner"
     }
   ];
 

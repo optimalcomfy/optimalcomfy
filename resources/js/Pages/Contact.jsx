@@ -143,7 +143,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
               Open Hours: Monday – Sunday <br />
               Telephone:&nbsp;+12505550199 <br />
               Fax: +12505550199 <br />
-              Email:&nbsp;info@Optimalcomfy.com
+              Email:&nbsp;info@Ristay.com
             </p>
           </div>
           <div>
@@ -152,7 +152,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
               Address: Nairobi, Kenya <br />
               Telephone:&nbsp;+12505550199 <br />
               Fax: +12505550199 <br />
-              Email:&nbsp;info@Optimalcomfy.com
+              Email:&nbsp;info@Ristay.com
             </p>
           </div>
         </div>

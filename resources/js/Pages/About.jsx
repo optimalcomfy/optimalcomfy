@@ -32,7 +32,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         About Us
       </h1>
       <p className="text-sm">
-        Welcome to Optimalcomfy, where luxury meets comfort in the heart of canada.
+        Welcome to Ristay, where luxury meets comfort in the heart of canada.
       </p>
     </div>
   </div>
@@ -73,10 +73,10 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
             About Us
           </span>
           <h2 className="text-heading mb-[30px]">
-            Welcome To Our Optimalcomfy Hotel &amp; Resort
+            Welcome To Our Ristay Hotel &amp; Resort
           </h2>
           <p className="text-sm max-w-[645px] mb-[45px]">
-            Welcome to Optimalcomfy, where luxury meets comfort in the heart of
+            Welcome to Ristay, where luxury meets comfort in the heart of
             canada. Since 1999, we have been dedicated to providing an
             exceptional stay for our guests, blending modern amenities with
             timeless elegance.Our beautifully designed properties and suites offer
@@ -353,7 +353,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     <i className="flaticon-star-sharp-half-stroke" />
                   </div>
                   <span className="block text-[18px] leading-[28px] xl:text-[28px] xl:leading-[42px] mb-5 lg:text-[24px] lg:leading-[38px]">
-                    Choosing Optimalcomfy was one of the best decisions we've ever
+                    Choosing Ristay was one of the best decisions we've ever
                     made. They have proven to be a reliable and innovative
                     partner, always ready to tackle new challenges with and
                     expertise.Their commitment to and delivering tailored.
@@ -391,7 +391,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     <i className="flaticon-star-sharp-half-stroke" />
                   </div>
                   <span className="block text-[18px] leading-[28px] xl:text-[28px] xl:leading-[42px] mb-5 lg:text-[24px] lg:leading-[38px]">
-                    Choosing Optimalcomfy was one of the best decisions we've ever
+                    Choosing Ristay was one of the best decisions we've ever
                     made. They have proven to be a reliable and innovative
                     partner, always ready to tackle new challenges with and
                     expertise.Their commitment to and delivering tailored.

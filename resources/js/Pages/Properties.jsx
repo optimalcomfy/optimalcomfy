@@ -1,15 +1,12 @@
-import { useState, useEffect } from "react";
-import { Link, Head, router, usePage } from "@inertiajs/react";
+
+import { Link, Head, usePage } from "@inertiajs/react";
 import {
-  LayoutContext,
   LayoutProvider,
 } from "@/Layouts/layout/context/layoutcontext.jsx";
 import { PrimeReactProvider } from "primereact/api";
-import React, { useContext } from "react";
+import React from "react";
 import HomeLayout from "@/Layouts/HomeLayout";
 import '../../css/main'
-import SearchForm from "@/Components/SearchForm";
-import Video from "@/Components/Video";
 
 
 export default function Properties({ auth, laravelVersion, phpVersion }) {
@@ -24,19 +21,9 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
           <Head title="Event" />
           <HomeLayout>
           <>
-            <div
-                className="relative flex items-center"
-            >
-                <div className="container text-center text-white relative min-h-[50vh] mt-8">
-                <div className="relative">
-                    <SearchForm />
-                </div>
-                {/* advance form end */}
-                </div>
-            </div>
             {/* breadcrumb area end */}
             {/* property  */}
-            <div className="relative pb-[100px] lg:pb-[120px]">
+            <div className="relative py-[100px] lg:py-[120px]">
                 <div className="container">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-[30px]">
                     {/* item */}

@@ -1,37 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { router } from '@inertiajs/react';
-import DatePicker from 'react-datepicker';
-import { Search, Calendar, Users, ChevronDown, X, Loader2 } from 'lucide-react';
-import 'react-datepicker/dist/react-datepicker.css';
-import './SearchForm.css';
+import { Search, Loader2, X } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
+import './SearchForms.css';
 import 'react-toastify/dist/ReactToastify.css';
 
-export default function SearchForm() {
+export default function SearchBar() {
   const [formData, setFormData] = useState({
     location: '',
-    checkIn: null,
-    checkOut: null,
-    adult: '1',
-    child: '0',
+    checkIn: '',
+    checkOut: '',
+    guests: '',
   });
 
-  const [dateRange, setDateRange] = useState([null, null]);
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
-  const [searchMode, setSearchMode] = useState('properties');
   const suggestionRef = useRef(null);
 
-  useEffect(() => {
-    const [start, end] = dateRange;
-    setFormData(prev => ({
-      ...prev,
-      checkIn: start,
-      checkOut: end,
-    }));
-  }, [dateRange]);
-
+  // Fetch location suggestions
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (formData.location.length < 2) {
@@ -56,39 +43,20 @@ export default function SearchForm() {
     return () => clearTimeout(delay);
   }, [formData.location]);
 
+  // Close suggestions when clicking outside
   useEffect(() => {
-    function handleClickOutside(event) {
+    const handleClickOutside = (event) => {
       if (suggestionRef.current && !suggestionRef.current.contains(event.target)) {
         setIsSuggestionsOpen(false);
       }
-    }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = () => {
-    if (!formData.location) {
-      toast.error("Please enter a location");
-      return;
-    }
-    if (!formData.checkIn || !formData.checkOut) {
-      toast.error("Please select check-in and check-out dates");
-      return;
-    }
-
-    const formattedData = {
-      ...formData,
-      checkIn: formData.checkIn.toISOString().split('T')[0],
-      checkOut: formData.checkOut.toISOString().split('T')[0],
-      searchMode,
-    };
-
-    router.get('/all-properties', formattedData);
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleLocationSelect = (loc) => {
@@ -96,40 +64,52 @@ export default function SearchForm() {
     setIsSuggestionsOpen(false);
   };
 
-  const clearField = (field) => {
-    if (field === 'dates') {
-      setDateRange([null, null]);
-    } else {
-      setFormData(prev => ({ ...prev, [field]: '' }));
+  const handleSubmit = () => {
+    const { location, checkIn, checkOut, guests } = formData;
+
+    if (!location) {
+      toast.error("Please enter a location");
+      return;
     }
+    if (!checkIn || !checkOut) {
+      toast.error("Please provide check-in and check-out dates");
+      return;
+    }
+
+    router.get('/all-properties', {
+      location,
+      checkIn,
+      checkOut,
+      guests,
+      searchMode: 'properties',
+    });
   };
 
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
-      <div className="search-form-container max-w-7xl z-10 mx-auto px-4 py-4">
-        <div className="search-fields flex flex-col lg:flex-row lg:items-end lg:gap-4">
+      <div className="search-container">
+        <div className="bar" ref={suggestionRef}>
           {/* Location */}
-          <div className="field-group flex-1" ref={suggestionRef}>
-            <label>Where are you going?</label>
-            <div className="field-input">
-              <Search className="icon" />
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                placeholder="Search location"
-                autoComplete="off"
-                onFocus={() => {
-                  if (locationSuggestions.length > 0) setIsSuggestionsOpen(true);
-                }}
-              />
-              {formData.location && <X className="clear-icon" onClick={() => clearField('location')} />}
-              {isLoadingSuggestions && <Loader2 className="loader-icon" />}
-            </div>
+          <div className="location relative">
+            <p className="field-label absolute text-xs">Where</p>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              placeholder="Search destination"
+              className='inputType'
+              onFocus={() => {
+                if (locationSuggestions.length > 0) setIsSuggestionsOpen(true);
+              }}
+            />
+            {formData.location && (
+              <X className="clear-icon" onClick={() => setFormData(prev => ({ ...prev, location: '' }))} />
+            )}
+            {isLoadingSuggestions && <Loader2 className="loader-icon" />}
             {isSuggestionsOpen && (
-              <ul className="suggestions-list">
+              <ul className="suggestions-dropdown">
                 {locationSuggestions.map((loc, i) => (
                   <li key={i} onClick={() => handleLocationSelect(loc)}>{loc}</li>
                 ))}
@@ -137,44 +117,48 @@ export default function SearchForm() {
             )}
           </div>
 
-          {/* Date Range Picker */}
-          <div className="field-group flex-1">
-            <label>Dates</label>
-            <div className="field-input">
-              <Calendar className="icon" />
-              <DatePicker
-                selectsRange
-                startDate={dateRange[0]}
-                endDate={dateRange[1]}
-                onChange={(update) => setDateRange(update)}
-                placeholderText="Select your stay dates"
-                className="datepicker-input"
-                isClearable
-                minDate={new Date()}
-              />
-              {(formData.checkIn || formData.checkOut) && (
-                <X className="clear-icon" onClick={() => clearField('dates')} />
-              )}
-            </div>
+          {/* Check in */}
+          <div className="check-in relative">
+            <p className="field-label absolute text-xs">Check in</p>
+            <input
+              type="date"
+              name="checkIn"
+              value={formData.checkIn}
+              onChange={handleChange}
+              placeholder="Add dates"
+              className='inputType'
+              min={new Date().toISOString().split("T")[0]}
+            />
+          </div>
+
+          {/* Check out */}
+          <div className="check-out relative">
+            <p className="field-label absolute text-xs">Check out</p>
+            <input
+              type="date"
+              name="checkOut"
+              value={formData.checkOut}
+              onChange={handleChange}
+              placeholder="Add dates"
+              className='inputType'
+              min={formData.checkIn}
+            />
           </div>
 
           {/* Guests */}
-          <div className="field-group flex-1">
-            <label>Guests</label>
-            <div className="field-input">
-              <Users className="icon" />
-              <select name="adult" value={formData.adult} onChange={handleChange} className="select-input">
-                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n} Adult{n > 1 ? 's' : ''}</option>)}
-              </select>
-              <select name="child" value={formData.child} onChange={handleChange} className="select-input">
-                {[0, 1, 2, 3].map(n => <option key={n} value={n}>{n} Child{n > 1 ? 'ren' : ''}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {/* Submit */}
-          <div className="submit-container flex-shrink-0">
-            <button className="submit-button" onClick={handleSubmit}>Search</button>
+          <div className="guests relative">
+            <p className="field-label absolute text-xs">Guests</p>
+            <input
+              type="text"
+              name="guests"
+              value={formData.guests}
+              onChange={handleChange}
+              placeholder="Add guests"
+              className='inputType'
+            />
+            <button className="search-button" onClick={handleSubmit}>
+              <Search size={16} />
+            </button>
           </div>
         </div>
       </div>

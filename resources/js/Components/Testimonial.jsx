@@ -35,14 +35,14 @@ function Testimonial() {
       image: "assets/images/author/author-2x.webp",
       name: "Sarah Martinez",
       position: "COO of Apex Solutions",
-      quote: "Choosing Optimalcomfy was one of the best decisions we've ever made. They have proven to be a reliable and innovative partner, always ready to tackle new challenges with and expertise. Their commitment to and delivering tailored."
+      quote: "Choosing Ristay was one of the best decisions we've ever made. They have proven to be a reliable and innovative partner, always ready to tackle new challenges with and expertise. Their commitment to and delivering tailored."
     },
     {
       id: 2,
       image: "assets/images/author/author-6.webp",
       name: "Sarah Martinez",
       position: "COO of Apex Solutions",
-      quote: "Choosing Optimalcomfy was one of the best decisions we've ever made. They have proven to be a reliable and innovative partner, always ready to tackle new challenges with and expertise. Their commitment to and delivering tailored."
+      quote: "Choosing Ristay was one of the best decisions we've ever made. They have proven to be a reliable and innovative partner, always ready to tackle new challenges with and expertise. Their commitment to and delivering tailored."
     }
   ];
 

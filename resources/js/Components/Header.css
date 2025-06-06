@@ -1,9 +1,11 @@
 /* Header Top Section */
+.bgbg {
+  background: linear-gradient(to bottom, #ffffff, #f8f8f8);
+}
+
 .header-top {
-  border-bottom: 0.5px solid #E5E5E5;
   display: none;
   transition: all 0.3s ease;
-  background-color: white;
   z-index: 999;
 }
 
@@ -54,7 +56,6 @@
 .header-main {
   transition: all 0.3s ease;
   border-bottom: 0.5px solid #E5E5E5;
-  background-color: white;
   z-index: 1000;
 }
 
@@ -67,8 +68,16 @@
   width: 100%;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(10px);
-  background-color: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(to bottom, #ffffff, #f8f8f8);
   animation: slideDown 0.3s ease-out;
+}
+
+.mopper {
+  display: none !important;
+}
+
+.mopper.mopper-scrolled {
+  display: flex !important;
 }
 
 @keyframes slideDown {
@@ -133,24 +142,17 @@ body.header-fixed {
 }
 
 .logo-image {
-  max-width: 160px;
+  max-width: 100px;
   padding-top: 12px;
   transition: all 0.3s ease;
 }
 
 /* Smaller logo when scrolled */
-.logo-image.logo-scrolled {
-  max-width: 120px;
-  padding-top: 8px;
-}
 
 @media (min-width: 1024px) {
-  .logo-image {
-    max-width: 260px;
-  }
   
   .logo-image.logo-scrolled {
-    max-width: 200px;
+    max-width: 140px;
   }
 }
 

@@ -64,10 +64,10 @@ export default function Register() {
         <PrimeReactProvider>
         <LayoutProvider>
             <HomeLayout>
-            <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gray-100 text-xl">
+            <div className="min-h-screen flex flex-col items-center justify-center px-4 text-xl">
                 <Head title="Register - Airbnb Clone" />
                 
-                <div className="w-full max-w-4xl bg-white shadow-md rounded-lg p-8">
+                <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-8">
                     <h2 className="text-center text-3xl font-bold mb-6 text-red-500">Create Your Account</h2>
 
                     {step === 1 && (

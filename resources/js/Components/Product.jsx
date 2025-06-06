@@ -26,12 +26,18 @@ const Product = (props) => {
       <div className="relative rounded-xl overflow-hidden">
         <PropertySlider page={page} setPage={setPage}>
           {initial_gallery?.map((image, index) => (
-            <img
-              key={index}
-              src={`/storage/${image.image}`}
-              alt={`Image ${index + 1} of ${property_name}`}
-              className="w-full aspect-[20/19] object-cover"
-            />
+             <Link
+              href={route('property-detail', { id: id })}>
+                <img
+                  key={index}
+                  src={`/storage/${image.image}`}
+                  onClick={()=>{
+
+                  }}
+                  alt={`Image ${index + 1} of ${property_name}`}
+                  className="w-full aspect-[20/19] object-cover"
+                />
+            </Link>
           ))}
         </PropertySlider>
 

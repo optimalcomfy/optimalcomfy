@@ -35,7 +35,7 @@ export default function Login({ status, canResetPassword }) {
             <LayoutProvider>
                 <Head title="Sign In - Welcome Back" />
                 <HomeLayout>
-                    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4'>
+                    <div className='min-h-screen flex items-center justify-center p-4'>
                         {status && (
                             <div className="fixed top-6 right-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg shadow-lg z-50">
                                 <div className="flex items-center">
@@ -53,7 +53,7 @@ export default function Login({ status, canResetPassword }) {
                                 <p className="text-gray-600 text-base">Sign in to your account to continue</p>
                             </div>
 
-                            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+                            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 py-8 px-4">
                                 <form onSubmit={submit} className="space-y-6">
                                     <div className="space-y-2">
                                         <label htmlFor="email" className="block text-sm font-semibold text-gray-700">

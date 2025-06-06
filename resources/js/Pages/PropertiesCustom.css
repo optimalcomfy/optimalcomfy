@@ -1,0 +1,344 @@
+/* Properties Component Custom Styles */
+
+/* Main container enhancements */
+.properties-container {
+  background: white;
+  min-height: 100vh;
+}
+
+/* Header styling */
+.properties-header {
+  position: relative;
+  z-index: 10;
+}
+
+.properties-title {
+  background: linear-gradient(135deg, #1e293b, #475569);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.properties-subtitle {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Custom arrow styling */
+.custom-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 2px solid #e2e8f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.custom-arrow:hover {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  border-color: #cbd5e1;
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.custom-arrow:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.custom-prev-arrow {
+  left: -60px;
+}
+
+.custom-next-arrow {
+  right: -60px;
+}
+
+.custom-arrow.slick-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f8fafc;
+  border-color: #f1f5f9;
+}
+
+.custom-arrow.slick-disabled:hover {
+  transform: translateY(-50%) scale(1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Property slider container */
+.property-slider {
+  position: relative;
+  margin: 0 -8px;
+  padding: 20px 60px 20px 60px;
+}
+
+.property-slider .slick-list {
+  margin: 0 -8px;
+  padding: 0 8px;
+}
+
+.property-slider .slick-track {
+  display: flex;
+  align-items: stretch;
+}
+
+.property-slider .slick-slide {
+  height: auto;
+  padding: 0 8px;
+}
+
+.property-slider .slick-slide > div {
+  height: 100%;
+}
+
+/* Property card enhancements */
+.property-card {
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.property-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: #e2e8f0;
+}
+
+.property-card.selected {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2), 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Map container styling */
+.map-container {
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+}
+
+.map-loading {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+}
+
+.map-loading .spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mobile map toggle button */
+.mobile-map-toggle {
+  background: linear-gradient(135deg, #1e293b, #334155);
+  color: white;
+  border: none;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mobile-map-toggle:hover {
+  background: linear-gradient(135deg, #334155, #475569);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-map-toggle:active {
+  transform: translateY(0);
+}
+
+/* Mobile map overlay */
+.mobile-map-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #ffffff;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-map-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.mobile-map-close {
+  padding: 8px;
+  border: none;
+  background: #f8fafc;
+  border-radius: 50%;
+  color: #64748b;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.mobile-map-close:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+/* Responsive enhancements */
+@media (max-width: 1024px) {
+  .property-slider {
+    padding: 20px 40px;
+  }
+  
+  .custom-prev-arrow {
+    left: -40px;
+  }
+  
+  .custom-next-arrow {
+    right: -40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .property-slider {
+    padding: 20px 20px;
+  }
+  
+  .custom-arrow {
+    display: none;
+  }
+  
+  .properties-title {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+  
+  .properties-container {
+    background: #ffffff;
+  }
+}
+
+/* Animation for property cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.property-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Custom scrollbar for mobile map */
+.mobile-map-overlay::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-map-overlay {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Price marker styling */
+.price-marker {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 12px;
+  color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.price-marker.active {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-color: #ef4444;
+  color: #ffffff;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Hover effects for better UX */
+.interactive-element {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interactive-element:hover {
+  transform: translateY(-2px);
+}
+
+/* Loading states */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Focus states for accessibility */
+.custom-arrow:focus,
+.mobile-map-toggle:focus,
+.mobile-map-close:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Print media query */
+@media print {
+  .mobile-map-toggle,
+  .custom-arrow,
+  .mobile-map-overlay {
+    display: none !important;
+  }
+}

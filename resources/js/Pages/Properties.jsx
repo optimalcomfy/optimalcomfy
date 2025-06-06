@@ -1,88 +1,113 @@
-
+import React, { useRef, useState } from "react";
 import { Link, Head, usePage } from "@inertiajs/react";
-import {
-  LayoutProvider,
-} from "@/Layouts/layout/context/layoutcontext.jsx";
+import { LayoutProvider } from "@/Layouts/layout/context/layoutcontext.jsx";
 import { PrimeReactProvider } from "primereact/api";
-import React from "react";
 import HomeLayout from "@/Layouts/HomeLayout";
-import '../../css/main'
 
+import Slider from "react-slick";
+
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import '../../css/main';
+import "./Welcome.css";
+import Product from "@/Components/Product";
+
+function NextArrow({ onClick, disabled }) {
+  return (
+    <div
+      className={`custom-arrow custom-next-arrow ${disabled ? "slick-disabled" : ""}`}
+      onClick={!disabled ? onClick : undefined}
+    >
+      <img src="/image/chevron.png" alt="Next" className="h-5" />
+    </div>
+  );
+}
+
+function PrevArrow({ onClick, disabled }) {
+  return (
+    <div
+      className={`custom-arrow custom-prev-arrow ${disabled ? "slick-disabled" : ""}`}
+      onClick={!disabled ? onClick : undefined}
+    >
+      <img src="/image/left-chevron.png" alt="Prev" className="h-5" />
+    </div>
+  );
+}
 
 export default function Properties({ auth, laravelVersion, phpVersion }) {
-
   const { flash, pagination, properties } = usePage().props;
-  
-  
+
+  const sliderRef = useRef(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const totalSlides = properties.length;
+  const slidesToShow = 7;
+
+  const sliderSettings = {
+    dots: false,
+    infinite: properties.length > 7,
+    speed: 500,
+    slidesToShow: 7,
+    slidesToScroll: 1,
+    centerMode: false,
+    variableWidth: false,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 5,
+        },
+      },
+      {
+        breakpoint: 600,
+        settings: {
+          slidesToShow: 2,
+        },
+      },
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+        },
+      },
+    ],
+  };
+
   return (
-    <>
-      <PrimeReactProvider>
-        <LayoutProvider>
-          <Head title="Event" />
-          <HomeLayout>
+    <PrimeReactProvider>
+      <LayoutProvider>
+        <Head title="Properties" />
+        <HomeLayout>
           <>
-            {/* breadcrumb area end */}
-            {/* property  */}
-            <div className="relative py-[100px] lg:py-[120px]">
-                <div className="container">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-[30px]">
-                    {/* item */}
-
-                        {properties && properties.map((data, index)=>{
-                            return(
-                            <div className="overflow-hidden rounded-[10px] max-w-full border-[1px] border-solid border-[#F1F1F1]" key={index}>
-                                <div className="relative ">
-                                    <Link
-                                    href={route('property-detail', { id: data.id })}>
-                                    <h6 className="absolute top-[30px] left-[30px] rounded-[6px] text-primary text-[20px] p-[10px_15px] bg-white leading-none">
-                                        KES {data.price_per_night}
-                                    </h6>
-                                    <img
-                                      className="lg:h-[415px] h-[320px] object-cover w-full"
-                                      src={
-                                        data?.initial_gallery?.length > 0 && data?.initial_gallery?.[0]?.image
-                                          ? `/storage/${data.initial_gallery[0].image}`
-                                          : "../images/pages/header__bg.webp"
-                                      }
-                                      width={420}
-                                      height={310}
-                                      alt="property card"
-                                    />
-                                    </Link>
-                                </div>
-                                <div className="relative p-[30px] pt-[20px]">
-                                     <Link
-                                    href={route('property-detail', { id: data.id })} className="heading h5 text-heading">
-                                    {data?.property_name} - {data.type}
-                                    </Link>
-                                    <div className="flex gap-[20px] items-center mt-2 mb-3 text-[18px] font-jost">
-                                    <span className="flex gap-2">
-                                        <i className="flaticon-user" />{data?.max_guests} Person
-                                    </span>
-                                    </div>
-                                    <p className="mb-[15px] text-sm">
-                                    Our properties offer a harmonious blend of comfort and elegance,
-                                    designed to provide an exceptional stay for every guest.
-                                    </p>
-                                    <Link
-                                    href={route('property-detail', { id: data.id })}
-                                    className="text-[18px] text-primary border-b-[#ab8a62] border-solid border-b-[1px] font-jost font-medium"
-                                    >
-                                    Discover More
-                                    </Link>
-                                </div>
-                            </div>
-                            )
-                        })}
-                   </div>
-                   
+            {/* Slider Container */}
+            <div className="product-slider-container padding-container p-5 relative">
+              <div className="slider-header flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold">Explore Properties</h2>
+                <div className="slider-arrows flex gap-4">
+                  <PrevArrow
+                    onClick={() => sliderRef.current?.slickPrev()}
+                    disabled={currentSlide === 0}
+                  />
+                  <NextArrow
+                    onClick={() => sliderRef.current?.slickNext()}
+                    disabled={currentSlide >= totalSlides - slidesToShow}
+                  />
                 </div>
-            </div>
-            </>
+              </div>
 
-          </HomeLayout>
-        </LayoutProvider>
-      </PrimeReactProvider>
-    </>
+              <Slider ref={sliderRef} {...sliderSettings}>
+                {properties.map((data) => (
+                  <div key={data.id}>
+                    <div style={{ padding: "0 8px" }}>
+                      <Product {...data} />
+                    </div>
+                  </div>
+                ))}
+              </Slider>
+            </div>
+          </>
+        </HomeLayout>
+      </LayoutProvider>
+    </PrimeReactProvider>
   );
 }

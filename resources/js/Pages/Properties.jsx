@@ -148,7 +148,7 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
             {/* Mobile: Stack vertically, Desktop: Side by side */}
             <div className="flex flex-col lg:flex-row">
               {/* Properties List - Mobile: Full width, Desktop: 60% */}
-              <div className="w-full lg:w-3/5 p-4 lg:p-6">
+              <div className="w-full lg:w-[55%] p-4 lg:p-6">
                 <div className="mb-6">
                   <div className="properties-header flex justify-between items-center mb-6">
                     <div>
@@ -159,23 +159,10 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                         {properties.length} properties available
                       </p>
                     </div>
-                    
-                    {/* Desktop arrows */}
-                    <div className="slider-arrows">
-                      <PrevArrow
-                        onClick={() => sliderRef.current?.slickPrev()}
-                        disabled={currentSlide === 0}
-                      />
-                      <NextArrow
-                        onClick={() => sliderRef.current?.slickNext()}
-                        disabled={currentSlide >= totalSlides - slidesToShow}
-                      />
-                    </div>
                   </div>
 
                   {/* Properties Slider */}
-                  <div className="property-slider">
-                    <Slider ref={sliderRef} {...sliderSettings}>
+                  <div class="product-grid padding-container">
                       {properties.map((property) => (
                         <div 
                           key={property.id}
@@ -191,13 +178,12 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                           </div>
                         </div>
                       ))}
-                    </Slider>
+                      </div>
                   </div>
-                </div>
               </div>
 
               {/* Map Container - Mobile: Hidden by default, Desktop: 40% sticky */}
-              <div className="w-full lg:w-2/5 relative">
+              <div className="w-full lg:w-[45%] relative">
                 {/* Mobile Toggle Button */}
                 <div className="lg:hidden bg-white border-t border-gray-200 p-4">
                   <button 

@@ -1,4 +1,44 @@
 /* Properties Component Custom Styles */
+.product-grid {
+  padding-left: 2rem; /* px-8 */
+  padding-right: 2rem; /* px-8 */
+  margin-top: 1.5rem; /* my-6 */
+  margin-bottom: 1.5rem; /* my-6 */
+  gap: 2.5rem 1.5rem; /* gap-x-6 gap-y-10 */
+  display: grid;
+  grid-auto-flow: row dense; /* grid-flow-row-dense */
+  max-width: 1200px; /* container */
+  margin-left: auto; /* mx-auto */
+  margin-right: auto; /* mx-auto */
+}
+
+/* Default grid: 1 column (mobile) */
+.product-grid {
+  grid-template-columns: 1fr;
+}
+
+/* sm: 2 columns (tablet - 640px+) */
+@media (min-width: 640px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* md: 3 columns (small desktop - 768px+) */
+@media (min-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* lg: 4 columns (large desktop - 1024px+) */
+@media (min-width: 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(4, 1fr);
+    margin-top: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+}
 
 /* Main container enhancements */
 .properties-container {
@@ -104,16 +144,14 @@
 
 /* Property card enhancements */
 .property-card {
-  background: #ffffff;
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   cursor: pointer;
   height: 100%;
   display: flex;
   flex-direction: column;
+  padding: 10px;
 }
 
 .property-card:hover {

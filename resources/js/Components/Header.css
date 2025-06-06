@@ -80,6 +80,10 @@
   display: flex !important;
 }
 
+.lowBorder {
+  border-bottom: 2px solid #333;
+}
+
 @keyframes slideDown {
   from {
     transform: translateY(-100%);

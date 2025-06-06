@@ -1,40 +1,83 @@
-.product-grid {
-  padding-left: 2rem; /* px-8 */
-  padding-right: 2rem; /* px-8 */
-  margin-top: 1.5rem; /* my-6 */
-  margin-bottom: 1.5rem; /* my-6 */
-  gap: 2.5rem 1.5rem; /* gap-x-6 gap-y-10 */
-  display: grid;
-  grid-auto-flow: row dense; /* grid-flow-row-dense */
-  max-width: 1200px; /* container */
-  margin-left: auto; /* mx-auto */
-  margin-right: auto; /* mx-auto */
+.product-slider-container {
+  position: relative;
+  margin-bottom: 2rem;
 }
 
-/* Default grid: 1 column (mobile) */
-.product-grid {
-  grid-template-columns: 1fr;
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
 }
 
-/* sm: 2 columns (tablet - 640px+) */
-@media (min-width: 640px) {
-  .product-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.slider-header h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
 }
 
-/* md: 3 columns (small desktop - 768px+) */
-@media (min-width: 768px) {
-  .product-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.slider-arrows {
+  display: flex;
+  gap: 0.5rem;
 }
 
-/* lg: 4 columns (large desktop - 1024px+) */
-@media (min-width: 1024px) {
-  .product-grid {
-    grid-template-columns: repeat(4, 1fr);
-    margin-top: 1.5rem;
-    margin-bottom: 2.5rem;
-  }
+/* Custom Arrow Styles */
+.custom-arrow {
+  width: 40px;
+  height: 40px;
+  background-color: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.custom-arrow:hover {
+  background-color: #e0e0e0;
+}
+
+.slick-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Space between slides */
+.slick-list {
+  margin: 0 -8px;
+}
+
+.slick-slide > div {
+  padding: 0 8px;
+}
+
+
+/* Prevent centering behavior */
+.slick-track {
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: stretch;
+}
+
+.slick-track {
+    position: relative;
+    top: 0;
+    left: 0;
+    display: block;
+    margin-left: 0;
+    margin-right: auto;
+}
+
+/* Prevent centering from individual slides */
+.slick-slide {
+  display: flex !important;
+  justify-content: flex-start !important;
+  float: none !important;
+  height: auto;
+}
+
+/* Remove extra center-alignment from carousel wrapper */
+.slick-slider {
+  text-align: left !important;
 }

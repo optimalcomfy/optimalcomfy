@@ -5869,8 +5869,8 @@ textarea:focus-visible, input:focus-visible {
   position: relative;
   font-size: 16px;
   text-transform: capitalize;
-  padding-top: 24px;
-  padding-bottom: 30px;
+  padding-top: 20px;
+  padding-bottom: 20px;
   font-weight: 400;
   display: block;
   color: var(--rts-para);

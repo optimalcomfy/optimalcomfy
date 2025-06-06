@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import '../../css/style.css'
 import '../../css/plugins.min.css'
 import './Header.css'; // Import custom CSS
@@ -10,6 +10,9 @@ function Header() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef(null);
+  const {url} = usePage()
+  const [isWhich] = useState(url)
+  
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -65,7 +68,7 @@ function Header() {
                           <li className="navigation__menu--item has-child has-arrow dark:before:!text-white">
                           <Link
                             href={route('home')}
-                            className="navigation__menu--item__link dark:text-white flex items-center gap-2"
+                            className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${isWhich === '/' ? 'lowBorder' : ''}`}
                             >
                               <img src='/image/houses.png' alt='' className='h-8' />
                               Properties
@@ -74,7 +77,7 @@ function Header() {
                           <li className="navigation__menu--item has-child has-arrow  dark:before:!text-white">
                             <Link
                                 href={route('all-cars')}
-                                className="navigation__menu--item__link dark:text-white flex items-center gap-2"
+                                className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${isWhich === '/all-cars' ? 'lowBorder' : ''}`}
                             >
                               <img src='/image/car.png' alt='' className='h-8' />
                                 Cars

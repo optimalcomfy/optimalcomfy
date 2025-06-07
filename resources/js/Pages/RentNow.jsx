@@ -27,20 +27,7 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
         <LayoutProvider>
           <Head title="Cars" />
           <HomeLayout>
-            <div className="no-bottom no-top zebra" id="content">
-              <section id="subheader" className="jarallax text-light">
-                <img src="/cars/images/background/2.jpg" className="jarallax-img" alt="" />
-                <div className="center-y relative text-center">
-                  <div className="container">
-                    <div className="row">
-                      <div className="col-md-12 text-center">
-                        <h1>{car?.name || "Vehicle Fleet"}</h1>
-                      </div>
-                      <div className="clearfix" />
-                    </div>
-                  </div>
-                </div>
-              </section>
+            <div className="no-bottom no-top zebra py-8" id="content">
 
               <section id="section-car-details">
                 <div className="container">

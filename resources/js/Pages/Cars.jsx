@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, Head, router, usePage, useForm } from "@inertiajs/react"; // Import useForm
 import {
     LayoutContext,
@@ -8,11 +8,42 @@ import { PrimeReactProvider } from "primereact/api";
 import React, { useContext } from "react";
 import HomeLayout from "@/Layouts/HomeLayout";
 import '../../css/main'
+import Slider from "react-slick";
 
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import "../../css/main";
+import "./Welcome.css";
+
+function NextArrow({ onClick, disabled }) {
+  return (
+    <div
+      className={`custom-arrow custom-next-arrow ${disabled ? "slick-disabled" : ""}`}
+      onClick={!disabled ? onClick : undefined}
+    >
+      <img src="/image/chevron.png" alt="Next" className="h-5" />
+    </div>
+  );
+}
+
+function PrevArrow({ onClick, disabled }) {
+  return (
+    <div
+      className={`custom-arrow custom-prev-arrow ${disabled ? "slick-disabled" : ""}`}
+      onClick={!disabled ? onClick : undefined}
+    >
+      <img src="/image/left-chevron.png" alt="Prev" className="h-5" />
+    </div>
+  );
+}
 
 export default function Welcome({ auth, laravelVersion, phpVersion }) { // Add any other props your page might receive
 
-    const { flash } = usePage().props; // Removed pagination as it's not used in the provided snippet
+    const { flash, cars } = usePage().props; // Removed pagination as it's not used in the provided snippet
+    const sliderRef = useRef(null);
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const totalSlides = cars.length;
+    const slidesToShow = 7;
 
     // Initialize form data and setData function using useForm
     // The keys correspond to the 'name' attributes of your form inputs
@@ -38,259 +69,122 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) { // Add a
         setData("Car_Type", e.target.value);
     };
 
+    const getCarTypeIcon = (body_type) => {
+        // Default to SUV icon if body_type doesn't match known types
+        return "/cars/images/icons/4-green.svg";
+    };
+  
+
+    const sliderSettings = {
+        dots: false,
+        infinite: cars.length > 7,
+        speed: 500,
+        slidesToShow: 7,
+        slidesToScroll: 1,
+        centerMode: false,
+        variableWidth: false,
+        responsive: [
+        {
+            breakpoint: 1024,
+            settings: {
+            slidesToShow: 5,
+            },
+        },
+        {
+            breakpoint: 600,
+            settings: {
+            slidesToShow: 2,
+            },
+        },
+        {
+            breakpoint: 480,
+            settings: {
+            slidesToShow: 1,
+            },
+        },
+        ],
+    };
+
     return (
-        <>
-            <PrimeReactProvider>
-                <LayoutProvider>
-                    <Head title="Cars" />
-                    <HomeLayout>
-                        <>
-                            {/* content begin */}
-                            <div className="no-bottom no-top" id="content">
-                                <div id="top" />
-                                <section
-                                    id="section-hero"
-                                    aria-label="section"
-                                    className="jarallax no-top no-bottom bg-[url('/cars/images/background/1.jpg')]"
-                                >
-                                    <div className="overlay-bg no-top no-bottom">
-                                        <div className="v-center">
-                                            <div className="container position-relative z1000">
-                                                <div className="spacer-double d-lg-none d-sm-block" />
-                                                <div className="spacer-double d-lg-none d-sm-block" />
-                                                <div className="spacer-double d-lg-none d-sm-block" />
-                                                <div className="row align-items-center">
-                                                    <div className="col-lg-6 text-light">
-                                                        <h4>
-                                                            <span className="id-color">
-                                                                Fast and Easy Way to Rent a Car
-                                                            </span>
-                                                        </h4>
-                                                        <div className="spacer-10" />
-                                                        <h1 className="mb-2">Explore the world with comfortable car</h1>
-                                                        <div className="spacer-10" />
-                                                        <p className="lead">
-                                                            Embark on unforgettable adventures and discover the world in
-                                                            unparalleled comfort and style with our fleet of exceptionally
-                                                            comfortable cars.
-                                                        </p>
-                                                    </div>
-                                                    <div className="col-lg-6 bg-black/50">
-                                                        <div className="spacer-single sm-hide" />
-                                                        <div
-                                                            className="p-4 rounded-3 shadow-soft text-light"
-                                                            data-bgcolor="rgba(0, 0, 0, .6)"
-                                                        >
-                                                            {/* The form tag itself won't submit traditionally here */}
-                                                            <form name="contactForm" id="contact_form" onSubmit={(e) => e.preventDefault()}>
-                                                                <h5>What is your vehicle type?</h5>
-                                                                <div className="de_form de_radio row g-3">
-                                                                    {/* Car */}
-                                                                    <div className="radio-img col-lg-3 col-sm-3 col-6">
-                                                                        <input
-                                                                            id="radio-1a"
-                                                                            name="Car_Type"
-                                                                            type="radio"
-                                                                            value="Residential"
-                                                                            checked={data.Car_Type === "Residential"}
-                                                                            onChange={handleRadioChange}
-                                                                        />
-                                                                        <label htmlFor="radio-1a">
-                                                                            <img src="/cars/images/select-form/car.png" alt="Car" />
-                                                                            Car
-                                                                        </label>
-                                                                    </div>
-                                                                    {/* Van */}
-                                                                    <div className="radio-img col-lg-3 col-sm-3 col-6">
-                                                                        <input
-                                                                            id="radio-1b"
-                                                                            name="Car_Type"
-                                                                            type="radio"
-                                                                            value="Office" // Assuming "Office" maps to Van, or use "Van"
-                                                                            checked={data.Car_Type === "Office"}
-                                                                            onChange={handleRadioChange}
-                                                                        />
-                                                                        <label htmlFor="radio-1b">
-                                                                            <img src="/cars/images/select-form/van.png" alt="Van" />
-                                                                            Van
-                                                                        </label>
-                                                                    </div>
-                                                                    {/* Minibus */}
-                                                                    <div className="radio-img col-lg-3 col-sm-3 col-6">
-                                                                        <input
-                                                                            id="radio-1c"
-                                                                            name="Car_Type"
-                                                                            type="radio"
-                                                                            value="Commercial" // Assuming "Commercial" maps to Minibus, or use "Minibus"
-                                                                            checked={data.Car_Type === "Commercial"}
-                                                                            onChange={handleRadioChange}
-                                                                        />
-                                                                        <label htmlFor="radio-1c">
-                                                                            <img src="/cars/images/select-form/minibus.png" alt="Minibus" />
-                                                                            Minibus
-                                                                        </label>
-                                                                    </div>
-                                                                    {/* Prestige */}
-                                                                    <div className="radio-img col-lg-3 col-sm-3 col-6">
-                                                                        <input
-                                                                            id="radio-1d"
-                                                                            name="Car_Type"
-                                                                            type="radio"
-                                                                            value="Retail" // Assuming "Retail" maps to Prestige, or use "Prestige"
-                                                                            checked={data.Car_Type === "Retail"}
-                                                                            onChange={handleRadioChange}
-                                                                        />
-                                                                        <label htmlFor="radio-1d">
-                                                                            <img src="/cars/images/select-form/sportscar.png" alt="Prestige Car" />
-                                                                            Prestige
-                                                                        </label>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="spacer-20" />
-                                                                <div className="row">
-                                                                    <div className="col-lg-6 mb20">
-                                                                        <h5 className="text-xl">Pick Up Location</h5>
-                                                                        <input
-                                                                            type="text"
-                                                                            name="PickupLocation"
-                                                                            value={data.PickupLocation}
-                                                                            onChange={handleChange}
-                                                                            onFocus={(e) => typeof geolocate === 'function' && geolocate()} // Keep existing onfocus if geolocate is a global function
-                                                                            placeholder="Enter your pickup location"
-                                                                            id="autocomplete"
-                                                                            autoComplete="off"
-                                                                            className="form-control"
-                                                                        />
-                                                                        <div className="jls-address-preview jls-address-preview--hidden">
-                                                                            <div className="jls-address-preview__header"></div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="col-lg-6 mb20">
-                                                                        <h5 className="text-xl">Drop Off Location</h5>
-                                                                        <input
-                                                                            type="text"
-                                                                            name="DropoffLocation"
-                                                                            value={data.DropoffLocation}
-                                                                            onChange={handleChange}
-                                                                            onFocus={(e) => typeof geolocate === 'function' && geolocate()}
-                                                                            placeholder="Enter your dropoff location"
-                                                                            id="autocomplete2"
-                                                                            autoComplete="off"
-                                                                            className="form-control"
-                                                                        />
-                                                                        <div className="jls-address-preview jls-address-preview--hidden">
-                                                                            <div className="jls-address-preview__header"></div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="col-lg-6 mb20">
-                                                                        <h5 className="text-xl">Pick Up Date &amp; Time</h5>
-                                                                        <div className="date-time-field">
-                                                                            <input
-                                                                                type="text" // Assuming a date picker library hydrates this
-                                                                                id="date-picker"
-                                                                                name="Pick Up Date"
-                                                                                value={data["Pick Up Date"]}
-                                                                                onChange={handleChange}
-                                                                                placeholder="Select date" // Added placeholder
-                                                                            />
-                                                                            <select name="Pick Up Time" id="pickup-time" value={data["Pick Up Time"]} onChange={handleChange}>
-                                                                                <option value="">Time</option>
-                                                                                {/* Populate time options */}
-                                                                                {Array.from({ length: 48 }, (_, i) => {
-                                                                                    const hours = Math.floor(i / 2);
-                                                                                    const minutes = (i % 2) * 30;
-                                                                                    const time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-                                                                                    return <option key={time} value={time}>{time}</option>;
-                                                                                })}
-                                                                            </select>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="col-lg-6 mb20">
-                                                                        <h5 className="text-xl">Return Date &amp; Time</h5>
-                                                                        <div className="date-time-field">
-                                                                            <input
-                                                                                type="text" // Assuming a date picker library hydrates this
-                                                                                id="date-picker-2"
-                                                                                name="Collection Date"
-                                                                                value={data["Collection Date"]}
-                                                                                onChange={handleChange}
-                                                                                placeholder="Select date" // Added placeholder
-                                                                            />
-                                                                            <select name="Collection Time" id="collection-time" value={data["Collection Time"]} onChange={handleChange}>
-                                                                                <option value="">Time</option>
-                                                                                {/* Populate time options */}
-                                                                                {Array.from({ length: 48 }, (_, i) => {
-                                                                                    const hours = Math.floor(i / 2);
-                                                                                    const minutes = (i % 2) * 30;
-                                                                                    const time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-                                                                                    return <option key={time} value={time}>{time}</option>;
-                                                                                })}
-                                                                            </select>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                {/* Update Link to pass form data */}
-                                                                <Link
-                                                                    href={route('search-cars')}
-                                                                    data={data} // Inertia will append 'data' object as query parameters
-                                                                    // `as="button"` can be used if you want it to be a <button> element for styling/semantic reasons
-                                                                    // while still performing navigation.
-                                                                    // type="button" if `as="button"` to prevent form submission if it were a submit button.
-                                                                    className="btn-main pull-right"
-                                                                >
-                                                                    Search cars
-                                                                </Link>
-                                                                <div className="clearfix" />
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="spacer-double d-lg-none d-sm-block" />
-                                                <div className="spacer-double d-lg-none d-sm-block" />
-                                            </div>
-                                            <div className="position-absolute d-flex bottom-20">
-                                                {/* Marquee content remains unchanged */}
-                                                <div className="de-marquee-list d-marquee-small">
-                                                    <div className="d-item">
-                                                        <span className="d-item-txt">SUV</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Hatchback</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Crossover</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Convertible</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Sedan</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Sports Car</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Coupe</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Minivan</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Station Wagon</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Truck</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Minivans</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Exotic Cars</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                    </div>
-                                                </div>
-                                                <div className="de-marquee-list d-marquee-small">
-                                                    <div className="d-item">
-                                                        <span className="d-item-txt">SUV</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Hatchback</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Crossover</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Convertible</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Sedan</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Sports Car</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Coupe</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Minivan</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Station Wagon</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Truck</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Minivans</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                        <span className="d-item-txt">Exotic Cars</span><span className="d-item-display"><i className="d-item-dot" /></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-                        </>
-                    </HomeLayout>
-                </LayoutProvider>
-            </PrimeReactProvider>
-        </>
+    <PrimeReactProvider>
+      <LayoutProvider>
+        <Head title="Welcome" />
+        <HomeLayout>
+          <div className="product-slider-container padding-container p-5">
+            <div className="slider-header">
+              <h2>Explore Rides</h2>
+              <div className="slider-arrows">
+                <PrevArrow
+                  onClick={() => sliderRef.current?.slickPrev()}
+                  disabled={currentSlide === 0}
+                />
+                <NextArrow
+                  onClick={() => sliderRef.current?.slickNext()}
+                  disabled={currentSlide >= totalSlides - slidesToShow}
+                />
+              </div>
+            </div>
+
+            <Slider ref={sliderRef} {...sliderSettings}>
+              {cars.map((car, index) => (
+                <div className="col-xl-4 col-lg-6" key={index}>
+                    <div className="de-item mb30">
+                    <div className="d-img">
+                        {/* Use the first image from initial_gallery if available, otherwise use a placeholder */}
+                        <img
+                        src={car.initial_gallery && car.initial_gallery.length > 0 
+                            ? `/storage/${car.initial_gallery[0].image}` 
+                            : `/cars/images/cars/placeholder.jpg`}
+                        className="img-fluid"
+                        alt={`${car.brand} ${car.model}`}
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/cars/images/cars/placeholder.jpg";
+                        }}
+                        />
+                    </div>
+                    <div className="d-info">
+                        <div className="d-text">
+                        <h4>{car.brand} {car.model}</h4>
+                        <div className="d-item_like">
+                            <i className="fa fa-heart" />
+                            <span>{Math.floor(Math.random() * 100)}</span>
+                        </div>
+                        <div className="d-atr-group">
+                            <span className="d-atr">
+                            <img src="/cars/images/icons/1-green.svg" alt="" />
+                            {car.seats || 5}
+                            </span>
+                            <span className="d-atr">
+                            <img src="/cars/images/icons/2-green.svg" alt="" />
+                            {car.doors || 4}
+                            </span>
+                            <span className="d-atr">
+                            <img src="/cars/images/icons/3-green.svg" alt="" />
+                            {car.luggage_capacity ? Math.floor(car.luggage_capacity / 1000) : 4}
+                            </span>
+                            <span className="d-atr">
+                            <img src={getCarTypeIcon(car.body_type)} alt="" />
+                            {car.body_type || 'Sedan'}
+                            </span>
+                        </div>
+                        <div className="d-price">
+                            Daily rate from <span>KES{car.price_per_day}</span>
+                        </div>
+                        <div className="mt-2">
+                            <Link className="btn-main" href={route('rent-now', { car_id: car.id })}>
+                            Rent Now
+                            </Link>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+              ))}
+            </Slider>
+          </div>
+        </HomeLayout>
+      </LayoutProvider>
+    </PrimeReactProvider>
     );
 }

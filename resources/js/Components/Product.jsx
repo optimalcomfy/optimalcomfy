@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import PropertySlider from "./PropertySlider";
 
 import starIcon from "../assets/svgs/star.svg";
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 
 const Product = (props) => {
   const [page, setPage] = useState(1);
@@ -26,18 +26,13 @@ const Product = (props) => {
       <div className="relative rounded-xl overflow-hidden">
         <PropertySlider page={page} setPage={setPage}>
           {initial_gallery?.map((image, index) => (
-             <Link
-              href={route('property-detail', { id: id })}>
-                <img
-                  key={index}
-                  src={`/storage/${image.image}`}
-                  onClick={()=>{
-
-                  }}
-                  alt={`Image ${index + 1} of ${property_name}`}
-                  className="w-full aspect-[20/19] object-cover"
-                />
-            </Link>
+            <img
+              key={index}
+              src={`/storage/${image.image}`}
+              onClick={() => router.visit(route('property-detail', { id }))}
+              alt={`Image ${index + 1} of ${property_name}`}
+              className="w-full aspect-[20/19] object-cover"
+            />
           ))}
         </PropertySlider>
 

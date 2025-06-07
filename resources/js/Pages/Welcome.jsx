@@ -92,12 +92,8 @@ export default function Welcome() {
             </div>
 
             <Slider ref={sliderRef} {...sliderSettings}>
-              {properties.map((data) => (
-                <div key={data.id}>
-                  <div style={{ padding: "0 8px" }}>
-                    <Product {...data} />
-                  </div>
-                </div>
+              {properties.map((data, index) => (
+                <Product key={index} {...data} />
               ))}
             </Slider>
           </div>

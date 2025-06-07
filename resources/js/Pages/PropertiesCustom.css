@@ -290,6 +290,11 @@
   .properties-container {
     background: #ffffff;
   }
+
+  .product-grid {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 /* Animation for property cards */

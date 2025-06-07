@@ -379,6 +379,17 @@ body.header-fixed {
 @media (max-width: 767px) {
   .header-container {
     padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 0;
+      transition: all 0.3s ease;
   }
 }
 
@@ -403,3 +414,5 @@ body.header-fixed {
 .mobile-menu {
   z-index: 1002;
 }
+
+

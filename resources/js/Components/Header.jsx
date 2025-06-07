@@ -67,91 +67,91 @@ function Header() {
     <div className='bgbg'>
         <div className={`header-top ${isScrolled ? 'header-scrolled' : ''}`}>
             <div className="header-container">
-            <div className="header-top-content">
-                <div className="logo-container">
-                  <Link href={route('home')}>
-                      <img
-                      className={`logo-image ${isScrolled ? 'logo-scrolled' : ''}`}
-                      src="/image/logo/logo.png"
-                      alt="Ristay"
-                      />
-                  </Link>
-                </div>
-                <div className="navigation-menu">
-                  <div className="navigation d-none d-lg-block">
-                      <nav className="navigation__menu" id="main__menu">
-                      <ul className="list-unstyled">
-                          <li className="navigation__menu--item has-child has-arrow dark:before:!text-white">
-                          <Link
-                            href={route('home')}
-                            className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${isWhich === '/' ? 'lowBorder' : ''}`}
-                            >
-                              <img src='/image/houses.png' alt='' className='h-8' />
-                              Properties
-                          </Link>
-                          </li>
-                          <li className="navigation__menu--item has-child has-arrow  dark:before:!text-white">
+              <div className="header-top-content">
+                  <div className="logo-container">
+                    <Link href={route('home')}>
+                        <img
+                        className={`logo-image ${isScrolled ? 'logo-scrolled' : ''}`}
+                        src="/image/logo/logo.png"
+                        alt="Ristay"
+                        />
+                    </Link>
+                  </div>
+                  <div className="navigation-menu">
+                    <div className="navigation d-none d-lg-block">
+                        <nav className="navigation__menu" id="main__menu">
+                        <ul className="list-unstyled">
+                            <li className="navigation__menu--item has-child has-arrow dark:before:!text-white">
                             <Link
-                                href={route('all-cars')}
-                                className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${isWhich === '/all-cars' ? 'lowBorder' : ''}`}
-                            >
-                              <img src='/image/car.png' alt='' className='h-8' />
-                                Cars
+                              href={route('home')}
+                              className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${isWhich === '/' ? 'lowBorder' : ''}`}
+                              >
+                                <img src='/image/houses.png' alt='' className='h-8' />
+                                Properties
                             </Link>
-                          </li>
-                      </ul>
-                      </nav>
+                            </li>
+                            <li className="navigation__menu--item has-child has-arrow  dark:before:!text-white">
+                              <Link
+                                  href={route('all-cars')}
+                                  className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${isWhich === '/all-cars' ? 'lowBorder' : ''}`}
+                              >
+                                <img src='/image/car.png' alt='' className='h-8' />
+                                  Cars
+                              </Link>
+                            </li>
+                        </ul>
+                        </nav>
+                    </div>
                   </div>
-                </div>
-                <div className="header-right">
-                  <div className="header-right-content">
-                      <p className="airbnb-text">Airbnb your home</p>
-                      <div 
-                        className="profile-menu-button"
-                        onClick={toggleProfileDropdown2}
-                        ref={dropdownRef2}
-                      >
-                          <i className="fa-solid fa-bars"></i>
-                          <p className="profile-avatar">E</p>
-                          
-                          {/* Profile Dropdown Menu */}
-                          {profileDropdownOpen2 && (
-                            <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
-                              <Link 
-                                href={route('login')} 
-                                className="dropdown-item"
-                                onClick={handleDropdownClick2}
-                              >
-                                Log in
-                              </Link>
-                              <Link 
-                                href={route('register')} 
-                                className="dropdown-item"
-                                onClick={handleDropdownClick2}
-                              >
-                                Sign up
-                              </Link>
-                              <hr className="dropdown-divider" />
-                              <Link 
-                                href={route('all-properties')} 
-                                className="dropdown-item"
-                                onClick={handleDropdownClick2}
-                              >
-                                Book a property
-                              </Link>
-                              <Link 
-                                href={route('all-cars')} 
-                                className="dropdown-item"
-                                onClick={handleDropdownClick2}
-                              >
-                                Rent a car
-                              </Link>
-                            </div>
-                          )}
-                      </div>
+                  <div className="header-right">
+                    <div className="header-right-content">
+                        <p className="airbnb-text">Airbnb your home</p>
+                        <div 
+                          className="profile-menu-button"
+                          onClick={toggleProfileDropdown2}
+                          ref={dropdownRef2}
+                        >
+                            <i className="fa-solid fa-bars"></i>
+                            <p className="profile-avatar">E</p>
+                            
+                            {/* Profile Dropdown Menu */}
+                            {profileDropdownOpen2 && (
+                              <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
+                                <Link 
+                                  href={route('login')} 
+                                  className="dropdown-item"
+                                  onClick={handleDropdownClick2}
+                                >
+                                  Log in
+                                </Link>
+                                <Link 
+                                  href={route('register')} 
+                                  className="dropdown-item"
+                                  onClick={handleDropdownClick2}
+                                >
+                                  Sign up
+                                </Link>
+                                <hr className="dropdown-divider" />
+                                <Link 
+                                  href={route('all-properties')} 
+                                  className="dropdown-item"
+                                  onClick={handleDropdownClick2}
+                                >
+                                  Book a property
+                                </Link>
+                                <Link 
+                                  href={route('all-cars')} 
+                                  className="dropdown-item"
+                                  onClick={handleDropdownClick2}
+                                >
+                                  Rent a car
+                                </Link>
+                              </div>
+                            )}
+                        </div>
+                    </div>
                   </div>
-                </div>
-            </div>
+              </div>
             </div>
         </div>
         

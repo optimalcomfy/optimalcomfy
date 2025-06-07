@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { router } from '@inertiajs/react';
-import { Search, Loader2, X } from 'lucide-react';
+import { Search, Loader2, X, MapPin, Calendar, Users } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import './SearchForms.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -16,7 +16,35 @@ export default function SearchBar() {
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
   const suggestionRef = useRef(null);
+  const modalRef = useRef(null);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isModalOpen && isMobile) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isModalOpen, isMobile]);
 
   // Fetch location suggestions
   useEffect(() => {
@@ -49,10 +77,13 @@ export default function SearchBar() {
       if (suggestionRef.current && !suggestionRef.current.contains(event.target)) {
         setIsSuggestionsOpen(false);
       }
+      if (modalRef.current && !modalRef.current.contains(event.target) && isMobile) {
+        setIsModalOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isMobile]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -76,6 +107,11 @@ export default function SearchBar() {
       return;
     }
 
+    // Close modal on mobile after search
+    if (isMobile) {
+      setIsModalOpen(false);
+    }
+
     router.get('/all-properties', {
       location,
       checkIn,
@@ -85,83 +121,237 @@ export default function SearchBar() {
     });
   };
 
+  const openSearchModal = () => {
+    if (isMobile) {
+      setIsModalOpen(true);
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  // Desktop search bar (original design)
+  const DesktopSearchBar = () => (
+    <div className="search-container desktop-search">
+      <div className="bar" ref={suggestionRef}>
+        {/* Location */}
+        <div className="location relative">
+          <p className="field-label absolute text-xs">Where</p>
+          <input
+            type="text"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            placeholder="Search destination"
+            className='inputType'
+            onFocus={() => {
+              if (locationSuggestions.length > 0) setIsSuggestionsOpen(true);
+            }}
+          />
+          {formData.location && (
+            <X className="clear-icon" onClick={() => setFormData(prev => ({ ...prev, location: '' }))} />
+          )}
+          {isLoadingSuggestions && <Loader2 className="loader-icon" />}
+          {isSuggestionsOpen && (
+            <ul className="suggestions-dropdown">
+              {locationSuggestions.map((loc, i) => (
+                <li key={i} onClick={() => handleLocationSelect(loc)}>{loc}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Check in */}
+        <div className="check-in relative">
+          <p className="field-label absolute text-xs">Check in</p>
+          <input
+            type="date"
+            name="checkIn"
+            value={formData.checkIn}
+            onChange={handleChange}
+            placeholder="Add dates"
+            className='inputType'
+            min={new Date().toISOString().split("T")[0]}
+          />
+        </div>
+
+        {/* Check out */}
+        <div className="check-out relative">
+          <p className="field-label absolute text-xs">Check out</p>
+          <input
+            type="date"
+            name="checkOut"
+            value={formData.checkOut}
+            onChange={handleChange}
+            placeholder="Add dates"
+            className='inputType'
+            min={formData.checkIn}
+          />
+        </div>
+
+        {/* Guests */}
+        <div className="guests relative">
+          <p className="field-label absolute text-xs">Guests</p>
+          <input
+            type="text"
+            name="guests"
+            value={formData.guests}
+            onChange={handleChange}
+            placeholder="Add guests"
+            className='inputType'
+          />
+          <button className="search-button" onClick={handleSubmit}>
+            <Search size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Mobile search trigger button
+  const MobileSearchTrigger = () => (
+    <div className="mobile-search-trigger" onClick={openSearchModal}>
+      <div className="search-trigger-content">
+        <Search size={20} className="search-trigger-icon" />
+        <div className="search-trigger-text">
+          <span className="search-trigger-title">Where to?</span>
+          <span className="search-trigger-subtitle">Anywhere • Any week • Add guests</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Mobile search modal
+  const MobileSearchModal = () => (
+    <div className={`mobile-search-modal mb-2 ${isModalOpen ? 'active' : ''}`}>
+      <div className="modal-overlay" onClick={closeModal}></div>
+      <div className="modal-content" ref={modalRef}>
+        {/* Modal Header */}
+        <div className="modal-header">
+          <button className="modal-close-btn" onClick={closeModal}>
+            <X size={24} />
+          </button>
+          <h2 className="modal-title">Search Properties</h2>
+        </div>
+
+        {/* Modal Body */}
+        <div className="modal-body">
+          <div className="mobile-search-fields">
+            {/* Location Field */}
+            <div className="mobile-field-group" ref={suggestionRef}>
+              <label className="mobile-field-label">
+                <MapPin size={20} />
+                <span>Where</span>
+              </label>
+              <div className="mobile-field-input">
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  placeholder="Search destinations"
+                  onFocus={() => {
+                    if (locationSuggestions.length > 0) setIsSuggestionsOpen(true);
+                  }}
+                />
+                {formData.location && (
+                  <X className="clear-icon" onClick={() => setFormData(prev => ({ ...prev, location: '' }))} />
+                )}
+                {isLoadingSuggestions && <Loader2 className="loader-icon animate-spin" />}
+              </div>
+              {isSuggestionsOpen && (
+                <ul className="mobile-suggestions-dropdown">
+                  {locationSuggestions.map((loc, i) => (
+                    <li key={i} onClick={() => handleLocationSelect(loc)}>
+                      <MapPin size={16} />
+                      <span>{loc}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Check-in Field */}
+            <div className="mobile-field-group">
+              <label className="mobile-field-label">
+                <Calendar size={20} />
+                <span>Check in</span>
+              </label>
+              <div className="mobile-field-input">
+                <input
+                  type="date"
+                  name="checkIn"
+                  value={formData.checkIn}
+                  onChange={handleChange}
+                  min={new Date().toISOString().split("T")[0]}
+                />
+              </div>
+            </div>
+
+            {/* Check-out Field */}
+            <div className="mobile-field-group">
+              <label className="mobile-field-label">
+                <Calendar size={20} />
+                <span>Check out</span>
+              </label>
+              <div className="mobile-field-input">
+                <input
+                  type="date"
+                  name="checkOut"
+                  value={formData.checkOut}
+                  onChange={handleChange}
+                  min={formData.checkIn}
+                />
+              </div>
+            </div>
+
+            {/* Guests Field */}
+            <div className="mobile-field-group">
+              <label className="mobile-field-label">
+                <Users size={20} />
+                <span>Guests</span>
+              </label>
+              <div className="mobile-field-input">
+                <input
+                  type="text"
+                  name="guests"
+                  value={formData.guests}
+                  onChange={handleChange}
+                  placeholder="Add guests"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="modal-footer gap-8">
+          <button className="modal-clear-btn" onClick={() => setFormData({ location: '', checkIn: '', checkOut: '', guests: '' })}>
+            Clear all
+          </button>
+          <button className="modal-search-btn flex items-center gap-4" onClick={handleSubmit}>
+            <Search size={20} />
+            Search
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
-      <div className="search-container">
-        <div className="bar" ref={suggestionRef}>
-          {/* Location */}
-          <div className="location relative">
-            <p className="field-label absolute text-xs">Where</p>
-            <input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="Search destination"
-              className='inputType'
-              onFocus={() => {
-                if (locationSuggestions.length > 0) setIsSuggestionsOpen(true);
-              }}
-            />
-            {formData.location && (
-              <X className="clear-icon" onClick={() => setFormData(prev => ({ ...prev, location: '' }))} />
-            )}
-            {isLoadingSuggestions && <Loader2 className="loader-icon" />}
-            {isSuggestionsOpen && (
-              <ul className="suggestions-dropdown">
-                {locationSuggestions.map((loc, i) => (
-                  <li key={i} onClick={() => handleLocationSelect(loc)}>{loc}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* Check in */}
-          <div className="check-in relative">
-            <p className="field-label absolute text-xs">Check in</p>
-            <input
-              type="date"
-              name="checkIn"
-              value={formData.checkIn}
-              onChange={handleChange}
-              placeholder="Add dates"
-              className='inputType'
-              min={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-
-          {/* Check out */}
-          <div className="check-out relative">
-            <p className="field-label absolute text-xs">Check out</p>
-            <input
-              type="date"
-              name="checkOut"
-              value={formData.checkOut}
-              onChange={handleChange}
-              placeholder="Add dates"
-              className='inputType'
-              min={formData.checkIn}
-            />
-          </div>
-
-          {/* Guests */}
-          <div className="guests relative">
-            <p className="field-label absolute text-xs">Guests</p>
-            <input
-              type="text"
-              name="guests"
-              value={formData.guests}
-              onChange={handleChange}
-              placeholder="Add guests"
-              className='inputType'
-            />
-            <button className="search-button" onClick={handleSubmit}>
-              <Search size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
+      
+      {/* Show desktop search on larger screens */}
+      {!isMobile && <DesktopSearchBar />}
+      
+      {/* Show mobile trigger on mobile screens */}
+      {isMobile && <MobileSearchTrigger />}
+      
+      {/* --- MODIFIED LINE --- */}
+      {/* Mobile search modal - Render only when it is open */}
+      {isMobile && isModalOpen && <MobileSearchModal />}
     </>
   );
 }

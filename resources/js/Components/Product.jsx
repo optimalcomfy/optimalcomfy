@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import PropertySlider from "./PropertySlider";
 
 import starIcon from "../assets/svgs/star.svg";
-import { Link, usePage, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 
 const Product = (props) => {
   const [page, setPage] = useState(1);

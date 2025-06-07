@@ -5819,14 +5819,6 @@ input {
   transition: border-color 0.3s ease;
 }
 
-textarea:focus, input:focus {
-  outline: 1px solid var(--heading-color);
-}
-
-textarea:focus-visible, input:focus-visible {
-  outline: 1px solid var(--heading-color);
-}
-
 .navigation__menu ul {
   display: flex;
   max-width: max-content;

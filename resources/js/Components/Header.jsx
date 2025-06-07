@@ -6,20 +6,36 @@ import './Header.css'; // Import custom CSS
 import SearchBar from './SearchForm';
 
 function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [profileDropdownOpen2, setProfileDropdownOpen2] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef(null);
+  const dropdownRef2 = useRef(null);
   const {url} = usePage()
   const [isWhich] = useState(url)
   
 
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
-
   const toggleProfileDropdown = () => {
     setProfileDropdownOpen(!profileDropdownOpen);
+  };
+
+  const toggleProfileDropdown2 = () => {
+    setProfileDropdownOpen2(!profileDropdownOpen2);
+  };
+
+  // Handle dropdown link clicks
+  const handleDropdownClick = (e) => {
+    // Allow the link to navigate, then close dropdown after a short delay
+    setTimeout(() => {
+      setProfileDropdownOpen(false);
+    }, 100);
+  };
+
+  const handleDropdownClick2 = (e) => {
+    // Allow the link to navigate, then close dropdown after a short delay
+    setTimeout(() => {
+      setProfileDropdownOpen2(false);
+    }, 100);
   };
 
   // Handle scroll effect
@@ -92,24 +108,26 @@ function Header() {
                       <p className="airbnb-text">Airbnb your home</p>
                       <div 
                         className="profile-menu-button"
-                        onClick={toggleProfileDropdown}
-                        ref={dropdownRef}
+                        onClick={toggleProfileDropdown2}
+                        ref={dropdownRef2}
                       >
                           <i className="fa-solid fa-bars"></i>
                           <p className="profile-avatar">E</p>
                           
                           {/* Profile Dropdown Menu */}
-                          {profileDropdownOpen && (
-                            <div className="profile-dropdown">
+                          {profileDropdownOpen2 && (
+                            <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
                               <Link 
                                 href={route('login')} 
                                 className="dropdown-item"
+                                onClick={handleDropdownClick2}
                               >
                                 Log in
                               </Link>
                               <Link 
                                 href={route('register')} 
                                 className="dropdown-item"
+                                onClick={handleDropdownClick2}
                               >
                                 Sign up
                               </Link>
@@ -117,20 +135,16 @@ function Header() {
                               <Link 
                                 href={route('all-properties')} 
                                 className="dropdown-item"
+                                onClick={handleDropdownClick2}
                               >
                                 Book a property
                               </Link>
                               <Link 
                                 href={route('all-cars')} 
                                 className="dropdown-item"
+                                onClick={handleDropdownClick2}
                               >
                                 Rent a car
-                              </Link>
-                              <Link 
-                                href={route('contact')} 
-                                className="dropdown-item"
-                              >
-                                Contact us
                               </Link>
                             </div>
                           )}
@@ -172,16 +186,18 @@ function Header() {
                           
                           {/* Profile Dropdown Menu */}
                           {profileDropdownOpen && (
-                            <div className="profile-dropdown">
+                            <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
                               <Link 
                                 href={route('login')} 
                                 className="dropdown-item"
+                                onClick={handleDropdownClick}
                               >
                                 Log in
                               </Link>
                               <Link 
                                 href={route('register')} 
                                 className="dropdown-item"
+                                onClick={handleDropdownClick}
                               >
                                 Sign up
                               </Link>
@@ -189,20 +205,16 @@ function Header() {
                               <Link 
                                 href={route('all-properties')} 
                                 className="dropdown-item"
+                                onClick={handleDropdownClick}
                               >
                                 Book a property
                               </Link>
                               <Link 
                                 href={route('all-cars')} 
                                 className="dropdown-item"
+                                onClick={handleDropdownClick}
                               >
                                 Rent a car
-                              </Link>
-                              <Link 
-                                href={route('contact')} 
-                                className="dropdown-item"
-                              >
-                                Contact us
                               </Link>
                             </div>
                           )}

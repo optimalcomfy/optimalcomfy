@@ -88,7 +88,7 @@ class CarBookingController extends Controller
 	        'end_date'        => $request->end_date,
 	        'total_price'     => $totalPrice,
 	        'pickup_location' => $request->pickup_location,
-	        'dropoff_location'=> $request->dropoff_location,
+	        'dropoff_location'=> $request->pickup_location,
 	        'status'          => 'pending',
 	        'special_requests'=> $request->special_requests,
 	    ]);

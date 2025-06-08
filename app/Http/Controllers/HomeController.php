@@ -126,13 +126,16 @@ class HomeController extends Controller
 
     public function carBooking(Request $request)
     {
+        $input = $request->all();
+        $car = Car::with(['bookings', 'initialGallery', 'carFeatures'])->where('id', '=', $input['car_id'])->first();
 
         return Inertia::render('CarBooking', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
-            'flash' => session('flash')
+            'flash' => session('flash'),
+            'car'=> $car
         ]);
     }
 

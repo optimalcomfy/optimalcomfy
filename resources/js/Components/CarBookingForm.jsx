@@ -1,127 +1,73 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useForm, usePage } from '@inertiajs/react';
-import axios from 'axios';
-import { Search, X, Loader2 } from 'lucide-react'; // Import necessary icons
-import './CarBookingForm.css'; // Example: if you create a specific CSS file
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Star, X, Loader2, MapPin, Calendar, User, CreditCard, Eye } from 'lucide-react';
+import { Link, Head, router, usePage, useForm } from "@inertiajs/react";
 
-const CarBookingForm = ({ cars }) => {
-  const url = usePage().url;
+const today = new Date().toISOString().split('T')[0];
+const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
-  const carId = (() => {
-    const queryString = url.split('?')[1];
-    if (!queryString) return null;
-    const params = new URLSearchParams(queryString);
-    return params.get('car_id');
-  })();
+const CarBookingForm = () => {
+  const { flash, car } = usePage().props;
 
+  const [currentStep, setCurrentStep] = useState(1);
   const { data, setData, post, processing, errors } = useForm({
-    car_id: carId,
     pickup_location: '',
     dropoff_location: '',
-    start_date: '',
-    end_date: '',
-    total_price: 0,
-    status: 'Booked',
+    start_date: today,
+    car_id: car.id,
+    end_date: tomorrow, 
     name: '',
     email: '',
-    password: '',
     phone: '',
+    password: '',
     message: '',
-    is_registered: true,
-    user_type: 'guest',
-    days: 0, // Initialize days
+    is_registered: false
   });
 
-  const [selectedCar, setSelectedCar] = useState(null); // Assuming you still need this for price calculation
+  // Location suggestions state
+  const [pickupSuggestions, setPickupSuggestions] = useState(['Nairobi CBD', 'JKIA Airport', 'Westlands', 'Karen', 'Kilimani']);
+  const [dropoffSuggestions, setDropoffSuggestions] = useState(['Nairobi CBD', 'JKIA Airport', 'Westlands', 'Karen', 'Kilimani']);
+  const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
+  const [showDropoffSuggestions, setShowDropoffSuggestions] = useState(false);
+  
+  const pickupRef = useRef(null);
+  const dropoffRef = useRef(null);
 
-  // --- New state for location suggestions ---
-  const [pickupLocationSuggestions, setPickupLocationSuggestions] = useState([]);
-  const [isLoadingPickupSuggestions, setIsLoadingPickupSuggestions] = useState(false);
-  const [isPickupSuggestionsOpen, setIsPickupSuggestionsOpen] = useState(false);
+  const calculateDays = () => {
+    const start = new Date(data.start_date);
+    const end = new Date(data.end_date);
 
-  const [dropoffLocationSuggestions, setDropoffLocationSuggestions] = useState([]);
-  const [isLoadingDropoffSuggestions, setIsLoadingDropoffSuggestions] = useState(false);
-  const [isDropoffSuggestionsOpen, setIsDropoffSuggestionsOpen] = useState(false);
-
-  const pickupSuggestionRef = useRef(null);
-  const dropoffSuggestionRef = useRef(null);
-  // --- End of new state ---
-
-  // Find the selected car based on carId to get its price_per_day
-  useEffect(() => {
-    if (carId && cars && cars.length > 0) {
-        const foundCar = cars.find(car => car.id.toString() === carId);
-        setSelectedCar(foundCar);
-        if (foundCar) {
-            // If you want to pre-fill the car_id in the form if not already set
-            if (!data.car_id) {
-                setData('car_id', foundCar.id.toString());
-            }
-        }
-    }
-  }, [carId, cars, data.car_id, setData]);
-
-
-  const calculateDays = (start_date, end_date) => {
-    if (start_date && end_date) {
-      const pickupDate = new Date(start_date);
-      const returnDate = new Date(end_date);
-      const timeDifference = returnDate - pickupDate;
-      return Math.max(1, Math.ceil(timeDifference / (1000 * 3600 * 24)));
-    }
-    return 0;
+    return Math.max(1, Math.ceil((end - start) / (1000 * 3600 * 24)));
   };
 
-  const handleDateChange = (e) => {
-    const { name, value } = e.target;
+  const days = calculateDays();
+  const totalPrice = days * car.price_per_day;
 
-    if (name === 'end_date' && data.start_date && new Date(value) <= new Date(data.start_date)) {
-      alert('Return date must be after pickup date');
-      return;
-    }
-
-    if (name === 'start_date' && data.end_date && new Date(value) >= new Date(data.end_date)) {
-      alert('Pickup date must be before return date');
-      return;
-    }
-
-    setData(name, value);
-  };
-
-  useEffect(() => {
-    if (data.start_date && data.end_date) {
-      const days = calculateDays(data.start_date, data.end_date);
-      setData('days', days);
-      if (selectedCar) {
-        setData('total_price', days * (selectedCar.price_per_day || 0));
-      }
+  const handleLocationSelect = (location, field) => {
+    setData(field, location);
+    if (field === 'pickup_location') {
+      setShowPickupSuggestions(false);
     } else {
-      setData('days', 0);
-      setData('total_price', 0);
+      setShowDropoffSuggestions(false);
     }
-  }, [data.start_date, data.end_date, selectedCar, setData]);
+  };
 
-
-  // --- useEffect for fetching PICKUP location suggestions ---
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (data.pickup_location.length < 2) {
-        setPickupLocationSuggestions([]);
-        setIsPickupSuggestionsOpen(false);
+      if (data.pickup_location) {
+        setPickupSuggestions([]);
         return;
       }
-      setIsLoadingPickupSuggestions(true);
       try {
+        console.log(data);
+        
         // Ensure this endpoint exists and returns an array of strings
         const res = await fetch(`/locations?query=${encodeURIComponent(data.pickup_location)}`);
         const suggestions = await res.json();
-        setPickupLocationSuggestions(suggestions);
-        setIsPickupSuggestionsOpen(suggestions.length > 0);
+        setPickupSuggestions(suggestions);
       } catch (err) {
-        console.error("Error fetching pickup locations:", err);
-        setPickupLocationSuggestions([]);
+        console.error("Error fetching dropoff locations:", err);
+        setPickupSuggestions([]);
       } finally {
-        setIsLoadingPickupSuggestions(false);
       }
     };
 
@@ -129,111 +75,49 @@ const CarBookingForm = ({ cars }) => {
     return () => clearTimeout(delay);
   }, [data.pickup_location]);
 
-  // --- useEffect for fetching DROPOFF location suggestions ---
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (data.dropoff_location.length < 2) {
-        setDropoffLocationSuggestions([]);
-        setIsDropoffSuggestionsOpen(false);
-        return;
-      }
-      setIsLoadingDropoffSuggestions(true);
-      try {
-        // Ensure this endpoint exists and returns an array of strings
-        const res = await fetch(`/locations?query=${encodeURIComponent(data.dropoff_location)}`);
-        const suggestions = await res.json();
-        setDropoffLocationSuggestions(suggestions);
-        setIsDropoffSuggestionsOpen(suggestions.length > 0);
-      } catch (err) {
-        console.error("Error fetching dropoff locations:", err);
-        setDropoffLocationSuggestions([]);
-      } finally {
-        setIsLoadingDropoffSuggestions(false);
-      }
-    };
-
-    const delay = setTimeout(fetchSuggestions, 300);
-    return () => clearTimeout(delay);
-  }, [data.dropoff_location]);
-
-
-  // --- useEffect for handling click outside for suggestion lists ---
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (pickupSuggestionRef.current && !pickupSuggestionRef.current.contains(event.target)) {
-        setIsPickupSuggestionsOpen(false);
-      }
-      if (dropoffSuggestionRef.current && !dropoffSuggestionRef.current.contains(event.target)) {
-        setIsDropoffSuggestionsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleLocationInputChange = (e) => {
-    const { name, value } = e.target;
-    setData(name, value);
-  };
-
-  const handlePickupLocationSelect = (location) => {
-    setData('pickup_location', location);
-    setIsPickupSuggestionsOpen(false);
-  };
-
-  const handleDropoffLocationSelect = (location) => {
-    setData('dropoff_location', location);
-    setIsDropoffSuggestionsOpen(false);
-  };
-
-  const clearLocationField = (fieldName) => {
-    setData(fieldName, '');
-    if (fieldName === 'pickup_location') {
-      setPickupLocationSuggestions([]);
-      setIsPickupSuggestionsOpen(false);
-    } else if (fieldName === 'dropoff_location') {
-      setDropoffLocationSuggestions([]);
-      setIsDropoffSuggestionsOpen(false);
+  const handleContinue = () => {
+    if (currentStep < 3) {
+      setCurrentStep(prev => prev + 1);
     }
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!data.start_date || !data.end_date || data.days <= 0) {
+    if (!data.start_date || !data.end_date) {
       alert('Please select valid pickup and return dates');
       return;
     }
 
     if (!data.car_id) {
-      alert('Please select a vehicle'); // Or handle if car not found/selected
+      alert('Please select a vehicle');
       return;
     }
 
-    if (!data.pickup_location || !data.dropoff_location) {
+    if (!data.pickup_location) {
       alert('Please select pickup and dropoff locations');
       return;
     }
 
     try {
       let userId = null;
-      const bookingData = { ...data }; // Create a mutable copy
+      const bookingData = { ...data }; 
 
       const registrationResponse = await axios.post(route('register'), {
         email: data.email,
         password: data.password,
         name: data.name,
-        user_type: data.user_type, // Ensure 'guest' is a valid user_type on your backend
+        user_type: data.user_type, 
         phone: data.phone
       });
       
-      userId = registrationResponse.data.user_id; // Adjust based on your API response
-      bookingData.user_id = userId; // Add user_id to the booking data
+      userId = registrationResponse.data.user_id; 
+      bookingData.user_id = userId; 
 
       post(route('car-bookings.store'), {
-        data: bookingData, // Pass the potentially modified bookingData
+        data: bookingData,
         onSuccess: () => {
+          // Handle success
         },
         onError: (formErrors) => {
             alert(formErrors.message || 'Booking failed. Please check the form and try again.');
@@ -246,283 +130,366 @@ const CarBookingForm = ({ cars }) => {
     }
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (pickupRef.current && !pickupRef.current.contains(event.target)) {
+        setShowPickupSuggestions(false);
+      }
+      if (dropoffRef.current && !dropoffRef.current.contains(event.target)) {
+        setShowDropoffSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <div className="py-6 px-4 rounded-lg relative z-10 dark:shadow-none">
-      <form onSubmit={handleSubmit}>
-        <div className="grid gap-6">
-          <div className="grid md:grid-cols-2 gap-6">
+    <div className="max-w-6xl mx-auto p-4 bg-gray-50 min-h-screen">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left Column - Booking Form */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-6">
+              <h1 className="text-2xl font-semibold text-left">Request to book a ride</h1>
+            </div>
 
-            {/* Pickup Location - Modified */}
-            <div className="field-group" ref={pickupSuggestionRef}>
-              <label htmlFor="pickup_location" className="block text-xl font-medium text-heading dark:text-white mb-2">
-                Pickup Location
-              </label>
-              <div className="field-input relative"> {/* Ensure field-input and icon styles are available */}
-                <input
-                  type="text"
-                  id="pickup_location"
-                  name="pickup_location"
-                  className="w-full p-3 pl-10 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-700 rounded-md appearance-none outline-none dark:text-white"
-                  value={data.pickup_location}
-                  onChange={handleLocationInputChange}
-                  placeholder="Search pickup location"
-                  autoComplete="off"
-                  onFocus={() => {
-                    if (pickupLocationSuggestions.length > 0) setIsPickupSuggestionsOpen(true);
-                  }}
-                  required
-                />
-                {data.pickup_location && !isLoadingPickupSuggestions && (
-                  <X className="clear-icon lucide-icon absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600" size={20} onClick={() => clearLocationField('pickup_location')} />
-                )}
-                {isLoadingPickupSuggestions && (
-                  <Loader2 className="loader-icon lucide-icon absolute right-3 top-1/2 transform -translate-y-1/2 animate-spin text-blue-500" size={20} />
+            {/* Step 1: Login or Sign Up */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-pink-500 text-white rounded-full flex items-center justify-center font-semibold">
+                    1
+                  </div>
+                  <span className="font-medium">Log in or sign up</span>
+                </div>
+                {currentStep === 1 ? (
+                  <div className="text-sm text-gray-600">Required</div>
+                ) : (
+                  <button 
+                    onClick={() => setCurrentStep(1)}
+                    className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+                  >
+                    Continue
+                  </button>
                 )}
               </div>
-              {isPickupSuggestionsOpen && pickupLocationSuggestions.length > 0 && (
-                <ul className="suggestions-list absolute z-10 w-full bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-700 rounded-md mt-1 shadow-lg max-h-60 overflow-y-auto">
-                  {pickupLocationSuggestions.map((loc, i) => (
-                    <li 
-                      key={`pickup-${i}-${loc}`} // Ensure unique key
-                      onClick={() => handlePickupLocationSelect(loc)}
-                      className="p-3 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer dark:text-white"
-                    >
-                      {loc}
-                    </li>
-                  ))}
-                </ul>
+
+              {currentStep === 1 && (
+                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                  <div className="mb-4">
+                    <div className="flex gap-4 mb-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="userType"
+                          checked={!data.is_registered}
+                          onChange={() => setData('is_registered', false)}
+                          className="mr-2"
+                        />
+                        New User
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="userType"
+                          checked={data.is_registered}
+                          onChange={() => setData('is_registered', true)}
+                          className="mr-2"
+                        />
+                        Existing User
+                      </label>
+                    </div>
+
+                    {!data.is_registered && (
+                      <div className="grid gap-4">
+                        <div className="relative border rounded-md">
+                          <input
+                            type="text"
+                            placeholder="Full Name"
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
+                            className="w-full p-3 border rounded-lg"
+                          />
+                          {errors.name && <div className="text-red-500 text-sm mt-1">{errors.name}</div>}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid gap-4">
+                       <div className="relative border rounded-md">
+                        <input
+                          type="email"
+                          placeholder="Email"
+                          value={data.email}
+                          onChange={(e) => setData('email', e.target.value)}
+                          className="w-full p-3 border rounded-md"
+                        />
+                        {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
+                       </div>
+
+                      <div className="relative border rounded-md">
+                        <input
+                          type="password"
+                          placeholder="Password"
+                          value={data.password}
+                          onChange={(e) => setData('password', e.target.value)}
+                          className="w-full p-3 border rounded-lg"
+                        />
+                        {errors.password && <div className="text-red-500 text-sm mt-1">{errors.password}</div>}
+                      </div>
+
+                      <div className="relative border rounded-md">
+                        <input
+                          type="tel"
+                          placeholder="Phone Number"
+                          value={data.phone}
+                          onChange={(e) => setData('phone', e.target.value)}
+                          className="w-full p-3 border rounded-lg"
+                        />
+                        {errors.phone && <div className="text-red-500 text-sm mt-1">{errors.phone}</div>}
+                      </div>
+
+                    </div>
+
+                    <div className="relative">
+                      <button
+                        onClick={handleContinue}
+                        className="w-full mx-auto py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
-              {errors.pickup_location && <div className="text-red-500 text-sm mt-1">{errors.pickup_location}</div>}
             </div>
 
-            {/* Dropoff Location - Modified */}
-            <div className="field-group" ref={dropoffSuggestionRef}>
-              <label htmlFor="dropoff_location" className="block text-xl font-medium text-heading dark:text-white mb-2">
-                Dropoff Location
-              </label>
-              <div className="field-input relative">
-                <input
-                  type="text"
-                  id="dropoff_location"
-                  name="dropoff_location"
-                  className="w-full p-3 pl-10 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-700 rounded-md appearance-none outline-none dark:text-white"
-                  value={data.dropoff_location}
-                  onChange={handleLocationInputChange}
-                  placeholder="Search dropoff location"
-                  autoComplete="off"
-                  onFocus={() => {
-                    if (dropoffLocationSuggestions.length > 0) setIsDropoffSuggestionsOpen(true);
-                  }}
-                  required
-                />
-                {data.dropoff_location && !isLoadingDropoffSuggestions && (
-                  <X className="clear-icon lucide-icon absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600" size={20} onClick={() => clearLocationField('dropoff_location')} />
-                )}
-                {isLoadingDropoffSuggestions && (
-                  <Loader2 className="loader-icon lucide-icon absolute right-3 top-1/2 transform -translate-y-1/2 animate-spin text-blue-500" size={20} />
-                )}
+            {/* Step 2: Trip Details */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-pink-500 text-white' : 'bg-gray-200 text-gray-600'} rounded-full flex items-center justify-center font-semibold`}>
+                    2
+                  </div>
+                  <span className="font-medium">Add trip details</span>
+                </div>
+                {currentStep === 2 ? (
+                  <div className="text-sm text-gray-600">In progress</div>
+                ) : currentStep > 2 ? (
+                  <button 
+                    onClick={() => setCurrentStep(2)}
+                    className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+                  >
+                    Edit
+                  </button>
+                ) : null}
               </div>
-              {isDropoffSuggestionsOpen && dropoffLocationSuggestions.length > 0 && (
-                <ul className="suggestions-list absolute z-10 w-full bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-700 rounded-md mt-1 shadow-lg max-h-60 overflow-y-auto">
-                  {dropoffLocationSuggestions.map((loc, i) => (
-                    <li 
-                      key={`dropoff-${i}-${loc}`} // Ensure unique key
-                      onClick={() => handleDropoffLocationSelect(loc)}
-                      className="p-3 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer dark:text-white"
+
+              {currentStep === 2 && (
+                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                  <div className="grid gap-4">
+                    {/* Date Selection */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Pickup Date</label>
+                        <div className="relative border rounded-md">
+                          <input
+                            type="date"
+                            value={data.start_date}
+                            onChange={(e) => setData('start_date', e.target.value)}
+                            className="w-full pl-10 p-3 border rounded-lg"
+                          />
+                          {errors.start_date && <div className="text-red-500 text-sm mt-1">{errors.start_date}</div>}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Return Date</label>
+                        <div className="relative border rounded-md">
+                          <input
+                            type="date"
+                            value={data.end_date}
+                            onChange={(e) => setData('end_date', e.target.value)}
+                            className="w-full pl-10 p-3 border rounded-lg"
+                          />
+                          {errors.end_date && <div className="text-red-500 text-sm mt-1">{errors.end_date}</div>}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pickup Location */}
+                    <div className="relative" ref={pickupRef}>
+                      <label className="block text-sm font-medium mb-2">Pickup Location</label>
+                      <div className="relative border rounded-md">
+                        <input
+                          type="text"
+                          placeholder="Search pickup location"
+                          value={data.pickup_location}
+                          onChange={(e) => setData('pickup_location', e.target.value)}
+                          onFocus={() => setShowPickupSuggestions(true)}
+                          className="w-full pl-10 p-3 border rounded-lg"
+                        />
+                        {data.pickup_location && (
+                          <X 
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer w-5 h-5"
+                            onClick={() => setData('pickup_location', '')}
+                          />
+                        )}
+                      </div>
+                      {errors.pickup_location && <div className="text-red-500 text-sm mt-1">{errors.pickup_location}</div>}
+                      {showPickupSuggestions && (
+                        <div className="absolute z-50 w-full bg-white border rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
+                          {pickupSuggestions.length > 0 && pickupSuggestions?.map((location, index) => (
+                            <div
+                              key={index}
+                              onClick={() => handleLocationSelect(location, 'pickup_location')}
+                              className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                            >
+                              {location}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Additional Requests */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Additional Requests</label>
+                      <textarea
+                        placeholder="Do you have any specific requests?"
+                        value={data.message}
+                        onChange={(e) => setData('message', e.target.value)}
+                        rows={3}
+                        className="w-full p-3 border rounded-lg"
+                      />
+                      {errors.message && <div className="text-red-500 text-sm mt-1">{errors.message}</div>}
+                    </div>
+
+                    <button
+                      onClick={handleContinue}
+                      className="w-full py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
                     >
-                      {loc}
-                    </li>
-                  ))}
-                </ul>
+                      Continue
+                    </button>
+                  </div>
+                </div>
               )}
-              {errors.dropoff_location && <div className="text-red-500 text-sm mt-1">{errors.dropoff_location}</div>}
             </div>
 
-            {/* Pickup Date */}
-            <div>
-              <label htmlFor="start_date" className="block text-xl font-medium text-heading dark:text-white mb-2">
-                Pickup Date
-              </label>
-              <input
-                type="date"
-                id="start_date"
-                name="start_date"
-                className="w-full p-3 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-700 rounded-md appearance-none outline-none dark:text-white"
-                value={data.start_date}
-                onChange={handleDateChange}
-                min={new Date().toISOString().split('T')[0]}
-                required
-              />
-              {errors.start_date && <div className="text-red-500 text-sm mt-1">{errors.start_date}</div>}
-            </div>
-
-            {/* Return Date */}
-            <div>
-              <label htmlFor="end_date" className="block text-xl font-medium text-heading dark:text-white mb-2">
-                Return Date
-              </label>
-              <input
-                type="date"
-                id="end_date"
-                name="end_date"
-                className="w-full p-3 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-700 rounded-md appearance-none outline-none dark:text-white"
-                value={data.end_date}
-                onChange={handleDateChange}
-                min={data.start_date || new Date().toISOString().split('T')[0]}
-                required
-              />
-              {errors.end_date && <div className="text-red-500 text-sm mt-1">{errors.end_date}</div>}
-            </div>
-          </div>
-
-          {/* Rental Duration */}
-          {data.days > 0 && (
-            <div className="text-center font-medium dark:text-white">
-              Your rental: <span className="font-bold">{data.days} day{data.days !== 1 ? 's' : ''}</span>
-            </div>
-          )}
-
-          {/* Total Price */}
-          {data.total_price > 0 && selectedCar && (
-            <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
-              <span className="text-xl font-bold text-heading dark:text-white">Total Price</span>
-              <span className="text-xl font-bold text-heading dark:text-white">${data.total_price.toFixed(2)}</span>
-            </div>
-          )}
-
-          {/* Registration Toggle */}
-          <div className="flex items-center justify-between mb-4 bg-white dark:bg-[#2D2D2D] p-3 rounded-md">
-            <span className="font-medium dark:text-white">I am a:</span>
-            <div className="flex gap-4">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="userStatus"
-                  value="registered"
-                  checked={data.is_registered}
-                  onChange={() => setData({ ...data, is_registered: true, user_type: 'registered_user' })} // or appropriate type
-                  className="form-radio text-blue-600"
-                />
-                <span className="ml-2 dark:text-white">Registered User</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="userStatus"
-                  value="new"
-                  checked={!data.is_registered}
-                  onChange={() => setData({ ...data, is_registered: false, user_type: 'guest' })}
-                  className="form-radio text-blue-600"
-                />
-                <span className="ml-2 dark:text-white">New User</span>
-              </label>
-            </div>
-          </div>
-
-          {/* User Info */}
-          <div className="grid gap-4">
-            <h3 className="text-lg font-bold mt-2 mb-2 dark:text-white">Customer Information</h3>
-            
-            {!data.is_registered && (
-              <>
-                <div>
-                  <label htmlFor="name" className="block text-xl font-medium text-heading dark:text-white mb-2">
-                    Full Name
-                  </label>
-                  <input 
-                    type="text" 
-                    id="name"
-                    name="name"
-                    placeholder="Full Name" 
-                    value={data.name} 
-                    onChange={(e) => setData('name', e.target.value)} 
-                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D] dark:text-white"
-                    required={!data.is_registered} 
-                  />
-                   {errors.name && <div className="text-red-500 text-sm mt-1">{errors.name}</div>}
+            {/* Step 3: Review Request */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-pink-500 text-white' : 'bg-gray-200 text-gray-600'} rounded-full flex items-center justify-center font-semibold`}>
+                    3
+                  </div>
+                  <span className="font-medium">Review your request</span>
                 </div>
-              </>
-            )}
+              </div>
 
-            <div>
-              <label htmlFor="email" className="block text-xl font-medium text-heading dark:text-white mb-2">
-                Email
-              </label>
-              <input 
-                type="email" 
-                id="email"
-                name="email"
-                placeholder="Email" 
-                value={data.email} 
-                onChange={(e) => setData('email', e.target.value)} 
-                className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D] dark:text-white"
-                required 
-              />
-              {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
-            </div>
+              {currentStep === 3 && (
+                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-medium mb-2">Booking Summary</h3>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p><strong>Pickup:</strong> {data.pickup_location || 'Not selected'}</p>
+                        <p><strong>Dropoff:</strong> {data.pickup_location || 'Not selected'}</p>
+                        <p><strong>Dates:</strong> {data.start_date} to {data.end_date} ({days} days)</p>
+                        <p><strong>Customer:</strong> {data.name} ({data.email})</p>
+                        {data.message && <p><strong>Requests:</strong> {data.message}</p>}
+                      </div>
+                    </div>
 
-            {/* Conditionally show password if new user or for login */}
-            {(!data.is_registered || (data.is_registered /* && some_condition_for_login_password_if_needed */)) && (
-                <div>
-                <label htmlFor="password" className="block text-xl font-medium text-heading dark:text-white mb-2">
-                    Password
-                </label>
-                <input 
-                    type="password" 
-                    id="password"
-                    name="password"
-                    placeholder="Password" 
-                    value={data.password} 
-                    onChange={(e) => setData('password', e.target.value)} 
-                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D] dark:text-white"
-                    required={!data.is_registered} // Password is required for new users
-                />
-                {errors.password && <div className="text-red-500 text-sm mt-1">{errors.password}</div>}
+                    <button
+                      onClick={handleSubmit}
+                      disabled={processing}
+                      className="w-full py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {processing ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Confirm Booking'
+                      )}
+                    </button>
+                  </div>
                 </div>
-            )}
-            
-            <div>
-              <label htmlFor="phone" className="block text-xl font-medium text-heading dark:text-white mb-2">
-                Phone
-              </label>
-              <input 
-                type="text" 
-                id="phone"
-                name="phone"
-                placeholder="Phone" 
-                value={data.phone} 
-                onChange={(e) => setData('phone', e.target.value)} 
-                className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D] dark:text-white"
-                required
-              />
-              {errors.phone && <div className="text-red-500 text-sm mt-1">{errors.phone}</div>}
-            </div>
-
-            <div>
-              <label htmlFor="message" className="block text-xl font-medium text-heading dark:text-white mb-2">
-                Additional Requests
-              </label>
-              <textarea 
-                id="message"
-                name="message"
-                placeholder="Do you have any specific requests?" 
-                value={data.message} 
-                onChange={(e) => setData('message', e.target.value)} 
-                className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md dark:bg-[#2D2D2D] dark:text-white"
-                rows="3"
-              />
+              )}
             </div>
           </div>
-          
-          <button
-            type="submit"
-            className="w-full py-3 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors mt-4 disabled:opacity-50"
-            disabled={processing}
-          >
-            {processing ? 'Processing...' : 'Book Your Ride'}
-          </button>
         </div>
-      </form>
+
+        {/* Right Column - Car Details */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
+            
+            {/* Car Image and Details */}
+            <div className="mb-4">
+              <img
+                src={car.initial_gallery && car.initial_gallery.length > 0 
+                            ? `/storage/${car.initial_gallery[0].image}` 
+                            : `/cars/images/cars/placeholder.jpg`}
+                 alt={`${car.brand} ${car.model}`}
+                className="w-full h-48 object-cover rounded-lg mb-4"
+              />
+              <h3 className="font-semibold text-lg mb-2">{car.name}</h3>
+              <p className="text-sm text-gray-600 mb-4">{car.location_address}</p>
+            </div>
+
+            {/* Booking Details */}
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium">Trip details</span>
+                <button 
+                  onClick={() => setCurrentStep(2)}
+                  className="text-sm text-pink-500 hover:underline"
+                >
+                  Change
+                </button>
+              </div>
+              <div className="text-sm text-gray-600 mb-4">
+                <p>{data.start_date} – {data.end_date}</p>
+                <p>{days} {days === 1 ? 'day' : 'days'}</p>
+              </div>
+
+              {/* Price Breakdown */}
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-2">Price details</h4>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>KSh {car.price_per_day.toLocaleString()} x {days} days</span>
+                  <span>KSh {totalPrice.toLocaleString()}</span>
+                </div>
+                <div className="border-t pt-2 mt-2">
+                  <div className="flex justify-between font-medium">
+                    <span>Total KSh</span>
+                    <span>KSh {totalPrice.toLocaleString()}</span>
+                  </div>
+                </div>
+                <button className="text-sm text-pink-500 hover:underline mt-2">
+                  Price breakdown
+                </button>
+              </div>
+
+              {/* Rare Find Badge */}
+              <div className="mt-4 p-3 bg-pink-50 rounded-lg border border-pink-200">
+                <div className="flex items-center gap-2 text-pink-600">
+                  <div className="w-6 h-6 text-pink-500">💎</div>
+                  <div className="text-sm">
+                    <p className="font-medium">This is a rare find.</p>
+                    <p>This car is usually booked.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

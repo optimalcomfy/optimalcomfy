@@ -17,34 +17,12 @@ export default function CarBooking({ auth, laravelVersion, phpVersion }) {
           <Head title="Car Booking" />
           <HomeLayout>
             <div className="no-bottom no-top py-10" id="content">
-              <div id="top" />
-              {/* section begin */}
-              <section id="subheader" className="jarallax text-light">
-                <img
-                  src="/cars/images/background/subheader.jpg"
-                  className="jarallax-img"
-                  alt=""
-                />
-                <div className="center-y relative text-center">
-                  <div className="container">
-                    <div className="row">
-                      <div className="col-md-12 text-center">
-                        <h1>Car Booking</h1>
-                      </div>
-                      <div className="clearfix" />
-                    </div>
-                  </div>
-                </div>
-              </section>
-              {/* section close */}
-              
               <section
                 id="section-hero"
                 aria-label="section"
-                className="no-top"
-                style={{backgroundColor: '#121212'}}
+                className="no-top py-10"
               >
-                <div className="container">
+                <div className="container py-24">
                   <div className="row align-items-center">
                     <div className="col-lg-12 xs:-mt-4 lg:-mt-20 sm-mt-0">
                       <div className="spacer-single sm-hide" />
@@ -61,10 +39,10 @@ export default function CarBooking({ auth, laravelVersion, phpVersion }) {
                   <div className="spacer-double" />
                   <div className="row text-light">
                     <div className="col-lg-12">
-                      <div className="container-timeline">
+                      <div className="container-timeline text-black">
                         <ul>
                           <li>
-                            <h4>Choose a vehicle</h4>
+                            <h4 className="text-black">Choose a vehicle</h4>
                             <p>
                               Unlock unparalleled adventures and memorable journeys with our
                               vast fleet of vehicles tailored to suit every need, taste, and
@@ -72,7 +50,7 @@ export default function CarBooking({ auth, laravelVersion, phpVersion }) {
                             </p>
                           </li>
                           <li>
-                            <h4>Pick location &amp; date</h4>
+                            <h4 className="text-black">Pick location &amp; date</h4>
                             <p>
                               Pick your ideal location and date, and let us take you on a
                               journey filled with convenience, flexibility, and
@@ -80,7 +58,7 @@ export default function CarBooking({ auth, laravelVersion, phpVersion }) {
                             </p>
                           </li>
                           <li>
-                            <h4>Make a booking</h4>
+                            <h4 className="text-black">Make a booking</h4>
                             <p>
                               Secure your reservation with ease, unlocking a world of
                               possibilities and embarking on your next adventure with
@@ -88,7 +66,7 @@ export default function CarBooking({ auth, laravelVersion, phpVersion }) {
                             </p>
                           </li>
                           <li>
-                            <h4>Sit back &amp; relax</h4>
+                            <h4 className="text-black">Sit back &amp; relax</h4>
                             <p>
                               Hassle-free convenience as we take care of every detail,
                               allowing you to unwind and embrace a journey filled comfort.

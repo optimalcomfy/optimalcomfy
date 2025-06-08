@@ -94,7 +94,7 @@ function Header() {
                             <li className="navigation__menu--item has-child has-arrow  dark:before:!text-white">
                               <Link
                                   href={route('all-cars')}
-                                  className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${(isWhich === '/all-cars' || isWhich === '/search-cars' || isWhich === '/rent-now') ? 'lowBorder' : ''}`}
+                                  className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${(isWhich === '/all-cars' || isWhich === '/search-cars' || isWhich === '/rent-now' || isWhich === '/car-booking' || isWhich === '/car-booking') ? 'lowBorder' : ''}`}
                               >
                                 <img src='/image/car.png' alt='' className='h-8' />
                                   Rides
@@ -174,7 +174,7 @@ function Header() {
                   {(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register') &&
                     <SearchBar />
                   }
-                  {(isWhich === '/all-cars' || isWhich === '/search-cars' || isWhich === '/rent-now') &&
+                  {(isWhich === '/all-cars' || isWhich === '/search-cars' || isWhich === '/rent-now' || isWhich === '/car-booking') &&
                   <RideForm />}
                 </div>
                 

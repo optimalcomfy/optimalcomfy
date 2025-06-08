@@ -247,7 +247,7 @@ const CarBookingForm = ({ cars }) => {
   };
 
   return (
-    <div className="bg-gray dark:bg-[#1B1B1B] dark:text-white py-6 px-4 rounded-lg relative z-10 dark:shadow-none">
+    <div className="py-6 px-4 rounded-lg relative z-10 dark:shadow-none">
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6">
           <div className="grid md:grid-cols-2 gap-6">
@@ -519,7 +519,7 @@ const CarBookingForm = ({ cars }) => {
             className="w-full py-3 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors mt-4 disabled:opacity-50"
             disabled={processing}
           >
-            {processing ? 'Processing...' : 'Book Your Car'}
+            {processing ? 'Processing...' : 'Book Your Ride'}
           </button>
         </div>
       </form>

@@ -4,7 +4,6 @@ import { LayoutProvider } from "@/Layouts/layout/context/layoutcontext.jsx";
 import { PrimeReactProvider } from "primereact/api";
 import HomeLayout from "@/Layouts/HomeLayout";
 
-import Slider from "react-slick";
 import { GoogleMap, useLoadScript, MarkerF } from "@react-google-maps/api";
 
 import "slick-carousel/slick/slick.css";
@@ -14,70 +13,14 @@ import "./PropertiesCustom.css";
 import Product from "@/Components/Product";
 import './Welcome.css'
 
-function NextArrow({ onClick, disabled }) {
-  return (
-    <div
-      className={`custom-arrow custom-next-arrow interactive-element ${disabled ? "slick-disabled" : ""}`}
-      onClick={!disabled ? onClick : undefined}
-      role="button"
-      tabIndex={0}
-      aria-label="Next properties"
-    >
-      <img src="/image/chevron.png" alt="Next" className="h-5" />
-    </div>
-  );
-}
-
-function PrevArrow({ onClick, disabled }) {
-  return (
-    <div
-      className={`custom-arrow custom-prev-arrow interactive-element ${disabled ? "slick-disabled" : ""}`}
-      onClick={!disabled ? onClick : undefined}
-      role="button"
-      tabIndex={0}
-      aria-label="Previous properties"
-    >
-      <img src="/image/left-chevron.png" alt="Prev" className="h-5" />
-    </div>
-  );
-}
-
 export default function Properties({ auth, laravelVersion, phpVersion }) {
-  const { flash, pagination, properties } = usePage().props;
+  const { properties } = usePage().props;
 
-  const sliderRef = useRef(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [hoveredProperty, setHoveredProperty] = useState(null);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isMobileMapVisible, setIsMobileMapVisible] = useState(false);
 
-  const totalSlides = properties.length;
-  const slidesToShow = 3;
 
-  const sliderSettings = {
-    dots: false,
-    infinite: properties.length > 7,
-    speed: 500,
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    centerMode: false,
-    variableWidth: false,
-    beforeChange: (current, next) => setCurrentSlide(next),
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 2,
-        },
-      },
-      {
-        breakpoint: 768,
-        settings: {
-          slidesToShow: 1,
-        },
-      },
-    ],
-  };
 
   // Google Maps
   const { isLoaded } = useLoadScript({
@@ -148,7 +91,7 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
             {/* Mobile: Stack vertically, Desktop: Side by side */}
             <div className="flex flex-col lg:flex-row">
               {/* Properties List - Mobile: Full width, Desktop: 60% */}
-              <div className="w-full lg:w-[55%] p-4 lg:p-6">
+              <div className="w-full lg:w-[55%]">
                 <div className="mb-6">
                   <div className="properties-header flex justify-between items-center mb-6">
                     <div>
@@ -171,7 +114,7 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                           onClick={() => handlePropertySelect(property.id)}
                           className="interactive-element"
                         >
-                          <div className="px-2">
+                          <div className="">
                             <div className={`property-card ${selectedProperty === property.id ? 'selected' : ''}`}>
                               <Product {...property} />
                             </div>

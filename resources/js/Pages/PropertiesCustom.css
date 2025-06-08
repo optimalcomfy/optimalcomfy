@@ -1,7 +1,7 @@
 /* Properties Component Custom Styles */
 .product-grid {
-  padding-left: 2rem; /* px-8 */
-  padding-right: 2rem; /* px-8 */
+  padding-left: 0; /* px-8 */
+  padding-right: 0; /* px-8 */
   margin-top: 1.5rem; /* my-6 */
   margin-bottom: 1.5rem; /* my-6 */
   gap: 2.5rem 1.5rem; /* gap-x-6 gap-y-10 */
@@ -156,7 +156,6 @@
 
 .property-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   border-color: #e2e8f0;
 }
 

@@ -87,7 +87,7 @@ function Header() {
                               className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${isWhich === '/' ? 'lowBorder' : ''}`}
                               >
                                 <img src='/image/houses.png' alt='' className='h-8' />
-                                Properties
+                                Stays
                             </Link>
                             </li>
                             <li className="navigation__menu--item has-child has-arrow  dark:before:!text-white">
@@ -96,7 +96,7 @@ function Header() {
                                   className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${isWhich === '/all-cars' ? 'lowBorder' : ''}`}
                               >
                                 <img src='/image/car.png' alt='' className='h-8' />
-                                  Cars
+                                  Rides
                               </Link>
                             </li>
                         </ul>
@@ -137,14 +137,14 @@ function Header() {
                                   className="dropdown-item"
                                   onClick={handleDropdownClick2}
                                 >
-                                  Book a property
+                                  Book a stay
                                 </Link>
                                 <Link 
                                   href={route('all-cars')} 
                                   className="dropdown-item"
                                   onClick={handleDropdownClick2}
                                 >
-                                  Rent a car
+                                  Rent a ride
                                 </Link>
                               </div>
                             )}
@@ -207,14 +207,14 @@ function Header() {
                                 className="dropdown-item"
                                 onClick={handleDropdownClick}
                               >
-                                Book a property
+                                Book a stay
                               </Link>
                               <Link 
                                 href={route('all-cars')} 
                                 className="dropdown-item"
                                 onClick={handleDropdownClick}
                               >
-                                Rent a car
+                                Rent a ride
                               </Link>
                             </div>
                           )}

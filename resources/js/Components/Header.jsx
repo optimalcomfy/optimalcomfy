@@ -4,6 +4,7 @@ import '../../css/style.css'
 import '../../css/plugins.min.css'
 import './Header.css'; // Import custom CSS
 import SearchBar from './SearchForm';
+import RideForm from './RideForm';
 
 function Header() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -12,7 +13,7 @@ function Header() {
   const dropdownRef = useRef(null);
   const dropdownRef2 = useRef(null);
   const {url} = usePage()
-  const [isWhich] = useState(url)
+  const [isWhich] = useState(url.split('?')[0]);
   
 
   const toggleProfileDropdown = () => {
@@ -170,7 +171,11 @@ function Header() {
                 </div>
 
                 <div className="logo-container">
-                  <SearchBar />
+                  {(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register') &&
+                    <SearchBar />
+                  }
+                  {(isWhich === '/all-cars' || isWhich === '/search-cars' || isWhich === '/rent-now') &&
+                  <RideForm />}
                 </div>
                 
                 <div className={`header-right mopper ${isScrolled ? 'mopper-scrolled' : ''}`}>

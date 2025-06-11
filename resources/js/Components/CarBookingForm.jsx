@@ -25,9 +25,7 @@ const CarBookingForm = () => {
 
   // Location suggestions state
   const [pickupSuggestions, setPickupSuggestions] = useState(['Nairobi CBD', 'JKIA Airport', 'Westlands', 'Karen', 'Kilimani']);
-  const [dropoffSuggestions, setDropoffSuggestions] = useState(['Nairobi CBD', 'JKIA Airport', 'Westlands', 'Karen', 'Kilimani']);
   const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
-  const [showDropoffSuggestions, setShowDropoffSuggestions] = useState(false);
   
   const pickupRef = useRef(null);
   const dropoffRef = useRef(null);
@@ -46,22 +44,20 @@ const CarBookingForm = () => {
     setData(field, location);
     if (field === 'pickup_location') {
       setShowPickupSuggestions(false);
-    } else {
-      setShowDropoffSuggestions(false);
     }
   };
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (data.pickup_location) {
+      if (data.pickup_location.length < 3) {
         setPickupSuggestions([]);
         return;
       }
       try {
-        console.log(data);
-        
+ 
         // Ensure this endpoint exists and returns an array of strings
         const res = await fetch(`/locations?query=${encodeURIComponent(data.pickup_location)}`);
+        if (!res.ok) throw new Error('Failed to fetch suggestions');
         const suggestions = await res.json();
         setPickupSuggestions(suggestions);
       } catch (err) {
@@ -145,7 +141,7 @@ const CarBookingForm = () => {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto p-4 bg-gray-50 min-h-screen">
+    <div className="w-full p-4 bg-gray-50 min-h-screen">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left Column - Booking Form */}

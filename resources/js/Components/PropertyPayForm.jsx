@@ -45,8 +45,9 @@ const PropertyBookingForm = () => {
   const [errors, setErrors] = useState({});
 
   // Location suggestions state
-  const [locationSuggestions, setLocationSuggestions] = useState(['Nairobi CBD', 'JKIA Airport', 'Westlands', 'Karen', 'Kilimani']);
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   
   const locationRef = useRef(null);
 
@@ -97,21 +98,32 @@ const PropertyBookingForm = () => {
     }
   }, [data.check_in_date, data.check_out_date]);
 
+  // Fixed useEffect for location search
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (data.current_location && data.current_location.length < 3) {
+      if (data.current_location.length < 3) {
         setLocationSuggestions([]);
+        setShowLocationSuggestions(false);
         return;
       }
+      
+      setIsLoadingSuggestions(true);
       try {
-        // Mock API call - replace with actual endpoint
-        const suggestions = ['Nairobi CBD', 'JKIA Airport', 'Westlands', 'Karen', 'Kilimani'];
-        setLocationSuggestions(suggestions.filter(s => 
-          s.toLowerCase().includes((data.current_location || '').toLowerCase())
-        ));
+        const res = await fetch(`/locations?query=${encodeURIComponent(data.current_location)}`);
+        if (res.ok) {
+          const suggestions = await res.json();
+          setLocationSuggestions(suggestions);
+          setShowLocationSuggestions(suggestions.length > 0);
+        } else {
+          setLocationSuggestions([]);
+          setShowLocationSuggestions(false);
+        }
       } catch (err) {
-        console.error("Error fetching location suggestions:", err);
+        console.error('Error fetching location suggestions:', err);
         setLocationSuggestions([]);
+        setShowLocationSuggestions(false);
+      } finally {
+        setIsLoadingSuggestions(false);
       }
     };
 
@@ -389,36 +401,57 @@ const PropertyBookingForm = () => {
                           </div>
                         </div>
 
-                        {/* Current Location */}
+                        {/* Current Location with API Search */}
                         <div className="relative" ref={locationRef}>
                           <label className="block text-sm font-medium mb-2">Current Location</label>
-                          <div className="relative border rounded-md">
+                          <div className="relative">
                             <input
                               type="text"
                               placeholder="Search current location"
                               value={data.current_location}
                               onChange={(e) => setData(prev => ({ ...prev, current_location: e.target.value }))}
-                              onFocus={() => setShowLocationSuggestions(true)}
-                              className="w-full pl-10 p-3 border rounded-lg"
+                              onFocus={() => data.current_location.length >= 3 && setShowLocationSuggestions(true)}
+                              className="w-full pl-10 pr-10 p-3 border rounded-lg"
                             />
+                            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            {isLoadingSuggestions && (
+                              <Loader2 className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
+                            )}
                             {data.current_location && (
                               <X 
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer w-5 h-5"
-                                onClick={() => setData(prev => ({ ...prev, current_location: '' }))}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer w-5 h-5 hover:text-gray-600"
+                                onClick={() => {
+                                  setData(prev => ({ ...prev, current_location: '' }));
+                                  setShowLocationSuggestions(false);
+                                }}
                               />
                             )}
                           </div>
-                          {showLocationSuggestions && locationSuggestions.length > 0 && (
+                          
+                          {/* Location Suggestions Dropdown */}
+                          {showLocationSuggestions && (
                             <div className="absolute z-50 w-full bg-white border rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
-                              {locationSuggestions.map((location, index) => (
-                                <div
-                                  key={index}
-                                  onClick={() => handleLocationSelect(location)}
-                                  className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                                >
-                                  {location}
+                              {isLoadingSuggestions ? (
+                                <div className="p-3 text-center text-gray-500">
+                                  <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
+                                  Searching locations...
                                 </div>
-                              ))}
+                              ) : locationSuggestions.length > 0 ? (
+                                locationSuggestions.map((location, index) => (
+                                  <div
+                                    key={index}
+                                    onClick={() => handleLocationSelect(location)}
+                                    className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 flex items-center gap-2"
+                                  >
+                                    <MapPin className="w-4 h-4 text-gray-400" />
+                                    <span>{location}</span>
+                                  </div>
+                                ))
+                              ) : data.current_location.length >= 3 ? (
+                                <div className="p-3 text-center text-gray-500">
+                                  No locations found for "{data.current_location}"
+                                </div>
+                              ) : null}
                             </div>
                           )}
                         </div>

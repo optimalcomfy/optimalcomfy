@@ -17,3 +17,18 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;     /* Firefox */
 }
+
+
+.formForm {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: transparent !important;
+    border-color: transparent !important;
+    border-width: 1px;
+    border-radius: 0;
+    padding: .5rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    --tw-shadow: 0 0 #0000;
+}

@@ -144,7 +144,7 @@ export default function SearchBar() {
             value={formData.location}
             onChange={handleChange}
             placeholder="Search destination"
-            className='inputType'
+            className='inputType formForm'
             onFocus={() => {
               if (locationSuggestions.length > 0) setIsSuggestionsOpen(true);
             }}
@@ -171,7 +171,7 @@ export default function SearchBar() {
             value={formData.checkIn}
             onChange={handleChange}
             placeholder="Add dates"
-            className='inputType'
+            className='inputType formForm'
             min={new Date().toISOString().split("T")[0]}
           />
         </div>
@@ -185,7 +185,7 @@ export default function SearchBar() {
             value={formData.checkOut}
             onChange={handleChange}
             placeholder="Add dates"
-            className='inputType'
+            className='inputType formForm'
             min={formData.checkIn}
           />
         </div>
@@ -199,7 +199,7 @@ export default function SearchBar() {
             value={formData.guests}
             onChange={handleChange}
             placeholder="Add guests"
-            className='inputType'
+            className='inputType formForm'
           />
           <button className="search-button" onClick={handleSubmit}>
             <Search size={16} />
@@ -251,6 +251,7 @@ export default function SearchBar() {
                   value={formData.location}
                   onChange={handleChange}
                   placeholder="Search destinations"
+                  className='formForm'
                   onFocus={() => {
                     if (locationSuggestions.length > 0) setIsSuggestionsOpen(true);
                   }}
@@ -285,6 +286,7 @@ export default function SearchBar() {
                   value={formData.checkIn}
                   onChange={handleChange}
                   min={new Date().toISOString().split("T")[0]}
+                  className='formForm'
                 />
               </div>
             </div>
@@ -302,6 +304,7 @@ export default function SearchBar() {
                   value={formData.checkOut}
                   onChange={handleChange}
                   min={formData.checkIn}
+                  className='formForm'
                 />
               </div>
             </div>
@@ -319,6 +322,7 @@ export default function SearchBar() {
                   value={formData.guests}
                   onChange={handleChange}
                   placeholder="Add guests"
+                  className='formForm'
                 />
               </div>
             </div>

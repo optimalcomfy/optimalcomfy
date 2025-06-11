@@ -125,66 +125,54 @@ const PropertyBookingForm = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setProcessing(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-    if (!data.check_in_date || !data.check_out_date || nights <= 0) {
-      alert('Please select valid check-in and check-out dates');
-      setProcessing(false);
-      return;
-    }
+        if (!data.check_in_date || !data.check_out_date || data.nights <= 0) {
+        alert('Please select valid check-in and check-out dates');
+        return;
+        }
 
-    try {
-      // Mock API calls - replace with actual endpoints
-      let userId = null;
-      
-      // Register user
-      const registrationData = {
-        email: data.email,
-        password: data.password,
-        name: data.name,
-        user_type: data.user_type,
-        phone: data.phone,
-        nationality: data.nationality,
-        current_location: data.current_location,
-        passport_number: data.passport_number,
-        address: data.address,
-        city: data.city,
-        country: data.country,
-        emergency_contact: data.emergency_contact,
-        contact_phone: data.contact_phone,
-      };
+        try {
+        let userId = null;
+        
+        const response = await axios.post(route('register'), {
+            email: data.email,
+            password: data.password,
+            name: data.name,
+            user_type: data.user_type,
+            phone: data.phone,
+            nationality: data.nationality,
+            current_location: data.current_location,
+            passport_number: data.passport_number,
+            address: data.address,
+            city: data.city,
+            country: data.country,
+            emergency_contact: data.emergency_contact,
+            contact_phone: data.contact_phone,
+        });
+        
+        userId = response.data.user_id;
 
-      console.log('Registering user:', registrationData);
-      // Mock registration response
-      userId = Math.floor(Math.random() * 1000) + 1;
+        await axios.post(route('login'), {
+            email: data.email,
+            password: data.password
+        });
 
-      // Login user
-      console.log('Logging in user:', { email: data.email, password: data.password });
+        if (userId) {
+            setData('user_id', userId);
+        }
 
-      // Create booking
-      const bookingData = {
-        ...data,
-        user_id: userId
-      };
+        post(route('bookings.store'), {
+            onSuccess: () => {
+            window.location.href = route('booking.confirmation');
+            },
+        });
+        } catch (error) {
+        alert(error.response?.data?.message || 'User creation failed.');
+        }
+    };
 
-      console.log('Creating booking:', bookingData);
-      
-      // Mock success
-      setTimeout(() => {
-        alert('Booking created successfully!');
-        setProcessing(false);
-        // Redirect to confirmation page
-        console.log('Redirecting to confirmation page...');
-      }, 1500);
-
-    } catch (error) {
-      console.error("Booking error:", error);
-      alert('Booking failed. Please try again.');
-      setProcessing(false);
-    }
-  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {

@@ -1,33 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Star, X, Loader2, MapPin, Calendar, User, CreditCard, Eye } from 'lucide-react';
+import { ArrowLeft, Star, X, Loader2, MapPin, Calendar, User, CreditCard, Eye, Check, Mail, Shield, Phone } from 'lucide-react';
 import { Link, Head, router, usePage } from "@inertiajs/react";
-const today = new Date().toISOString().split('T')[0];
 
 const PropertyBookingForm = () => {
-
   const { flash, pagination, property } = usePage().props;
-
-  const url = usePage().url
-
+  const url = usePage().url;
   const params = new URLSearchParams(url.split('?')[1]);
-
+  
   const checkInDate = params.get('check_in_date');
   const checkOutDate = params.get('check_out_date');
+  const today = new Date().toISOString().split('T')[0];
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [processing, setProcessing] = useState(false);
   const [data, setData] = useState({
     property_id: property.id,
-    check_in_date: checkInDate,
-    check_out_date: checkOutDate,
+    check_in_date: checkInDate || '',
+    check_out_date: checkOutDate || '',
     total_price: 0,
     nights: 0,
     status: 'Booked',
-    
+
     // User fields
     name: '',
     email: '',
-    phone: '',
     password: '',
+    phone: '',
     nationality: '',
     current_location: '',
     passport_number: '',
@@ -40,16 +38,20 @@ const PropertyBookingForm = () => {
     is_registered: false,
     user_type: 'guest'
   });
-
-  const [processing, setProcessing] = useState(false);
-  const [errors, setErrors] = useState({});
-
+  
   // Location suggestions state
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  
   const locationRef = useRef(null);
+
+  // Helper function to update data
+  const updateData = (key, value) => {
+    setData(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
 
   const calculateDays = (check_in_date, check_out_date) => {
     if (check_in_date && check_out_date) {
@@ -61,44 +63,28 @@ const PropertyBookingForm = () => {
     return 0;
   };
 
-  const nights = calculateDays(data.check_in_date, data.check_out_date);
-  const subtotal = nights * property.price_per_night;
-  const totalPrice = subtotal;
+  const handleDateChange = (e) => {
+    const { name, value } = e.target;
 
-  const handleLocationSelect = (location) => {
-    setData(prev => ({ ...prev, current_location: location }));
-    setShowLocationSuggestions(false);
-  };
-
-  const handleDateChange = (field, value) => {
-    if (field === 'check_out_date' && data.check_in_date && new Date(value) <= new Date(data.check_in_date)) {
+    if (name === 'check_out_date' && data.check_in_date && new Date(value) <= new Date(data.check_in_date)) {
       alert('Check-out date must be after check-in date');
       return;
     }
 
-    if (field === 'check_in_date' && data.check_out_date && new Date(value) >= new Date(data.check_out_date)) {
+    if (name === 'check_in_date' && data.check_out_date && new Date(value) >= new Date(data.check_out_date)) {
       alert('Check-in date must be before check-out date');
       return;
     }
 
-    setData(prev => ({ ...prev, [field]: value }));
+    updateData(name, value);
   };
 
-  useEffect(() => {
-    if (data.check_in_date && data.check_out_date) {
-      const calculatedNights = calculateDays(data.check_in_date, data.check_out_date);
-      const basePrice = calculatedNights * property.price_per_night;
-      const fee = Math.round(basePrice * 0.12);
-      
-      setData(prev => ({
-        ...prev,
-        nights: calculatedNights,
-        total_price: basePrice + fee
-      }));
-    }
-  }, [data.check_in_date, data.check_out_date]);
+  const handleLocationSelect = (location) => {
+    updateData('current_location', location);
+    setShowLocationSuggestions(false);
+  };
 
-  // Fixed useEffect for location search
+  // Location search effect
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (data.current_location.length < 3) {
@@ -131,60 +117,109 @@ const PropertyBookingForm = () => {
     return () => clearTimeout(delay);
   }, [data.current_location]);
 
-  const handleContinue = () => {
-    if (currentStep < 3) {
-      setCurrentStep(prev => prev + 1);
+  // Price calculation effect
+  useEffect(() => {
+    if (data.check_in_date && data.check_out_date && property?.price_per_night) {
+      const nights = calculateDays(data.check_in_date, data.check_out_date);
+      const basePrice = nights * property.price_per_night;
+      const serviceFee = Math.round(basePrice * 0.12);
+      
+      setData(prev => ({
+        ...prev,
+        nights: nights,
+        total_price: basePrice + serviceFee
+      }));
+    } else {
+      setData(prev => ({
+        ...prev,
+        nights: 0,
+        total_price: 0
+      }));
     }
+  }, [data.check_in_date, data.check_out_date, property?.price_per_night]);
+
+  const handleReserveClick = () => {
+    if (!data.check_in_date || !data.check_out_date) {
+      alert('Please select check-in and check-out dates first');
+      return;
+    }
+    setCurrentStep(2);
   };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  const handleContinueToStep3 = () => {
+    // Validate required fields for step 2
+    if (!data.email || !data.password) {
+      alert('Please fill in email and password');
+      return;
+    }
+    
+    if (!data.is_registered && !data.name) {
+      alert('Please fill in your name');
+      return;
+    }
+    
+    setCurrentStep(3);
+  };
 
-        if (!data.check_in_date || !data.check_out_date || data.nights <= 0) {
-        alert('Please select valid check-in and check-out dates');
-        return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setProcessing(true);
+
+    if (!data.check_in_date || !data.check_out_date || data.nights <= 0) {
+      alert('Please select valid check-in and check-out dates');
+      setProcessing(false);
+      return;
+    }
+
+    try {
+      let userId = null;
+      
+      // Register user
+      const response = await axios.post(route('register'), {
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        user_type: data.user_type,
+        phone: data.phone,
+        nationality: data.nationality,
+        current_location: data.current_location,
+        passport_number: data.passport_number,
+        address: data.address,
+        city: data.city,
+        country: data.country,
+        emergency_contact: data.emergency_contact,
+        contact_phone: data.contact_phone,
+      });
+      
+      userId = response.data.user_id;
+
+      // Login user
+      await axios.post(route('login'), {
+        email: data.email,
+        password: data.password
+      });
+
+      if (userId) {
+        updateData('user_id', userId);
+      }
+
+      // Create booking
+      await router.post(route('bookings.store'), data, {
+        onSuccess: () => {
+          window.location.href = route('booking.confirmation');
+        },
+        onError: (errors) => {
+          console.error('Booking creation failed:', errors);
+          alert('Booking creation failed. Please try again.');
         }
-
-        try {
-        let userId = null;
-        
-        const response = await axios.post(route('register'), {
-            email: data.email,
-            password: data.password,
-            name: data.name,
-            user_type: data.user_type,
-            phone: data.phone,
-            nationality: data.nationality,
-            current_location: data.current_location,
-            passport_number: data.passport_number,
-            address: data.address,
-            city: data.city,
-            country: data.country,
-            emergency_contact: data.emergency_contact,
-            contact_phone: data.contact_phone,
-        });
-        
-        userId = response.data.user_id;
-
-        await axios.post(route('login'), {
-            email: data.email,
-            password: data.password
-        });
-
-        if (userId) {
-            setData('user_id', userId);
-        }
-
-        post(route('bookings.store'), {
-            onSuccess: () => {
-            window.location.href = route('booking.confirmation');
-            },
-        });
-        } catch (error) {
-        alert(error.response?.data?.message || 'User creation failed.');
-        }
-    };
-
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      alert(error.response?.data?.message || 'An error occurred. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -197,459 +232,476 @@ const PropertyBookingForm = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Calculate pricing
+  const nights = calculateDays(data.check_in_date, data.check_out_date);
+  const subtotal = nights * (property?.price_per_night || 0);
+  const serviceFee = Math.round(subtotal * 0.12);
+  const totalPrice = subtotal + serviceFee;
+
+  const StepIndicator = ({ step, currentStep, title, completed = false }) => (
+    <div className="flex items-center gap-3 mb-6">
+      <div className={`
+        w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
+        ${completed ? 'bg-green-500 text-white' : 
+          step === currentStep ? 'bg-pink-500 text-white' : 
+          'bg-gray-200 text-gray-600'}
+      `}>
+        {completed ? <Check className="w-5 h-5" /> : step}
+      </div>
+      <span className={`font-medium ${step === currentStep ? 'text-gray-900' : 'text-gray-600'}`}>
+        {title}
+      </span>
+    </div>
+  );
+
+  // Show loading or error if property is not available
+  if (!property) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Property not found</h2>
+          <p className="text-gray-600">The property you're looking for is not available.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full p-4 bg-gray-50 min-h-screen">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-4">
         
-        {/* Left Column - Booking Form */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-sm p-6">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <button 
+            onClick={() => window.history.back()}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-2xl font-semibold">Request to book</h1>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Left Column - Booking Form */}
+          <div className="space-y-6">
             
-            {/* Header */}
-            <div className="flex items-center gap-4 mb-6">
-              <h1 className="text-2xl font-semibold text-left">Request to book a property</h1>
-            </div>
-
-            {/* Step 1: Login or Sign Up */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-pink-500 text-white rounded-full flex items-center justify-center font-semibold">
-                    1
-                  </div>
-                  <span className="font-medium">Log in or sign up</span>
-                </div>
-                {currentStep === 1 ? (
-                  <div className="text-sm text-gray-600">Required</div>
-                ) : (
-                  <button 
-                    onClick={() => setCurrentStep(1)}
-                    className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
-                  >
-                    Continue
-                  </button>
-                )}
-              </div>
-
-              {currentStep === 1 && (
-                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-                  <div className="mb-4">
-                    <div className="flex gap-4 mb-4">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="userType"
-                          checked={!data.is_registered}
-                          onChange={() => setData(prev => ({ ...prev, is_registered: false }))}
-                          className="mr-2"
-                        />
-                        New User
+            {/* Step 1: Date Selection & Reserve */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <StepIndicator 
+                step={1} 
+                currentStep={currentStep} 
+                title="Select dates"
+                completed={currentStep > 1}
+              />
+              
+              {currentStep >= 1 && (
+                <div className="space-y-4">
+                  {/* Date Selection */}
+                  <div className="grid grid-cols-2 border border-gray-300 rounded-xl overflow-hidden">
+                    <div className="border-r border-gray-300 p-4">
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
+                        Check-in
                       </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="userType"
-                          checked={data.is_registered}
-                          onChange={() => setData(prev => ({ ...prev, is_registered: true }))}
-                          className="mr-2"
-                        />
-                        Existing User
-                      </label>
-                    </div>
-
-                    {!data.is_registered && (
-                      <div className="grid gap-4">
-                        <div className="relative border rounded-md">
-                          <input
-                            type="text"
-                            placeholder="Full Name"
-                            value={data.name}
-                            onChange={(e) => setData(prev => ({ ...prev, name: e.target.value }))}
-                            className="w-full p-3 border rounded-lg"
-                          />
-                          {errors.name && <div className="text-red-500 text-sm mt-1">{errors.name}</div>}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="grid gap-4">
-                       <div className="relative border rounded-md">
-                        <input
-                          type="email"
-                          placeholder="Email"
-                          value={data.email}
-                          onChange={(e) => setData(prev => ({ ...prev, email: e.target.value }))}
-                          className="w-full p-3 border rounded-md"
-                        />
-                        {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
-                       </div>
-
-                      <div className="relative border rounded-md">
-                        <input
-                          type="password"
-                          placeholder="Password"
-                          value={data.password}
-                          onChange={(e) => setData(prev => ({ ...prev, password: e.target.value }))}
-                          className="w-full p-3 border rounded-lg"
-                        />
-                        {errors.password && <div className="text-red-500 text-sm mt-1">{errors.password}</div>}
-                      </div>
-
-                      <div className="relative border rounded-md">
-                        <input
-                          type="tel"
-                          placeholder="Phone Number"
-                          value={data.phone}
-                          onChange={(e) => setData(prev => ({ ...prev, phone: e.target.value }))}
-                          className="w-full p-3 border rounded-lg"
-                        />
-                        {errors.phone && <div className="text-red-500 text-sm mt-1">{errors.phone}</div>}
-                      </div>
-
-                    </div>
-
-                    <div className="relative">
-                      <button
-                        onClick={handleContinue}
-                        className="w-full mx-auto py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
-                      >
-                        Continue
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Step 2: Booking Details */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-pink-500 text-white' : 'bg-gray-200 text-gray-600'} rounded-full flex items-center justify-center font-semibold`}>
-                    2
-                  </div>
-                  <span className="font-medium">Add booking details</span>
-                </div>
-                {currentStep === 2 ? (
-                  <div className="text-sm text-gray-600">In progress</div>
-                ) : currentStep > 2 ? (
-                  <button 
-                    onClick={() => setCurrentStep(2)}
-                    className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
-                  >
-                    Edit
-                  </button>
-                ) : null}
-              </div>
-
-              {currentStep === 2 && (
-                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-                  <div className="grid gap-4">
-                    {/* Date Selection */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Check-in Date</label>
-                        <div className="relative border rounded-md">
-                          <input
-                            type="date"
-                            value={data.check_in_date}
-                            onChange={(e) => handleDateChange('check_in_date', e.target.value)}
-                            className="w-full pl-10 p-3 border rounded-lg"
-                            min={today}
-                          />
-                          {errors.check_in_date && <div className="text-red-500 text-sm mt-1">{errors.check_in_date}</div>}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Check-out Date</label>
-                        <div className="relative border rounded-md">
-                          <input
-                            type="date"
-                            value={data.check_out_date}
-                            onChange={(e) => handleDateChange('check_out_date', e.target.value)}
-                            className="w-full pl-10 p-3 border rounded-lg"
-                            min={data.check_in_date || today}
-                          />
-                          {errors.check_out_date && <div className="text-red-500 text-sm mt-1">{errors.check_out_date}</div>}
-                        </div>
-                      </div>
-                    </div>
-
-                    {!data.is_registered && (
-                      <>
-                        {/* Guest Information */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Nationality</label>
-                            <input
-                              type="text"
-                              placeholder="Nationality"
-                              value={data.nationality}
-                              onChange={(e) => setData(prev => ({ ...prev, nationality: e.target.value }))}
-                              className="w-full p-3 border rounded-lg"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2">ID/Passport Number</label>
-                            <input
-                              type="text"
-                              placeholder="Passport Number"
-                              value={data.passport_number}
-                              onChange={(e) => setData(prev => ({ ...prev, passport_number: e.target.value }))}
-                              className="w-full p-3 border rounded-lg"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Current Location with API Search */}
-                        <div className="relative" ref={locationRef}>
-                          <label className="block text-sm font-medium mb-2">Current Location</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              placeholder="Search current location"
-                              value={data.current_location}
-                              onChange={(e) => setData(prev => ({ ...prev, current_location: e.target.value }))}
-                              onFocus={() => data.current_location.length >= 3 && setShowLocationSuggestions(true)}
-                              className="w-full pl-10 pr-10 p-3 border rounded-lg"
-                            />
-                            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                            {isLoadingSuggestions && (
-                              <Loader2 className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
-                            )}
-                            {data.current_location && (
-                              <X 
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer w-5 h-5 hover:text-gray-600"
-                                onClick={() => {
-                                  setData(prev => ({ ...prev, current_location: '' }));
-                                  setShowLocationSuggestions(false);
-                                }}
-                              />
-                            )}
-                          </div>
-                          
-                          {/* Location Suggestions Dropdown */}
-                          {showLocationSuggestions && (
-                            <div className="absolute z-50 w-full bg-white border rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
-                              {isLoadingSuggestions ? (
-                                <div className="p-3 text-center text-gray-500">
-                                  <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                                  Searching locations...
-                                </div>
-                              ) : locationSuggestions.length > 0 ? (
-                                locationSuggestions.map((location, index) => (
-                                  <div
-                                    key={index}
-                                    onClick={() => handleLocationSelect(location)}
-                                    className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 flex items-center gap-2"
-                                  >
-                                    <MapPin className="w-4 h-4 text-gray-400" />
-                                    <span>{location}</span>
-                                  </div>
-                                ))
-                              ) : data.current_location.length >= 3 ? (
-                                <div className="p-3 text-center text-gray-500">
-                                  No locations found for "{data.current_location}"
-                                </div>
-                              ) : null}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Address Information */}
-                        <div className="grid grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Address</label>
-                            <input
-                              type="text"
-                              placeholder="Address"
-                              value={data.address}
-                              onChange={(e) => setData(prev => ({ ...prev, address: e.target.value }))}
-                              className="w-full p-3 border rounded-lg"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2">City</label>
-                            <input
-                              type="text"
-                              placeholder="City"
-                              value={data.city}
-                              onChange={(e) => setData(prev => ({ ...prev, city: e.target.value }))}
-                              className="w-full p-3 border rounded-lg"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Country</label>
-                            <input
-                              type="text"
-                              placeholder="Country"
-                              value={data.country}
-                              onChange={(e) => setData(prev => ({ ...prev, country: e.target.value }))}
-                              className="w-full p-3 border rounded-lg"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Emergency Contact */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Emergency Contact Name</label>
-                            <input
-                              type="text"
-                              placeholder="Emergency Contact"
-                              value={data.emergency_contact}
-                              onChange={(e) => setData(prev => ({ ...prev, emergency_contact: e.target.value }))}
-                              className="w-full p-3 border rounded-lg"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Emergency Contact Phone</label>
-                            <input
-                              type="text"
-                              placeholder="Emergency Contact Phone"
-                              value={data.contact_phone}
-                              onChange={(e) => setData(prev => ({ ...prev, contact_phone: e.target.value }))}
-                              className="w-full p-3 border rounded-lg"
-                            />
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Additional Requests */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Additional Requests</label>
-                      <textarea
-                        placeholder="Do you have any specific requests?"
-                        value={data.message}
-                        onChange={(e) => setData(prev => ({ ...prev, message: e.target.value }))}
-                        rows={3}
-                        className="w-full p-3 border rounded-lg"
+                      <input
+                        type="date"
+                        name="check_in_date"
+                        className="w-full bg-transparent text-sm font-medium text-gray-900 border-none focus:outline-none"
+                        value={data.check_in_date}
+                        onChange={handleDateChange}
+                        min={today}
                       />
-                      {errors.message && <div className="text-red-500 text-sm mt-1">{errors.message}</div>}
                     </div>
+                    
+                    <div className="p-4">
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
+                        Check-out
+                      </label>
+                      <input
+                        type="date"
+                        name="check_out_date"
+                        className="w-full bg-transparent text-sm font-medium text-gray-900 border-none focus:outline-none"
+                        value={data.check_out_date}
+                        onChange={handleDateChange}
+                        min={data.check_in_date || today}
+                      />
+                    </div>
+                  </div>
 
+                  {currentStep === 1 && (
                     <button
-                      onClick={handleContinue}
-                      className="w-full py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+                      onClick={handleReserveClick}
+                      className="w-full py-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold rounded-xl transition-all duration-200"
                     >
                       Continue
                     </button>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Step 3: Review Request */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-pink-500 text-white' : 'bg-gray-200 text-gray-600'} rounded-full flex items-center justify-center font-semibold`}>
-                    3
+            {/* Step 2: User Information */}
+            {currentStep >= 2 && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <StepIndicator 
+                  step={2} 
+                  currentStep={currentStep} 
+                  title="Your information"
+                  completed={currentStep > 2}
+                />
+                
+                <div className="space-y-6">
+                  {/* User Type Selection */}
+                  <div className="flex gap-4 p-4 bg-gray-50 rounded-xl">
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="userType"
+                        checked={!data.is_registered}
+                        onChange={() => updateData('is_registered', false)}
+                        className=" text-pink-500"
+                      />
+                      <span className="ml-3 font-medium">New User</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="userType"
+                        checked={data.is_registered}
+                        onChange={() => updateData('is_registered', true)}
+                        className=" text-pink-500"
+                      />
+                      <span className="ml-3 font-medium">Existing User</span>
+                    </label>
                   </div>
-                  <span className="font-medium">Review your request</span>
-                </div>
-              </div>
 
-              {currentStep === 3 && (
-                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                  {/* Basic Information */}
                   <div className="space-y-4">
-                    <div>
-                      <h3 className="font-medium mb-2">Booking Summary</h3>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <p><strong>Property:</strong> {property.property_name}</p>
-                        <p><strong>Check-in:</strong> {data.check_in_date}</p>
-                        <p><strong>Check-out:</strong> {data.check_out_date}</p>
-                        <p><strong>Nights:</strong> {nights}</p>
-                        <p><strong>Guest:</strong> {data.name} ({data.email})</p>
-                        {data.current_location && <p><strong>Current Location:</strong> {data.current_location}</p>}
-                        {data.message && <p><strong>Requests:</strong> {data.message}</p>}
+                    {!data.is_registered && (
+                      <div className="relative">
+                        <User className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <input
+                          type="text"
+                          placeholder="Full Name"
+                          value={data.name}
+                          onChange={(e) => updateData('name', e.target.value)}
+                          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                          required={!data.is_registered}
+                        />
                       </div>
+                    )}
+
+                    <div className="relative">
+                      <Mail className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="email"
+                        placeholder="Email address"
+                        value={data.email}
+                        onChange={(e) => updateData('email', e.target.value)}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        required
+                      />
                     </div>
 
+                    <div className="relative">
+                      <Shield className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="password"
+                        placeholder="Password"
+                        value={data.password}
+                        onChange={(e) => updateData('password', e.target.value)}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        required={!data.is_registered}
+                      />
+                    </div>
+
+                    <div className="relative">
+                      <Phone className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="tel"
+                        placeholder="Phone number"
+                        value={data.phone}
+                        onChange={(e) => updateData('phone', e.target.value)}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Additional Details for New Users */}
+                  {!data.is_registered && (
+                    <div className="space-y-4 pt-4 border-t border-gray-200">
+                      <h4 className="font-medium text-gray-900">Additional Details</h4>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <input
+                          type="text"
+                          placeholder="Nationality"
+                          value={data.nationality}
+                          onChange={(e) => updateData('nationality', e.target.value)}
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="ID/Passport Number"
+                          value={data.passport_number}
+                          onChange={(e) => updateData('passport_number', e.target.value)}
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        />
+                      </div>
+
+                      {/* Current Location with Search */}
+                      <div className="relative" ref={locationRef}>
+                        <div className="relative">
+                          <MapPin className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          <input
+                            type="text"
+                            placeholder="Current location"
+                            value={data.current_location}
+                            onChange={(e) => updateData('current_location', e.target.value)}
+                            onFocus={() => data.current_location.length >= 3 && setShowLocationSuggestions(true)}
+                            className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                          />
+                          {isLoadingSuggestions && (
+                            <Loader2 className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
+                          )}
+                          {data.current_location && (
+                            <X 
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer w-5 h-5 hover:text-gray-600"
+                              onClick={() => {
+                                updateData('current_location', '');
+                                setShowLocationSuggestions(false);
+                              }}
+                            />
+                          )}
+                        </div>
+                        
+                        {/* Location Suggestions */}
+                        {showLocationSuggestions && (
+                          <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-xl mt-2 shadow-lg max-h-48 overflow-y-auto">
+                            {isLoadingSuggestions ? (
+                              <div className="p-4 text-center text-gray-500">
+                                <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
+                                Searching locations...
+                              </div>
+                            ) : locationSuggestions.length > 0 ? (
+                              locationSuggestions.map((location, index) => (
+                                <div
+                                  key={index}
+                                  onClick={() => handleLocationSelect(location)}
+                                  className="p-4 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 flex items-center gap-3"
+                                >
+                                  <MapPin className="w-4 h-4 text-gray-400" />
+                                  <span>{location}</span>
+                                </div>
+                              ))
+                            ) : data.current_location.length >= 3 ? (
+                              <div className="p-4 text-center text-gray-500">
+                                No locations found for "{data.current_location}"
+                              </div>
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <input
+                          type="text"
+                          placeholder="Address"
+                          value={data.address}
+                          onChange={(e) => updateData('address', e.target.value)}
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="City"
+                          value={data.city}
+                          onChange={(e) => updateData('city', e.target.value)}
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Country"
+                          value={data.country}
+                          onChange={(e) => updateData('country', e.target.value)}
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <input
+                          type="text"
+                          placeholder="Emergency contact name"
+                          value={data.emergency_contact}
+                          onChange={(e) => updateData('emergency_contact', e.target.value)}
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Emergency contact phone"
+                          value={data.contact_phone}
+                          onChange={(e) => updateData('contact_phone', e.target.value)}
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Message */}
+                  <div>
+                    <textarea
+                      placeholder="Any special requests or message for the host?"
+                      value={data.message}
+                      onChange={(e) => updateData('message', e.target.value)}
+                      rows={3}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 resize-none"
+                    />
+                  </div>
+
+                  {currentStep === 2 && (
                     <button
-                      onClick={handleSubmit}
+                      onClick={handleContinueToStep3}
+                      className="w-full py-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold rounded-xl transition-all duration-200"
+                    >
+                      Continue
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Review and Confirm */}
+            {currentStep >= 3 && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <StepIndicator 
+                  step={3} 
+                  currentStep={currentStep} 
+                  title="Confirm and pay"
+                />
+                
+                <div className="space-y-6">
+                  <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <div className="flex items-center gap-3 text-blue-800">
+                      <Shield className="w-5 h-5" />
+                      <div className="text-sm">
+                        <p className="font-medium">Your payment is protected</p>
+                        <p>You won't be charged until your booking is confirmed</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSubmit}>
+                    <button
+                      type="submit"
                       disabled={processing}
-                      className="w-full py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="w-full py-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {processing ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          Processing...
+                          Processing booking...
                         </>
                       ) : (
-                        'Confirm Booking'
+                        <>
+                          <CreditCard className="w-5 h-5" />
+                          Confirm and book
+                        </>
                       )}
                     </button>
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Property Summary */}
+          <div className="lg:sticky lg:top-4 lg:self-start">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+              
+              {/* Property Preview */}
+              <div className="flex gap-4">
+                <img
+                  src={property.initial_gallery && property.initial_gallery.length > 0 
+                    ? `/storage/${property.initial_gallery[0].image}` 
+                    : `/images/property-placeholder.jpg`}
+                  alt={property.property_name}
+                  className="w-24 h-24 rounded-xl object-cover"
+                />
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 mb-1">{property.type}</p>
+                  <h3 className="font-semibold text-lg mb-2">{property.property_name}</h3>
+                  <div className="flex items-center gap-1 text-sm">
+                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    <span className="font-medium">4.88</span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-600">249 reviews</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Booking Details */}
+              {data.check_in_date && data.check_out_date && (
+                <div className="space-y-4 pt-4 border-t border-gray-200">
+                  <h4 className="font-semibold">Your trip</h4>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">Dates</p>
+                        <p className="text-sm text-gray-600">
+                          {new Date(data.check_in_date).toLocaleDateString()} - {new Date(data.check_out_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                      {currentStep >= 1 && (
+                        <button 
+                          onClick={() => setCurrentStep(1)}
+                          className="text-sm text-pink-500 hover:underline font-medium"
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+
+                    {nights > 0 && (
+                      <div className="p-3 bg-blue-50 rounded-lg">
+                        <p className="text-center font-medium text-blue-800">
+                          {nights} night{nights !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Property Details */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
-            
-            {/* Property Image and Details */}
-            <div className="mb-4">
-              <img
-                src={property.initial_gallery && property.initial_gallery.length > 0 
-                            ? `/storage/${property.initial_gallery[0].image}` 
-                            : `/images/property-placeholder.jpg`}
-                 alt={property.property_name}
-                className="w-full h-48 object-cover rounded-lg mb-4"
-              />
-              <h3 className="font-semibold text-lg mb-2">{property.property_name}</h3>
-              <p className="text-sm text-gray-600 mb-2">{property.type}</p>
-              <p className="text-sm text-gray-600 mb-4">{property.location}</p>
-              <div className="flex items-center gap-1 text-sm mb-4">
-                <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                <span className="font-medium">4.88</span>
-                <span className="text-gray-400">•</span>
-                <span className="text-gray-600">249 reviews</span>
-              </div>
-            </div>
-
-            {/* Booking Details */}
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="font-medium">Stay details</span>
-                <button 
-                  onClick={() => setCurrentStep(2)}
-                  className="text-sm text-pink-500 hover:underline"
-                >
-                  Change
-                </button>
-              </div>
-              <div className="text-sm text-gray-600 mb-4">
-                <p>{data.check_in_date} – {data.check_out_date}</p>
-                <p>{nights} {nights === 1 ? 'night' : 'nights'}</p>
-              </div>
 
               {/* Price Breakdown */}
-              <div className="border-t pt-4">
-                <h4 className="font-medium mb-2">Price details</h4>
-                <div className="flex justify-between text-sm mb-2">
-                  <span>KES {property.price_per_night.toLocaleString()} x {nights} nights</span>
-                  <span>KES {subtotal.toLocaleString()}</span>
-                </div>
-                <div className="border-t pt-2 mt-2">
-                  <div className="flex justify-between font-medium">
-                    <span>Total</span>
-                    <span>KES {totalPrice.toLocaleString()}</span>
+              {nights > 0 && (
+                <div className="space-y-3 pt-4 border-t border-gray-200">
+                  <h4 className="font-semibold">Price details</h4>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm">KES {(property.price_per_night || 0).toLocaleString()} × {nights} night{nights !== 1 ? 's' : ''}</span>
+                      <span className="text-sm">KES {subtotal.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Service fee</span>
+                      <span className="text-sm">KES {serviceFee.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                    <span className="font-semibold">Total</span>
+                    <span className="font-semibold text-lg">KES {totalPrice.toLocaleString()}</span>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Rare Find Badge */}
-              <div className="mt-4 p-3 bg-pink-50 rounded-lg border border-pink-200">
-                <div className="flex items-center gap-2 text-pink-600">
-                  <div className="w-6 h-6 text-pink-500">💎</div>
+              <div className="p-4 bg-pink-50 rounded-xl border border-pink-200">
+                <div className="flex items-center gap-3 text-pink-600">
+                  <div className="text-2xl">💎</div>
                   <div className="text-sm">
-                    <p className="font-medium">This is a rare find.</p>
-                    <p>This property is usually booked.</p>
+                    <p className="font-medium">This is a rare find</p>
+                    <p className="text-pink-500">This property is usually booked</p>
                   </div>
                 </div>
               </div>

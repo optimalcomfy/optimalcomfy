@@ -140,6 +140,22 @@ class HomeController extends Controller
     }
 
 
+    public function propertyBooking(Request $request)
+    {
+        $input = $request->all();
+        $property = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])->where('id', '=', $input['property_id'])->first();
+
+        return Inertia::render('PropertyBooking', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'laravelVersion' => Application::VERSION,
+            'phpVersion' => PHP_VERSION,
+            'flash' => session('flash'),
+            'property'=> $property
+        ]);
+    }
+
+
     public function dashboard(Request $request)
     {
         $user = Auth::user();

@@ -85,7 +85,7 @@ function Header() {
                             <li className="navigation__menu--item has-child has-arrow dark:before:!text-white">
                             <Link
                               href={route('home')}
-                              className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register') ? 'lowBorder' : ''}`}
+                              className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking') ? 'lowBorder' : ''}`}
                               >
                                 <img src='/image/houses.png' alt='' className='h-8' />
                                 Stays
@@ -171,7 +171,7 @@ function Header() {
                 </div>
 
                 <div className="logo-container">
-                  {(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register') &&
+                  {(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking') &&
                     <SearchBar />
                   }
                   {(isWhich === '/all-cars' || isWhich === '/search-cars' || isWhich === '/rent-now' || isWhich === '/car-booking') &&

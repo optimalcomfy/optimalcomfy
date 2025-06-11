@@ -70,6 +70,7 @@ Route::get('/all-cars', [HomeController::class, 'allCars'])->name('all-cars');
 Route::get('/search-cars', [HomeController::class, 'searchCars'])->name('search-cars');
 Route::get('/rent-now', [HomeController::class, 'rentNow'])->name('rent-now');
 Route::get('/car-booking', [HomeController::class, 'carBooking'])->name('car-booking');
+Route::get('/property-booking', [HomeController::class, 'propertyBooking'])->name('property-booking');
 
 Route::get('/joby/{job}', [HomeController::class, 'showJob'])->name('jobShow');
 

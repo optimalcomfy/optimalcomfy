@@ -49,7 +49,7 @@ export default function SearchBar() {
   // Fetch location suggestions
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (formData.location.length < 2) {
+      if (formData.location.length < 3) {
         setLocationSuggestions([]);
         return;
       }

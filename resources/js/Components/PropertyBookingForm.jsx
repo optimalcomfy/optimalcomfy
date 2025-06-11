@@ -1,7 +1,7 @@
 // resources/js/Pages/Property/PropertyBookingForm.jsx
 
 import React, { useEffect, useState } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm, Link } from '@inertiajs/react';
 import axios from 'axios';
 
 const PropertyBookingForm = ({ property }) => {
@@ -9,28 +9,7 @@ const PropertyBookingForm = ({ property }) => {
     property_id: property.id,
     check_in_date: '',
     check_out_date: '',
-    total_price: 0,
-    nights: 0,
-    status: 'Booked',
-
-    // User fields
-    name: '',
-    email: '',
-    password: '',
-    phone: '',
-    nationality: '',
-    current_location: '',
-    passport_number: '',
-    address: '',
-    city: '',
-    country: '',
-    emergency_contact: '',
-    contact_phone:'',
-    is_registered: true,
-    user_type: 'guest'
   });
-
-  const [showGuestForm, setShowGuestForm] = useState(false);
 
   const calculateDays = (check_in_date, check_out_date) => {
     if (check_in_date && check_out_date) {
@@ -58,31 +37,16 @@ const PropertyBookingForm = ({ property }) => {
     setData(name, value);
   };
 
-  const handleReserveClick = () => {
-    if (!data.check_in_date || !data.check_out_date) {
-      alert('Please select check-in and check-out dates first');
-      return;
-    }
-    setShowGuestForm(true);
-    // Scroll to guest form
-    setTimeout(() => {
-      const guestSection = document.querySelector('.guest-info-section');
-      if (guestSection) {
-        guestSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
-  };
 
   useEffect(() => {
     if (data.check_in_date && data.check_out_date) {
       const nights = calculateDays(data.check_in_date, data.check_out_date);
       const basePrice = nights * (property.price_per_night || 0);
-      const serviceFee = Math.round(basePrice * 0.12);
       
       setData(prev => ({
         ...prev,
         nights: nights,
-        total_price: basePrice + serviceFee
+        total_price: basePrice
       }));
     } else {
       setData(prev => ({
@@ -93,65 +57,7 @@ const PropertyBookingForm = ({ property }) => {
     }
   }, [data.check_in_date, data.check_out_date]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!data.check_in_date || !data.check_out_date || data.nights <= 0) {
-      alert('Please select valid check-in and check-out dates');
-      return;
-    }
-
-    try {
-      let userId = null;
-      
-      const response = await axios.post(route('register'), {
-        email: data.email,
-        password: data.password,
-        name: data.name,
-        user_type: data.user_type,
-        phone: data.phone,
-        nationality: data.nationality,
-        current_location: data.current_location,
-        passport_number: data.passport_number,
-        address: data.address,
-        city: data.city,
-        country: data.country,
-        emergency_contact: data.emergency_contact,
-        contact_phone: data.contact_phone,
-      });
-      
-      userId = response.data.user_id;
-
-      await axios.post(route('login'), {
-        email: data.email,
-        password: data.password
-      });
-
-      if (userId) {
-        setData('user_id', userId);
-      }
-
-      post(route('bookings.store'), {
-        onSuccess: () => {
-          window.location.href = route('booking.confirmation');
-        },
-      });
-    } catch (error) {
-      alert(error.response?.data?.message || 'User creation failed.');
-    }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'numeric',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const serviceFee = data.nights > 0 ? Math.round((property.price_per_night || 0) * data.nights * 0.12) : 0;
+  
   const subtotal = data.nights > 0 ? (property.price_per_night || 0) * data.nights : 0;
 
   return (
@@ -227,18 +133,20 @@ const PropertyBookingForm = ({ property }) => {
           </div>
 
           {/* Reserve Button */}
-          <button
+          {data.check_in_date && data.check_out_date &&
+          <>
+          <Link
             type="button"
+             href={route('property-booking', { property_id: property.id, check_in_date: data.check_in_date, check_out_date: data.check_out_date  })}
             className="btn btn--pink w-full py-3 px-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold rounded-lg transition-all duration-200 mb-4"
-            onClick={handleReserveClick}
           >
             Reserve
-          </button>
+          </Link>
 
           <span className="sticky-card--ext-text block text-center text-sm text-gray-600 dark:text-gray-400 mb-4">
             You won't be charged yet
           </span>
-
+          </>}
           {/* Price Breakdown */}
           {data.nights > 0 && (
             <>
@@ -248,14 +156,6 @@ const PropertyBookingForm = ({ property }) => {
                 </a>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
                   KES {subtotal}
-                </p>
-              </div>
-              <div className="sticky-card__detail flex justify-between items-center mb-4">
-                <a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:underline">
-                  Service fee
-                </a>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  KES {serviceFee}
                 </p>
               </div>
               <hr className="border-gray-200 dark:border-gray-600 mb-4" />
@@ -273,188 +173,6 @@ const PropertyBookingForm = ({ property }) => {
             </div>
           )}
         </div>
-
-        {/* Guest Information Section */}
-        {showGuestForm && (
-          <div className="guest-info-section bg-white dark:bg-[#2D2D2D] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 mt-6">
-            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Guest Information</h3>
-            
-            <form onSubmit={handleSubmit}>
-              {/* Registration Toggle */}
-              <div className="flex items-center justify-between mb-4 bg-gray-50 dark:bg-[#1B1B1B] p-3 rounded-md">
-                <span className="font-medium text-gray-900 dark:text-white">I am a:</span>
-                <div className="flex gap-4">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="userStatus"
-                      value="registered"
-                      checked={data.is_registered}
-                      onChange={() => setData({ ...data, is_registered: true })}
-                      className="form-radio text-blue-600"
-                    />
-                    <span className="ml-2 text-gray-700 dark:text-gray-300">Registered</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="userStatus"
-                      value="new"
-                      checked={!data.is_registered}
-                      onChange={() => setData({ ...data, is_registered: false })}
-                      className="form-radio text-blue-600"
-                    />
-                    <span className="ml-2 text-gray-700 dark:text-gray-300">New</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Form fields */}
-              <div className="grid gap-4">
-                {!data.is_registered && (
-                  <>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Full name
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="Full Name" 
-                      value={data.name} 
-                      onChange={(e) => setData('name', e.target.value)} 
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-[#1B1B1B] dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required={!data.is_registered} 
-                    />
-                  </>
-                )}
-
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Email
-                </label>
-                <input 
-                  type="email" 
-                  placeholder="Email" 
-                  value={data.email} 
-                  onChange={(e) => setData('email', e.target.value)} 
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-[#1B1B1B] dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required 
-                />
-
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Password
-                </label>
-                <input 
-                  type="password" 
-                  placeholder="Password" 
-                  value={data.password} 
-                  onChange={(e) => setData('password', e.target.value)} 
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-[#1B1B1B] dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required={!data.is_registered} 
-                />
-                
-                {!data.is_registered && (
-                  <>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Phone
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="Phone" 
-                      value={data.phone} 
-                      onChange={(e) => setData('phone', e.target.value)} 
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-[#1B1B1B] dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Nationality
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="Nationality" 
-                      value={data.nationality} 
-                      onChange={(e) => setData('nationality', e.target.value)} 
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-[#1B1B1B] dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      ID/Passport number
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="Passport Number" 
-                      value={data.passport_number} 
-                      onChange={(e) => setData('passport_number', e.target.value)} 
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-[#1B1B1B] dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Address
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="Address" 
-                      value={data.address} 
-                      onChange={(e) => setData('address', e.target.value)} 
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-[#1B1B1B] dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      City
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="City" 
-                      value={data.city} 
-                      onChange={(e) => setData('city', e.target.value)} 
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-[#1B1B1B] dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Country
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="Country" 
-                      value={data.country} 
-                      onChange={(e) => setData('country', e.target.value)} 
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-[#1B1B1B] dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Emergency contact name
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="Emergency Contact" 
-                      value={data.emergency_contact} 
-                      onChange={(e) => setData('emergency_contact', e.target.value)} 
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-[#1B1B1B] dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Emergency contact phone
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="Emergency Contact Phone" 
-                      value={data.contact_phone} 
-                      onChange={(e) => setData('contact_phone', e.target.value)} 
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-[#1B1B1B] dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </>
-                )}
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                className="w-full py-3 font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-md transition-all duration-200 mt-6"
-                disabled={processing}
-              >
-                {processing ? 'Booking...' : 'Book Your Property'}
-              </button>
-            </form>
-          </div>
-        )}
       </div>
     </div>
   );

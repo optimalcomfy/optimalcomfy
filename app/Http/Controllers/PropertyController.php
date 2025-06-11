@@ -90,7 +90,7 @@ class PropertyController extends Controller
 
         $validatedData['user_id'] = $user->id;
     
-        $property = Property::create($validatedData);
+        Property::create($validatedData);
     
         return redirect()->route('properties.index')->with('success', 'Property added successfully.');
     }

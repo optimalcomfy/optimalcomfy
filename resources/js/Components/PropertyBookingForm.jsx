@@ -138,7 +138,7 @@ const PropertyBookingForm = ({ property }) => {
           <Link
             type="button"
              href={route('property-booking', { property_id: property.id, check_in_date: data.check_in_date, check_out_date: data.check_out_date  })}
-            className="btn btn--pink w-full py-3 px-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold rounded-lg transition-all duration-200 mb-4"
+            className="btn btn--pink w-full py-3 text-center px-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold rounded-lg transition-all duration-200 mb-4"
           >
             Reserve
           </Link>

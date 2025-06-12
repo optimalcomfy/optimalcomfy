@@ -629,12 +629,6 @@ const PropertyBookingForm = () => {
                 <div className="flex-1">
                   <p className="text-sm text-gray-600 mb-1">{property.type}</p>
                   <h3 className="font-semibold text-lg mb-2">{property.property_name}</h3>
-                  <div className="flex items-center gap-1 text-sm">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="font-medium">4.88</span>
-                    <span className="text-gray-400">•</span>
-                    <span className="text-gray-600">249 reviews</span>
-                  </div>
                 </div>
               </div>
 

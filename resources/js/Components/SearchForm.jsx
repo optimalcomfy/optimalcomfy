@@ -30,7 +30,7 @@ const DesktopSearchBar = ({ formData, handleChange, handleLocationSelect, handle
         )}
         {isLoadingSuggestions && <Loader2 className="loader-icon" />}
         {isSuggestionsOpen && (
-          <div className="absolute z-50 w-full bg-white border rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
+          <div className="absolute z-50 w-full bg-white border rounded-sm mt-1 shadow-lg max-h-48 overflow-y-auto">
             {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
               <div
                 key={index}
@@ -158,7 +158,7 @@ const MobileSearchModal = ({
               {isLoadingSuggestions && <Loader2 className="loader-icon animate-spin" />}
             </div>
             {isSuggestionsOpen && (
-              <div className="absolute z-50 w-full bg-white border rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
+              <div className="absolute z-50 w-full bg-white border rounded-sm mt-1 shadow-lg max-h-48 overflow-y-auto">
                 {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
                   <div
                     key={index}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Star, X, Loader2, MapPin, Calendar, User, CreditCard, Eye } from 'lucide-react';
 import { Link, Head, router, usePage, useForm } from "@inertiajs/react";
 
+import './CarBookingForm.css'
 
 const CarBookingForm = () => {
   const { flash, car } = usePage().props;
@@ -179,7 +180,7 @@ const CarBookingForm = () => {
 
               {currentStep === 1 && (
                 <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-                  <div className="mb-4">
+                  <div className="mb-4 flex flex-col gap-4">
                     <div className="flex gap-4 mb-4">
                       <label className="flex items-center">
                         <input
@@ -205,13 +206,13 @@ const CarBookingForm = () => {
 
                     {!data.is_registered && (
                       <div className="grid gap-4">
-                        <div className="relative border rounded-md">
+                        <div className="relative rounded-md">
                           <input
                             type="text"
                             placeholder="Full Name"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
-                            className="w-full p-3 border rounded-lg"
+                            className="w-full p-3 rounded-lg"
                           />
                           {errors.name && <div className="text-red-500 text-sm mt-1">{errors.name}</div>}
                         </div>
@@ -219,35 +220,35 @@ const CarBookingForm = () => {
                     )}
 
                     <div className="grid gap-4">
-                       <div className="relative border rounded-md">
+                       <div className="relative rounded-md">
                         <input
                           type="email"
                           placeholder="Email"
                           value={data.email}
                           onChange={(e) => setData('email', e.target.value)}
-                          className="w-full p-3 border rounded-md"
+                          className="w-full p-3 rounded-md"
                         />
                         {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
                        </div>
 
-                      <div className="relative border rounded-md">
+                      <div className="relative rounded-md">
                         <input
                           type="password"
                           placeholder="Password"
                           value={data.password}
                           onChange={(e) => setData('password', e.target.value)}
-                          className="w-full p-3 border rounded-lg"
+                          className="w-full p-3 rounded-lg"
                         />
                         {errors.password && <div className="text-red-500 text-sm mt-1">{errors.password}</div>}
                       </div>
 
-                      <div className="relative border rounded-md">
+                      <div className="relative rounded-md">
                         <input
                           type="tel"
                           placeholder="Phone Number"
                           value={data.phone}
                           onChange={(e) => setData('phone', e.target.value)}
-                          className="w-full p-3 border rounded-lg"
+                          className="w-full p-3 rounded-lg"
                         />
                         {errors.phone && <div className="text-red-500 text-sm mt-1">{errors.phone}</div>}
                       </div>
@@ -295,24 +296,24 @@ const CarBookingForm = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-2">Pickup Date</label>
-                        <div className="relative border rounded-md">
+                        <div className="relative rounded-md">
                           <input
                             type="date"
                             value={data.start_date}
                             onChange={(e) => setData('start_date', e.target.value)}
-                            className="w-full pl-10 p-3 border rounded-lg"
+                            className="w-full pl-10 p-3 rounded-lg"
                           />
                           {errors.start_date && <div className="text-red-500 text-sm mt-1">{errors.start_date}</div>}
                         </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2">Return Date</label>
-                        <div className="relative border rounded-md">
+                        <div className="relative rounded-md">
                           <input
                             type="date"
                             value={data.end_date}
                             onChange={(e) => setData('end_date', e.target.value)}
-                            className="w-full pl-10 p-3 border rounded-lg"
+                            className="w-full pl-10 p-3 rounded-lg"
                           />
                           {errors.end_date && <div className="text-red-500 text-sm mt-1">{errors.end_date}</div>}
                         </div>
@@ -322,14 +323,14 @@ const CarBookingForm = () => {
                     {/* Pickup Location */}
                     <div className="relative" ref={pickupRef}>
                       <label className="block text-sm font-medium mb-2">Pickup Location</label>
-                      <div className="relative border rounded-md">
+                      <div className="relative rounded-md">
                         <input
                           type="text"
                           placeholder="Search pickup location"
                           value={data.pickup_location}
                           onChange={(e) => setData('pickup_location', e.target.value)}
                           onFocus={() => setShowPickupSuggestions(true)}
-                          className="w-full pl-10 p-3 border rounded-lg"
+                          className="w-full pl-10 p-3 rounded-lg"
                         />
                         {data.pickup_location && (
                           <X 
@@ -362,7 +363,7 @@ const CarBookingForm = () => {
                         value={data.message}
                         onChange={(e) => setData('message', e.target.value)}
                         rows={3}
-                        className="w-full p-3 border rounded-lg"
+                        className="w-full p-3 rounded-lg"
                       />
                       {errors.message && <div className="text-red-500 text-sm mt-1">{errors.message}</div>}
                     </div>

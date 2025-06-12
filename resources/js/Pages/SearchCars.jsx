@@ -16,6 +16,7 @@ import "slick-carousel/slick/slick-theme.css";
 import '../../css/main';
 import "./PropertiesCustom.css"; 
 import './Welcome.css'
+import ProductCar from "@/Components/ProductCar";
 
 export default function SearchCars({ auth, laravelVersion, phpVersion }) {
 
@@ -114,91 +115,22 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                   </div>
                 </div>
 
-                <div className="no-bottom no-top zebra" id="content">
-                    <div className="container">
-                      <div className="row py-4">
-                          <div className="col-sm-12">
-                          <div className="row">
-                              {/* Dynamic car listing based on cars data */}
-                              {cars && cars.length > 0 ? (
-                                cars.map((car) => (
-                                <div 
-                                  key={car.id}
-                                  onMouseEnter={() => handlePropertyHover(car.id)}
-                                  onMouseLeave={() => handlePropertyHover(null)}
-                                  onClick={() => handlePropertySelect(car.id)}
-                                  className="interactive-element col-sm-12 col-lg-4"
-                                >
-                                  <div className="">
-                                    <div className={`property-card ${selectedProperty === car.id ? 'selected' : ''}`}>
-                                      <div className="w-full" key={car.id}>
-                                        <div className="de-item">
-                                          <div className="d-img">
-                                            {/* Use the first image from initial_gallery if available, otherwise use a placeholder */}
-                                            <img
-                                              src={car.initial_gallery && car.initial_gallery.length > 0 
-                                                ? `/storage/${car.initial_gallery[0].image}` 
-                                                : `/cars/images/cars/placeholder.jpg`}
-                                              className="img-fluid"
-                                              alt={`${car.brand} ${car.model}`}
-                                              onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = "/cars/images/cars/placeholder.jpg";
-                                              }}
-                                            />
-                                          </div>
-                                          <div className="d-info">
-                                            <div className="d-text">
-                                              <h4>{car.brand} {car.model}</h4>
-                                              <div className="d-item_like">
-                                                <i className="fa fa-heart" />
-                                                <span>{Math.floor(Math.random() * 100)}</span>
-                                              </div>
-                                              <div className="d-atr-group">
-                                                <span className="d-atr">
-                                                  <img src="/cars/images/icons/1-green.svg" alt="" />
-                                                  {car.seats || 5}
-                                                </span>
-                                                <span className="d-atr">
-                                                  <img src="/cars/images/icons/2-green.svg" alt="" />
-                                                  {car.doors || 4}
-                                                </span>
-                                                <span className="d-atr">
-                                                  <img src="/cars/images/icons/3-green.svg" alt="" />
-                                                  {car.luggage_capacity ? Math.floor(car.luggage_capacity / 1000) : 4}
-                                                </span>
-                                                <span className="d-atr">
-                                                  <img src={getCarTypeIcon(car.body_type)} alt="" />
-                                                  {car.body_type || 'Sedan'}
-                                                </span>
-                                              </div>
-                                              <div className="d-price">
-                                                Daily rate from <span>KES{car.price_per_day}</span>
-                                              </div>
-                                              <div className="mt-2">
-                                                <Link className="btn-main" href={route('rent-now', { car_id: car.id })}>
-                                                  Rent Now
-                                                </Link>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                                ))
-                              ) : (
-                                <div className="col-12">
-                                  <div className="alert alert-info">
-                                    No cars available at the moment. Please check back later.
-                                  </div>
-                                </div>
-                              )}
-                          </div>
-                          </div>
+                <div class="product-grid padding-container">
+                  {cars.map((car) => (
+                    <div 
+                      key={car.id}
+                      onMouseEnter={() => handlePropertyHover(car.id)}
+                      onMouseLeave={() => handlePropertyHover(null)}
+                      onClick={() => handlePropertySelect(car.id)}
+                      className="interactive-element"
+                    >
+                      <div className="">
+                        <div className={`property-card ${selectedProperty === car.id ? 'selected' : ''}`}>
+                          <ProductCar {...car} />
+                        </div>
                       </div>
                     </div>
+                  ))}
                 </div>
               </div>
 

@@ -32,37 +32,21 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                   {/* meta datas */}
                   <div className="meta-data__container">
                     <div className="meta-data">
-                      <span className="rating">
-                        <div className="rating-img__container">
-                          <img src="/images/icons/rating.svg" alt="rating-star" />
-                        </div>
-                        <span>4.88</span>
-                        <span className="dot">.</span>
-                        <a href="#" className="reviews">
-                          249 reviews
-                        </a>
-                      </span>
-                      <span className="dot">.</span>
-                      <a href="#" className="location">
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property?.location)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="location min-w-[240px]"
+                      >
                         {property?.location}
                       </a>
                     </div>
-                    <div className="buttons">
-                      <div className="share">
-                        <div className="img__container">
-                          <img src="/images/icons/share.png" alt="share" />
-                        </div>
-                        <a href="#">Share</a>
-                      </div>
-                      <div className="save">
-                        <div className="img__container">
-                          <img src="images/icons/heart.svg" alt="heart" />
-                        </div>
-                        <a href="#">Save</a>
-                      </div>
-                    </div>
                   </div>
                   {/* images */}
+
+                  {property?.initial_gallery?.length > 1 ?
+                  <>
+                  {property?.initial_gallery[0]?.image &&
                   <div className="hero-images">
                     <a href="#" className="image__link">
                       <div className="img__container">
@@ -71,23 +55,38 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                       <span className="image__link-text">Show all photos</span>
                     </a>
                     <div className="img__container--hero">
-                      <img src="/images/room1.webp" alt="room" />
+                      <img src={`/storage/${property?.initial_gallery[0]?.image}`} alt="room" />
                     </div>
+                    {property?.initial_gallery[1]?.image &&
                     <div className="img__collage">
                       <div className="img__container">
-                        <img src="/images/room2.webp" alt="room" />
+                        <img src={`/storage/${property?.initial_gallery[1]?.image}`} alt="room" />
                       </div>
+                      
                       <div className="img__container">
-                        <img src="/images/room3.webp" alt="room" />
+                        {property?.initial_gallery[2]?.image &&
+                        <img src={`/storage/${property?.initial_gallery[2]?.image}`}alt="room" />}
                       </div>
+                     
                       <div className="img__container">
-                        <img src="/images/room4.webp" alt="room" />
+                         {property?.initial_gallery[3]?.image &&
+                        <img src={`/storage/${property?.initial_gallery[3]?.image}`} alt="room" />}
                       </div>
+                      
                       <div className="img__container">
-                        <img src="/images/romm5.webp" alt="room" />
+                        {property?.initial_gallery[4]?.image &&
+                        <img src={`/storage/${property?.initial_gallery[4]?.image}`} alt="room" />}
                       </div>
-                    </div>
-                  </div>
+                    </div>}
+                  </div>}
+                  </>
+                  :
+                  <>
+                  {property?.initial_gallery[0]?.image &&
+                  <div className="rounded-lg overflow-hidden mt-4">
+                    <img src={`/storage/${property?.initial_gallery[0]?.image}`} className="w-full h-[50vh] object-cover object-center" alt="room" />
+                  </div>}
+                  </>}
                 </div>
               </section>
               <div className="container-m">
@@ -336,53 +335,6 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                   </div>
 
                   <PropertyBookingForm property={property} />
-                </div>
-                <div className="container">
-                  <hr />
-                </div>
-              </section>
-              <section>
-                <div className="container container-m">
-                  <span className="rating rating--large">
-                    <div className="rating-img__container">
-                      <img src="/images/icons/rating.svg" alt="rating-star" />
-                    </div>
-                    <span>4.88 (249 reviews)</span>
-                  </span>
-                  <div className="detailed-rating">
-                    <ul className="rating-list">
-                      <li className="rating-list__item">
-                        <p className="item-title">Cleanliness</p>
-                        <span className="rating-bar" />
-                        <span className="rating-list__rating">4.9</span>
-                      </li>
-                      <li className="rating-list__item">
-                        <p className="item-title">Communication</p>
-                        <span className="rating-bar" />
-                        <span className="rating-list__rating">4.9</span>
-                      </li>
-                      <li className="rating-list__item">
-                        <p className="item-title">Check-in</p>
-                        <span className="rating-bar" />
-                        <span className="rating-list__rating">4.9</span>
-                      </li>
-                      <li className="rating-list__item">
-                        <p className="item-title">Accuracy</p>
-                        <span className="rating-bar" />
-                        <span className="rating-list__rating">4.9</span>
-                      </li>
-                      <li className="rating-list__item">
-                        <p className="item-title">Location</p>
-                        <span className="rating-bar" />
-                        <span className="rating-list__rating">4.8</span>
-                      </li>
-                      <li className="rating-list__item">
-                        <p className="item-title">Value</p>
-                        <span className="rating-bar" />
-                        <span className="rating-list__rating">4.8</span>
-                      </li>
-                    </ul>
-                  </div>
                 </div>
               </section>
             </div>

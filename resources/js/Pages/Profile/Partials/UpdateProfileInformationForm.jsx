@@ -24,7 +24,7 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
     };
 
     return (
-        <section className={`${className} w-full`}>
+        <section className={className}>
             <header>
                 <h2 className="text-lg font-medium">Profile Information</h2>
 

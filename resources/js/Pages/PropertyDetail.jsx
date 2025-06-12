@@ -103,10 +103,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                         </h3>
                       </div>
                       <div className="section__img">
-                        <img
-                          src="https://a0.muscache.com/im/pictures/user/bfe2dd3c-e72f-4e46-ba38-5c0bac2cc2e2.jpg?im_w=240"
-                          alt="woman sitting"
-                        />
+                    
                       </div>
                     </div>
                     <hr />

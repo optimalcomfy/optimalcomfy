@@ -35,13 +35,18 @@ const DesktopSearchBar = ({
         {formData.location && <X className="clear-icon" onClick={() => handleChange({ target: { name: 'location', value: '' } })} />}
         {isLoadingSuggestions && <Loader2 className="loader-icon animate-spin" />}
         {isSuggestionsOpen && (
-          <ul className="suggestions-dropdown">
-            {locationSuggestions.map((loc, i) => (
-              <li key={i} onMouseDown={() => handleLocationSelect(loc)}>
-                {loc}
-              </li>
+
+          <div className="absolute z-50 w-full bg-white border rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
+            {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
+              <div
+                key={index}
+                onClick={() => handleLocationSelect(location, 'pickup_location')}
+                className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+              >
+                {location}
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
 

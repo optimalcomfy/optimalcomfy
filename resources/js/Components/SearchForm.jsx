@@ -30,11 +30,17 @@ const DesktopSearchBar = ({ formData, handleChange, handleLocationSelect, handle
         )}
         {isLoadingSuggestions && <Loader2 className="loader-icon" />}
         {isSuggestionsOpen && (
-          <ul className="suggestions-dropdown">
-            {locationSuggestions.map((loc, i) => (
-              <li key={i} onClick={() => handleLocationSelect(loc)}>{loc}</li>
+          <div className="absolute z-50 w-full bg-white border rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
+            {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
+              <div
+                key={index}
+                onClick={() => handleLocationSelect(location, 'destination')}
+                className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+              >
+                {location}
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
 
@@ -152,14 +158,18 @@ const MobileSearchModal = ({
               {isLoadingSuggestions && <Loader2 className="loader-icon animate-spin" />}
             </div>
             {isSuggestionsOpen && (
-              <ul className="mobile-suggestions-dropdown">
-                {locationSuggestions.map((loc, i) => (
-                  <li key={i} onClick={() => handleLocationSelect(loc)}>
-                    <MapPin size={16} />
-                    <span>{loc}</span>
-                  </li>
+              <div className="absolute z-50 w-full bg-white border rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
+                {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
+                  <div
+                    key={index}
+                    onClick={() => handleLocationSelect(location, 'destination')}
+                    className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                  >
+                    {location}
+                  </div>
                 ))}
-              </ul>
+              </div>
+              
             )}
           </div>
 

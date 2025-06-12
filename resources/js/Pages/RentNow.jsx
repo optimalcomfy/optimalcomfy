@@ -14,13 +14,6 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
   const { car } = usePage().props;
   const url = usePage().url;
 
-  const carId = (() => {
-    const queryString = url.split('?')[1];
-    if (!queryString) return null;
-    const params = new URLSearchParams(queryString);
-    return params.get('car_id');
-  })();
-
   return (
     <>
       <PrimeReactProvider>
@@ -156,21 +149,64 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                     <hr />
 
                     {/* Detailed Specifications */}
-                    <h4>Specifications</h4>
-                    <div className="de-spec mb-4">
-                      <div className="d-row"><span className="d-title">Body</span><span className="d-value">{car?.category?.name}</span></div>
-                      <div className="d-row"><span className="d-title">Seat</span><span className="d-value">{car?.seats} seats</span></div>
-                      <div className="d-row"><span className="d-title">Door</span><span className="d-value">{car?.doors} doors</span></div>
-                      <div className="d-row"><span className="d-title">Luggage</span><span className="d-value">{car?.luggage_capacity}</span></div>
-                      <div className="d-row"><span className="d-title">Fuel Type</span><span className="d-value">{car?.fuel_type}</span></div>
-                      <div className="d-row"><span className="d-title">Engine</span><span className="d-value">{car?.engine_capacity}</span></div>
-                      <div className="d-row"><span className="d-title">Year</span><span className="d-value">{car?.year}</span></div>
-                      <div className="d-row"><span className="d-title">Mileage</span><span className="d-value">{car?.mileage}</span></div>
-                      <div className="d-row"><span className="d-title">Transmission</span><span className="d-value">{car?.transmission}</span></div>
-                      <div className="d-row"><span className="d-title">Drive</span><span className="d-value">{car?.drive_type}</span></div>
-                      <div className="d-row"><span className="d-title">Fuel Economy</span><span className="d-value">{car?.fuel_economy}</span></div>
-                      <div className="d-row"><span className="d-title">Exterior Color</span><span className="d-value">{car?.exterior_color}</span></div>
-                      <div className="d-row"><span className="d-title">Interior Color</span><span className="d-value">{car?.interior_color}</span></div>
+                    <h4 className="mt-4">Specifications</h4>
+                    <div className="my-4">
+                      <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+                        <tbody>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Body</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.category?.name}</td>
+                          </tr>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Seat</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.seats} seats</td>
+                          </tr>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Door</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.doors} doors</td>
+                          </tr>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Luggage</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.luggage_capacity}</td>
+                          </tr>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Fuel Type</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.fuel_type}</td>
+                          </tr>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Engine</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.engine_capacity}</td>
+                          </tr>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Year</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.year}</td>
+                          </tr>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Mileage</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.mileage}</td>
+                          </tr>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Transmission</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.transmission}</td>
+                          </tr>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Drive</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.drive_type}</td>
+                          </tr>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Fuel Economy</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.fuel_economy}</td>
+                          </tr>
+                          <tr className="border-b border-gray-200 hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Exterior Color</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.exterior_color}</td>
+                          </tr>
+                          <tr className="hover:bg-gray-50">
+                            <td className="px-6 py-3 text-sm font-medium text-gray-900 bg-gray-50">Interior Color</td>
+                            <td className="px-6 py-3 text-sm text-gray-700">{car?.interior_color}</td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
 
                     <hr />
@@ -187,151 +223,6 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                       </ul>
                     </div>
 
-                    <hr />
-                    
-                    {/* Booking Calendar - simplified for car rental */}
-                    <div className="calendar">
-                      <h3 className="calendar-heading">Select your rental dates</h3>
-                      <span className="selected-date">Pick your dates</span>
-                      <div className="months-content-wrapper">
-                        <div className="months-heading-container">
-                          <div className="img__container img__container--rotate">
-                            <img src="/images/icons/small-arrow.svg" alt="icon" />
-                          </div>
-                          <h4>June 2025</h4>
-                          <h4 className="sep">July 2025</h4>
-                          <div className="img__container">
-                            <img src="/images/icons/small-arrow.svg" alt="icon" />
-                          </div>
-                        </div>
-                        <div className="months-wrapper">
-                          <table className="month">
-                            <tbody>
-                              <tr className="days">
-                                <td>Su</td>
-                                <td>Mo</td>
-                                <td>Tu</td>
-                                <td>We</td>
-                                <td>Th</td>
-                                <td>Fr</td>
-                                <td>Sa</td>
-                              </tr>
-                              <tr>
-                                <td>1</td>
-                                <td>2</td>
-                                <td>3</td>
-                                <td>4</td>
-                                <td>5</td>
-                                <td>6</td>
-                                <td>7</td>
-                              </tr>
-                              <tr>
-                                <td>8</td>
-                                <td>9</td>
-                                <td>10</td>
-                                <td>11</td>
-                                <td className="active">12</td>
-                                <td className="active">13</td>
-                                <td>14</td>
-                              </tr>
-                              <tr>
-                                <td>15</td>
-                                <td>16</td>
-                                <td>17</td>
-                                <td>18</td>
-                                <td>19</td>
-                                <td>20</td>
-                                <td>21</td>
-                              </tr>
-                              <tr>
-                                <td>22</td>
-                                <td>23</td>
-                                <td>24</td>
-                                <td>25</td>
-                                <td>26</td>
-                                <td>27</td>
-                                <td>28</td>
-                              </tr>
-                              <tr>
-                                <td>29</td>
-                                <td>30</td>
-                                <td />
-                                <td />
-                                <td />
-                                <td />
-                                <td />
-                              </tr>
-                            </tbody>
-                          </table>
-                          <table className="month sep">
-                            <tbody>
-                              <tr className="days">
-                                <td>Su</td>
-                                <td>Mo</td>
-                                <td>Tu</td>
-                                <td>We</td>
-                                <td>Th</td>
-                                <td>Fr</td>
-                                <td>Sa</td>
-                              </tr>
-                              <tr>
-                                <td />
-                                <td />
-                                <td>1</td>
-                                <td>2</td>
-                                <td>3</td>
-                                <td>4</td>
-                                <td>5</td>
-                              </tr>
-                              <tr>
-                                <td>6</td>
-                                <td>7</td>
-                                <td>8</td>
-                                <td>9</td>
-                                <td>10</td>
-                                <td>11</td>
-                                <td>12</td>
-                              </tr>
-                              <tr>
-                                <td>13</td>
-                                <td>14</td>
-                                <td>15</td>
-                                <td>16</td>
-                                <td>17</td>
-                                <td>18</td>
-                                <td>19</td>
-                              </tr>
-                              <tr>
-                                <td>20</td>
-                                <td>21</td>
-                                <td>22</td>
-                                <td>23</td>
-                                <td>24</td>
-                                <td>25</td>
-                                <td>26</td>
-                              </tr>
-                              <tr>
-                                <td>27</td>
-                                <td>28</td>
-                                <td>29</td>
-                                <td>30</td>
-                                <td>31</td>
-                                <td />
-                                <td />
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="calendar-extra">
-                      <div className="img__container">
-                        <img src="/images/icons/keyboard.svg" alt="keyboard" />
-                      </div>
-                      <a href="#" className="link">
-                        Clear Dates
-                      </a>
-                    </div>
                   </div>
 
                  

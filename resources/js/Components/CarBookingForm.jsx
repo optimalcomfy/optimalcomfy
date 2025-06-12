@@ -2,19 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Star, X, Loader2, MapPin, Calendar, User, CreditCard, Eye } from 'lucide-react';
 import { Link, Head, router, usePage, useForm } from "@inertiajs/react";
 
-const today = new Date().toISOString().split('T')[0];
-const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
 const CarBookingForm = () => {
   const { flash, car } = usePage().props;
+  const url = usePage().url;
+  const params = new URLSearchParams(url.split('?')[1]);
+
+  const checkInDate = params.get('check_in_date');
+  const checkOutDate = params.get('check_out_date');
 
   const [currentStep, setCurrentStep] = useState(1);
   const { data, setData, post, processing, errors } = useForm({
     pickup_location: '',
     dropoff_location: '',
-    start_date: today,
+    start_date: checkInDate,
     car_id: car.id,
-    end_date: tomorrow, 
+    end_date: checkOutDate, 
     name: '',
     email: '',
     phone: '',

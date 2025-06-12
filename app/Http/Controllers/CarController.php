@@ -114,7 +114,7 @@ class CarController extends Controller
     public function show(Car $car)
     {
 
-        $car->load('bookings', 'initialGallery', 'carFeatures');
+        $car->load('bookings', 'initialGallery', 'carFeatures.feature');
 
         $features = Feature::all();
 

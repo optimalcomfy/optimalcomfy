@@ -14,6 +14,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import "../../css/main";
 import "./Welcome.css";
+import ProductCar from "@/Components/ProductCar";
 
 function NextArrow({ onClick, disabled }) {
   return (
@@ -126,60 +127,8 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) { // Add a
             </div>
 
             <Slider ref={sliderRef} {...sliderSettings}>
-              {cars.map((car, index) => (
-                <div className="col-xl-4 col-lg-6" key={index}>
-                    <div className="de-item mb30">
-                    <div className="d-img">
-                        {/* Use the first image from initial_gallery if available, otherwise use a placeholder */}
-                        <img
-                        src={car.initial_gallery && car.initial_gallery.length > 0 
-                            ? `/storage/${car.initial_gallery[0].image}` 
-                            : `/cars/images/cars/placeholder.jpg`}
-                        className="img-fluid"
-                        alt={`${car.brand} ${car.model}`}
-                        onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "/cars/images/cars/placeholder.jpg";
-                        }}
-                        />
-                    </div>
-                    <div className="d-info">
-                        <div className="d-text">
-                        <h4>{car.brand} {car.model}</h4>
-                        <div className="d-item_like">
-                            <i className="fa fa-heart" />
-                            <span>{Math.floor(Math.random() * 100)}</span>
-                        </div>
-                        <div className="d-atr-group">
-                            <span className="d-atr">
-                            <img src="/cars/images/icons/1-green.svg" alt="" />
-                            {car.seats || 5}
-                            </span>
-                            <span className="d-atr">
-                            <img src="/cars/images/icons/2-green.svg" alt="" />
-                            {car.doors || 4}
-                            </span>
-                            <span className="d-atr">
-                            <img src="/cars/images/icons/3-green.svg" alt="" />
-                            {car.luggage_capacity ? Math.floor(car.luggage_capacity / 1000) : 4}
-                            </span>
-                            <span className="d-atr">
-                            <img src={getCarTypeIcon(car.body_type)} alt="" />
-                            {car.body_type || 'Sedan'}
-                            </span>
-                        </div>
-                        <div className="d-price">
-                            Daily rate from <span>KES{car.price_per_day}</span>
-                        </div>
-                        <div className="mt-2">
-                            <Link className="btn-main" href={route('rent-now', { car_id: car.id })}>
-                            Rent Now
-                            </Link>
-                        </div>
-                        </div>
-                    </div>
-                    </div>
-                </div>
+             {cars.map((data, index) => (
+                <ProductCar key={index} {...data} />
               ))}
             </Slider>
           </div>

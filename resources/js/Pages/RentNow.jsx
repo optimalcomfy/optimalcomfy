@@ -27,7 +27,7 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
         <LayoutProvider>
           <Head title="Cars" />
           <HomeLayout>
-            <div className="py-8 container mx-auto">
+            <div className="py-8 mx-auto">
               {/* Main Section */}
               <section className="main">
                 <div className="container f-reverse">

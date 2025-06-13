@@ -171,7 +171,6 @@ const MobileSearchModal = ({
                   </div>
                 ))}
               </div>
-              
             )}
           </div>
 

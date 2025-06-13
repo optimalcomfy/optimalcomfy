@@ -46,6 +46,7 @@
         "slick-carousel": "^1.8.1",
         "sweetalert2": "^11.15.10",
         "swiper": "^11.2.5",
+        "use-places-autocomplete": "^4.0.1",
         "vite-plugin-svgr": "^4.3.0",
         "xlsx": "^0.18.5"
     }

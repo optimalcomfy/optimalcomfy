@@ -45,12 +45,6 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                     <>
                       {car?.initial_gallery[0]?.image && (
                         <div className="hero-images">
-                          <a href="#" className="image__link">
-                            <div className="img__container">
-                              <img src="/images/icons/menu1.png" alt="9 dots" />
-                            </div>
-                            <span className="image__link-text">Show all photos</span>
-                          </a>
                           <div className="img__container--hero">
                             <img src={`/storage/${car?.initial_gallery[0]?.image}`} alt="car" />
                           </div>
@@ -109,12 +103,6 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                         <h3 className="content-title">
                           Owned by {car?.user?.name}
                         </h3>
-                      </div>
-                      <div className="section__img">
-                        <img
-                          src='https://a0.muscache.com/im/pictures/user/bfe2dd3c-e72f-4e46-ba38-5c0bac2cc2e2.jpg?im_w=240'
-                          alt="car owner"
-                        />
                       </div>
                     </div>
                     <hr />

@@ -48,12 +48,6 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                   <>
                   {property?.initial_gallery[0]?.image &&
                   <div className="hero-images">
-                    <a href="#" className="image__link">
-                      <div className="img__container">
-                        <img src="/images/icons/menu1.png" alt="9 dots" />
-                      </div>
-                      <span className="image__link-text">Show all photos</span>
-                    </a>
                     <div className="img__container--hero">
                       <img src={`/storage/${property?.initial_gallery[0]?.image}`} alt="room" />
                     </div>
@@ -128,11 +122,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                       Stay at safe and clean place during your stay in {property.property_name}!
                     </p>
                     <p className="section__content-paragraph">
-                      Lazimpat is popular residential area for both foreign and wealthy
-                      local people because of its very clean, convenient and safe
-                      environment. The city center, Durbar Marg and Thamel, is all located
-                      in walking distance. Convenient location, safe area, super clean house
-                      with beautiful garden and good foods, any reason to hesitate?;)
+                      {property?.user?.bio}
                     </p>
                     <button className="show-more">
                       Show More
@@ -161,18 +151,6 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                       </div>
                     </div>
                     <hr />
-                    <div className="card">
-                      <div className="card-images">
-                        <div className="img__container">
-                          <img src="/images/icons/bed.svg" alt="bed" />
-                        </div>
-                        <div className="img__container">
-                          <img src="/images/icons/bed.svg" alt="bed" />
-                        </div>
-                      </div>
-                      <h5>Bedroom</h5>
-                      <p>2 single beds</p>
-                    </div>
                     <hr />
                     {/* amenities list */}
                     <h3 className="heading--amenities">Amenities</h3>

@@ -75,16 +75,7 @@ const DesktopSearchBar = ({ formData, handleChange, handleLocationSelect, handle
       </div>
 
       {/* Guests */}
-      <div className="guests relative">
-        <p className="field-label absolute text-xs">Guests</p>
-        <input
-          type="text"
-          name="guests"
-          value={formData.guests}
-          onChange={handleChange}
-          placeholder="Add guests"
-          className='inputType formForm'
-        />
+      <div className="guests flex items-center relative">
         <button className="search-button" onClick={handleSubmit}>
           <Search size={16} />
         </button>
@@ -198,12 +189,6 @@ const MobileSearchModal = ({
             <label className="mobile-field-label"><Calendar size={20} /><span>Check out</span></label>
             <div className="mobile-field-input">
               <input type="date" name="checkOut" value={formData.checkOut} onChange={handleChange} min={formData.checkIn} className='formForm' />
-            </div>
-          </div>
-          <div className="mobile-field-group">
-            <label className="mobile-field-label"><Users size={20} /><span>Guests</span></label>
-            <div className="mobile-field-input">
-              <input type="text" name="guests" value={formData.guests} onChange={handleChange} placeholder="Add guests" className='formForm' />
             </div>
           </div>
         </div>

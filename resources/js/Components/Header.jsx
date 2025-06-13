@@ -106,7 +106,7 @@ function Header() {
                   </div>
                   <div className="header-right">
                     <div className="header-right-content">
-                        <p className="airbnb-text">Airbnb your home</p>
+                        <p className="airbnb-text">List your property</p>
                         <div 
                           className="profile-menu-button"
                           onClick={toggleProfileDropdown2}
@@ -180,7 +180,7 @@ function Header() {
                 
                 <div className={`header-right mopper ${isScrolled ? 'mopper-scrolled' : ''}`}>
                   <div className="header-right-content">
-                      <p className="airbnb-text">Airbnb your home</p>
+                      <p className="airbnb-text">List your property</p>
                       <div 
                         className="profile-menu-button"
                         onClick={toggleProfileDropdown}

@@ -258,6 +258,10 @@ label.focused {
   margin: 0 1rem;
 }
 
+.mini {
+  border-radius: 5px !important;
+}
+
 .mobile-search-trigger:active {
   transform: scale(0.98);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);

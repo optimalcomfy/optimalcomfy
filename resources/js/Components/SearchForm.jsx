@@ -32,7 +32,7 @@ const DesktopSearchBar = ({ formData, handleChange, handleLocationSelect, handle
         )}
         {isLoadingSuggestions && <Loader2 className="loader-icon" />}
         {isSuggestionsOpen && (
-          <div className="absolute z-50 w-full bg-white border rounded-sm mt-1 shadow-lg max-h-48 overflow-y-auto">
+          <div className="mini absolute z-50 w-full bg-white border mt-1 shadow-lg max-h-48 overflow-y-auto">
             {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
               <div
                 key={index}
@@ -137,35 +137,47 @@ const MobileSearchModal = ({
       <div className="modal-body">
         <div className="mobile-search-fields">
           {/* Location Field */}
-          <div className="mobile-field-group" ref={suggestionRef}>
-            <label className="mobile-field-label">
-              <MapPin size={20} />
+          <div className="relative w-full" ref={suggestionRef}>
+            <label className="flex items-center gap-2 text-sm text-gray-700 mb-1">
+              <MapPin size={18} />
               <span>Where</span>
             </label>
-            <div className="mobile-field-input">
+
+            <div className="relative">
               <input
                 type="text"
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
                 placeholder="Search destinations"
-                className='formForm'
                 onFocus={() => {
                   if (locationSuggestions.length > 0) setIsSuggestionsOpen(true);
                 }}
+                className="w-full border border-gray-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-none"
               />
+
               {formData.location && (
-                <X className="clear-icon" onClick={() => handleChange({ target: { name: 'location', value: '' } })} />
+                <X
+                  className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  size={18}
+                  onClick={() =>
+                    handleChange({ target: { name: 'location', value: '' } })
+                  }
+                />
               )}
-              {isLoadingSuggestions && <Loader2 className="loader-icon animate-spin" />}
+
+              {isLoadingSuggestions && (
+                <Loader2 className="absolute top-1/2 right-10 transform -translate-y-1/2 text-gray-400 animate-spin" size={18} />
+              )}
             </div>
+
             {isSuggestionsOpen && (
-              <div className="absolute z-50 w-full bg-white border rounded-sm mt-1 shadow-lg max-h-48 overflow-y-auto">
-                {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
+              <div className="absolute w-full bg-white border border-gray-300 rounded-none mt-1 shadow-md max-h-48 overflow-y-auto z-50">
+                {locationSuggestions.map((location, index) => (
                   <div
                     key={index}
                     onClick={() => handleLocationSelect(location, 'destination')}
-                    className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                    className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
                   >
                     {location}
                   </div>
@@ -173,6 +185,7 @@ const MobileSearchModal = ({
               </div>
             )}
           </div>
+
 
           {/* Other fields... */}
           <div className="mobile-field-group">

@@ -36,7 +36,7 @@ const DesktopSearchBar = ({
         {isLoadingSuggestions && <Loader2 className="loader-icon animate-spin" />}
         {isSuggestionsOpen && (
 
-          <div className="absolute z-50 w-full bg-white border rounded-sm mt-1 shadow-lg max-h-48 overflow-y-auto">
+          <div className="mini absolute z-50 w-full bg-white border mt-1 shadow-lg max-h-48 overflow-y-auto">
             {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
               <div
                 key={index}
@@ -74,16 +74,7 @@ const DesktopSearchBar = ({
         />
       </div>
 
-      <div className="guests relative">
-        <p className="field-label absolute text-xs">Ride type</p>
-        <input
-          type="text"
-          name="guests"
-          value={formData.guests}
-          onChange={handleChange}
-          placeholder="Add guests"
-          className="inputType formForm"
-        />
+      <div className="guests flex items-center relative">
         <button className="search-button" onClick={handleSubmit}>
           <Search size={16} />
         </button>
@@ -193,23 +184,6 @@ const MobileSearchModal = ({
                 value={formData.checkOut}
                 onChange={handleChange}
                 min={formData.checkIn}
-                className="formForm"
-              />
-            </div>
-          </div>
-
-          <div className="mobile-field-group">
-            <label className="mobile-field-label">
-              <CarIcon size={20} />
-              <span>Ride type</span>
-            </label>
-            <div className="mobile-field-input">
-              <input
-                type="text"
-                name="guests"
-                value={formData.guests}
-                onChange={handleChange}
-                placeholder="Add guests"
                 className="formForm"
               />
             </div>

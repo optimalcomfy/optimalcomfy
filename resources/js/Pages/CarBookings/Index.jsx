@@ -34,7 +34,7 @@ const CarBookingsIndex = () => {
       <div className="w-full mr-auto bg-white p-6 rounded-lg shadow-md">
 
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-semibold mb-6">Car Bookings</h1>
+          <h1 className="text-3xl font-semibold mb-6">Ride Bookings</h1>
         </div>
 
         {/* Table */}

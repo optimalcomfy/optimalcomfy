@@ -7,6 +7,8 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // --- COMPONENT DEFINITIONS MOVED OUTSIDE ---
 
+
+
 // Desktop Search Bar Component
 const DesktopSearchBar = ({ formData, handleChange, handleLocationSelect, handleSubmit, isLoadingSuggestions, isSuggestionsOpen, setIsSuggestionsOpen, locationSuggestions, suggestionRef }) => (
   <div className="search-container desktop-search">

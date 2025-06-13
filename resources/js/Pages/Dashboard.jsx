@@ -17,20 +17,7 @@ const Dashboard = () => {
     const roleId = parseInt(auth.user?.role_id);
     const isDarkMode = layoutConfig.colorScheme === 'dark';
     const [isLoading, setIsLoading] = useState(false);
-
-    useEffect(() => {
-        const hasReloaded = sessionStorage.getItem('hasReloaded');
-    
-        if (!hasReloaded) {
-            setIsLoading(true);
-            sessionStorage.setItem('hasReloaded', 'true');
-            
-            // Add a slight delay before reload for better user experience
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-        }
-    }, []);    
+   
 
     // Apply chart theme based on layout theme
     const applyLightTheme = () => {

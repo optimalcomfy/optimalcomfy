@@ -82,11 +82,11 @@ const CreateProperty = ({ errors }) => {
   return (
     <Layout>
       <div className="max-w-4xl bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-lg font-bold mb-4">Create Property</h1>
+        <h1 className="text-lg font-bold mb-4">Create a stay</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium">Property Name</label>
+              <label className="block text-sm font-medium">Stay Name</label>
               <input
                 type="text"
                 value={data.property_name}
@@ -97,7 +97,7 @@ const CreateProperty = ({ errors }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium">Property Type</label>
+              <label className="block text-sm font-medium">Stay Type</label>
               <select
                 value={data.type}
                 onChange={(e) => setData("type", e.target.value)}
@@ -188,10 +188,10 @@ const CreateProperty = ({ errors }) => {
 
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded mt-4"
+            className="w-full bg-peach text-white py-2 rounded mt-4"
             disabled={processing}
           >
-            {processing ? "Saving..." : "Create Property"}
+            {processing ? "Saving..." : "Create a stay"}
           </button>
         </form>
       </div>

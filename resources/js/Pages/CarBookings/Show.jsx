@@ -37,7 +37,7 @@ const CarBookingShow = () => {
         <div className="mt-6 flex space-x-4">
           <Link
             href={route('car-bookings.edit', { booking: booking.id })}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            className="bg-peach text-white px-4 py-2 rounded-md hover:bg-blue-600"
           >
             Edit Booking
           </Link>

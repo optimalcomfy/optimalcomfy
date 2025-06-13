@@ -7,7 +7,7 @@ const IndexServiceBookings = ({ serviceBookings }) => {
     <Layout>
       <div className="w-full mr-auto bg-white p-6 rounded-lg shadow-md">
         <h1 className="text-lg font-bold mb-4">Service Bookings</h1>
-        <Link href={route("serviceBookings.create")} className="mb-4 inline-block bg-blue-500 text-white px-4 py-2 rounded">
+        <Link href={route("serviceBookings.create")} className="mb-4 inline-block bg-peach text-white px-4 py-2 rounded">
           Add Service Booking
         </Link>
         <table className="w-full border-collapse border">
@@ -28,7 +28,7 @@ const IndexServiceBookings = ({ serviceBookings }) => {
                 <td className="border px-4 py-2">{booking.quantity}</td>
                 <td className="border px-4 py-2">{booking.status}</td>
                 <td className="border px-4 py-2">
-                  <Link href={route("serviceBookings.show", booking.id)} className="text-blue-500 mr-2">View</Link>
+                  <Link href={route("serviceBookings.show", booking.id)} className="text-peach mr-2">View</Link>
                   <Link href={route("serviceBookings.edit", booking.id)} className="text-green-500 mr-2">Edit</Link>
                 </td>
               </tr>

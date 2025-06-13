@@ -16,24 +16,40 @@ class PropertyController extends Controller
     /**
      * Display a listing of the resource.
      */
+    
     public function index(Request $request)
     {
         $user = Auth::user();
 
-        $query = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])->orderBy('created_at', 'desc');
+        $query = Property::with([
+            'bookings',
+            'initialGallery',
+            'propertyAmenities',
+            'propertyFeatures',
+            'PropertyServices',
+            'user'
+        ])->orderBy('created_at', 'desc');
 
-        if ($user->role_id == 2) {
-            $query->where('user_id', '=', $user->id);
+        // Filter by user role (Agent only sees own properties)
+        if ((int) $user->role_id === 2) {
+            $query->whereHas('user', function ($q) use ($user) {
+                $q->where('id', '=', $user->id);
+            });
         }
 
-        if ($request->has('search')) {
+        // Search filtering
+        if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where('name', 'LIKE', "%$search%")
-                  ->orWhere('type', 'LIKE', "%$search%")
-                  ->orWhere('price', 'LIKE', "%$search%");
+
+            $query->where(function ($q) use ($search) {
+                $q->where('property_name', 'LIKE', "%{$search}%")
+                ->orWhere('type', 'LIKE', "%{$search}%")
+                ->orWhere('price_per_night', 'LIKE', "%{$search}%")
+                ->orWhere('location', 'LIKE', "%{$search}%");
+            });
         }
 
-        $properties = $query->paginate(10);
+        $properties = $query->paginate(10)->withQueryString();
 
         return Inertia::render('Properties/Index', [
             'properties' => $properties->items(),
@@ -41,6 +57,7 @@ class PropertyController extends Controller
             'flash' => session('flash'),
         ]);
     }
+
 
     /**
      * Show the form for creating a new resource.

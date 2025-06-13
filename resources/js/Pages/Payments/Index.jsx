@@ -27,7 +27,7 @@ const IndexPayments = ({ payments }) => {
                 <td className="border px-4 py-2">{payment.method}</td>
                 <td className="border px-4 py-2">{payment.status}</td>
                 <td className="border px-4 py-2">
-                  <Link href={route("payments.show", payment.id)} className="text-blue-500 mr-2">View</Link>
+                  <Link href={route("payments.show", payment.id)} className="text-peach mr-2">View</Link>
                   <Link href={route("payments.edit", payment.id)} className="text-green-500 mr-2">Edit</Link>
                 </td>
               </tr>

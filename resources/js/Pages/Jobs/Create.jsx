@@ -102,7 +102,7 @@ const Create = () => {
           />
           <label
             htmlFor="image-upload"
-            className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-peach cursor-pointer"
           >
             {preview ? 'Change Image' : 'Select Image'}
           </label>
@@ -127,7 +127,7 @@ const Create = () => {
                   type="text"
                   value={data.title}
                   onChange={(e) => setData('title', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                 />
               </div>
               <div>
@@ -136,7 +136,7 @@ const Create = () => {
                   type="text"
                   value={data.company_name}
                   onChange={(e) => setData('company_name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                 />
               </div>
               <div>
@@ -145,7 +145,7 @@ const Create = () => {
                   type="url"
                   value={data.company_website}
                   onChange={(e) => setData('company_website', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                 />
               </div>
               <div>
@@ -153,7 +153,7 @@ const Create = () => {
                 <select
                   value={data.industry}
                   onChange={(e) => setData('industry', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                 >
                   <option value="">Select industry</option>
                   <option value="technology">Technology</option>
@@ -174,7 +174,7 @@ const Create = () => {
                   type="text"
                   value={data.location}
                   onChange={(e) => setData('location', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                 />
               </div>
               <div>
@@ -182,7 +182,7 @@ const Create = () => {
                 <select
                   value={data.job_type}
                   onChange={(e) => setData('job_type', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                 >
                   <option value="">Select job type</option>
                   <option value="full-time">Full Time</option>
@@ -197,7 +197,7 @@ const Create = () => {
                 <select
                   value={data.work_schedule}
                   onChange={(e) => setData('work_schedule', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                 >
                   <option value="">Select schedule</option>
                   <option value="regular">Regular (9-5)</option>
@@ -212,7 +212,7 @@ const Create = () => {
                 <select
                   value={data.experience_level}
                   onChange={(e) => setData('experience_level', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                 >
                   <option value="">Select experience level</option>
                   <option value="entry">Entry Level</option>
@@ -234,14 +234,14 @@ const Create = () => {
                     value={data.salary_min}
                     onChange={(e) => setData('salary_min', e.target.value)}
                     placeholder="Min"
-                    className="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                   />
                   <input
                     type="number"
                     value={data.salary_max}
                     onChange={(e) => setData('salary_max', e.target.value)}
                     placeholder="Max"
-                    className="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                   />
                 </div>
               </div>
@@ -251,7 +251,7 @@ const Create = () => {
                   value={data.benefits}
                   onChange={(e) => setData('benefits', e.target.value)}
                   placeholder="List benefits package details"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach min-h-[100px]"
                 />
               </div>
               <div>
@@ -260,7 +260,7 @@ const Create = () => {
                   value={data.description}
                   onChange={(e) => setData('description', e.target.value)}
                   placeholder="Enter detailed job description"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[150px]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach min-h-[150px]"
                 />
               </div>
             </div>
@@ -274,7 +274,7 @@ const Create = () => {
                   value={data.required_qualifications}
                   onChange={(e) => setData('required_qualifications', e.target.value)}
                   placeholder="List required qualifications"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach min-h-[100px]"
                 />
               </div>
               <div>
@@ -283,7 +283,7 @@ const Create = () => {
                   value={data.preferred_qualifications}
                   onChange={(e) => setData('preferred_qualifications', e.target.value)}
                   placeholder="List preferred qualifications"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach min-h-[100px]"
                 />
               </div>
               <div>
@@ -292,7 +292,7 @@ const Create = () => {
                   value={data.company_culture}
                   onChange={(e) => setData('company_culture', e.target.value)}
                   placeholder="Describe your company culture"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach min-h-[100px]"
                 />
               </div>
             </div>
@@ -306,7 +306,7 @@ const Create = () => {
                   type="date"
                   value={data.application_deadline}
                   onChange={(e) => setData('application_deadline', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                 />
               </div>
               <div>
@@ -314,7 +314,7 @@ const Create = () => {
                 <select
                   value={data.application_method}
                   onChange={(e) => setData('application_method', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                 >
                   <option value="">Select application method</option>
                   <option value="email">Email</option>
@@ -328,7 +328,7 @@ const Create = () => {
                   type="email"
                   value={data.hiring_manager_contact}
                   onChange={(e) => setData('hiring_manager_contact', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
                 />
               </div>
               <div>
@@ -337,7 +337,7 @@ const Create = () => {
                   value={data.interview_process}
                   onChange={(e) => setData('interview_process', e.target.value)}
                   placeholder="Describe the interview process"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach min-h-[100px]"
                 />
               </div>
             </div>
@@ -348,7 +348,7 @@ const Create = () => {
               <button
                 type="button"
                 onClick={() => setStep(step - 1)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-peach"
               >
                 Previous
               </button>
@@ -358,7 +358,7 @@ const Create = () => {
               <button
                 type="button"
                 onClick={() => setStep(step + 1)}
-                className="ml-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="ml-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-peach"
               >
                 Next
               </button>
@@ -367,7 +367,7 @@ const Create = () => {
             {step === 5 &&
             <button
               type="submit"
-              className="ml-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="ml-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-peach"
             >
                 Create Job
             </button>}

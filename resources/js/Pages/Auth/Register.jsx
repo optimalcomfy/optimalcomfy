@@ -91,7 +91,7 @@ export default function Register() {
                 <Head title="Register - Airbnb Clone" />
                 
                 <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-8">
-                    <h2 className="text-center text-3xl font-bold mb-6 text-peach">Create Your Account</h2>
+                    <h2 className="text-center text-3xl font-bold mb-6 text-peachDark">Create Your Account</h2>
 
                     {step === 1 && (
                         <div className="mb-6 text-center">
@@ -101,10 +101,10 @@ export default function Register() {
                                     type="button"
                                     onClick={() => setData('user_type', 'guest')}
                                     className={`px-6 py-4 rounded-lg flex flex-col items-center border-2 ${
-                                        data.user_type === 'guest' ? 'border-peach bg-red-50' : 'border-gray-300'
+                                        data.user_type === 'guest' ? 'border-peachDark bg-red-50' : 'border-gray-300'
                                     }`}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2 text-peach" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2 text-peachDark" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
                                     <span className="font-medium">Guest</span>
@@ -114,10 +114,10 @@ export default function Register() {
                                     type="button"
                                     onClick={() => setData('user_type', 'host')}
                                     className={`px-6 py-4 rounded-lg flex flex-col items-center border-2 ${
-                                        data.user_type === 'host' ? 'border-peach bg-red-50' : 'border-gray-300'
+                                        data.user_type === 'host' ? 'border-peachDark bg-red-50' : 'border-gray-300'
                                     }`}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2 text-peach" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2 text-peachDark" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                     </svg>
                                     <span className="font-medium">Host</span>
@@ -128,7 +128,7 @@ export default function Register() {
                     )}
 
                     <div className="relative w-full bg-gray-200 rounded-full h-2 mb-6">
-                        <div className="bg-peach h-2 rounded-full" style={{ width: `${(step / totalSteps) * 100}%` }}></div>
+                        <div className="bg-peachDark h-2 rounded-full" style={{ width: `${(step / totalSteps) * 100}%` }}></div>
                     </div>
 
                     <form onSubmit={submit} className="space-y-6">

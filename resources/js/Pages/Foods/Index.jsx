@@ -40,7 +40,7 @@ const FoodIndex = () => {
                     <td className="border p-3 flex gap-2">
                       <Link 
                         href={route('foods.show', food.id)} 
-                        className="text-blue-500 hover:underline"
+                        className="text-peach hover:underline"
                       >
                         View
                       </Link>

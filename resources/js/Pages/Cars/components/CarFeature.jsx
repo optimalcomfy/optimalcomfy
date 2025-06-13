@@ -81,7 +81,7 @@ const CarFeature = ({ car, features }) => {
                   />
                   {loadingFeatures[feature.id] ? (
                     // Simple loading indicator placeholder
-                    <span className="w-5 h-5 inline-block border-t-2 border-r-2 border-blue-500 rounded-full animate-spin"></span>
+                    <span className="w-5 h-5 inline-block border-t-2 border-r-2 border-peach rounded-full animate-spin"></span>
                   ) : (
                     <i className={`${feature.icon} w-5 text-blue-600`}></i> // Added text-blue-600 for icon color consistency
                   )}

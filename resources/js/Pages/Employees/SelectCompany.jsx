@@ -90,7 +90,7 @@ const SelectCompany = () => {
                     />
                     <label 
                         htmlFor={`${field}-upload`} 
-                        className="cursor-pointer flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                        className="cursor-pointer flex items-center px-4 py-2 bg-peach text-white rounded-md hover:bg-blue-600 transition-colors"
                     >
                         <Upload className="mr-2 h-5 w-5" />
                         Upload
@@ -186,7 +186,7 @@ const SelectCompany = () => {
 
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                            className="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-peach transition-colors"
                         >
                             Send
                         </button>

@@ -55,7 +55,7 @@ const Amenity = ({ property, amenities }) => {
   return (
     <div className="gallery-container">
       <div className="gallery-header">
-        <h2>Property Amenities</h2>
+        <h2>Stay Amenities</h2>
       </div>
 
       <div className="gallery-grid">
@@ -67,7 +67,7 @@ const Amenity = ({ property, amenities }) => {
                 checked={isAmenitySelected(amenity.id)}
                 onChange={() => toggleAmenity(amenity)}
                 disabled={loadingAmenities[amenity.id]}
-                className="form-checkbox h-5 text-blue-600 outline border rounded-md border-blue-400"
+                className="form-checkbox text-blue-600 outline border rounded-md border-blue-400"
               />
               {loadingAmenities[amenity.id] ? (
                 <span className="loading-spinner w-5 h-5"></span>

@@ -7520,8 +7520,8 @@ input.p-dropdown-label  {
 .text-blue-400 {
   color: var(--blue-400) !important;
 }
-.text-blue-500 {
-  color: var(--blue-500) !important;
+.text-peach {
+  color: var(-peachh) !important;
 }
 .text-blue-600 {
   color: var(--blue-600) !important;
@@ -7551,8 +7551,8 @@ input.p-dropdown-label  {
 .focus\:text-blue-400:focus {
   color: var(--blue-400) !important;
 }
-.focus\:text-blue-500:focus {
-  color: var(--blue-500) !important;
+.focus\:text-peach:focus {
+  color: var(-peachh) !important;
 }
 .focus\:text-blue-600:focus {
   color: var(--blue-600) !important;
@@ -7582,8 +7582,8 @@ input.p-dropdown-label  {
 .hover\:text-blue-400:hover {
   color: var(--blue-400) !important;
 }
-.hover\:text-blue-500:hover {
-  color: var(--blue-500) !important;
+.hover\:text-peach:hover {
+  color: var(-peachh) !important;
 }
 .hover\:text-blue-600:hover {
   color: var(--blue-600) !important;
@@ -7613,8 +7613,8 @@ input.p-dropdown-label  {
 .active\:text-blue-400:active {
   color: var(--blue-400) !important;
 }
-.active\:text-blue-500:active {
-  color: var(--blue-500) !important;
+.active\:text-peach:active {
+  color: var(-peachh) !important;
 }
 .active\:text-blue-600:active {
   color: var(--blue-600) !important;
@@ -9132,8 +9132,8 @@ input.p-dropdown-label  {
 .bg-blue-400 {
   background-color: var(--blue-400) !important;
 }
-.bg-blue-500 {
-  background-color: var(--blue-500) !important;
+.bg-peach {
+  background-color: var(-peachh) !important;
 }
 .bg-blue-600 {
   background-color: var(--blue-600) !important;
@@ -9163,8 +9163,8 @@ input.p-dropdown-label  {
 .focus\:bg-blue-400:focus {
   background-color: var(--blue-400) !important;
 }
-.focus\:bg-blue-500:focus {
-  background-color: var(--blue-500) !important;
+.focus\:bg-peach:focus {
+  background-color: var(-peachh) !important;
 }
 .focus\:bg-blue-600:focus {
   background-color: var(--blue-600) !important;
@@ -9194,8 +9194,8 @@ input.p-dropdown-label  {
 .hover\:bg-blue-400:hover {
   background-color: var(--blue-400) !important;
 }
-.hover\:bg-blue-500:hover {
-  background-color: var(--blue-500) !important;
+.hover\:bg-peach:hover {
+  background-color: var(-peachh) !important;
 }
 .hover\:bg-blue-600:hover {
   background-color: var(--blue-600) !important;
@@ -9225,8 +9225,8 @@ input.p-dropdown-label  {
 .active\:bg-blue-400:active {
   background-color: var(--blue-400) !important;
 }
-.active\:bg-blue-500:active {
-  background-color: var(--blue-500) !important;
+.active\:bg-peach:active {
+  background-color: var(-peachh) !important;
 }
 .active\:bg-blue-600:active {
   background-color: var(--blue-600) !important;
@@ -10744,8 +10744,8 @@ input.p-dropdown-label  {
 .border-blue-400 {
   border-color: var(--blue-400) !important;
 }
-.border-blue-500 {
-  border-color: var(--blue-500) !important;
+.border-peach {
+  border-color: var(-peachh) !important;
 }
 .border-blue-600 {
   border-color: var(--blue-600) !important;
@@ -10775,8 +10775,8 @@ input.p-dropdown-label  {
 .focus\:border-blue-400:focus {
   border-color: var(--blue-400) !important;
 }
-.focus\:border-blue-500:focus {
-  border-color: var(--blue-500) !important;
+.focus\:border-peach:focus {
+  border-color: var(-peachh) !important;
 }
 .focus\:border-blue-600:focus {
   border-color: var(--blue-600) !important;
@@ -10806,8 +10806,8 @@ input.p-dropdown-label  {
 .hover\:border-blue-400:hover {
   border-color: var(--blue-400) !important;
 }
-.hover\:border-blue-500:hover {
-  border-color: var(--blue-500) !important;
+.hover\:border-peach:hover {
+  border-color: var(-peachh) !important;
 }
 .hover\:border-blue-600:hover {
   border-color: var(--blue-600) !important;
@@ -10837,8 +10837,8 @@ input.p-dropdown-label  {
 .active\:border-blue-400:active {
   border-color: var(--blue-400) !important;
 }
-.active\:border-blue-500:active {
-  border-color: var(--blue-500) !important;
+.active\:border-peach:active {
+  border-color: var(-peachh) !important;
 }
 .active\:border-blue-600:active {
   border-color: var(--blue-600) !important;

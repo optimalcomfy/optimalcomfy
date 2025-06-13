@@ -35,7 +35,7 @@ const Joby = ({ job }) => {
             </div>
             <Link
                 href={route('home')}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition mt-4"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-peach transition mt-4"
             >
                 Go back
             </Link>
@@ -160,7 +160,7 @@ const Joby = ({ job }) => {
             <div className="flex justify-between items-center">
             <Link
                 href={route('register') + `?job_id=${job.id}`}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-peach transition"
             >
                 Apply for the job
             </Link>

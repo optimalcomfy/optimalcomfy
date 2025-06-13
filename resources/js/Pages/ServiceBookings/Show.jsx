@@ -12,7 +12,7 @@ const ShowServiceBooking = ({ serviceBooking }) => {
         <p><strong>Quantity:</strong> {serviceBooking.quantity}</p>
         <p><strong>Status:</strong> {serviceBooking.status}</p>
 
-        <Link href={route("serviceBookings.index")} className="mt-4 inline-block text-blue-500">Back to Service Bookings</Link>
+        <Link href={route("serviceBookings.index")} className="mt-4 inline-block text-peach">Back to Service Bookings</Link>
       </div>
     </Layout>
   );

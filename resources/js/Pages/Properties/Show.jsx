@@ -67,7 +67,7 @@ const ShowProperty = ({ property }) => {
                     : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
                 }`}
               >
-                Property Details
+                Stay Details
               </button>
               <button
                 onClick={() => setActiveTab("gallery")}
@@ -107,7 +107,7 @@ const ShowProperty = ({ property }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
                 <div className="bg-gray-50 p-6 rounded-lg">
-                  <h2 className="text-lg font-medium text-gray-700 mb-4">Property Information</h2>
+                  <h2 className="text-lg font-medium text-gray-700 mb-4">Stay Information</h2>
                   <div className="space-y-3">
                     <div className="flex justify-between border-b border-gray-200 pb-2 gap-4">
                       <span className="text-gray-600">Property Name</span>
@@ -162,7 +162,7 @@ const ShowProperty = ({ property }) => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              <span className="flex items-center min-w-[250px]">Back to All Properties</span>
+              <span className="flex items-center min-w-[250px]">Back to All Stays</span>
             </Link>
 
             {roleId === 1 &&

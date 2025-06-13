@@ -57,7 +57,7 @@ const Gallery = ({ property }) => {
   return (
     <div className="gallery-container">
       <div className="gallery-header">
-        <h2>Property Gallery</h2>
+        <h2>Stay Gallery</h2>
         <button onClick={() => setShowGalleryPopup(true)} className="add-image-btn">
           Add New Image
         </button>

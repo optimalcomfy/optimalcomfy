@@ -11,7 +11,7 @@ const ShowReview = ({ review }) => {
         <p><strong>Rating:</strong> {review.rating}</p>
         <p><strong>Comment:</strong> {review.comment}</p>
 
-        <Link href={route("reviews.index")} className="mt-4 inline-block text-blue-500">Back to Reviews</Link>
+        <Link href={route("reviews.index")} className="mt-4 inline-block text-peach">Back to Reviews</Link>
       </div>
     </Layout>
   );

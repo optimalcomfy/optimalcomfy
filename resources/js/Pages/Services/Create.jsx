@@ -60,7 +60,7 @@ const CreateService = ({ errors }) => {
             {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
           </div>
 
-          <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded" disabled={processing}>
+          <button type="submit" className="w-full bg-peach text-white py-2 rounded" disabled={processing}>
             {processing ? "Saving..." : "Save"}
           </button>
         </form>

@@ -9,7 +9,7 @@ const Map = ({ property }) => {
   return (
     <div className="gallery-container">
       <div className="gallery-header">
-        <h2>Property map</h2>
+        <h2>Stay map</h2>
       </div>
 
       <PropertyMap property={property} />

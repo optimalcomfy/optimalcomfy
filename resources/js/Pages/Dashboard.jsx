@@ -96,14 +96,14 @@ const Dashboard = () => {
             <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 bg-opacity-90 dark:bg-opacity-90 z-50">
                 <div className="flex flex-col items-center">
                     <div className="relative">
-                        <Loader size={48} className="text-blue-500 animate-spin" />
+                        <Loader size={48} className="text-peach animate-spin" />
                         <div className="absolute inset-0 flex items-center justify-center">
                             <Home size={20} className="text-blue-700 dark:text-blue-400" />
                         </div>
                     </div>
                     <p className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">Loading your dashboard...</p>
                     <div className="mt-3 h-1 w-48 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500 rounded-full animate-pulse"></div>
+                        <div className="h-full bg-peach rounded-full animate-pulse"></div>
                     </div>
                 </div>
             </div>

@@ -17,7 +17,7 @@ const ShowFoodOrderItem = ({ foodOrderItem }) => {
         </div>
 
         <div className="mt-6 flex gap-4">
-          <Link href={route('foodOrderItems.edit', foodOrderItem.id)} className="text-blue-500">Edit</Link>
+          <Link href={route('foodOrderItems.edit', foodOrderItem.id)} className="text-peach">Edit</Link>
           <Link href={route('foodOrderItems.index')} className="text-gray-500">Back to Order Items</Link>
         </div>
       </div>

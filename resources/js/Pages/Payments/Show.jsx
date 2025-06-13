@@ -8,7 +8,7 @@ const ShowPayment = ({ payment }) => {
       <div className="max-w-2xl bg-white p-6 rounded-lg shadow-md">
         <h1 className="text-lg font-bold">Payment Details</h1>
         <p><strong>User:</strong> {payment.user?.name || "N/A"}</p>
-        <p><strong>Amount:</strong> ${payment.amount}</p>
+        <p><strong>Amount:</strong> {payment.amount}</p>
         <p><strong>Method:</strong> {payment.method}</p>
         <p><strong>Status:</strong> {payment.status}</p>
 

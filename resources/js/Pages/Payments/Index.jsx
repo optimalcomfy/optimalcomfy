@@ -23,12 +23,11 @@ const IndexPayments = ({ payments }) => {
               <tr key={payment.id}>
                 <td className="border px-4 py-2">{payment.id}</td>
                 <td className="border px-4 py-2">{payment.user?.name || "N/A"}</td>
-                <td className="border px-4 py-2">${payment.amount}</td>
+                <td className="border px-4 py-2">{payment.amount}</td>
                 <td className="border px-4 py-2">{payment.method}</td>
                 <td className="border px-4 py-2">{payment.status}</td>
                 <td className="border px-4 py-2">
                   <Link href={route("payments.show", payment.id)} className="text-blue-peach mr-2">View</Link>
-                  <Link href={route("payments.edit", payment.id)} className="text-green-500 mr-2">Edit</Link>
                 </td>
               </tr>
             ))}

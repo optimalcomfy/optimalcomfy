@@ -240,10 +240,10 @@ const PropertyBookingForm = () => {
 
   const StepIndicator = ({ step, currentStep, title, completed = false }) => (
     <div className="flex items-center gap-3 mb-6">
-      <div className={`
-        w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
+      <div style={{width: '80px'}} className={`
+        rounded-full flex items-center justify-center font-semibold text-sm
         ${completed ? 'bg-green-500 text-white' : 
-          step === currentStep ? 'bg-pink-500 text-white' : 
+          step === currentStep ? 'bg-peachDark text-white' : 
           'bg-gray-200 text-gray-600'}
       `}>
         {completed ? <Check className="w-5 h-5" /> : step}
@@ -359,7 +359,7 @@ const PropertyBookingForm = () => {
                         name="userType"
                         checked={!data.is_registered}
                         onChange={() => updateData('is_registered', false)}
-                        className=" text-pink-500"
+                        className=" text-peachDark"
                       />
                       <span className="ml-3 font-medium">New User</span>
                     </label>
@@ -369,7 +369,7 @@ const PropertyBookingForm = () => {
                         name="userType"
                         checked={data.is_registered}
                         onChange={() => updateData('is_registered', true)}
-                        className=" text-pink-500"
+                        className=" text-peachDark"
                       />
                       <span className="ml-3 font-medium">Existing User</span>
                     </label>
@@ -385,7 +385,7 @@ const PropertyBookingForm = () => {
                           placeholder="Full Name"
                           value={data.name}
                           onChange={(e) => updateData('name', e.target.value)}
-                          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                           required={!data.is_registered}
                         />
                       </div>
@@ -398,7 +398,7 @@ const PropertyBookingForm = () => {
                         placeholder="Email address"
                         value={data.email}
                         onChange={(e) => updateData('email', e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                         required
                       />
                     </div>
@@ -410,7 +410,7 @@ const PropertyBookingForm = () => {
                         placeholder="Password"
                         value={data.password}
                         onChange={(e) => updateData('password', e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                         required={!data.is_registered}
                       />
                     </div>
@@ -422,7 +422,7 @@ const PropertyBookingForm = () => {
                         placeholder="Phone number"
                         value={data.phone}
                         onChange={(e) => updateData('phone', e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                       />
                     </div>
                   </div>
@@ -438,14 +438,14 @@ const PropertyBookingForm = () => {
                           placeholder="Nationality"
                           value={data.nationality}
                           onChange={(e) => updateData('nationality', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                         />
                         <input
                           type="text"
                           placeholder="ID/Passport Number"
                           value={data.passport_number}
                           onChange={(e) => updateData('passport_number', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                         />
                       </div>
 
@@ -459,7 +459,7 @@ const PropertyBookingForm = () => {
                             value={data.current_location}
                             onChange={(e) => updateData('current_location', e.target.value)}
                             onFocus={() => data.current_location.length >= 3 && setShowLocationSuggestions(true)}
-                            className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                            className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                           />
                           {isLoadingSuggestions && (
                             <Loader2 className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
@@ -509,21 +509,21 @@ const PropertyBookingForm = () => {
                           placeholder="Address"
                           value={data.address}
                           onChange={(e) => updateData('address', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                         />
                         <input
                           type="text"
                           placeholder="City"
                           value={data.city}
                           onChange={(e) => updateData('city', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                         />
                         <input
                           type="text"
                           placeholder="Country"
                           value={data.country}
                           onChange={(e) => updateData('country', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                         />
                       </div>
 
@@ -533,14 +533,14 @@ const PropertyBookingForm = () => {
                           placeholder="Emergency contact name"
                           value={data.emergency_contact}
                           onChange={(e) => updateData('emergency_contact', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                         />
                         <input
                           type="text"
                           placeholder="Emergency contact phone"
                           value={data.contact_phone}
                           onChange={(e) => updateData('contact_phone', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                         />
                       </div>
                     </div>
@@ -553,7 +553,7 @@ const PropertyBookingForm = () => {
                       value={data.message}
                       onChange={(e) => updateData('message', e.target.value)}
                       rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 resize-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark resize-none"
                     />
                   </div>
 
@@ -648,7 +648,7 @@ const PropertyBookingForm = () => {
                       {currentStep >= 1 && (
                         <button 
                           onClick={() => setCurrentStep(1)}
-                          className="text-sm text-pink-500 hover:underline font-medium"
+                          className="text-sm text-peachDark hover:underline font-medium"
                         >
                           Edit
                         </button>
@@ -695,7 +695,7 @@ const PropertyBookingForm = () => {
                   <div className="text-2xl">💎</div>
                   <div className="text-sm">
                     <p className="font-medium">This is a rare find</p>
-                    <p className="text-pink-500">This property is usually booked</p>
+                    <p className="text-peachDark">This property is usually booked</p>
                   </div>
                 </div>
               </div>

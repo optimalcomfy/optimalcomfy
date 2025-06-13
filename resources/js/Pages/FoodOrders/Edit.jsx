@@ -72,7 +72,7 @@ const EditFoodOrder = ({ foodOrder, users, bookings }) => {
             </select>
           </div>
 
-          <button type="submit" className="w-full bg-peach text-white py-2 rounded" disabled={processing}>
+          <button type="submit" className="w-full bg-blue-peach text-white py-2 rounded" disabled={processing}>
             {processing ? 'Saving...' : 'Save'}
           </button>
         </form>

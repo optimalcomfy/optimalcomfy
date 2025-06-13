@@ -31,7 +31,7 @@ const IndexFoodOrderItems = ({ foodOrderItems }) => {
                 <td className="border border-gray-300 px-4 py-2">${item.price}</td>
                 <td className="border border-gray-300 px-4 py-2">${item.total_price}</td>
                 <td className="border border-gray-300 px-4 py-2">
-                  <Link href={route('foodOrderItems.edit', item.id)} className="text-peach">Edit</Link>
+                  <Link href={route('foodOrderItems.edit', item.id)} className="text-blue-peach">Edit</Link>
                 </td>
               </tr>
             ))}

@@ -1028,9 +1028,7 @@ body{
 .-z-50{
   z-index: -50;
 }
-.z-\[\]{
-  z-index: ;
-}
+
 .z-\[99999\]{
   z-index: 99999;
 }
@@ -2043,9 +2041,7 @@ body{
 .p-\[90px_70px_50px_30px\]{
   padding: 90px 70px 50px 30px;
 }
-.p-\[\]{
-  padding: ;
-}
+
 .p-\[40\]{
   padding: 40;
 }
@@ -2335,7 +2331,7 @@ body{
   --tw-text-opacity: 1;
   color: rgb(241 241 241 / var(--tw-text-opacity));
 }
-.text-peach{
+.text-blue-peach{
   --tw-text-opacity: 1;
   color: rgb(59 130 246 / var(--tw-text-opacity));
 }
@@ -2359,9 +2355,7 @@ body{
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
 }
-.text-\[\]{
-  color: ;
-}
+
 .text-\[16\]{
   color: 16;
 }

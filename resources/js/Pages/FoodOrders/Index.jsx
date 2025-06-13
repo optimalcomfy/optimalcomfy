@@ -7,7 +7,7 @@ const FoodOrdersIndex = ({ foodOrders }) => {
     <Layout>
       <div className="w-full mr-auto bg-white p-6 rounded shadow-md">
         <h1 className="text-xl font-bold">Food Orders</h1>
-        <Link href={route('foodOrders.create')} className="block my-3 text-peach">Create New Order</Link>
+        <Link href={route('foodOrders.create')} className="block my-3 text-blue-peach">Create New Order</Link>
         <table className="w-full border">
           <thead>
             <tr className="bg-gray-200">
@@ -26,7 +26,7 @@ const FoodOrdersIndex = ({ foodOrders }) => {
                 <td>${order.total_price}</td>
                 <td>{order.status}</td>
                 <td>
-                  <Link href={route('foodOrders.edit', order.id)} className="text-peach">Edit</Link>
+                  <Link href={route('foodOrders.edit', order.id)} className="text-blue-peach">Edit</Link>
                 </td>
               </tr>
             ))}

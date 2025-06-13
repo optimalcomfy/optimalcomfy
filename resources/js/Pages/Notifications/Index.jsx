@@ -161,7 +161,7 @@ const Index = () => {
               type="text"
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-peach"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-peach"
               placeholder="Search notifications..."
             />
             {loading && <p className="text-sm text-gray-500 mt-2">Searching...</p>}

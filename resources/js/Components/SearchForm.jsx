@@ -338,10 +338,6 @@ export default function SearchBar() {
     setIsModalOpen(false);
   };
 
-  // Pass a consistent function to clear the location input
-  const clearLocation = () => {
-    setFormData(prev => ({ ...prev, location: '' }));
-  };
 
 
   return (

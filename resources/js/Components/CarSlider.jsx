@@ -71,7 +71,7 @@ const CarSlider = ({ images }) => {
             onClick={() => goToSlide(index)}
             className={`thumbnail-item cursor-pointer transition-all duration-200 ${
               index === currentIndex 
-                ? "border-2 border-peach opacity-100" 
+                ? "border-2 border-blue-peach opacity-100" 
                 : "border border-gray-300 opacity-70 hover:opacity-100"
             }`}
             style={{ flex: "0 0 80px", height: "60px" }}

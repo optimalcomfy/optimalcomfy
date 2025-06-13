@@ -82,7 +82,7 @@ const EditProperty = ({ property, errors }) => {
   return (
     <Layout>
       <div className="max-w-4xl bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-lg font-bold mb-4">Edit Property</h1>
+        <h1 className="text-lg font-bold mb-4">Edit Stay</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
             {['property_name', 'type', 'price_per_night', 'max_adults', 'max_children'].map(field => (
@@ -162,7 +162,7 @@ const EditProperty = ({ property, errors }) => {
             className="w-full bg-green-500 text-white py-2 rounded mt-4"
             disabled={processing}
           >
-            {processing ? "Updating..." : "Update Property"}
+            {processing ? "Updating..." : "Update Stay"}
           </button>
         </form>
       </div>

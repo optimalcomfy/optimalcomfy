@@ -161,7 +161,7 @@ const CarBookingForm = () => {
             <div className="mb-6">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-pink-500 text-white rounded-full flex items-center justify-center font-semibold">
+                  <div className="w-8 h-8 bg-peachDark text-white rounded-full flex items-center justify-center font-semibold">
                     1
                   </div>
                   <span className="font-medium">Log in or sign up</span>
@@ -171,7 +171,7 @@ const CarBookingForm = () => {
                 ) : (
                   <button 
                     onClick={() => setCurrentStep(1)}
-                    className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+                    className="px-4 py-2 bg-peachDark text-white rounded-lg hover:bg-pink-600 transition-colors"
                   >
                     Continue
                   </button>
@@ -258,7 +258,7 @@ const CarBookingForm = () => {
                     <div className="relative">
                       <button
                         onClick={handleContinue}
-                        className="w-full mx-auto py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+                        className="w-full mx-auto py-3 bg-peachDark text-white rounded-lg hover:bg-pink-600 transition-colors"
                       >
                         Continue
                       </button>
@@ -272,7 +272,7 @@ const CarBookingForm = () => {
             <div className="mb-6">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-pink-500 text-white' : 'bg-gray-200 text-gray-600'} rounded-full flex items-center justify-center font-semibold`}>
+                  <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-peachDark text-white' : 'bg-gray-200 text-gray-600'} rounded-full flex items-center justify-center font-semibold`}>
                     2
                   </div>
                   <span className="font-medium">Add trip details</span>
@@ -282,7 +282,7 @@ const CarBookingForm = () => {
                 ) : currentStep > 2 ? (
                   <button 
                     onClick={() => setCurrentStep(2)}
-                    className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+                    className="px-4 py-2 bg-peachDark text-white rounded-lg hover:bg-pink-600 transition-colors"
                   >
                     Edit
                   </button>
@@ -370,7 +370,7 @@ const CarBookingForm = () => {
 
                     <button
                       onClick={handleContinue}
-                      className="w-full py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+                      className="w-full py-3 bg-peachDark text-white rounded-lg hover:bg-pink-600 transition-colors"
                     >
                       Continue
                     </button>
@@ -383,7 +383,7 @@ const CarBookingForm = () => {
             <div className="mb-6">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-pink-500 text-white' : 'bg-gray-200 text-gray-600'} rounded-full flex items-center justify-center font-semibold`}>
+                  <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-peachDark text-white' : 'bg-gray-200 text-gray-600'} rounded-full flex items-center justify-center font-semibold`}>
                     3
                   </div>
                   <span className="font-medium">Review your request</span>
@@ -407,7 +407,7 @@ const CarBookingForm = () => {
                     <button
                       onClick={handleSubmit}
                       disabled={processing}
-                      className="w-full py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="w-full py-3 bg-peachDark text-white rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {processing ? (
                         <>
@@ -448,7 +448,7 @@ const CarBookingForm = () => {
                 <span className="font-medium">Trip details</span>
                 <button 
                   onClick={() => setCurrentStep(2)}
-                  className="text-sm text-pink-500 hover:underline"
+                  className="text-sm text-peachDark hover:underline"
                 >
                   Change
                 </button>
@@ -471,7 +471,7 @@ const CarBookingForm = () => {
                     <span>KSh {totalPrice.toLocaleString()}</span>
                   </div>
                 </div>
-                <button className="text-sm text-pink-500 hover:underline mt-2">
+                <button className="text-sm text-peachDark hover:underline mt-2">
                   Price breakdown
                 </button>
               </div>
@@ -479,7 +479,7 @@ const CarBookingForm = () => {
               {/* Rare Find Badge */}
               <div className="mt-4 p-3 bg-pink-50 rounded-lg border border-pink-200">
                 <div className="flex items-center gap-2 text-pink-600">
-                  <div className="w-6 h-6 text-pink-500">💎</div>
+                  <div className="w-6 h-6 text-peachDark">💎</div>
                   <div className="text-sm">
                     <p className="font-medium">This is a rare find.</p>
                     <p>This car is usually booked.</p>

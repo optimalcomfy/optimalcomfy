@@ -35,10 +35,6 @@ function Footer() {
                 alt="footer logo"
               />
             </a>
-            <p className="max-w-[290px] mt-[20px]">
-              Each property features plush bedding, high-quality linens, and a selection
-              of ensure a restful night's sleep.
-            </p>
           </div>
           <div className="rts__widget">
             <span className="block text-[20px] heading text-heading capitalize mb-[20px]">
@@ -46,19 +42,19 @@ function Footer() {
             </span>
             <ul className="flex flex-col gap-[10px]">
               <li>
-                <a className="hover:text-primary" href="#">
+                <Link className="hover:text-primary" href={route('home')}>
                   Home
-                </a>
+                </Link>
               </li>
               <li>
-                <a className="hover:text-primary" href="#">
-                  Property
-                </a>
+                <Link className="hover:text-primary" href={route('home')}>
+                  Stays
+                </Link>
               </li>
               <li>
-                <a className="hover:text-primary" href="#">
-                  Cars
-                </a>
+                <Link className="hover:text-primary" href={route('all-cars')}>
+                  Rides
+                </Link>
               </li>
             </ul>
           </div>
@@ -80,10 +76,10 @@ function Footer() {
                 <a
                   className="flex gap-2 items-center"
                   aria-label="footer__contact"
-                  href="mailto:UjJw6@example.com"
+                  href="mailto:info@ristay.co.ke"
                 >
                   <i className="flaticon-envelope" />
-                  Ristay@gmail.com
+                  info@ristay.co.ke
                 </a>
               </li>
               <li>
@@ -103,22 +99,31 @@ function Footer() {
       <div className="border-t-[1px] border-[#e5e5e5] p-[40px_0] relative z-10">
         <div className="container">
           <div className="flex flex-wrap md:justify-between justify-center items-center gap-[30px]">
-            <p className="mb-0">Copyright © 2024 Ristay. All rights reserved.</p>
+            <p className="mb-0">Copyright © 2025 Ristay. All rights reserved.</p>
             <div className="flex items-center gap-[30px]">
-              <a
+              <a target='_blank'
                 className="pr-[25px] border-r-[1px] border-[#65676b] leading-4"
-                href="#"
+                href="https://facebook.com/ristay.ke"
               >
                 Facebook
               </a>
-              <a
+              <a target='_blank'
                 className="pr-[25px] border-r-[1px] border-[#65676b] leading-4"
-                href="#"
+                href="https://instagram.com/ristay.ke"
+              >
+                Instagram
+              </a>
+              <a target='_blank'
+                className="pr-[25px] border-r-[1px] border-[#65676b] leading-4"
+                href="https://www.linkedin.com/company/ristay"
               >
                 Linkedin
               </a>
-              <a className="leading-4" href="#">
+              <a className="leading-4" target='_blank' href="https://twitter.com/RistayApp">
                 Twitter
+              </a>
+              <a className="leading-4" target='_blank' href="https://tiktok.com/@ristay.ke">
+                Tiktok
               </a>
             </div>
           </div>

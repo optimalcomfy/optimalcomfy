@@ -12,7 +12,7 @@ const ShowPayment = ({ payment }) => {
         <p><strong>Method:</strong> {payment.method}</p>
         <p><strong>Status:</strong> {payment.status}</p>
 
-        <Link href={route("payments.index")} className="mt-4 inline-block text-peach">Back to Payments</Link>
+        <Link href={route("payments.index")} className="mt-4 inline-block text-blue-peach">Back to Payments</Link>
       </div>
     </Layout>
   );

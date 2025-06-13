@@ -25,7 +25,7 @@ const IndexReviews = ({ reviews }) => {
                 <td className="border px-4 py-2">{review.rating}</td>
                 <td className="border px-4 py-2">{review.comment}</td>
                 <td className="border px-4 py-2">
-                  <Link href={route("reviews.show", review.id)} className="text-peach mr-2">View</Link>
+                  <Link href={route("reviews.show", review.id)} className="text-blue-peach mr-2">View</Link>
                   <Link href={route("reviews.edit", review.id)} className="text-green-500 mr-2">Edit</Link>
                 </td>
               </tr>

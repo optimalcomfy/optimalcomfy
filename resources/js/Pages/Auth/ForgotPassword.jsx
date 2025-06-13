@@ -44,7 +44,7 @@ export default function ForgotPassword({ status }) {
                         <button 
                             type="submit" 
                             disabled={processing}
-                            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-peach disabled:opacity-50"
+                            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-peach disabled:opacity-50"
                         >
                             Email Password Reset Link
                         </button>

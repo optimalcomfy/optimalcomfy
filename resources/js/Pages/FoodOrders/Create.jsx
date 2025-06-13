@@ -78,7 +78,7 @@ const CreateFoodOrder = ({ users, bookings }) => {
             {errors.status && <p className="text-red-500">{errors.status}</p>}
           </div>
 
-          <button type="submit" className="w-full bg-peach text-white py-2 rounded" disabled={processing}>
+          <button type="submit" className="w-full bg-blue-peach text-white py-2 rounded" disabled={processing}>
             {processing ? 'Saving...' : 'Save'}
           </button>
         </form>

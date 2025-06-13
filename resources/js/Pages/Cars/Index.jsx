@@ -8,11 +8,11 @@ const CarsIndex = () => {
   return (
     <Layout>
       <div className="max-w-full p-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-3xl font-semibold mb-6">Cars List</h1>
+        <h1 className="text-3xl font-semibold mb-6">Rides List</h1>
 
         <div className="mb-6 text-right">
-          <Link href={route('main-cars.create')} className="text-indigo-600 hover:text-indigo-800">
-            Add New Car
+          <Link href={route('main-cars.create')} className="text-white bg-peachDark py-2 px-4 rounded-md">
+            Add New Ride
           </Link>
         </div>
 

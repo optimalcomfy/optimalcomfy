@@ -90,14 +90,14 @@ const CreateCar = () => {
   return (
     <Layout>
       <div className="max-w-2xl bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-2xl font-semibold mb-4">Create New Car</h1>
+        <h1 className="text-2xl font-semibold mb-4">Create New Ride</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* Step 1: Basic Info */}
           {step === 1 && (
             <>
               <div>
-                <label className="block text-sm font-medium">Car Category</label>
+                <label className="block text-sm font-medium">Ride Category</label>
                 <Select
                   options={categoryOptions}
                   value={categoryOptions.find(option => option.value === data.car_category_id)}
@@ -107,11 +107,11 @@ const CreateCar = () => {
                 {errors.car_category_id && <p className="text-red-500 text-sm">{errors.car_category_id}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium">Car Name</label>
+                <label className="block text-sm font-medium">Ride Name</label>
                 <input type="text" className="w-full border rounded-md px-3 py-2"
                   value={data.name}
                   onChange={e => setData('name', e.target.value)}
-                  placeholder="Car Name"
+                  placeholder="Ride Name"
                 />
                 {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
               </div>
@@ -253,7 +253,7 @@ const CreateCar = () => {
 
         <div className="mt-6 text-center">
           <Link href={route('main-cars.index')} className="text-indigo-600 hover:text-indigo-800">
-            Back to Cars List
+            Back to Rides List
           </Link>
         </div>
       </div>

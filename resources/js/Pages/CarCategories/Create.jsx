@@ -17,7 +17,7 @@ const CreateCarCategory = () => {
   return (
     <Layout>
       <div className="max-w-2xl bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-3xl font-semibold mb-6">Create Car Category</h1>
+        <h1 className="text-3xl font-semibold mb-6">Create Ride Category</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
 

@@ -89,9 +89,8 @@ const Wallet = ({ user }) => {
   return (
     <Layout>
       <div className="max-w-full bg-white shadow-md rounded-lg overflow-hidden">
-               <div style={{
+               <div className='' style={{
                 minHeight: '100vh',
-                background: 'linear-gradient(135deg, #20e933 0%, #66f174 100%)',
                 padding: '40px 20px',
                 fontFamily: 'system-ui, -apple-system, sans-serif'
                 }}>
@@ -196,8 +195,7 @@ const Wallet = ({ user }) => {
                     </div>
 
                     {/* Ledger Balance Card */}
-                    <div style={{
-                        background: 'linear-gradient(135deg, #66f1c4 , #66f19c)',
+                    <div className='bg-peach' style={{
                         borderRadius: '20px',
                         padding: '30px',
                         color: 'white',
@@ -205,13 +203,12 @@ const Wallet = ({ user }) => {
                         position: 'relative',
                         overflow: 'hidden'
                     }}>
-                        <div style={{
+                        <div className='bg-peachDark' style={{
                         position: 'absolute',
                         top: '-50px',
                         right: '-50px',
                         width: '100px',
                         height: '100px',
-                        background: 'rgba(255,255,255,0.1)',
                         borderRadius: '50%'
                         }}></div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>

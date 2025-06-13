@@ -32,7 +32,7 @@ const DesktopSearchBar = ({ formData, handleChange, handleLocationSelect, handle
         )}
         {isLoadingSuggestions && <Loader2 className="loader-icon" />}
         {isSuggestionsOpen && (
-          <div className="mini absolute z-50 w-full bg-white border mt-1 shadow-lg max-h-48 overflow-y-auto">
+          <div style={{borderRadius: '0px'}} className="mini absolute z-50 w-full bg-white border mt-1 shadow-lg max-h-48 overflow-y-auto">
             {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
               <div
                 key={index}
@@ -172,7 +172,7 @@ const MobileSearchModal = ({
             </div>
 
             {isSuggestionsOpen && (
-              <div className="absolute w-full bg-white border border-gray-300 rounded-none mt-1 shadow-md max-h-48 overflow-y-auto z-50">
+              <div style={{borderRadius: '0px'}} className="absolute w-full bg-white border border-gray-300 rounded-none mt-1 shadow-md max-h-48 overflow-y-auto z-50">
                 {locationSuggestions.map((location, index) => (
                   <div
                     key={index}

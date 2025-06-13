@@ -126,7 +126,7 @@ const CarRideForm = ({ car }) => {
           <Link
             type="button"
              href={route('car-booking', { car_id: car.id, check_in_date: data.check_in_date, check_out_date: data.check_out_date  })}
-            className="btn btn--pink w-full text-center py-3 px-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold rounded-lg transition-all duration-200 mb-4"
+            className="btn btn--pink w-full text-center py-3 px-4 bg-gradient-to-r bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-lg transition-all duration-200 mb-4"
           >
             Hire ride
           </Link>

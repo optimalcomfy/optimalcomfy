@@ -68,7 +68,7 @@ export default function Login({ status, canResetPassword }) {
                                                 id="email"
                                                 type="email"
                                                 placeholder="Enter your email"
-                                                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-peach focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                                                 value={data.email}
                                                 onChange={(e) => setData('email', e.target.value)}
                                             />
@@ -90,7 +90,7 @@ export default function Login({ status, canResetPassword }) {
                                                 id="password"
                                                 type={showPassword ? 'text' : 'password'}
                                                 placeholder="Enter your password"
-                                                className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                                                className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-peach focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                                                 value={data.password}
                                                 onChange={(e) => setData('password', e.target.value)}
                                             />
@@ -118,7 +118,7 @@ export default function Login({ status, canResetPassword }) {
                                             <input
                                                 id="rememberme-login"
                                                 type="checkbox"
-                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-colors"
+                                                className="text-peach focus:ring-peach border-gray-300 rounded transition-colors"
                                                 checked={data.remember}
                                                 onChange={(e) => setData('remember', e.target.checked)}
                                             />
@@ -130,7 +130,7 @@ export default function Login({ status, canResetPassword }) {
                                         {canResetPassword && (
                                             <Link
                                                 href={route('password.request')}
-                                                className="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors"
+                                                className="text-sm text-peach hover:text-peachDark font-medium hover:underline transition-colors"
                                             >
                                                 Forgot password?
                                             </Link>
@@ -140,7 +140,7 @@ export default function Login({ status, canResetPassword }) {
                                     <button
                                         type="submit"
                                         disabled={processing}
-                                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-4 rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                                        className="w-full bg-gradient-to-r from-peach to-peachDark text-white font-semibold py-3 px-4 rounded-xl hover:from-peachDark hover:to-peachDark focus:outline-none focus:ring-2 focus:ring-peach focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                                     >
                                         {processing ? (
                                             <div className="flex items-center justify-center">
@@ -161,7 +161,7 @@ export default function Login({ status, canResetPassword }) {
                                         Don't have an account?
                                         <Link
                                             href={route('register')}
-                                            className="ml-2 text-blue-600 hover:text-blue-800 font-semibold hover:underline transition-colors"
+                                            className="ml-2 text-peach hover:text-peachDark font-semibold hover:underline transition-colors"
                                         >
                                             Create one today
                                         </Link>

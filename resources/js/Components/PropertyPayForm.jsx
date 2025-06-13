@@ -331,7 +331,7 @@ const PropertyBookingForm = () => {
                   {currentStep === 1 && (
                     <button
                       onClick={handleReserveClick}
-                      className="w-full py-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold rounded-xl transition-all duration-200"
+                      className="w-full py-4 bg-gradient-to-r bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200"
                     >
                       Continue
                     </button>
@@ -560,7 +560,7 @@ const PropertyBookingForm = () => {
                   {currentStep === 2 && (
                     <button
                       onClick={handleContinueToStep3}
-                      className="w-full py-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold rounded-xl transition-all duration-200"
+                      className="w-full py-4 bg-gradient-to-r bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200"
                     >
                       Continue
                     </button>
@@ -593,7 +593,7 @@ const PropertyBookingForm = () => {
                     <button
                       type="submit"
                       disabled={processing}
-                      className="w-full py-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="w-full py-4 bg-gradient-to-r bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {processing ? (
                         <>

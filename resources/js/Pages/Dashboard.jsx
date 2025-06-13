@@ -137,16 +137,11 @@ const Dashboard = () => {
             {isLoading && <LoadingScreen />}
             
             <div className="grid">
-                <div className="col-12">
-                    <h2 className="text-2xl font-bold mb-4">Property Overview</h2>
-                </div>
-                
-                
                     <div className="lg:flex pt-4 w-full">
                         {parseInt(roleId) !== 3 && (
                         <>
                             <InfoCard 
-                                title="Total Properties" 
+                                title="Total Stays" 
                                 value={propertiesCount} 
                                 icon={Home} 
                                 iconColor="rose" 
@@ -185,7 +180,7 @@ const Dashboard = () => {
                                     <Tooltip />
                                     <Legend />
                                     <Line yAxisId="left" type="monotone" dataKey="total" stroke="#3B82F6" activeDot={{ r: 8 }} strokeWidth={2} />
-                                    <Line yAxisId="right" type="monotone" dataKey="property_earnings" stroke="#10B981" strokeWidth={2} />
+                                    <Line yAxisId="right" type="monotone" dataKey="stay_earnings" stroke="#10B981" strokeWidth={2} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>

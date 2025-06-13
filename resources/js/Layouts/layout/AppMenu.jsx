@@ -18,18 +18,18 @@ const AppMenu = () => {
             ]
         },
         {
-            label: 'Property Management',
+            label: 'Stays Management',
             items: [
-                { label: 'Properties', icon: 'pi pi-fw pi-building', to: route('properties.index'), roles: [1, 2] },
-                { label: 'Property Bookings', icon: 'pi pi-fw pi-calendar', to: route('bookings.index'), roles: [1, 2,3] }
+                { label: 'Stays', icon: 'pi pi-fw pi-building', to: route('properties.index'), roles: [1, 2] },
+                { label: 'Stays Bookings', icon: 'pi pi-fw pi-calendar', to: route('bookings.index'), roles: [1, 2,3] }
             ]
         },
         {
-            label: 'Car hire Management',
+            label: 'Ride hire Management',
             items: [
-                { label: 'Cars', icon: 'pi pi-fw pi-car', to: route('main-cars.index'), roles: [1, 2] },
-                { label: 'Car Bookings', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index'), roles: [1, 2, 3] },
-                { label: 'Car Categories', icon: 'pi pi-fw pi-tags', to: route('car-categories.index'), roles: [1, 2] }               
+                { label: 'Rides', icon: 'pi pi-fw pi-car', to: route('main-cars.index'), roles: [1, 2] },
+                { label: 'Ride Bookings', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index'), roles: [1, 2, 3] },
+                { label: 'Ride Categories', icon: 'pi pi-fw pi-tags', to: route('car-categories.index'), roles: [1, 2] }               
             ]
         },
         {

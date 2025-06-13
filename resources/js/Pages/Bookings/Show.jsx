@@ -39,7 +39,7 @@ const BookingShow = () => {
               <tbody>
                 {booking.payments.map((payment) => (
                   <tr key={payment.id} className="border-t">
-                    <td className="px-4 py-2 border">${payment.amount}</td>
+                    <td className="px-4 py-2 border">{payment.amount}</td>
                     <td className="px-4 py-2 border">{payment.date}</td>
                     <td className="px-4 py-2 border">{payment.method}</td>
                   </tr>

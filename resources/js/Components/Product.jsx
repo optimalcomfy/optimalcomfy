@@ -53,22 +53,12 @@ const Product = (props) => {
       {/* Product Details */}
       <Link
        href={route('property-detail', { id: id })}
-       className="grid grid-cols-[minmax(0,1fr),max-content] gap-[2px_8px] mt-3 text-[.9375rem] leading-[19px]">
-        <div className="font-semibold whitespace-nowrap overflow-hidden text-ellipsis">
-          {property_name}, {country}
+       className="grid grid-cols-[minmax(0,1fr),max-content] gap-[2px_8px] mt-3 text-[.9375rem] leading-[19px] px-2">
+        <div className="font-bold whitespace-nowrap overflow-hidden text-ellipsis">
+          {property_name} in {location}
         </div>
-
-        {starRate && (
-          <div className="flex items-center gap-x-1">
-            <img src={starIcon} alt="Star" className="w-4 h-4" />
-            {starRate}
-          </div>
-        )}
-
-        <div className="text-[#717171] col-span-2">{location}</div>
-        <div className="text-[#717171] col-span-2">{dayRange}</div>
         <div className="mt-[6px] col-span-2">
-          <span className="font-semibold">KES {price_per_night}</span> {time}
+          <span className="font-light">KES {price_per_night} for one night</span> 
         </div>
       </Link>
     </div>

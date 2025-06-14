@@ -16,7 +16,7 @@ const BookingShow = () => {
           <p><strong>Property:</strong> {booking.property.property_name}</p>
           <p><strong>Check-in Date:</strong> {booking.check_in_date}</p>
           <p><strong>Check-out Date:</strong> {booking.check_out_date}</p>
-          <p><strong>Total Price:</strong> ${booking.total_price}</p>
+          <p><strong>Total Price:</strong> {booking.total_price}</p>
           <p><strong>Status:</strong> 
             <span className={`px-2 py-1 ml-2 rounded text-white ${booking.status === 'confirmed' ? 'bg-green-500' : booking.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'}`}>
               {booking.status}

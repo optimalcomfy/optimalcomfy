@@ -156,27 +156,34 @@ class HomeController extends Controller
     }
 
 
-    public function dashboard(Request $request)
+   public function dashboard(Request $request)
     {
         $user = Auth::user();
+        $isAdmin = $user->role_id === 1 || $user->role_id === '1'; 
 
         // Calculate total revenue from property bookings
-        $propertyBookingTotal = Booking::where('status', '=', 'Paid')
-            ->whereHas('property', function($query) use ($user) {
-                $query->where('user_id', $user->id);
+        $propertyBookingTotal = Booking::where('status', 'Paid')
+            ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+            ->whereHas('property', function ($query) use ($user, $isAdmin) {
+                if (!$isAdmin) {
+                    $query->where('user_id', $user->id);
+                }
             })
             ->sum('total_price');
 
-        // Calculate total revenue from car bookings  
-        $carBookingTotal = CarBooking::where('status', '=', 'Paid')
-            ->whereHas('car', function($query) use ($user) {
-                $query->where('user_id', $user->id);
+        // Calculate total revenue from car bookings
+        $carBookingTotal = CarBooking::where('status', 'Paid')
+            ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+            ->whereHas('car', function ($query) use ($user, $isAdmin) {
+                if (!$isAdmin) {
+                    $query->where('user_id', $user->id);
+                }
             })
             ->sum('total_price');
 
         // Count user's cars and properties
-        $carsCount = Car::where('user_id', '=', $user->id)->count();
-        $propertiesCount = Property::where('user_id', '=', $user->id)->count();
+        $carsCount = $isAdmin ? Car::count() : Car::where('user_id', $user->id)->count();
+        $propertiesCount = $isAdmin ? Property::count() : Property::where('user_id', $user->id)->count();
 
         // Calculate pending payouts
         $pendingPayouts = ($propertyBookingTotal + $carBookingTotal) * 0.85; // Assuming 15% platform fee
@@ -185,14 +192,17 @@ class HomeController extends Controller
         $recentTransactions = collect([
             // Property bookings
             ...Booking::where('status', 'Paid')
-                ->whereHas('property', function($query) use ($user) {
-                    $query->where('user_id', $user->id);
+                ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                ->whereHas('property', function ($query) use ($user, $isAdmin) {
+                    if (!$isAdmin) {
+                        $query->where('user_id', $user->id);
+                    }
                 })
                 ->with(['property', 'user'])
                 ->latest()
                 ->take(5)
                 ->get()
-                ->map(function($booking) {
+                ->map(function ($booking) {
                     return [
                         'type' => 'property',
                         'title' => $booking->property->title,
@@ -202,17 +212,20 @@ class HomeController extends Controller
                         'status' => 'completed'
                     ];
                 }),
-            
+
             // Car bookings
             ...CarBooking::where('status', 'Paid')
-                ->whereHas('car', function($query) use ($user) {
-                    $query->where('user_id', $user->id);
+                ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                ->whereHas('car', function ($query) use ($user, $isAdmin) {
+                    if (!$isAdmin) {
+                        $query->where('user_id', $user->id);
+                    }
                 })
                 ->with(['car', 'user'])
                 ->latest()
                 ->take(5)
                 ->get()
-                ->map(function($booking) {
+                ->map(function ($booking) {
                     return [
                         'type' => 'car',
                         'title' => $booking->car->make . ' ' . $booking->car->model,
@@ -230,21 +243,27 @@ class HomeController extends Controller
             $month = now()->subMonths($i);
             $monthStart = $month->startOfMonth()->toDateString();
             $monthEnd = $month->endOfMonth()->toDateString();
-            
+
             $propertyEarnings = Booking::where('status', 'Paid')
-                ->whereHas('property', function($query) use ($user) {
-                    $query->where('user_id', $user->id);
+                ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                ->whereHas('property', function ($query) use ($user, $isAdmin) {
+                    if (!$isAdmin) {
+                        $query->where('user_id', $user->id);
+                    }
                 })
                 ->whereBetween('created_at', [$monthStart, $monthEnd])
                 ->sum('total_price');
-                
+
             $carEarnings = CarBooking::where('status', 'Paid')
-                ->whereHas('car', function($query) use ($user) {
-                    $query->where('user_id', $user->id);
+                ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                ->whereHas('car', function ($query) use ($user, $isAdmin) {
+                    if (!$isAdmin) {
+                        $query->where('user_id', $user->id);
+                    }
                 })
                 ->whereBetween('created_at', [$monthStart, $monthEnd])
                 ->sum('total_price');
-                
+
             $monthlyEarnings[] = [
                 'month' => $month->format('M Y'),
                 'property_earnings' => $propertyEarnings,
@@ -259,7 +278,7 @@ class HomeController extends Controller
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
             'flash' => session('flash'),
-            
+
             // Wallet specific data
             'carsCount' => $carsCount,
             'propertiesCount' => $propertiesCount,
@@ -270,16 +289,18 @@ class HomeController extends Controller
             'availableBalance' => $pendingPayouts * 0.6, // Assuming some amount is available
             'monthlyEarnings' => $monthlyEarnings,
             'recentTransactions' => $recentTransactions,
-            
+
             // Performance metrics
             'averagePropertyBookingValue' => $propertiesCount > 0 ? $propertyBookingTotal / max($propertiesCount, 1) : 0,
             'averageCarBookingValue' => $carsCount > 0 ? $carBookingTotal / max($carsCount, 1) : 0,
-            'totalBookingsCount' => Booking::whereHas('property', function($query) use ($user) {
-                    $query->where('user_id', $user->id);
-                })->count() + 
-                CarBooking::whereHas('car', function($query) use ($user) {
-                    $query->where('user_id', $user->id);
-                })->count(),
+            'totalBookingsCount' =>
+                Booking::when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                    ->whereHas('property', fn($q) => !$isAdmin ? $q->where('user_id', $user->id) : null)
+                    ->count()
+                +
+                CarBooking::when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                    ->whereHas('car', fn($q) => !$isAdmin ? $q->where('user_id', $user->id) : null)
+                    ->count(),
         ]);
     }
 

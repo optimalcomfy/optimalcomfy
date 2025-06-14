@@ -232,7 +232,7 @@ const Dashboard = () => {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value) => [`$${value.toFixed(2)}`, 'Amount']}
+                  formatter={(value) => [`${value?.toFixed(2)}`, 'Amount']}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -333,7 +333,7 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentTransactions.map((transaction, index) => (
+                  {recentTransactions?.map((transaction, index) => (
                     <tr key={index} className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                       <td className="py-3 px-3 text-sm">{new Date(transaction.date).toLocaleDateString()}</td>
                       <td className="py-3 px-3 text-sm capitalize">{transaction.type}</td>
@@ -434,9 +434,12 @@ const Dashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip 
-                        formatter={(value) => [`${value.toFixed(2)}`, 'Amount']}
-                      />
+                     <Tooltip 
+                        formatter={(value) => {
+                            const num = parseFloat(value);
+                            return [isNaN(num) ? value : num.toFixed(2), 'Amount'];
+                        }}
+                        />
                       <Legend />
                       <Line 
                         type="monotone" 

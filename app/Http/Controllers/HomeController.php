@@ -163,7 +163,7 @@ class HomeController extends Controller
 
         // Calculate total revenue from property bookings
         $propertyBookingTotal = Booking::where('status', 'Paid')
-            ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+            ->when(fn($q) => $q->whereHas('user'))
             ->whereHas('property', function ($query) use ($user, $isAdmin) {
                 if (!$isAdmin) {
                     $query->where('user_id', $user->id);
@@ -173,7 +173,7 @@ class HomeController extends Controller
 
         // Calculate total revenue from car bookings
         $carBookingTotal = CarBooking::where('status', 'Paid')
-            ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+            ->when(fn($q) => $q->whereHas('user'))
             ->whereHas('car', function ($query) use ($user, $isAdmin) {
                 if (!$isAdmin) {
                     $query->where('user_id', $user->id);
@@ -192,7 +192,7 @@ class HomeController extends Controller
         $recentTransactions = collect([
             // Property bookings
             ...Booking::where('status', 'Paid')
-                ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                ->when(fn($q) => $q->whereHas('user'))
                 ->whereHas('property', function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
                         $query->where('user_id', $user->id);
@@ -215,7 +215,7 @@ class HomeController extends Controller
 
             // Car bookings
             ...CarBooking::where('status', 'Paid')
-                ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                ->when(fn($q) => $q->whereHas('user'))
                 ->whereHas('car', function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
                         $query->where('user_id', $user->id);
@@ -235,7 +235,8 @@ class HomeController extends Controller
                         'status' => 'completed'
                     ];
                 })
-        ])->sortByDesc('date')->take(10);
+        ])->sortByDesc('date')->take(10)->values() // ✅ reset numeric keys
+        ->all();
 
         // Monthly earnings data for chart
         $monthlyEarnings = [];
@@ -245,7 +246,7 @@ class HomeController extends Controller
             $monthEnd = $month->endOfMonth()->toDateString();
 
             $propertyEarnings = Booking::where('status', 'Paid')
-                ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                ->when(fn($q) => $q->whereHas('user'))
                 ->whereHas('property', function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
                         $query->where('user_id', $user->id);
@@ -255,7 +256,7 @@ class HomeController extends Controller
                 ->sum('total_price');
 
             $carEarnings = CarBooking::where('status', 'Paid')
-                ->when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                ->when(fn($q) => $q->whereHas('user'))
                 ->whereHas('car', function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
                         $query->where('user_id', $user->id);
@@ -294,11 +295,11 @@ class HomeController extends Controller
             'averagePropertyBookingValue' => $propertiesCount > 0 ? $propertyBookingTotal / max($propertiesCount, 1) : 0,
             'averageCarBookingValue' => $carsCount > 0 ? $carBookingTotal / max($carsCount, 1) : 0,
             'totalBookingsCount' =>
-                Booking::when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                Booking::when(fn($q) => $q->whereHas('user'))
                     ->whereHas('property', fn($q) => !$isAdmin ? $q->where('user_id', $user->id) : null)
                     ->count()
                 +
-                CarBooking::when(!$isAdmin, fn($q) => $q->whereHas('user'))
+                CarBooking::when(fn($q) => $q->whereHas('user'))
                     ->whereHas('car', fn($q) => !$isAdmin ? $q->where('user_id', $user->id) : null)
                     ->count(),
         ]);

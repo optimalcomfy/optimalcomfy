@@ -87,7 +87,7 @@ const DesktopSearchBar = ({ formData, handleChange, handleLocationSelect, handle
 // Mobile Search Trigger Component
 const MobileSearchTrigger = ({ onClick }) => (
   <div className="mobile-search-trigger" onClick={onClick}>
-    <div className="search-trigger-content">
+    <div className="search-trigger-content flex items-center gap-2">
       <Search size={20} className="search-trigger-icon" />
       <div className="search-trigger-text">
         <span className="search-trigger-title">Where to?</span>
@@ -117,11 +117,11 @@ const MobileSearchModal = ({
     <div className="modal-overlay" onClick={closeModal}></div>
     <div className="modal-content" ref={modalRef}>
       {/* Modal Header */}
-      <div className="modal-header">
+      <div className="modal-header flex justify-between">
+        <h2 className="modal-title">Search Properties</h2>
         <button className="modal-close-btn" onClick={closeModal}>
           <X size={24} />
         </button>
-        <h2 className="modal-title">Search Properties</h2>
       </div>
 
       {/* Modal Body */}

@@ -33,7 +33,7 @@ const BookingShow = () => {
             </div>
             <div className="ml-3">
               <p className="text-sm text-green-700">
-                Your booking at <span className="font-medium">{booking.property.property_name}</span> is confirmed!
+                Your booking status at <span className="font-medium">{booking.property.property_name}</span> is {booking.status}!
                 Booking ID: <span className="font-mono font-bold">#{booking.id}</span>
               </p>
             </div>

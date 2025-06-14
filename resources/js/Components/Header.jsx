@@ -160,16 +160,6 @@ function Header() {
         <div className={`header-main ${isScrolled ? 'header-scrolled' : ''}`}>
             <div className="header-container">
             <div className="header-grid">
-                <div className={`logo-container`}>
-                  <Link href={route('home')} className={`mopper ${isScrolled ? 'mopper-scrolled' : ''}`}>
-                      <img
-                      className={`logo-image ${isScrolled ? 'logo-scrolled' : ''}`}
-                      src="/image/logo/logo.png"
-                      alt="Ristay"
-                      />
-                  </Link>
-                </div>
-
                 <div className="logo-container">
                   {(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking') &&
                     <SearchBar />
@@ -178,54 +168,6 @@ function Header() {
                   <RideForm />}
                 </div>
                 
-                <div className={`header-right mopper ${isScrolled ? 'mopper-scrolled' : ''}`}>
-                  <div className="header-right-content">
-                      <p className="airbnb-text">List your property</p>
-                      <div 
-                        className="profile-menu-button"
-                        onClick={toggleProfileDropdown}
-                        ref={dropdownRef}
-                      >
-                          <i className="fa-solid fa-bars"></i>
-                          <p className="profile-avatar">E</p>
-                          
-                          {/* Profile Dropdown Menu */}
-                          {profileDropdownOpen && (
-                            <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
-                              <Link 
-                                href={route('login')} 
-                                className="dropdown-item"
-                                onClick={handleDropdownClick}
-                              >
-                                Log in
-                              </Link>
-                              <Link 
-                                href={route('register')} 
-                                className="dropdown-item"
-                                onClick={handleDropdownClick}
-                              >
-                                Sign up
-                              </Link>
-                              <hr className="dropdown-divider" />
-                              <Link 
-                                href={route('all-properties')} 
-                                className="dropdown-item"
-                                onClick={handleDropdownClick}
-                              >
-                                Book a stay
-                              </Link>
-                              <Link 
-                                href={route('all-cars')} 
-                                className="dropdown-item"
-                                onClick={handleDropdownClick}
-                              >
-                                Rent a ride
-                              </Link>
-                            </div>
-                          )}
-                      </div>
-                  </div>
-                </div>
             </div>
             </div>
         </div>

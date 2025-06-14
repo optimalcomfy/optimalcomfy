@@ -100,21 +100,21 @@ function Footer() {
         <div className="container">
           <div className="flex flex-wrap md:justify-between justify-center items-center gap-[30px]">
             <p className="mb-0">Copyright © 2025 Ristay. All rights reserved.</p>
-            <div className="flex items-center gap-[30px]">
+            <div className="flex flex-col md:flex-row items-center gap-[30px]">
               <a target='_blank'
-                className="pr-[25px] border-r-[1px] border-[#65676b] leading-4"
+                className="pr-[25px] md:border-r-[1px] md:border-[#65676b] leading-4"
                 href="https://facebook.com/ristay.ke"
               >
                 Facebook
               </a>
               <a target='_blank'
-                className="pr-[25px] border-r-[1px] border-[#65676b] leading-4"
+                className="pr-[25px] md:border-r-[1px] md:border-[#65676b] leading-4"
                 href="https://instagram.com/ristay.ke"
               >
                 Instagram
               </a>
               <a target='_blank'
-                className="pr-[25px] border-r-[1px] border-[#65676b] leading-4"
+                className="pr-[25px] md:border-r-[1px] md:border-[#65676b] leading-4"
                 href="https://www.linkedin.com/company/ristay"
               >
                 Linkedin

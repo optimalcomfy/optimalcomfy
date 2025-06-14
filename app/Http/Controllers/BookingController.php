@@ -111,9 +111,18 @@ class BookingController extends Controller
     public function show(Booking $booking)
     {
         return Inertia::render('Bookings/Show', [
-            'booking' => $booking->load('user', 'property'),
+            'booking' => $booking->load([
+                'user',
+                'property.propertyAmenities',
+                'property.propertyFeatures',
+                'property.initialGallery',   // Gallery
+                'property.PropertyServices',
+                'property.user',             // Property owner
+            ]),
         ]);
     }
+
+
 
     public function edit(Booking $booking)
     {

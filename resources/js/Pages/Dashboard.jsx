@@ -98,7 +98,7 @@ const Dashboard = () => {
                     <div className="relative">
                         <Loader size={48} className="text-blue-peach animate-spin" />
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <Home size={20} className="text-blue-700 dark:text-blue-400" />
+                            <Home size={20} className="text-peachDark dark:text-blue-400" />
                         </div>
                     </div>
                     <p className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">Loading your dashboard...</p>

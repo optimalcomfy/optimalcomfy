@@ -7255,7 +7255,7 @@ input {
   color: rgb(255 255 255 / var(--tw-text-opacity)) !important;
 }
 
-.hover\:text-blue-700:hover{
+.hover\:text-peachDark:hover{
   --tw-text-opacity: 1;
   color: rgb(29 78 216 / var(--tw-text-opacity));
 }

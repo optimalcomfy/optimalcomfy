@@ -7526,7 +7526,7 @@ input.p-dropdown-label  {
 .text-blue-600 {
   color: var(--blue-600) !important;
 }
-.text-blue-700 {
+.text-peachDark {
   color: var(--blue-700) !important;
 }
 .text-blue-800 {
@@ -7557,7 +7557,7 @@ input.p-dropdown-label  {
 .focus\:text-blue-600:focus {
   color: var(--blue-600) !important;
 }
-.focus\:text-blue-700:focus {
+.focus\:text-peachDark:focus {
   color: var(--blue-700) !important;
 }
 .focus\:text-blue-800:focus {
@@ -7588,7 +7588,7 @@ input.p-dropdown-label  {
 .hover\:text-blue-600:hover {
   color: var(--blue-600) !important;
 }
-.hover\:text-blue-700:hover {
+.hover\:text-peachDark:hover {
   color: var(--blue-700) !important;
 }
 .hover\:text-blue-800:hover {
@@ -7619,7 +7619,7 @@ input.p-dropdown-label  {
 .active\:text-blue-600:active {
   color: var(--blue-600) !important;
 }
-.active\:text-blue-700:active {
+.active\:text-peachDark:active {
   color: var(--blue-700) !important;
 }
 .active\:text-blue-800:active {

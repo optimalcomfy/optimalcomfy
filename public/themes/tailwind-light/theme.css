@@ -1,51 +1,78 @@
 :root body {
-  --surface-a:#ffffff;
-  --surface-b:#fafafa;
-  --surface-c:#f4f4f5;
-  --surface-d:#e5e7eb;
-  --surface-e:#ffffff;
-  --surface-f:#ffffff;
-  --text-color:#3f3f46;
-  --text-color-secondary:#71717A;
-  --primary-color:#4F46E5;
-  --primary-color-text:#ffffff;
-  --font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+  /* Base surface colors (warm neutrals) */
+  --surface-a: #ffffff;         /* Light peach background */
+  --surface-b: #fef0eb;         /* Softer peach variation */
+  --surface-c: #fbe3db;         /* Slightly deeper background */
+  --surface-d: #ffffff;         /* Light coral tone */
+  --surface-e: #ffffff;         /* Base white */
+  --surface-f: #fff5f0;         /* Warm off-white */
+
+  /* Text colors */
+  --text-color: #2f2f2f;        /* Charcoal for high contrast */
+  --text-color-secondary: #805548; /* Muted earthy brown */
+
+  /* Primary peach branding */
+  --primary-color: #ec8669;     /* Peach */
+  --primary-color-text: #ffffff;
+
+  /* Optional darker version for buttons, hover, focus */
+  --primary-color-dark: #d45736;
+
+  /* Font */
+  --font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+
+  /* Grayscale but with warm undertones */
   --surface-0: #ffffff;
-  --surface-50: #FAFAFA;
-  --surface-100: #F4F4F5;
-  --surface-200: #E4E4E7;
-  --surface-300: #D4D4D8;
-  --surface-400: #A1A1AA;
-  --surface-500: #71717A;
-  --surface-600: #52525B;
-  --surface-700: #3F3F46;
-  --surface-800: #27272A;
-  --surface-900: #18181B;
-  --gray-50: #FAFAFA;
-  --gray-100: #F4F4F5;
-  --gray-200: #E4E4E7;
-  --gray-300: #D4D4D8;
-  --gray-400: #A1A1AA;
-  --gray-500: #71717A;
-  --gray-600: #52525B;
-  --gray-700: #3F3F46;
-  --gray-800: #27272A;
-  --gray-900: #18181B;
-  --content-padding:1.25rem;
-  --inline-spacing:0.5rem;
-  --border-radius:0.375rem;
-  --surface-ground:#FAFAFA;
-  --surface-section:#ffffff;
-  --surface-card:#ffffff;
-  --surface-overlay:#ffffff;
-  --surface-border:#e5e7eb;
-  --surface-hover: #f4f4f5;
-  --focus-ring: 0 0 0 1px #6366F1;
+  --surface-50: #fff6f2;
+  --surface-100: #fbe9e3;
+  --surface-200: #f2d8d0;
+  --surface-300: #ddbfb3;
+  --surface-400: #ba9d8f;
+  --surface-500: #9d8074;
+  --surface-600: #7d635a;
+  --surface-700: #5f493f;
+  --surface-800: #44302a;
+  --surface-900: #2f1d1a;
+
+  /* Warm gray replacements */
+  --gray-50: #fff6f2;
+  --gray-100: #fbe9e3;
+  --gray-200: #f2d8d0;
+  --gray-300: #ddbfb3;
+  --gray-400: #ba9d8f;
+  --gray-500: #9d8074;
+  --gray-600: #7d635a;
+  --gray-700: #5f493f;
+  --gray-800: #44302a;
+  --gray-900: #2f1d1a;
+
+  /* Layout and utility */
+  --content-padding: 1.25rem;
+  --inline-spacing: 0.5rem;
+  --border-radius: 0.375rem;
+
+  /* Surface roles */
+  --surface-ground: #fff5f0;
+  --surface-section: #ffffff;
+  --surface-card: #fff8f6;
+  --surface-overlay: #ffffff;
+  --surface-border: #f2d8d0;
+  --surface-hover: #fbe3db;
+
+  /* Focus & highlight */
+  --focus-ring: 0 0 0 1px #d45736;
+  --highlight-bg: #fef0eb;
+  --highlight-text-color: #7a3a2c;
+
+  /* Overlay */
   --maskbg: rgba(0, 0, 0, 0.4);
-  --highlight-bg: #EEF2FF;
-  --highlight-text-color: #312E81;
+
+  /* Branding gradient */
+  --brand-gradient: linear-gradient(to right, #ec8669, #d45736);
+
   color-scheme: light;
 }
+
 
 @font-face {
   font-family: "Inter";

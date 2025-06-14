@@ -18,6 +18,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
+use Illuminate\Validation\Rules\File;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class ProfileController extends Controller
 {
@@ -27,16 +30,11 @@ class ProfileController extends Controller
     public function edit(Request $request): Response
     {
         $user = Auth::user();
-        $employee = null; 
-    
-        if ($user->role_id == 3) {
-            $employee = Employee::where('user_id', '=', $user->id)->first();
-        }
     
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
-            'employee' => $employee, 
+            'employee' => $user,
         ]);
     }
 
@@ -80,18 +78,115 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
+
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        try {
+            $user = $request->user();
+            $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+            // Handle profile picture upload (consistent with store method)
+            if ($request->hasFile('profile_picture')) {
+                // Delete old profile picture if exists
+                if ($user->profile_picture) {
+                    Storage::disk('public')->delete($user->profile_picture);
+                }
+                $validated['profile_picture'] = $request->file('profile_picture')
+                    ->store('profile_pictures', 'public');
+            } else {
+                // Keep existing picture if not updating
+                $validated['profile_picture'] = $user->profile_picture;
+            }
+
+            // Handle ID verification upload (consistent with store method)
+            if ($request->hasFile('id_verification')) {
+                // Delete old ID verification if exists
+                if ($user->id_verification) {
+                    Storage::disk('public')->delete($user->id_verification);
+                }
+                $validated['id_verification'] = $request->file('id_verification')
+                    ->store('id_verifications', 'public');
+            } else {
+                // Keep existing ID verification if not updating
+                $validated['id_verification'] = $user->id_verification;
+            }
+
+            // Check if email was changed
+            if ($user->isDirty('email')) {
+                $user->email_verified_at = null;
+                // Consider adding email verification here if needed
+                // $user->sendEmailVerificationNotification();
+            }
+
+            // Update user data
+            $user->update($validated);
+
+            return redirect()->route('profile.edit')
+                ->with('success', 'Profile updated successfully!');
+
+        } catch (\Exception $e) {
+            Log::error('Profile update failed: ' . $e->getMessage());
+            
+            return back()->withErrors([
+                'message' => 'An error occurred while updating your profile. Please try again.'
+            ])->withInput();
         }
-
-        $request->user()->save();
-
-        return Redirect::route('profile.edit');
     }
+
+    public function reload(ProfileUpdateRequest $request): RedirectResponse
+    {
+        try {
+            $user = $request->user();
+            $validated = $request->validated();
+
+            // Handle profile picture upload (consistent with store method)
+            if ($request->hasFile('profile_picture')) {
+                // Delete old profile picture if exists
+                if ($user->profile_picture) {
+                    Storage::disk('public')->delete($user->profile_picture);
+                }
+                $validated['profile_picture'] = $request->file('profile_picture')
+                    ->store('profile_pictures', 'public');
+            } else {
+                // Keep existing picture if not updating
+                $validated['profile_picture'] = $user->profile_picture;
+            }
+
+            // Handle ID verification upload (consistent with store method)
+            if ($request->hasFile('id_verification')) {
+                // Delete old ID verification if exists
+                if ($user->id_verification) {
+                    Storage::disk('public')->delete($user->id_verification);
+                }
+                $validated['id_verification'] = $request->file('id_verification')
+                    ->store('id_verifications', 'public');
+            } else {
+                // Keep existing ID verification if not updating
+                $validated['id_verification'] = $user->id_verification;
+            }
+
+            // Check if email was changed
+            if ($user->isDirty('email')) {
+                $user->email_verified_at = null;
+                // Consider adding email verification here if needed
+                // $user->sendEmailVerificationNotification();
+            }
+
+            // Update user data
+            $user->update($validated);
+
+            return redirect()->route('profile.edit')
+                ->with('success', 'Profile updated successfully!');
+
+        } catch (\Exception $e) {
+            Log::error('Profile update failed: ' . $e->getMessage());
+            
+            return back()->withErrors([
+                'message' => 'An error occurred while updating your profile. Please try again.'
+            ])->withInput();
+        }
+    }
+
 
     /**
      * Delete the user's account.

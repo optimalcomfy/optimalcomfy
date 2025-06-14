@@ -119,7 +119,7 @@ const Dashboard = () => {
           </div>
           <p className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">Loading your dashboard...</p>
           <div className="mt-3 h-1 w-48 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-500 rounded-full animate-pulse"></div>
+            <div className="h-full bg-peachDark rounded-full animate-pulse"></div>
           </div>
         </div>
       </div>
@@ -266,11 +266,11 @@ const Dashboard = () => {
             <div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Total Earnings</span>
-                <span className="font-bold">${totalEarnings?.toFixed(2) || '0.00'}</span>
+                <span className="font-bold">{totalEarnings?.toFixed(2) || '0.00'}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                 <div 
-                  className="bg-blue-500 h-2 rounded-full" 
+                  className="bg-peachDark h-2 rounded-full" 
                   style={{ width: `${Math.min(100, (totalEarnings / 10000) * 100)}%` }}
                 ></div>
               </div>
@@ -279,7 +279,7 @@ const Dashboard = () => {
             <div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Available Balance</span>
-                <span className="font-bold">${availableBalance?.toFixed(2) || '0.00'}</span>
+                <span className="font-bold">{availableBalance?.toFixed(2) || '0.00'}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                 <div 
@@ -292,7 +292,7 @@ const Dashboard = () => {
             <div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Pending Payouts</span>
-                <span className="font-bold">${pendingPayouts?.toFixed(2) || '0.00'}</span>
+                <span className="font-bold">{pendingPayouts?.toFixed(2) || '0.00'}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                 <div 
@@ -339,7 +339,7 @@ const Dashboard = () => {
                       <td className="py-3 px-3 text-sm capitalize">{transaction.type}</td>
                       <td className="py-3 px-3 text-sm">{transaction.guest}</td>
                       <td className="py-3 px-3 text-sm text-right font-medium">
-                        ${parseFloat(transaction.amount).toFixed(2)}
+                        {parseFloat(transaction.amount).toFixed(2)}
                       </td>
                       <td className="py-3 px-3 text-sm text-right">
                         <span className={`px-2 py-1 rounded-full text-xs ${
@@ -386,12 +386,14 @@ const Dashboard = () => {
         {/* First Column */}
         <div className="col-span-1">
           <UserProfileCard />
-          <FinancialSummary />
+          {(roleId === 1 || roleId === 2) &&
+          <FinancialSummary />}
         </div>
 
         {/* Second Column */}
         <div className="col-span-1 lg:col-span-2">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {(roleId === 1 || roleId === 2) &&
             <InfoCard 
               title="Total Properties" 
               value={propertiesCount} 
@@ -399,7 +401,8 @@ const Dashboard = () => {
               iconColor="blue" 
               description="Your listed properties"
               trend={{ value: 12, period: 'this month' }}
-            />
+            />}
+            {(roleId === 1 || roleId === 2) &&
             <InfoCard 
               title="Total Vehicles" 
               value={carsCount} 
@@ -407,7 +410,7 @@ const Dashboard = () => {
               iconColor="purple" 
               description="Your listed vehicles"
               trend={{ value: 5, period: 'this month' }}
-            />
+            />}
             <InfoCard 
               title="Total Bookings" 
               value={totalBookingsCount} 
@@ -418,6 +421,7 @@ const Dashboard = () => {
             />
           </div>
 
+         {(roleId === 1 || roleId === 2) &&
           <div className="grid grid-cols-1 lg:grid-cols-2">
             <EarningsBreakdown />
             
@@ -431,7 +435,7 @@ const Dashboard = () => {
                       <XAxis dataKey="month" />
                       <YAxis />
                       <Tooltip 
-                        formatter={(value) => [`$${value.toFixed(2)}`, 'Amount']}
+                        formatter={(value) => [`${value.toFixed(2)}`, 'Amount']}
                       />
                       <Legend />
                       <Line 
@@ -461,9 +465,10 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div>}
 
-          <RecentTransactions />
+          {(roleId === 1 || roleId === 2) &&
+          <RecentTransactions />}
         </div>
       </div>
     </Layout>

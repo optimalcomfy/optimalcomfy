@@ -122,7 +122,7 @@ class CarBookingController extends Controller
     public function show(CarBooking $carBooking)
     {
         return Inertia::render('CarBookings/Show', [
-            'carBooking' => $carBooking->load(['car', 'user']),
+            'carBooking' => $carBooking->load(['car', 'user', 'car.category','car.initialGallery','car.carFeatures.feature','car.user']),
         ]);
     }
 

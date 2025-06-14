@@ -3,47 +3,34 @@ import { useForm, usePage, Link } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import Select from 'react-select';
 
-const EditCarBooking = ({ booking }) => {
-  const { users, cars } = usePage().props; // Make sure 'cars' and 'users' are passed from backend
+const EditCarBooking = ({ carBooking }) => {
+  const { cars } = usePage().props; // Make sure 'cars' and 'users' are passed from backend
 
   const { data, setData, put, errors, processing } = useForm({
-    user_id: booking.user_id || '',
-    car_id: booking.car_id || '',
-    start_date: booking.start_date || '',
-    end_date: booking.end_date || '',
-    total_price: booking.total_price || '',
-    pickup_location: booking.pickup_location || '',
-    dropoff_location: booking.dropoff_location || '',
-    status: booking.status || 'pending',
-    special_requests: booking.special_requests || '',
+    user_id: carBooking.user_id || '',
+    car_id: carBooking.car_id || '',
+    start_date: carBooking.start_date || '',
+    end_date: carBooking.end_date || '',
+    total_price: carBooking.total_price || '',
+    pickup_location: carBooking.pickup_location || '',
+    dropoff_location: carBooking.dropoff_location || '',
+    status: carBooking.status || 'pending',
+    special_requests: carBooking.special_requests || '',
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    put(route('car-bookings.update', { booking: booking.id }));
+    put(route('car-bookings.update', { car_booking: carBooking.id }));
   };
 
-  const userOptions = users.map(user => ({ value: user.id, label: user.name }));
   const carOptions = cars.map(car => ({ value: car.id, label: car.name }));
 
   return (
     <Layout>
       <div className="max-w-2xl bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-3xl font-semibold mb-6">Edit Car Booking</h1>
+        <h1 className="text-3xl font-semibold mb-6">Edit Car carBooking</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-
-          {/* User Select */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">User</label>
-            <Select
-              options={userOptions}
-              value={userOptions.find(option => option.value === data.user_id)}
-              onChange={(selected) => setData('user_id', selected ? selected.value : '')}
-              placeholder="Select a user"
-            />
-            {errors.user_id && <div className="text-sm text-red-500 mt-1">{errors.user_id}</div>}
-          </div>
 
           {/* Car Select */}
           <div>
@@ -153,13 +140,13 @@ const EditCarBooking = ({ booking }) => {
             className="w-full mt-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
             disabled={processing}
           >
-            {processing ? 'Updating...' : 'Update Car Booking'}
+            {processing ? 'Updating...' : 'Update Car carBooking'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <Link href={route('car-bookings.index')} className="text-indigo-600 hover:text-indigo-800">
-            Back to Car Bookings
+            Back to Car car bookings
           </Link>
         </div>
       </div>

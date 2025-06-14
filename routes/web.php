@@ -107,7 +107,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('foodOrders', FoodOrderController::class);
 
     Route::resource('main-cars', CarController::class)->parameters([
-        'main-cars' => 'car', 
+        'main-cars' => 'car'
     ]);
 
     Route::resource('car-bookings', CarBookingController::class);

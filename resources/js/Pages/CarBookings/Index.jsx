@@ -77,12 +77,12 @@ const CarBookingsIndex = () => {
                     </span>
                   </td>
                   <td className="px-4 py-2 border flex space-x-2">
-                    <button 
-                      onClick={() => handleDelete(booking.id)} 
-                      className="text-red-600 hover:text-red-800"
+                    <Link 
+                      href={route('car-bookings.show', { car_booking: booking.id })} 
+                      className="text-green-600 hover:text-green-800 mr-2"
                     >
-                      Delete
-                    </button>
+                      View
+                    </Link>
                   </td>
                 </tr>
               ))}

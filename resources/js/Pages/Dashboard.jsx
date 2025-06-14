@@ -392,7 +392,7 @@ const Dashboard = () => {
 
         {/* Second Column */}
         <div className="col-span-1 lg:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 pt-2">
             {(roleId === 1 || roleId === 2) &&
             <InfoCard 
               title="Total Properties" 

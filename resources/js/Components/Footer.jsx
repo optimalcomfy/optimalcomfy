@@ -67,9 +67,9 @@ function Footer() {
                 <a
                   className="flex gap-2 items-center"
                   aria-label="footer__contact"
-                  href="tel:+12505550199"
+                  href="tel:+245741574797"
                 >
-                  <i className="flaticon-phone-flip" /> +12505550199
+                  <i className="flaticon-phone-flip" /> +245741574797
                 </a>
               </li>
               <li>

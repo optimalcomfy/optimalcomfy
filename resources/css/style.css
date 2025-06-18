@@ -1,5 +1,5 @@
 
-@import url("https://fonts.googleapis.com/css2?family=Gilda+Display&amp;family=Jost:ital,wght@0,100..900;1,100..900&amp;display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400..900;1,400..900&display=swap");
 .navigation__menu--item ul.submenu li a::before,
 .navigation__menu--item .sub__style li a::before {
   position: absolute;
@@ -2179,7 +2179,7 @@ body{
   font-family: "flaticon_Ristay", system-ui;
 }
 .font-glida{
-  font-family: "Gilda Display", system-ui;
+  font-family: "Figtree", system-ui;
 }
 .font-jost{
   font-family: "Jost", system-ui;
@@ -5337,7 +5337,7 @@ body{
   --color-twitch: #6441A3;
   --color-discord: #7289da;
   /* typhography */
-  --glida: "Gilda Display", serif;
+  --glida: "Figtree", serif;
   --jost: "Jost", sans-serif;
   --h1: 80px;
   --h2: 60px;

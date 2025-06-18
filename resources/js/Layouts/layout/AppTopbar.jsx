@@ -19,17 +19,17 @@ const AppTopbar = forwardRef((props, ref) => {
 
 
     return (
-        <div className="layout-topbar">
+        <div className="layout-topbar text-white">
             <Link href="/" className="layout-topbar-logo">
-                <img src={`/image/logo/logo.png`} height={'35px'} alt="logo" />
+                <img src={`/image/logo/logo2.png`} height={'35px'} alt="logo" />
             </Link>
 
-            <button ref={menubuttonRef} type="button" className="p-link layout-menu-button layout-topbar-button" onClick={onMenuToggle}>
+            <button ref={menubuttonRef} type="button" className="p-link text-white hover:text-[#0E3C46] layout-menu-button layout-topbar-button" onClick={onMenuToggle}>
                 <i className="pi pi-bars" />
             </button>
 
 
-            <button ref={topbarmenubuttonRef} type="button" className="p-link layout-topbar-menu-button layout-topbar-button" onClick={showProfileSidebar}>
+            <button ref={topbarmenubuttonRef} type="button" className="p-link text-white hover:text-[#0E3C46] layout-topbar-menu-button layout-topbar-button" onClick={showProfileSidebar}>
                 <i className="pi pi-user" />
             </button>
 

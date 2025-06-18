@@ -7,7 +7,7 @@ function Footer() {
     
   return (
     <>
-    <div className="relative  bg-[#f1f1f1] pt-[90px]">
+    <div className="relative  bg-[#0E3C46] text-white pt-[90px]">
       <div className="shape">
         <img
           className="absolute hidden md:block left-0 top-0"
@@ -31,13 +31,13 @@ function Footer() {
             <a href="index.html">
               <img
                 className="footer__logo max-w-[160px]"
-                src="/image/logo/logo.png"
+                src="/image/logo/logo2.png"
                 alt="footer logo"
               />
             </a>
           </div>
           <div className="rts__widget">
-            <span className="block text-[20px] heading text-heading capitalize mb-[20px]">
+            <span className="block text-[20px] heading text-[#F26722] capitalize mb-[20px]">
               quick links
             </span>
             <ul className="flex flex-col gap-[10px]">
@@ -59,7 +59,7 @@ function Footer() {
             </ul>
           </div>
           <div className="rts__widget">
-            <span className="block text-[20px] heading text-heading capitalize mb-[20px]">
+            <span className="block text-[20px] heading text-[#F26722] capitalize mb-[20px]">
               Contact Us
             </span>
             <ul className="flex flex-col gap-[10px]">

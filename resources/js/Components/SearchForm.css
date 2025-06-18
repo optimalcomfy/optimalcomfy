@@ -200,7 +200,7 @@ label.focused {
 }
 
 .desktop-search .search-button {
-  background: #ec8669;
+  background: #F26722;
   border: none;
   border-radius: 50%;
   width: 44px;
@@ -275,7 +275,7 @@ label.focused {
 }
 
 .search-trigger-icon {
-  color: #ec8669;
+  color: #F26722;
   flex-shrink: 0;
 }
 
@@ -410,7 +410,7 @@ label.focused {
 }
 
 .mobile-field-input:focus-within {
-  border-color: #ec8669;
+  border-color: #F26722;
   background: white;
   box-shadow: 0 0 0 2px rgba(255, 56, 92, 0.1);
 }
@@ -501,7 +501,7 @@ label.focused {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #ec8669;
+  background: #F26722;
   color: white;
   border: none;
   border-radius: 12px;

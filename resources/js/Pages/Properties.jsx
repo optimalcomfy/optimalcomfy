@@ -177,11 +177,11 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                                 }}
                                 icon={{
                                   path: "M-12,-24 L12,-24 L12,-8 C12,-3.58 8.42,0 4,0 L-4,0 C-8.42,0 -12,-3.58 -12,-8 L-12,-24 Z",
-                                  fillColor: selectedProperty === property.id ? '#ec8669' : 
-                                            hoveredProperty === property.id ? '#ec8669' : '#FFFFFF',
+                                  fillColor: selectedProperty === property.id ? '#F26722' : 
+                                            hoveredProperty === property.id ? '#F26722' : '#FFFFFF',
                                   fillOpacity: 1,
                                   strokeColor: selectedProperty === property.id || hoveredProperty === property.id ? 
-                                             '#ec8669' : '#B0B0B0',
+                                             '#F26722' : '#B0B0B0',
                                   strokeWeight: 2,
                                   scale: 1,
                                   anchor: { x: 0, y: 0 },
@@ -229,11 +229,11 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                             }}
                             icon={{
                               path: "M-20,-35 L20,-35 C25,-35 25,-25 20,-25 L4,-25 L0,0 L-4,-25 L-20,-25 C-25,-25 -25,-35 -20,-35 Z",
-                              fillColor: selectedProperty === property.id ? '#ec8669' : 
-                                        hoveredProperty === property.id ? '#ec8669' : '#FFFFFF',
+                              fillColor: selectedProperty === property.id ? '#F26722' : 
+                                        hoveredProperty === property.id ? '#F26722' : '#FFFFFF',
                               fillOpacity: 1,
                               strokeColor: selectedProperty === property.id || hoveredProperty === property.id ? 
-                                         '#ec8669' : '#DDDDDD',
+                                         '#F26722' : '#DDDDDD',
                               strokeWeight: 1.5,
                               scale: 1,
                               anchor: { x: 0, y: 0 },

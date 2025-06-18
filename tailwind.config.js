@@ -16,8 +16,8 @@ export default {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
             colors: {
-                peach: '#ec8669',
-                peachDark: '#d45736',
+                peach: '#F26722',
+                peachDark: '#EDEAE6',
             },
         },
     },

@@ -99,6 +99,16 @@ const ShowProperty = ({ property }) => {
               >
                 Map
               </button>
+              <button
+                onClick={() => setActiveTab("lock")}
+                className={`px-4 py-3 font-medium text-sm transition-colors duration-200 ${
+                  activeTab === "lock"
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
+                }`}
+              >
+                Lock box
+              </button>
             </nav>
           </div>
           
@@ -136,6 +146,39 @@ const ShowProperty = ({ property }) => {
                     <p className="text-gray-500 text-sm">Price per night</p>
                     <p className="text-4xl font-bold text-blue-600">KES {property.price_per_night}</p>
                     <p className="text-gray-500 text-sm mt-2">Exclusive of taxes and fees</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+
+          {activeTab === "lock" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <div className="bg-gray-50 p-6 rounded-lg">
+                  <h2 className="text-lg font-medium text-gray-700 mb-4">Lock box details</h2>
+                  <div className="space-y-3">
+                    <div className="flex justify-between border-b border-gray-200 pb-2 gap-4">
+                      <span className="text-gray-600">Wifi password</span>
+                      <span className="font-medium text-gray-800">{property.wifi_password}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-200 pb-2 gap-4">
+                      <span className="text-gray-600">Cook</span>
+                      <span className="font-medium text-gray-800">{property.cook}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-200 pb-2 gap-4">
+                      <span className="text-gray-600">Cleaner</span>
+                      <span className="font-medium text-gray-800">{property.cleaner}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-200 pb-2 gap-4">
+                      <span className="text-gray-600">Emergency contact</span>
+                      <span className="font-medium text-gray-800">{property.emergency_contact}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-200 pb-2 gap-4">
+                      <span className="text-gray-600">Key location</span>
+                      <span className="font-medium text-gray-800">{property.key_location}</span>
+                    </div>
                   </div>
                 </div>
               </div>

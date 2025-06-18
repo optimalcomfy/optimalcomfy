@@ -63,7 +63,7 @@ class PropertyController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    
+
     public function create()
     {
         $company = Company::first();
@@ -139,8 +139,11 @@ class PropertyController extends Controller
      */
     public function edit(Property $property)
     {
+        $company = Company::first();
+
         return Inertia::render('Properties/Edit', [
             'property' => $property,
+            'company'=> $company
         ]);
     }
 

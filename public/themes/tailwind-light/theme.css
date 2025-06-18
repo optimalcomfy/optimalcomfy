@@ -35,10 +35,10 @@
   --surface-900: #2f1d1a;
 
   /* Warm gray replacements */
-  --gray-50: #fff6f2;
-  --gray-100: #fbe9e3;
-  --gray-200: #f2d8d0;
-  --gray-300: #ddbfb3;
+  --gray-50: #ffffff;
+  --gray-100: #EDEAE6;
+  --gray-200: #f4f4f4;
+  --gray-300: #f4f4f4;
   --gray-400: #ba9d8f;
   --gray-500: #9d8074;
   --gray-600: #7d635a;
@@ -56,7 +56,7 @@
   --surface-section: #ffffff;
   --surface-card: #0E3C46;
   --surface-overlay: #EDEAE6;
-  --surface-border: #f2d8d0;
+  --surface-border: #f4f4f4;
   --surface-hover: #FFFFFF;
 
   /* Focus & highlight */

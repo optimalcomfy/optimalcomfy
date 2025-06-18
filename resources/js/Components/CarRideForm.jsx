@@ -78,7 +78,7 @@ const CarRideForm = ({ car }) => {
               <div className="border-r border-gray-300 dark:border-gray-600 p-3">
                 <div className="flex flex-col">
                   <label htmlFor="check_in_date" className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    Check-In
+                    PICKUP DATE
                   </label>
                   <input
                     type="date"
@@ -98,7 +98,7 @@ const CarRideForm = ({ car }) => {
               <div className="p-3">
                 <div className="flex flex-col">
                   <label htmlFor="check_out_date" className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    Checkout
+                    DROP OFF DATE
                   </label>
                   <input
                     type="date"

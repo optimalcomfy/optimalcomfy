@@ -15,7 +15,7 @@ const DesktopSearchBar = ({ formData, handleChange, handleLocationSelect, handle
     <div className="bar" ref={suggestionRef}>
       {/* Location */}
       <div className="location relative">
-        <p className="field-label absolute text-xs">Where</p>
+        <p className="field-label absolute text-xs">Where to Ristay?</p>
         <input
           type="text"
           name="location"
@@ -131,7 +131,7 @@ const MobileSearchModal = ({
           <div className="relative w-full" ref={suggestionRef}>
             <label className="flex items-center gap-2 text-sm text-gray-700 mb-1">
               <MapPin size={18} />
-              <span>Where</span>
+              <span>Where to Ristay?</span>
             </label>
 
             <div className="relative">

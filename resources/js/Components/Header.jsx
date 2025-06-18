@@ -155,7 +155,9 @@ function Header() {
               </div>
             </div>
         </div>
-        
+        <div className='text-center'>
+            <h4>Let's ride and let's stay - <br /> the Ristay way </h4>
+        </div>
         {/* header menu */}
         <div className={`header-main ${isScrolled ? 'header-scrolled' : ''}`}>
             <div className="header-container">
@@ -227,6 +229,9 @@ function Header() {
                   </div>
                 </div>
             </div>
+            </div>
+            <div className='text-center text-xl text-black mb-2'>
+                <p>From Nairobi to Mombasa. Across Kenya - Just Ristay!</p>
             </div>
         </div>
     </div>

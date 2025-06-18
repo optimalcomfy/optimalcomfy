@@ -13,6 +13,7 @@ class Property extends Model
         'property_name',
         'type',
         'price_per_night',
+        'amount',
         'max_adults',
         'max_children',
         'status',

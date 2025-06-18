@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePropertyRequest;
 use App\Http\Requests\UpdatePropertyRequest;
 use App\Models\Property;
+use App\Models\Company;
 use App\Models\Amenity;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
@@ -62,9 +63,14 @@ class PropertyController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+    
     public function create()
     {
-        return Inertia::render('Properties/Create');
+        $company = Company::first();
+
+        return Inertia::render('Properties/Create', [
+            'company' => $company
+        ]);
     }
 
     /**

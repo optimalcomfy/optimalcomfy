@@ -40,6 +40,7 @@ class UpdateCarRequest extends FormRequest
             'exterior_color'    => 'nullable',
             'interior_color'    => 'nullable',
             'price_per_day'     => 'nullable',
+            'amount' => 'nullable',
             'description'       => 'nullable',
             'is_available'      => 'nullable',
             'location_address'  => 'nullable',

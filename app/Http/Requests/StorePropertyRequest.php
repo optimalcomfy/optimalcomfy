@@ -25,6 +25,7 @@ class StorePropertyRequest extends FormRequest
             'property_name' => 'nullable',
             'type' => 'nullable',
             'price_per_night' => 'nullable',
+            'amount' => 'nullable',
             'max_adults' => 'nullable',
             'max_children' => 'nullable',
             'status' => 'nullable',

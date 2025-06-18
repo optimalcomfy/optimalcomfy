@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "@inertiajs/react";
+import { useForm, usePage } from "@inertiajs/react";
 import Layout from "@/Layouts/layout/layout.jsx";
 import { Plus, Logs, MapPin, Star as StarIcon } from 'lucide-react'; // Optional icons
 
 const CreateProperty = ({ errors }) => {
-  const [previews, setPreviews] = useState([]);
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const { company } = usePage().props; 
 
   const { data, setData, post, processing } = useForm({
     property_name: "",

@@ -31,6 +31,7 @@ return new class extends Migration
             $table->string('exterior_color')->nullable();
             $table->string('interior_color')->nullable();
             $table->decimal('price_per_day', 10, 2);
+            $table->double('amount')->nullable()->after('price_per_day');
             $table->text('description')->nullable();
             $table->boolean('is_available')->default(true);
             $table->string('location_address')->nullable(); 

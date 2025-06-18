@@ -28,6 +28,7 @@ class Car extends Model
         'exterior_color',
         'interior_color',
         'price_per_day',
+        'amount',
         'description',
         'is_available',
         'location_address',

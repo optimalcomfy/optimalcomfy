@@ -26,13 +26,14 @@ class UpdatePropertyRequest extends FormRequest
             'type' => 'nullable',
             'gallery' => 'nullable',
             'price_per_night' => 'nullable',
+            'amount' => 'nullable',
             'max_adults' => 'nullable',
             'max_children' => 'nullable',
             'status' => 'nullable',
             'location' => 'nullable',
             'latitude' => 'nullable',
             'longitude' => 'nullable',
-            'user_id' => 'nullable'            
+            'user_id' => 'nullable'
         ];
     }
 }

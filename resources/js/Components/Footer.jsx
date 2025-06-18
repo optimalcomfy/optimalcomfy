@@ -28,13 +28,13 @@ function Footer() {
       <div className="container">
         <div className="grid sm:grid-cols-2 gap-[30px] lg:flex justify-between mb-[60px] relative z-[1] ">
           <div className="rts__widget">
-            <a href="index.html">
+            <Link href={route('home')}>
               <img
                 className="footer__logo max-w-[160px]"
                 src="/image/logo/logo2.png"
                 alt="footer logo"
               />
-            </a>
+            </Link>
           </div>
           <div className="rts__widget">
             <span className="block text-[20px] heading text-[#F26722] capitalize mb-[20px]">

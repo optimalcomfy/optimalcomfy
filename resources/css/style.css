@@ -5650,7 +5650,7 @@ select {
 .nice-select {
   width: 100%;
   height: auto;
-  font-size: inherit;
+  
   position: relative;
 }
 .nice-select.open::before {

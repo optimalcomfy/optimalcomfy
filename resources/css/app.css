@@ -32,3 +32,8 @@ body {
     line-height: 1.5rem;
     --tw-shadow: 0 0 #0000;
 }
+
+
+.rideH2 {
+  font-size: 2rem !important;
+}

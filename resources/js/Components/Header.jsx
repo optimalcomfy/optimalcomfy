@@ -156,7 +156,7 @@ function Header() {
             </div>
         </div>
         <div className='text-center'>
-            <h4>Let's ride and let's stay - <br /> the Ristay way </h4>
+            <h4 className='rideH2'>Let's ride and let's stay - <br /> the Ristay way </h4>
         </div>
         {/* header menu */}
         <div className={`header-main ${isScrolled ? 'header-scrolled' : ''}`}>

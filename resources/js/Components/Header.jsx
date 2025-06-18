@@ -230,7 +230,7 @@ function Header() {
                 </div>
             </div>
             </div>
-            <div className='text-center text-xl text-black mb-2'>
+            <div className={`text-center text-xl text-black mb-2 ${isScrolled ? 'hidden' : 'flex items-center justify-center'}`}>
                 <p>From Nairobi to Mombasa. Across Kenya - Just Ristay!</p>
             </div>
         </div>

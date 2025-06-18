@@ -14,7 +14,12 @@ return new class extends Migration
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
             $table->string('property_name')->unique();
-            $table->string('type');
+            $table->string('type')->nullable();
+            $table->string('wifi_password')->nullable();
+            $table->string('cook')->nullable();
+            $table->string('cleaner')->nullable();
+            $table->string('emergency_contact')->nullable();
+            $table->text('key_location')->nullable();
             $table->decimal('price_per_night', 10, 2);
             $table->integer('max_guests')->default(0);
             $table->integer('max_adults')->default(0);

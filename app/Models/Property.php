@@ -19,7 +19,12 @@ class Property extends Model
         'location',
         'latitude',
         'longitude',
-        'user_id'
+        'user_id',
+        'wifi_password',
+        'cook',
+        'cleaner',
+        'emergency_contact',
+        'key_location'
     ];
 
     protected $casts = [

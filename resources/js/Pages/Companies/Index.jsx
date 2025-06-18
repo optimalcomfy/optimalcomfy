@@ -124,52 +124,8 @@ const Index = () => {
         `}>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <h1 className="text-2xl font-semibold text-gray-900 w-full sm:w-auto my-auto">
-              Companies Directory
+              Ristay information
             </h1>
-            
-            <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">
-              <Link
-                href={route('companies.create')}
-                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-              >
-                <Plus className="w-4 h-4 mr-2 my-auto" />
-                <span className='my-auto'>
-                Create
-                </span>
-              </Link>
-              <button
-                onClick={generatePDF}
-                disabled={companies.length === 0}
-                className="flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
-              >
-                <FileText className="w-4 h-4 mr-2 my-auto" />
-                <span className='my-auto'>
-                  PDF
-                </span>
-              </button>
-              <button
-                onClick={generateExcel}
-                disabled={companies.length === 0}
-                className="inline-flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
-              >
-                <FileSpreadsheet className="w-4 h-4 mr-2 my-auto" />
-                <span className='my-auto'>
-                  Excel
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {/* Search Input */}
-          <div className="mt-4">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-peach"
-              placeholder="Search companies..."
-            />
-            {loading && <p className="text-sm text-gray-500 mt-2">Searching...</p>}
           </div>
         </div>
 
@@ -188,7 +144,7 @@ const Index = () => {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase">Address</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase">Email</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase">Phone</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase">Loan percentage</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase">Platform rate</th>
                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-600 uppercase">Actions</th>
               </tr>
             </thead>
@@ -200,7 +156,7 @@ const Index = () => {
                     <td className="px-6 py-4">{company.address}</td>
                     <td className="px-6 py-4">{company.email}</td>
                     <td className="px-6 py-4">{company.phone}</td>
-                    <td className="px-6 py-4">{company.percentage}</td>
+                    <td className="px-6 py-4">{company.percentage}%</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <Link 
@@ -215,12 +171,6 @@ const Index = () => {
                         >
                           <span className="my-auto px-4 py-2">Edit</span>
                         </Link>
-                        <button
-                          onClick={() => handleDelete(company.id)}
-                          className="flex items-center cursor-pointer bg-red-600 text-white rounded-lg text-xs hover:bg-red-700"
-                        >
-                         <span className="my-auto px-4 py-2">Delete</span> 
-                        </button>
                       </div>
                     </td>
                   </tr>

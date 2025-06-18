@@ -40,6 +40,12 @@ const AppMenu = () => {
                 // { label: 'Reviews', icon: 'pi pi-fw pi-star', to: route('reviews.index'), roles: [1, 2, 3] },
             ]
         },
+        {
+            label: 'Settings',
+            items: [
+                { label: 'Company', icon: 'pi pi-fw pi-briefcase', to: route('companies.index'), roles: [1] }
+            ]
+        },
     ];    
 
     const filteredModel = model.map(section => ({

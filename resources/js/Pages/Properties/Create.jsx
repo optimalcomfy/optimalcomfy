@@ -30,7 +30,7 @@ const CreateProperty = ({ errors }) => {
     if (data.amount && company.percentage) {
       const amount = parseFloat(data.amount);
       const platformFee = amount * (company.percentage / 100);
-      const earnings = amount - platformFee;
+      const earnings = amount + platformFee;
       setHostEarnings(earnings);
       setData('price_per_night', earnings.toFixed(2));
     } else {
@@ -199,7 +199,7 @@ const CreateProperty = ({ errors }) => {
                 </div>
                 <div className="flex justify-between text-sm font-medium text-gray-800">
                   <span>You'll receive:</span>
-                  <span className="text-green-600">KES {hostEarnings.toFixed(2)}</span>
+                  <span className="text-green-600">KES {data.amount}</span>
                 </div>
               </div>
 

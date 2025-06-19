@@ -16,7 +16,7 @@ const EditProperty = ({ property, errors }) => {
   const { data, setData, processing } = useForm({
     property_name: property.property_name,
     type: property.type,
-    amount: property.amount || property.price_per_night / (1 - company.percentage / 100), // Calculate original amount
+    amount: property.amount, // Calculate original amount
     price_per_night: property.price_per_night,
     max_adults: property.max_adults,
     max_children: property.max_children,
@@ -34,7 +34,7 @@ const EditProperty = ({ property, errors }) => {
     if (data.amount && company.percentage) {
       const amount = parseFloat(data.amount);
       const platformFee = amount * (company.percentage / 100);
-      const earnings = amount - platformFee;
+      const earnings = amount + platformFee;
       setHostEarnings(earnings);
       setData('price_per_night', earnings.toFixed(2));
     } else {
@@ -202,7 +202,7 @@ const EditProperty = ({ property, errors }) => {
                 </div>
                 <div className="flex justify-between text-sm font-medium text-gray-800">
                   <span>You'll receive:</span>
-                  <span className="text-green-600">KES {hostEarnings.toFixed(2)}</span>
+                  <span className="text-green-600">KES {data.amount}</span>
                 </div>
               </div>
 

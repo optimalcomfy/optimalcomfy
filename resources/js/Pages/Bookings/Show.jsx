@@ -133,6 +133,35 @@ const BookingShow = () => {
                 </div>
               </div>
             </div>
+
+            {/* Host details */}
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
+                <FaHome className="inline mr-2" /> Lock box details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Wifi password</p>
+                  <p className="font-medium">{booking.property.wifi_password}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Cook</p>
+                  <p className="font-medium">{booking.property.cook}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Cleaner</p>
+                  <p className="font-medium">{booking.property.cleaner}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Emergency contact</p>
+                  <p className="font-medium">{booking.property.emergency_contact}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Key location</p>
+                  <p className="font-medium">{booking.property.key_location}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Right column - Payment summary */}

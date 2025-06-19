@@ -53,6 +53,8 @@ class MpesaService
                 'ResultURL' => $resultUrlWithLoanId, 
                 'Occasion' => 'LoanID_' . $loanId,
             ]);
+
+        Log::info('B2c here:', ['response' => $response]);
     
         return $response->json();
     }

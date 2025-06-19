@@ -191,10 +191,10 @@ const Index = () => {
               {notifications.length > 0 ? (
                 notifications.map((notification) => (
                   <tr key={notification.id}>
-                                        <td className="px-6 py-4 whitespace-nowrap">{notification.user?.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{notification.message}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{notification.is_read}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                                        <td className="px-6 py-4 whitespace-wrap">{notification.user?.name}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{notification.message}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{notification.is_read}</td>
+                    <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
                         <Link
                           href={route('notifications.edit', notification.id)}

@@ -54,7 +54,7 @@ const Product = (props) => {
       <Link
        href={route('property-detail', { id: id })}
        className="grid grid-cols-[minmax(0,1fr),max-content] gap-[2px_8px] mt-3 text-[.9375rem] leading-[19px] px-2">
-        <div className="font-bold whitespace-nowrap overflow-hidden text-ellipsis">
+        <div className="font-bold whitespace-wrap overflow-hidden text-ellipsis">
           {property_name} in {location}
         </div>
         <div className="mt-[6px] col-span-2">

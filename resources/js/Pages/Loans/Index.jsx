@@ -269,15 +269,15 @@ const Index = () => {
                         onChange={() => handleSelectLoan(loan.id)}
                       />
                     </td>}
-                    <td className="px-6 py-4 whitespace-nowrap">{loan.number}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{loan.number}</td>
                     {roleId !== 3 &&
-                    <td className="px-6 py-4 whitespace-nowrap">{loan.employee?.user?.name}</td>}
-                    <td className="px-6 py-4 whitespace-nowrap">{loan.amount}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{loan.eventualPay}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{loan.currentBalance}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{loan.status}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{loan.loan_provider?.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-6 py-4 whitespace-wrap">{loan.employee?.user?.name}</td>}
+                    <td className="px-6 py-4 whitespace-wrap">{loan.amount}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{loan.eventualPay}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{loan.currentBalance}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{loan.status}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{loan.loan_provider?.name}</td>
+                    <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
                         <Link
                           href={route('loans.show', loan.id)}

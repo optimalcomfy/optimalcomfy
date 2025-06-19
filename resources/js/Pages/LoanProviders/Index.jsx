@@ -69,10 +69,10 @@ const Index = () => {
               {filteredLoanProviders.length > 0 ? (
                 filteredLoanProviders.map((loanProvider) => (
                   <tr key={loanProvider.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">{loanProvider.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{loanProvider.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{loanProvider.phone}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-6 py-4 whitespace-wrap">{loanProvider.name}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{loanProvider.email}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{loanProvider.phone}</td>
+                    <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
                         <Link
                           href={route('loanProviders.show', loanProvider.id)}

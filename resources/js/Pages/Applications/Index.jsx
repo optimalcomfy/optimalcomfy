@@ -183,12 +183,12 @@ const Index = () => {
               {applications.length > 0 ? (
                 applications.map((application) => (
                   <tr key={application.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">{application.user?.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{application.user?.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{application.user?.phone}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{application.job?.title}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{application.job?.location}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-6 py-4 whitespace-wrap">{application.user?.name}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{application.user?.email}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{application.user?.phone}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{application.job?.title}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{application.job?.location}</td>
+                    <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
                         <Link
                           href={route('jobs.show', application.job?.id)}

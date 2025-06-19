@@ -187,11 +187,11 @@ const Index = () => {
               {users.length > 0 ? (
                 users.map((user) => (
                   <tr key={user.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{user.phone}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-6 py-4 whitespace-wrap">{user.name}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{user.phone}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
                         <Link
                           href={route('users.show', user.id)}

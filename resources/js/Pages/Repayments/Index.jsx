@@ -197,12 +197,12 @@ const Index = () => {
               {repayments.length > 0 ? (
                 repayments.map((repayment) => (
                   <tr key={repayment.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">{repayment.number}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{repayment?.loan?.employee?.user?.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{repayment?.loan?.employee?.company?.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{repayment?.loan?.amount}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{repayment.amount}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-6 py-4 whitespace-wrap">{repayment.number}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{repayment?.loan?.employee?.user?.name}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{repayment?.loan?.employee?.company?.name}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{repayment?.loan?.amount}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{repayment.amount}</td>
+                    <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
                         <Link
                           href={route('repayments.show', repayment.id)}

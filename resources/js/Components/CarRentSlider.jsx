@@ -55,7 +55,7 @@ const CarRentSlider = ({ children, className }) => {
       <div
         ref={slider}
         onScroll={handleWheel}
-        className={`flex hide-scrollbar overflow-x-scroll scroll-hidden whitespace-nowrap ${className}`}
+        className={`flex hide-scrollbar overflow-x-scroll scroll-hidden whitespace-wrap ${className}`}
       >
         {children}
       </div>

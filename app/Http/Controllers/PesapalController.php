@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use Auth;
 use App\Mail\BookingConfirmation;
+use App\Mail\CarBookingConfirmation;
 use Illuminate\Support\Facades\Mail;
 
 class PesapalController extends Controller
@@ -109,11 +110,20 @@ class PesapalController extends Controller
             );
 
             try {
-                $bookingWithRelations = Booking::with(['user', 'property', 'payments'])
+                if($booking_type == 'property') {
+                    $propertyBookingWithRelations = Booking::with(['user', 'property', 'payments'])
+                                                ->find($booking_id);
+                    
+                    Mail::to($propertyBookingWithRelations->user->email)
+                    ->send(new BookingConfirmation($propertyBookingWithRelations));
+                }
+                else {
+                    $carBookingWithRelations = Booking::with(['user', 'car'])
                                             ->find($booking_id);
                 
-                Mail::to($bookingWithRelations->user->email)
-                    ->send(new BookingConfirmation($bookingWithRelations));
+                    Mail::to($carBookingWithRelations->user->email)
+                    ->send(new CarBookingConfirmation($carBookingWithRelations));
+                }
                     
                 \Log::info('Booking confirmation email sent for booking ID: ' . $booking_id);
                 

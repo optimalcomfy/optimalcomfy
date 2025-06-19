@@ -141,7 +141,7 @@
         
         <div class="info-row">
             <span class="info-label">Total Amount:</span>
-            <span class="amount">${{ number_format($booking->total_price, 2) }}</span>
+            <span class="amount">{{ number_format($booking->total_price, 2) }}</span>
         </div>
         
         @if($payment)

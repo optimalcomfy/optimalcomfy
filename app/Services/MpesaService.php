@@ -26,7 +26,7 @@ class MpesaService
         Log::info('M-Pesa Token Response:', ['response' => $response->body()]);
     
         return $response->json()['access_token'] ?? null;
-    }    
+    }
 
     public function sendB2CPayment($phone, $amount, $loanId = null)
     {

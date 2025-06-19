@@ -117,7 +117,7 @@ class WithdrawalController extends Controller
     
                 Log::info('data: ', $data);
     
-                if ($resultCode == 0) {
+                if ($resultCode == 0 || $resultCode == '0') {
                     $repayment->update(['status' => 'Approved']);
 
                     $repayment->refresh()->load(['user']);

@@ -33,7 +33,12 @@ class UpdatePropertyRequest extends FormRequest
             'location' => 'nullable',
             'latitude' => 'nullable',
             'longitude' => 'nullable',
-            'user_id' => 'nullable'
+            'user_id' => 'nullable',
+            'wifi_password' => 'nullable',
+            'cook' => 'nullable',
+            'cleaner' => 'nullable',
+            'emergency_contact' => 'nullable',
+            'key_location' => 'nullable'
         ];
     }
 }

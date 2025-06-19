@@ -8,6 +8,8 @@ use App\Models\Payment;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use Auth;
+use App\Mail\BookingConfirmation;
+use Illuminate\Support\Facades\Mail;
 
 class PesapalController extends Controller
 {
@@ -105,6 +107,19 @@ class PesapalController extends Controller
                     'booking_type' => $booking_type
                 ]
             );
+
+            try {
+                $bookingWithRelations = Booking::with(['user', 'property', 'payments'])
+                                            ->find($booking_id);
+                
+                Mail::to($bookingWithRelations->user->email)
+                    ->send(new BookingConfirmation($bookingWithRelations));
+                    
+                \Log::info('Booking confirmation email sent for booking ID: ' . $booking_id);
+                
+            } catch (\Exception $e) {
+                \Log::error('Failed to send booking confirmation email: ' . $e->getMessage());
+            }
 
             return redirect()->route('bookings.success')->with('message', 'Booking payment verified!');
         } else {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\User;
 use App\Models\CarBooking;
 use App\Models\Payment;
 use Illuminate\Http\Request;
@@ -118,11 +119,13 @@ class PesapalController extends Controller
                     ->send(new BookingConfirmation($propertyBookingWithRelations));
                 }
                 else {
-                    $carBookingWithRelations = Booking::with(['user', 'car'])
+                    $carBookingWithRelations = Booking::with(['car'])
                                             ->find($booking_id);
+
+                    $user  = User::find($user_id);
                 
-                    Mail::to($carBookingWithRelations->user->email)
-                    ->send(new CarBookingConfirmation($carBookingWithRelations));
+                    Mail::to($user->email)
+                    ->send(new CarBookingConfirmation($carBookingWithRelations, $user));
                 }
                     
                 \Log::info('Booking confirmation email sent for booking ID: ' . $booking_id);

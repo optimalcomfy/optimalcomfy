@@ -5,7 +5,7 @@ import Select from 'react-select';
 import { Plus, Logs, MapPin, Star as StarIcon } from 'lucide-react';
 
 const CreateCar = () => {
-  const { categories, features } = usePage().props;
+  const { categories, features, company } = usePage().props;
 
   const { data, setData, post, errors, processing } = useForm({
     car_category_id: '',
@@ -25,6 +25,7 @@ const CreateCar = () => {
     fuel_economy: '',
     exterior_color: '',
     interior_color: '',
+    host_earnings: '',
     price_per_day: '',
     description: '',
     is_available: true,
@@ -37,6 +38,18 @@ const CreateCar = () => {
   const [locationAddressSuggestions, setlocationAddressSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [step, setStep] = useState(1);
+
+  // Calculate prices whenever host_earnings changes
+  useEffect(() => {
+    if (data.host_earnings && company.percentage) {
+      const earnings = parseFloat(data.host_earnings);
+      const platformFee = earnings * (company.percentage / 100);
+      const customerPrice = earnings + platformFee;
+      setData('price_per_day', customerPrice.toFixed(2));
+    } else {
+      setData('price_per_day', "");
+    }
+  }, [data.host_earnings, company.percentage]);
 
   const categoryOptions = categories.map(category => ({
     value: category.id, label: category.name
@@ -134,7 +147,7 @@ const CreateCar = () => {
                 {errors.model && <p className="text-red-500 text-sm">{errors.model}</p>}
               </div>
               <div className="flex justify-end">
-                <button type="button" onClick={nextStep} className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                <button type="button" onClick={nextStep} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                   Next
                 </button>
               </div>
@@ -146,25 +159,24 @@ const CreateCar = () => {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
-                  ['Year', 'year'],
-                  ['Mileage', 'mileage'],
-                  ['Body Type', 'body_type'],
-                  ['Seats', 'seats'],
-                  ['Doors', 'doors'],
-                  ['Luggage Capacity', 'luggage_capacity'],
-                  ['Fuel Type', 'fuel_type'],
-                  ['Engine Capacity', 'engine_capacity'],
-                  ['Transmission', 'transmission'],
-                  ['Drive Type', 'drive_type'],
-                  ['Fuel Economy', 'fuel_economy'],
-                  ['Exterior Color', 'exterior_color'],
-                  ['Interior Color', 'interior_color'],
-                  ['Price Per Day', 'price_per_day'],
-                ].map(([label, key]) => (
+                  ['Year', 'year', 'number'],
+                  ['Mileage', 'mileage', 'number'],
+                  ['Body Type', 'body_type', 'text'],
+                  ['Seats', 'seats', 'number'],
+                  ['Doors', 'doors', 'number'],
+                  ['Luggage Capacity', 'luggage_capacity', 'number'],
+                  ['Fuel Type', 'fuel_type', 'text'],
+                  ['Engine Capacity', 'engine_capacity', 'number'],
+                  ['Transmission', 'transmission', 'text'],
+                  ['Drive Type', 'drive_type', 'text'],
+                  ['Fuel Economy', 'fuel_economy', 'text'],
+                  ['Exterior Color', 'exterior_color', 'text'],
+                  ['Interior Color', 'interior_color', 'text'],
+                ].map(([label, key, type]) => (
                   <div className="min-w-full" key={key}>
                     <label className="block text-sm font-medium">{label}</label>
                     <input
-                      type={['year', 'mileage', 'seats', 'doors', 'luggage_capacity', 'engine_capacity', 'price_per_day'].includes(key) ? 'number' : 'text'}
+                      type={type}
                       className="w-full border rounded-md px-3 py-2"
                       value={data[key]}
                       onChange={e => setData(key, e.target.value)}
@@ -173,26 +185,69 @@ const CreateCar = () => {
                     {errors[key] && <p className="text-red-500 text-sm">{errors[key]}</p>}
                   </div>
                 ))}
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Description</label>
-                <textarea
-                  className="w-full border rounded-md px-3 py-2"
-                  value={data.description}
-                  onChange={e => setData('description', e.target.value)}
-                  placeholder="Enter description"
-                  rows="4"
-                />
-                {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+
+                {/* Pricing Section */}
+                <div className="md:col-span-2 bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-medium text-gray-800 mb-3">Pricing Details</h3>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Desired Earnings (KES)</label>
+                    <input
+                      type="number"
+                      value={data.host_earnings}
+                      onChange={(e) => setData("host_earnings", e.target.value)}
+                      className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter your desired earnings per day"
+                    />
+                    {errors.host_earnings && <p className="text-red-500 text-sm mt-1">{errors.host_earnings}</p>}
+                  </div>
+
+                  <div className="bg-white p-3 rounded-md border border-gray-200 mb-4">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">Platform fee ({company.percentage}%)</span>
+                      <span className="font-medium">
+                        {data.host_earnings ? `KES ${(data.host_earnings * (company.percentage / 100)).toFixed(2)}` : 'KES 0.00'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm font-medium text-gray-800">
+                      <span>You'll receive:</span>
+                      <span className="text-green-600">KES {data.host_earnings || '0.00'}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer Price (KES)</label>
+                    <input
+                      type="number"
+                      value={data.price_per_day}
+                      readOnly
+                      className="w-full border border-gray-300 bg-gray-100 px-4 py-2 rounded-lg cursor-not-allowed"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">This is the price customers will pay per day after platform fees</p>
+                    {errors.price_per_day && <p className="text-red-500 text-sm mt-1">{errors.price_per_day}</p>}
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium">Description</label>
+                  <textarea
+                    className="w-full border rounded-md px-3 py-2"
+                    value={data.description}
+                    onChange={e => setData('description', e.target.value)}
+                    placeholder="Enter description"
+                    rows="4"
+                  />
+                  {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+                </div>
               </div>
               <div className="flex justify-between mt-4">
                 <button type="button" onClick={prevStep} className="bg-gray-300 px-4 py-2 rounded">Previous</button>
-                <button type="button" onClick={nextStep} className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Next</button>
+                <button type="button" onClick={nextStep} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Next</button>
               </div>
             </>
           )}
 
-          {/* Step 3: Location_address & Availability */}
+          {/* Step 3: Location & Availability */}
           {step === 3 && (
             <>
               <div className="relative">
@@ -252,7 +307,7 @@ const CreateCar = () => {
         </form>
 
         <div className="mt-6 text-center">
-          <Link href={route('main-cars.index')} className="text-indigo-600 hover:text-indigo-800">
+          <Link href={route('main-cars.index')} className="text-blue-600 hover:text-blue-800">
             Back to Rides List
           </Link>
         </div>

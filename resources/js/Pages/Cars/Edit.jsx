@@ -19,8 +19,9 @@ import {
 import Layout from "@/Layouts/layout/layout.jsx";
 import './Edit.css'; // Import custom CSS
 
-const EditCar = ({ car, categories }) => {
+const EditCar = ({ car, categories, company }) => {
   const { data, setData, post, errors, processing } = useForm({
+    _method: 'PUT',
     car_category_id: car.car_category_id || '',
     name: car.name || '',
     brand: car.brand || '',
@@ -38,6 +39,7 @@ const EditCar = ({ car, categories }) => {
     fuel_economy: car.fuel_economy || '',
     exterior_color: car.exterior_color || '',
     interior_color: car.interior_color || '',
+    host_earnings: car.host_earnings || '',
     price_per_day: car.price_per_day || '',
     description: car.description || '',
     is_available: car.is_available || false,
@@ -49,9 +51,30 @@ const EditCar = ({ car, categories }) => {
   const [locationAddressSuggestions, setlocationAddressSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
+  // Calculate prices whenever host_earnings changes
+  useEffect(() => {
+    if (data.host_earnings && company?.percentage) {
+      const earnings = parseFloat(data.host_earnings);
+      const platformFee = earnings * (company.percentage / 100);
+      const customerPrice = earnings + platformFee;
+      setData('price_per_day', customerPrice.toFixed(2));
+    } else if (!data.host_earnings) {
+      setData('price_per_day', "");
+    }
+  }, [data.host_earnings, company?.percentage]);
+
+  // Calculate host earnings from existing price_per_day when component mounts
+  useEffect(() => {
+    if (car.price_per_day && company?.percentage && !car.host_earnings) {
+      const customerPrice = parseFloat(car.price_per_day);
+      const hostEarnings = customerPrice / (1 + (company.percentage / 100));
+      setData('host_earnings', hostEarnings.toFixed(2));
+    }
+  }, [car.price_per_day, company?.percentage, car.host_earnings]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    post(route('cars.update', car.id));
+    post(route('main-cars.update', car.id));
   };
 
   const carCategoryOptions = categories.map((category) => ({
@@ -228,33 +251,76 @@ const EditCar = ({ car, categories }) => {
                   <DollarSign className="section-icon" />
                   Pricing and Availability
                 </h3>
-                <div className="form-grid-2">
-                  <InputField 
-                    label="Price Per Day" 
-                    name="price_per_day" 
-                    icon={DollarSign}
-                    placeholder="0.00"
-                  />
-                  
+                
+                {/* Pricing Details Section */}
+                <div className="pricing-section">
                   <div className="form-field">
                     <label className="form-label">
-                      <Info className="form-field-icon" />
-                      Availability Status
+                      <DollarSign className="form-field-icon" />
+                      Your Desired Earnings (KES)
                     </label>
-                    <div className="checkbox-wrapper">
-                      <label className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={data.is_available}
-                          onChange={(e) => setData('is_available', e.target.checked)}
-                          className="checkbox-input"
-                        />
-                        <span className="checkbox-text">
-                          {data.is_available ? 'Available for Rent' : 'Not Available'}
+                    <input
+                      type="number"
+                      value={data.host_earnings}
+                      onChange={(e) => setData("host_earnings", e.target.value)}
+                      className="form-input"
+                      placeholder="Enter your desired earnings per day"
+                    />
+                    {errors.host_earnings && <div className="form-error">{errors.host_earnings}</div>}
+                  </div>
+
+                  {company?.percentage && (
+                    <div className="pricing-breakdown">
+                      <div className="pricing-item">
+                        <span className="pricing-label">Platform fee ({company.percentage}%)</span>
+                        <span className="pricing-value">
+                          {data.host_earnings ? `KES ${(data.host_earnings * (company.percentage / 100)).toFixed(2)}` : 'KES 0.00'}
                         </span>
-                      </label>
-                      {errors.is_available && <div className="form-error">{errors.is_available}</div>}
+                      </div>
+                      <div className="pricing-item earnings">
+                        <span className="pricing-label">You'll receive:</span>
+                        <span className="pricing-value earnings-value">KES {data.host_earnings || '0.00'}</span>
+                      </div>
                     </div>
+                  )}
+
+                  <div className="form-field">
+                    <label className="form-label">
+                      <DollarSign className="form-field-icon" />
+                      Customer Price (KES)
+                    </label>
+                    <input
+                      type="number"
+                      value={data.price_per_day}
+                      readOnly
+                      className="form-input readonly-input"
+                      placeholder="0.00"
+                    />
+                    <div className="field-help-text">
+                      This is the price customers will pay per day after platform fees
+                    </div>
+                    {errors.price_per_day && <div className="form-error">{errors.price_per_day}</div>}
+                  </div>
+                </div>
+                
+                <div className="form-field">
+                  <label className="form-label">
+                    <Info className="form-field-icon" />
+                    Availability Status
+                  </label>
+                  <div className="checkbox-wrapper">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={data.is_available}
+                        onChange={(e) => setData('is_available', e.target.checked)}
+                        className="checkbox-input"
+                      />
+                      <span className="checkbox-text">
+                        {data.is_available ? 'Available for Rent' : 'Not Available'}
+                      </span>
+                    </label>
+                    {errors.is_available && <div className="form-error">{errors.is_available}</div>}
                   </div>
                 </div>
               </div>

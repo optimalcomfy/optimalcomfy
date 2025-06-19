@@ -6,6 +6,7 @@ use App\Http\Requests\StoreCarRequest;
 use App\Http\Requests\UpdateCarRequest;
 use App\Models\CarCategory;
 use App\Models\Car;
+use App\Models\Company;
 use App\Models\CarFeature;
 use App\Models\Feature;
 use Inertia\Inertia;
@@ -71,16 +72,19 @@ class CarController extends Controller
     {
        $categories = CarCategory::all();
        $features = Feature::all();
+       $company = Company::first();
 
         return Inertia::render('Cars/Create', [
             'categories' => $categories,
-            'features'=> $features
+            'features'=> $features,
+            'company'=> $company
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
+    
     public function store(StoreCarRequest $request)
     {
         $validated = $request->validated();
@@ -111,6 +115,7 @@ class CarController extends Controller
     /**
      * Display the specified resource.
      */
+    
     public function show(Car $car)
     {
 
@@ -127,15 +132,18 @@ class CarController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
+
     public function edit(Car $car)
     {
         $features = Feature::all();
         $categories = CarCategory::all();
+        $company = Company::first();
 
         return Inertia::render('Cars/Edit', [
             'car' => $car,
             'features'=> $features,
-            'categories'=>$categories
+            'categories'=>$categories,
+            'company'=> $company
         ]);
     }
 

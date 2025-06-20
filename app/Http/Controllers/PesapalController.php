@@ -119,13 +119,11 @@ class PesapalController extends Controller
                     ->send(new BookingConfirmation($propertyBookingWithRelations));
                 }
                 else {
-                    $carBookingWithRelations = Booking::with(['car'])
-                                            ->find($booking_id);
 
                     $user  = User::find($user_id);
                 
                     Mail::to($user->email)
-                    ->send(new CarBookingConfirmation($carBookingWithRelations, $user));
+                    ->send(new CarBookingConfirmation($booking, $user));
                 }
                     
                 \Log::info('Booking confirmation email sent for booking ID: ' . $booking_id);
@@ -143,11 +141,12 @@ class PesapalController extends Controller
     private function resolveBooking($type, $id)
     {
         return match ($type) {
-            'car' => CarBooking::find($id),
+            'car' => CarBooking::with('car')->find($id),
             'property' => Booking::find($id),
             default => null,
         };
     }
+
 
     public function getTransactionStatus($orderTrackingId)
     {

@@ -61,7 +61,7 @@ const CarRideForm = ({ car }) => {
   const subtotal = data.days > 0 ? (car.price_per_day || 0) * data.days : 0;
 
   return (
-    <div className="sticky-content--container">
+    <div className="mt-2 lg:sticky-content--container">
       <div className="sticky-content">
         <div className="sticky-card bg-white dark:bg-[#2D2D2D] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6">
           {/* Price and Rating Section */}

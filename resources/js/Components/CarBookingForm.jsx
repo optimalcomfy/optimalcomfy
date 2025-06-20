@@ -146,7 +146,7 @@ const CarBookingForm = () => {
 
   return (
     <div className="w-full p-4 bg-gray-50 min-h-screen">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 justify-center gap-6">
         
         {/* Left Column - Booking Form */}
         <div className="lg:col-span-2">

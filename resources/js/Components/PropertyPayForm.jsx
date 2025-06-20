@@ -281,7 +281,7 @@ const PropertyBookingForm = () => {
           <h1 className="text-2xl font-semibold">Request to book</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 justify-center lg:grid-cols-2 gap-8">
           
           {/* Left Column - Booking Form */}
           <div className="space-y-6">

@@ -117,16 +117,16 @@ const MobileSearchModal = ({
     <div className="modal-overlay" onClick={closeModal}></div>
     <div className="modal-content" ref={modalRef}>
       {/* Modal Header */}
-      <div className="modal-header">
-        <button className="modal-close-btn" onClick={closeModal}>
-          <X size={24} />
+      <div className="modal-header flex justify-between my-2">
+        <h2 className="modal-title text-xl">Search Properties</h2>
+        <button className="modal-close-btn flex items-center bg-[#f37e5d] rounded-md px-2 py-1" onClick={closeModal}>
+          <X size={24} /> close
         </button>
-        <h2 className="modal-title">Search Properties</h2>
       </div>
 
       {/* Modal Body */}
       <div className="modal-body">
-        <div className="mobile-search-fields">
+        <div className="mobile-search-fields flex flex-col gap-2">
           {/* Location Field */}
           <div className="relative w-full" ref={suggestionRef}>
             <label className="flex items-center gap-2 text-sm text-gray-700 mb-1">
@@ -182,24 +182,24 @@ const MobileSearchModal = ({
           <div className="mobile-field-group">
             <label className="mobile-field-label"><Calendar size={20} /><span>Check in</span></label>
             <div className="mobile-field-input">
-              <input type="date" name="checkIn" value={formData.checkIn} onChange={handleChange} min={new Date().toISOString().split("T")[0]} className='formForm' />
+              <input type="date" name="checkIn" value={formData.checkIn} onChange={handleChange} min={new Date().toISOString().split("T")[0]} className='rounded-md' />
             </div>
           </div>
           <div className="mobile-field-group">
             <label className="mobile-field-label"><Calendar size={20} /><span>Check out</span></label>
             <div className="mobile-field-input">
-              <input type="date" name="checkOut" value={formData.checkOut} onChange={handleChange} min={formData.checkIn} className='formForm' />
+              <input type="date" name="checkOut" value={formData.checkOut} onChange={handleChange} min={formData.checkIn} className='rounded-md' />
             </div>
           </div>
         </div>
       </div>
 
       {/* Modal Footer */}
-      <div className="modal-footer gap-8">
-        <button className="modal-clear-btn" onClick={() => setFormData({ location: '', checkIn: '', checkOut: '', guests: '' })}>
+      <div className="modal-footer flex my-2 gap-8">
+        <button className="modal-clear-btn bg-[#f37e5d] px-4 py-1 rounded-md" onClick={() => setFormData({ location: '', checkIn: '', checkOut: '', guests: '' })}>
           Clear all
         </button>
-        <button className="modal-search-btn flex items-center gap-4" onClick={handleSubmit}>
+        <button className="modal-search-btn flex items-center gap-4 bg-[#0d3c46] text-white px-4 py-1 rounded-md" onClick={handleSubmit}>
           <Search size={20} />
           Search
         </button>

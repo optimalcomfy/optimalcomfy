@@ -2938,3 +2938,13 @@ border:2px solid #f85993;
 	}
 }
 /*--//responsive--*/
+
+button {
+  background-color: #d05337 !important;
+  color: white;
+  transition: all 0.3s ease-in-out;
+}
+
+button:hover {
+ background-color: #0d3c46 !important;
+}

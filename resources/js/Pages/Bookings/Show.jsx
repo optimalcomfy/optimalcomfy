@@ -1,7 +1,8 @@
 import React from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { FaCalendarAlt, FaMapMarkerAlt, FaUser, FaHome, FaMoneyBillWave, FaCheckCircle, FaArrowLeft } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaUser, FaHome, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
+import Swal from 'sweetalert2';
 
 const BookingShow = () => {
   const { booking } = usePage().props;
@@ -10,6 +11,90 @@ const BookingShow = () => {
   const checkIn = new Date(booking.check_in_date);
   const checkOut = new Date(booking.check_out_date);
   const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+
+  const handleCheckIn = () => {
+    const toMysqlDatetime = () => {
+      const date = new Date();
+      return date.toISOString().slice(0, 19).replace('T', ' '); // "YYYY-MM-DD HH:MM:SS"
+    };
+
+    Swal.fire({
+      title: 'Confirm Check-In',
+      text: 'Are you sure you want to check in this guest?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, check in'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        router.put(route('bookings.update', booking.id), {
+          checked_in: toMysqlDatetime(), // Call the function here
+          preserveScroll: true,
+          onSuccess: () => {
+            Swal.fire(
+              'Checked In!',
+              'Guest has been successfully checked in.',
+              'success'
+            );
+          },
+          onError: () => {
+            Swal.fire(
+              'Error!',
+              'There was an error checking in the guest.',
+              'error'
+            );
+          }
+        });
+      }
+    });
+  };
+
+  const handleCheckOut = () => {
+    const toMysqlDatetime = () => {
+      const date = new Date();
+      return date.toISOString().slice(0, 19).replace('T', ' '); // "YYYY-MM-DD HH:MM:SS"
+    };
+
+    Swal.fire({
+      title: 'Confirm Check-Out',
+      text: 'Are you sure you want to check out this guest?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, check out'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        router.put(route('bookings.update', booking.id), {
+          checked_out: toMysqlDatetime(), // Call the function here
+          preserveScroll: true,
+          onSuccess: () => {
+            Swal.fire(
+              'Check Out!',
+              'Guest has been successfully checked out.',
+              'success'
+            );
+          },
+          onError: () => {
+            Swal.fire(
+              'Error!',
+              'There was an error checking out the guest.',
+              'error'
+            );
+          }
+        });
+      }
+    });
+  };
+
+  const getBookingStatus = () => {
+    if (booking.checked_out) return 'checked_out';
+    if (booking.checked_in) return 'checked_in';
+    return 'confirmed';
+  };
+
+  const bookingStatus = getBookingStatus();
 
   return (
     <Layout>
@@ -22,20 +107,48 @@ const BookingShow = () => {
           >
             <FaArrowLeft className="mr-2" /> Back to Bookings
           </Link>
-          <h1 className="text-3xl font-bold text-gray-800">Booking Confirmation</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Booking Details</h1>
         </div>
 
-        {/* Success banner */}
-        <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded-r">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <FaCheckCircle className="h-5 w-5 text-green-500" />
+        {/* Status banner with check-in/out buttons */}
+        <div className={`mb-6 rounded-r p-4 border-l-4 ${
+          bookingStatus === 'checked_in' ? 'bg-blue-50 border-blue-500' :
+          bookingStatus === 'checked_out' ? 'bg-purple-50 border-purple-500' :
+          'bg-green-50 border-green-500'
+        }`}>
+          <div className="flex justify-between items-center">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <FaCheckCircle className={`h-5 w-5 ${
+                  bookingStatus === 'checked_in' ? 'text-blue-500' :
+                  bookingStatus === 'checked_out' ? 'text-purple-500' :
+                  'text-green-500'
+                }`} />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm">
+                  <span className="font-medium">{booking.property.property_name}</span> - 
+                  Status: <span className="font-bold capitalize">{bookingStatus}</span>
+                </p>
+              </div>
             </div>
-            <div className="ml-3">
-              <p className="text-sm text-green-700">
-                Your booking status at <span className="font-medium">{booking.property.property_name}</span> is {booking.status}!
-                Booking ID: <span className="font-mono font-bold">#{booking.id}</span>
-              </p>
+            <div className="flex space-x-2">
+              {!booking.checked_in && !booking.checked_out && (
+                <button
+                  onClick={handleCheckIn}
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                >
+                  <FaSignInAlt className="mr-2" /> Check In
+                </button>
+              )}
+              {booking.checked_in && !booking.checked_out && (
+                <button
+                  onClick={handleCheckOut}
+                  className="flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
+                >
+                  <FaSignOutAlt className="mr-2" /> Check Out
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -134,7 +247,7 @@ const BookingShow = () => {
               </div>
             </div>
 
-            {/* Host details */}
+            {/* Lock box details */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                 <FaHome className="inline mr-2" /> Lock box details
@@ -219,31 +332,51 @@ const BookingShow = () => {
                         </div>
                         <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                           <div>
-                            <p className="text-sm text-gray-500">Booking confirmed on <time dateTime={booking.created_at}>{new Date(booking.created_at).toLocaleDateString()}</time></p>
+                            <p className="text-sm text-gray-500">Booking confirmed on <time dateTime={booking.created_at}>{new Date(booking.created_at).toLocaleString()}</time></p>
                           </div>
                         </div>
                       </div>
                     </div>
                   </li>
 
-                  <li>
-                    <div className="relative pb-8">
-                      <div className="relative flex space-x-3">
-                        <div>
-                          <span className="h-8 w-8 rounded-full bg-peachDark flex items-center justify-center ring-8 ring-white">
-                            <svg className="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                            </svg>
-                          </span>
-                        </div>
-                        <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                  {booking.checked_in && (
+                    <li>
+                      <div className="relative pb-8">
+                        <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                        <div className="relative flex space-x-3">
                           <div>
-                            <p className="text-sm text-gray-500">Check-in on <time dateTime={booking.check_in_date}>{new Date(booking.check_in_date).toLocaleDateString()}</time></p>
+                            <span className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                              <FaSignInAlt className="h-5 w-5 text-white" />
+                            </span>
+                          </div>
+                          <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                            <div>
+                              <p className="text-sm text-gray-500">Checked in on <time dateTime={new Date().toISOString()}>{new Date().toLocaleString()}</time></p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </li>
+                    </li>
+                  )}
+
+                  {booking.checked_out && (
+                    <li>
+                      <div className="relative pb-8">
+                        <div className="relative flex space-x-3">
+                          <div>
+                            <span className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center ring-8 ring-white">
+                              <FaSignOutAlt className="h-5 w-5 text-white" />
+                            </span>
+                          </div>
+                          <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                            <div>
+                              <p className="text-sm text-gray-500">Checked out on <time dateTime={new Date().toISOString()}>{new Date().toLocaleString()}</time></p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  )}
                 </ul>
               </div>
             </div>
@@ -256,7 +389,7 @@ const BookingShow = () => {
               <p className="text-sm text-gray-600 mb-3">
                 If you have any questions about your booking, please contact our customer support.
               </p>
-              <a  href={`tel:${booking.user?.contact_phone}`} className="px-8 py-2 text-center justify-center flex items-center w-full bg-peachDark hover:bg-blue-700 text-white rounded-md transition duration-150">
+              <a href={`tel:${booking.user?.contact_phone}`} className="px-8 py-2 text-center justify-center flex items-center w-full bg-peachDark hover:bg-blue-700 text-white rounded-md transition duration-150">
                 Contact Support
               </a>
             </div>

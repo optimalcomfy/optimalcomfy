@@ -53,48 +53,6 @@ const Index = () => {
     });
   };
 
-
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    const logoUrl = '/images/logo/logo.png';
-    doc.addImage(logoUrl, 'PNG', 10, 10, 80, 30);
-    doc.setFontSize(14);
-    doc.text(`Users Report`, 14, 50);
-    
-    const columns = ["Name", "Email", "Phone", "Company Email", "Company Phone"];
-    
-    const rows = users.map(data => [
-      data.name, 
-      data.email, 
-      data.phone, 
-      data.company?.email,
-      data.company?.phone
-    ]);
-    
-    doc.autoTable({
-      head: [columns],
-      body: rows,
-      startY: 60,
-    });
-    
-    doc.save("users_reports.pdf");
-  };
-
-  const generateExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(users.map((data) => ({
-      Name:data.name, 
-      Email:data.email, 
-      Phone:data.phone, 
-      Company_Email:data.company?.email,
-      Company_Phone:data.company?.phone
-    })));
-  
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Users');
-    XLSX.writeFile(wb, 'users_report.xlsx');
-  };
-
-
   return (
     <Layout>
       <div className="w-full">
@@ -125,29 +83,6 @@ const Index = () => {
               <h1 className="text-2xl font-semibold text-gray-900 w-full sm:w-auto my-auto">
                 Users Directory
               </h1>
-              
-              <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">
-                <button
-                  onClick={generatePDF}
-                  disabled={users.length === 0}
-                  className="flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
-                >
-                  <FileText className="w-4 h-4 mr-2 my-auto" />
-                  <span className='my-auto'>
-                    PDF
-                  </span>
-                </button>
-                <button
-                  onClick={generateExcel}
-                  disabled={users.length === 0}
-                  className="inline-flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
-                >
-                  <FileSpreadsheet className="w-4 h-4 mr-2 my-auto" />
-                  <span className='my-auto'>
-                    Excel
-                  </span>
-                </button>
-              </div>
           </div>
 
           {/* Search Input */}

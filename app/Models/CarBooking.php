@@ -19,6 +19,8 @@ class CarBooking extends Model
         'dropoff_location',
         'status',
         'special_requests',
+        'checked_in',
+        'checked_out'
     ];
 
     public function user()

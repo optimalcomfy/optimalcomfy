@@ -144,16 +144,7 @@ class CarBookingController extends Controller
      */
     public function update(UpdateCarBookingRequest $request, CarBooking $carBooking)
     {
-        $carBooking->update([
-            'car_id'          => $request->car_id,  // Update car reference
-            'start_date'      => $request->start_date,
-            'end_date'        => $request->end_date,
-            'total_price'     => $request->total_price,
-            'pickup_location' => $request->pickup_location,
-            'dropoff_location'=> $request->dropoff_location,
-            'status'          => $request->status,
-            'special_requests'=> $request->special_requests,
-        ]);
+        $carBooking->update($request->validated());
 
         return redirect()->route('car-bookings.index')->with('success', 'Car booking updated successfully.');
     }

@@ -34,18 +34,24 @@ function PrevArrow({ onClick, disabled }) {
   );
 }
 
-// Utility function to extract county/city from location string
 function extractLocationInfo(location) {
-  const parts = location.split(',').map(part => part.trim());
+  if (!location) return 'Unknown Location';
   
-  if (parts.length >= 3) {
-    const county = parts[parts.length - 2]; // Second to last part (County)
-    return county;
-  } else if (parts.length === 2) {
-    return parts[0];
+  try {
+    const parts = location.split(',').map(part => part.trim());
+    
+    if (parts.length >= 3) {
+      const county = parts[parts.length - 2]; // Second to last part (County)
+      return county || 'Unknown Location';
+    } else if (parts.length === 2) {
+      return parts[0] || 'Unknown Location';
+    }
+    
+    return 'Unknown Location';
+  } catch (error) {
+    console.error('Error processing location:', error);
+    return 'Unknown Location';
   }
-  
-  return 'Unknown Location';
 }
 
 // Group properties by county
@@ -73,8 +79,13 @@ export default function Welcome() {
   const [groupedProperties, setGroupedProperties] = useState({});
 
   useEffect(() => {
+    // Filter out properties with invalid locations
+    const validProperties = properties.filter(property => 
+      property?.location && typeof property.location === 'string'
+    );
+    
     // Group properties by location
-    const grouped = groupPropertiesByLocation(properties);
+    const grouped = groupPropertiesByLocation(validProperties);
     setGroupedProperties(grouped);
     
     // Initialize current slides for each county

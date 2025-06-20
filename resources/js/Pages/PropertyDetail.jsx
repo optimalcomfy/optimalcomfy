@@ -124,32 +124,38 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     <p className="section__content-paragraph">
                       {property?.user?.bio}
                     </p>
-                    <button className="show-more">
-                      Show More
-                      <div className="img__container">
-                        <img src="/images/icons/small-arrow.svg" alt="arrow" />
-                      </div>
-                    </button>
-                    <div className="image-group-m">
-                      <div className="img__container">
-                        <img src="/images/room1-1.webp" alt="room" />
-                      </div>
-                      <div className="img__container">
-                        <img src="/images/room1-3.webp" alt="room" />
-                      </div>
-                      <div className="img__container">
-                        <img src="/images/room1-2.webp" alt="room" />
-                      </div>
-                      <div className="img__container">
-                        <img src="/images/room1-4.webp" alt="room" />
-                      </div>
-                      <div className="img__container">
-                        <img src="/images/room4.webp" alt="room" />
-                      </div>
-                      <div className="img__container">
-                        <img src="/images/romm5.webp" alt="room" />
-                      </div>
-                    </div>
+                      {property?.initial_gallery[0]?.image &&
+                        <div className="image-group-m">
+                          <div className="img__container">
+                            <img src={`/storage/${property?.initial_gallery[0]?.image}`} alt="room" />
+                          </div>
+                          {property?.initial_gallery[1]?.image &&
+                            <div className="img__container">
+                              <img src={`/storage/${property?.initial_gallery[1]?.image}`} alt="room" />
+                            </div>
+                          }
+                          {property?.initial_gallery[2]?.image &&
+                            <div className="img__container">
+                              <img src={`/storage/${property?.initial_gallery[2]?.image}`} alt="room" />
+                            </div>
+                          }
+                          {property?.initial_gallery[3]?.image &&
+                            <div className="img__container">
+                              <img src={`/storage/${property?.initial_gallery[3]?.image}`} alt="room" />
+                            </div>
+                          }
+                          {property?.initial_gallery[4]?.image &&
+                            <div className="img__container">
+                              <img src={`/storage/${property?.initial_gallery[4]?.image}`} alt="room" />
+                            </div>
+                          }
+                          {property?.initial_gallery[5]?.image &&
+                            <div className="img__container">
+                              <img src={`/storage/${property?.initial_gallery[5]?.image}`} alt="room" />
+                            </div>
+                          }
+                        </div>
+                      }
                     <hr />
                     <hr />
                     {/* amenities list */}

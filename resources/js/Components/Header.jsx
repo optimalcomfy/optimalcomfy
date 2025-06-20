@@ -279,7 +279,7 @@ function Header() {
       </div>
       
       <div className={`header-main ${isScrolled ? 'header-scrolled' : ''} d-none d-lg-block`}>
-          <div className="header-container">
+          <div className="header-container relative">
           <div className="header-grid">
               <div className={`logo-container`}>
                 <Link href={route('home')} className={`mopper ${isScrolled ? 'mopper-scrolled' : ''}`}>
@@ -303,7 +303,7 @@ function Header() {
                 <div className="header-right-content">
                     <p className="airbnb-text">List your property</p>
                     <div 
-                      className="profile-menu-button"
+                      className="profile-menu-button absolute lg:relative top-8 lg:top-0"
                       onClick={toggleProfileDropdown}
                       ref={dropdownRef}
                     >

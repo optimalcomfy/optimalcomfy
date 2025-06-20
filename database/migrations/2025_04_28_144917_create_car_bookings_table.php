@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('car_id')->constrained()->cascadeOnDelete();
             $table->date('start_date');
             $table->date('end_date');
+            $table->timestamp('checked_in')->nullable();
+            $table->timestamp('checked_out')->nullable();
             $table->decimal('total_price', 10, 2);
             $table->string('pickup_location')->nullable();
             $table->string('dropoff_location')->nullable();

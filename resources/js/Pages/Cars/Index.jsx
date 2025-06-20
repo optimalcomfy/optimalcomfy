@@ -20,6 +20,7 @@ const CarsIndex = () => {
           <thead>
             <tr>
               <th className="py-2 px-4 text-left border-b">Name</th>
+              <th className="py-2 px-4 text-left border-b">License plate</th>
               <th className="py-2 px-4 text-left border-b">Brand</th>
               <th className="py-2 px-4 text-left border-b">Model</th>
               <th className="py-2 px-4 text-left border-b">Year</th>
@@ -31,6 +32,7 @@ const CarsIndex = () => {
             {cars?.map(car => (
               <tr key={car.id}>
                 <td className="py-2 px-4 border-b">{car.name}</td>
+                <td className="py-2 px-4 border-b">{car.license_plate}</td>
                 <td className="py-2 px-4 border-b">{car.brand}</td>
                 <td className="py-2 px-4 border-b">{car.model}</td>
                 <td className="py-2 px-4 border-b">{car.year}</td>

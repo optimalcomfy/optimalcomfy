@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('car_category_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
+            $table->string('license_plate')->nullable();
             $table->string('brand');
             $table->string('model');
             $table->year('year')->nullable();

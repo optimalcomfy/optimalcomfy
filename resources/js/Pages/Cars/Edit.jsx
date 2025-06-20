@@ -19,11 +19,31 @@ import {
 import Layout from "@/Layouts/layout/layout.jsx";
 import './Edit.css'; // Import custom CSS
 
+// Moved InputField outside the component to prevent recreation on each render
+const InputField = ({ label, name, type = "text", icon: Icon, value, onChange, error, ...props }) => (
+  <div className="form-field">
+    <label className="form-label">
+      {Icon && <Icon className="form-field-icon" />}
+      {label}
+    </label>
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      className="form-input"
+      {...props}
+    />
+    {error && <div className="form-error">{error}</div>}
+  </div>
+);
+
 const EditCar = ({ car, categories, company }) => {
   const { data, setData, post, errors, processing } = useForm({
     _method: 'PUT',
     car_category_id: car.car_category_id || '',
     name: car.name || '',
+    license_plate: car.license_plate || '',
     brand: car.brand || '',
     model: car.model || '',
     year: car.year || '',
@@ -135,31 +155,13 @@ const EditCar = ({ car, categories, company }) => {
     }),
   };
 
-  const InputField = ({ label, name, type = "text", icon: Icon, ...props }) => (
-    <div className="form-field">
-      <label className="form-label">
-        {Icon && <Icon className="form-field-icon" />}
-        {label}
-      </label>
-      <input
-        type={type}
-        name={name}
-        value={data[name]}
-        onChange={(e) => setData(name, e.target.value)}
-        className="form-input"
-        {...props}
-      />
-      {errors[name] && <div className="form-error">{errors[name]}</div>}
-    </div>
-  );
-
   return (
     <Layout>
       <div className="edit-car-container">
         <div className="edit-car-header">
           <h1 className="page-title">
             <Car className="title-icon" />
-            Edit Car Details
+            Edit Ride Details
           </h1>
           <div className="availability-badge-container">
             <span className={`availability-badge ${data.is_available ? 'available' : 'unavailable'}`}>
@@ -206,11 +208,50 @@ const EditCar = ({ car, categories, company }) => {
                     />
                     {errors.car_category_id && <div className="form-error">{errors.car_category_id}</div>}
                   </div>
-                  <InputField label="Name" name="name" />
-                  <InputField label="Brand" name="brand" />
-                  <InputField label="Model" name="model" />
-                  <InputField label="Year" name="year" icon={Calendar} />
-                  <InputField label="Mileage" name="mileage" icon={Gauge} />
+                  <InputField 
+                    label="Name" 
+                    name="name" 
+                    value={data.name}
+                    onChange={(e) => setData('name', e.target.value)}
+                    error={errors.name}
+                  />
+                  <InputField 
+                    label="License plate" 
+                    name="license_plate" 
+                    value={data.license_plate}
+                    onChange={(e) => setData('license_plate', e.target.value)}
+                    error={errors.license_plate}
+                  />
+                  <InputField 
+                    label="Brand" 
+                    name="brand" 
+                    value={data.brand}
+                    onChange={(e) => setData('brand', e.target.value)}
+                    error={errors.brand}
+                  />
+                  <InputField 
+                    label="Model" 
+                    name="model" 
+                    value={data.model}
+                    onChange={(e) => setData('model', e.target.value)}
+                    error={errors.model}
+                  />
+                  <InputField 
+                    label="Year" 
+                    name="year" 
+                    icon={Calendar}
+                    value={data.year}
+                    onChange={(e) => setData('year', e.target.value)}
+                    error={errors.year}
+                  />
+                  <InputField 
+                    label="Mileage" 
+                    name="mileage" 
+                    icon={Gauge}
+                    value={data.mileage}
+                    onChange={(e) => setData('mileage', e.target.value)}
+                    error={errors.mileage}
+                  />
                 </div>
               </div>
   
@@ -221,12 +262,54 @@ const EditCar = ({ car, categories, company }) => {
                   Physical Characteristics
                 </h3>
                 <div className="form-grid-3">
-                  <InputField label="Body Type" name="body_type" />
-                  <InputField label="Seats" name="seats" type="number" min="1" max="20" />
-                  <InputField label="Doors" name="doors" type="number" min="1" max="10" />
-                  <InputField label="Luggage Capacity" name="luggage_capacity" />
-                  <InputField label="Exterior Color" name="exterior_color" />
-                  <InputField label="Interior Color" name="interior_color" />
+                  <InputField 
+                    label="Body Type" 
+                    name="body_type" 
+                    value={data.body_type}
+                    onChange={(e) => setData('body_type', e.target.value)}
+                    error={errors.body_type}
+                  />
+                  <InputField 
+                    label="Seats" 
+                    name="seats" 
+                    type="number" 
+                    min="1" 
+                    max="20"
+                    value={data.seats}
+                    onChange={(e) => setData('seats', e.target.value)}
+                    error={errors.seats}
+                  />
+                  <InputField 
+                    label="Doors" 
+                    name="doors" 
+                    type="number" 
+                    min="1" 
+                    max="10"
+                    value={data.doors}
+                    onChange={(e) => setData('doors', e.target.value)}
+                    error={errors.doors}
+                  />
+                  <InputField 
+                    label="Luggage Capacity" 
+                    name="luggage_capacity" 
+                    value={data.luggage_capacity}
+                    onChange={(e) => setData('luggage_capacity', e.target.value)}
+                    error={errors.luggage_capacity}
+                  />
+                  <InputField 
+                    label="Exterior Color" 
+                    name="exterior_color" 
+                    value={data.exterior_color}
+                    onChange={(e) => setData('exterior_color', e.target.value)}
+                    error={errors.exterior_color}
+                  />
+                  <InputField 
+                    label="Interior Color" 
+                    name="interior_color" 
+                    value={data.interior_color}
+                    onChange={(e) => setData('interior_color', e.target.value)}
+                    error={errors.interior_color}
+                  />
                 </div>
               </div>
   
@@ -237,11 +320,42 @@ const EditCar = ({ car, categories, company }) => {
                   Technical Specifications
                 </h3>
                 <div className="form-grid-3">
-                  <InputField label="Fuel Type" name="fuel_type" icon={Fuel} />
-                  <InputField label="Engine Capacity" name="engine_capacity" />
-                  <InputField label="Transmission" name="transmission" />
-                  <InputField label="Drive Type" name="drive_type" />
-                  <InputField label="Fuel Economy" name="fuel_economy" />
+                  <InputField 
+                    label="Fuel Type" 
+                    name="fuel_type" 
+                    icon={Fuel}
+                    value={data.fuel_type}
+                    onChange={(e) => setData('fuel_type', e.target.value)}
+                    error={errors.fuel_type}
+                  />
+                  <InputField 
+                    label="Engine Capacity" 
+                    name="engine_capacity" 
+                    value={data.engine_capacity}
+                    onChange={(e) => setData('engine_capacity', e.target.value)}
+                    error={errors.engine_capacity}
+                  />
+                  <InputField 
+                    label="Transmission" 
+                    name="transmission" 
+                    value={data.transmission}
+                    onChange={(e) => setData('transmission', e.target.value)}
+                    error={errors.transmission}
+                  />
+                  <InputField 
+                    label="Drive Type" 
+                    name="drive_type" 
+                    value={data.drive_type}
+                    onChange={(e) => setData('drive_type', e.target.value)}
+                    error={errors.drive_type}
+                  />
+                  <InputField 
+                    label="Fuel Economy" 
+                    name="fuel_economy" 
+                    value={data.fuel_economy}
+                    onChange={(e) => setData('fuel_economy', e.target.value)}
+                    error={errors.fuel_economy}
+                  />
                 </div>
               </div>
   
@@ -410,7 +524,7 @@ const EditCar = ({ car, categories, company }) => {
                 ) : (
                   <span className="button-content">
                     <Check className="button-icon" />
-                    Update Car
+                    Update Ride
                   </span>
                 )}
               </button>

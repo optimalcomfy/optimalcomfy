@@ -10,6 +10,7 @@ const CreateCar = () => {
   const { data, setData, post, errors, processing } = useForm({
     car_category_id: '',
     name: '',
+    license_plate: '',
     brand: '',
     model: '',
     year: '',
@@ -127,6 +128,15 @@ const CreateCar = () => {
                   placeholder="Ride Name"
                 />
                 {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium">License plate</label>
+                <input type="text" className="w-full border rounded-md px-3 py-2"
+                  value={data.license_plate}
+                  onChange={e => setData('license_plate', e.target.value)}
+                  placeholder="License plate"
+                />
+                {errors.license_plate && <p className="text-red-500 text-sm">{errors.license_plate}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium">Brand</label>

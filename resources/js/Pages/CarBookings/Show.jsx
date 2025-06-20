@@ -45,7 +45,7 @@ const CarBookingShow = () => {
             </div>
             <div className="ml-3">
               <p className="text-sm text-green-700">
-                Your rental of <span className="font-medium">{booking.car.brand} {booking.car.model}</span>
+                Your rental of <span className="font-medium">{booking.car.brand} {booking.car.model} {booking.car.license_plate}</span>
               </p>
             </div>
           </div>

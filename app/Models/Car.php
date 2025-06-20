@@ -34,7 +34,8 @@ class Car extends Model
         'location_address',
         'latitude',
         'longitude',
-        'user_id'
+        'user_id',
+        'license_plate'
     ];
 
     /**

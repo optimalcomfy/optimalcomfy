@@ -235,7 +235,7 @@
         
         <h4>Rental Policy:</h4>
         <ul>
-            <li>Minimum age requirement: 23 years</li>
+            <li>Minimum age requirement: 18 years</li>
             <li>Valid driving license required (minimum 2 years)</li>
             <li>Security deposit will be held on your card</li>
             <li>Vehicle must be returned with the same fuel level</li>

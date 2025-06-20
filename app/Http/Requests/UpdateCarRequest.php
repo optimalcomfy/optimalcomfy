@@ -24,6 +24,7 @@ class UpdateCarRequest extends FormRequest
         return [
             'car_category_id'   => 'nullable',
             'name'              => 'nullable',
+            'license_plate'     => 'nullable',
             'brand'             => 'nullable',
             'model'             => 'nullable',
             'year'              => 'nullable',

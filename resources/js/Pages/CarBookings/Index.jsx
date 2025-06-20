@@ -44,6 +44,7 @@ const CarBookingsIndex = () => {
               <tr className="bg-gray-100 text-left">
                 <th className="px-4 py-2 border">User</th>
                 <th className="px-4 py-2 border">Car</th>
+                <th className="px-4 py-2 border">License plate</th>
                 <th className="px-4 py-2 border">Start Date</th>
                 <th className="px-4 py-2 border">End Date</th>
                 <th className="px-4 py-2 border">Pickup Location</th>
@@ -58,6 +59,7 @@ const CarBookingsIndex = () => {
                 <tr key={booking.id} className="border-t">
                   <td className="px-4 py-2 border">{booking.user?.name || '-'}</td>
                   <td className="px-4 py-2 border">{booking.car?.name || '-'}</td>
+                  <td className="px-4 py-2 border">{booking.car?.license_plate || '-'}</td>
                   <td className="px-4 py-2 border">{booking.start_date}</td>
                   <td className="px-4 py-2 border">{booking.end_date}</td>
                   <td className="px-4 py-2 border">{booking.pickup_location}</td>

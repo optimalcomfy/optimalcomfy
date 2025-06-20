@@ -17,7 +17,7 @@ export default {
             },
             colors: {
                 peach: '#F26722',
-                peachDark: '#EDEAE6',
+                peachDark: '#f88055',
             },
         },
     },

@@ -116,7 +116,7 @@ const MobileSearchModal = ({
         <button className="modal-close-btn" onClick={closeModal}>
           <X size={24} />
         </button>
-        <h2 className="modal-title">Search Properties</h2>
+        <h2 className="modal-title">Search Rides</h2>
       </div>
 
       <div className="modal-body">
@@ -322,7 +322,10 @@ export default function RideForm() {
         />
       ) : (
         <>
+         
           <MobileSearchTrigger onClick={openModal} />
+           {isModalOpen &&
+          <>
           <MobileSearchModal
             isModalOpen={isModalOpen}
             closeModal={closeModal}
@@ -337,6 +340,7 @@ export default function RideForm() {
             isSuggestionsOpen={isSuggestionsOpen}
             locationSuggestions={locationSuggestions}
           />
+          </>}
         </>
       )}
     </>

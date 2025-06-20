@@ -281,22 +281,6 @@ const CarRideForm = ({ car }) => {
               </h2>
             </div>
 
-            {/* Booked Dates Info */}
-            {car.bookings.length > 0 && (
-              <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                  <strong>Note:</strong> This car has bookings on:
-                </p>
-                <ul className="list-disc pl-5 mt-1 text-sm">
-                  {car.bookings.map((booking, index) => (
-                    <li key={index} className="text-yellow-700 dark:text-yellow-300">
-                      {booking.start_date} to {booking.end_date}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
             {/* Date Selection */}
             <div className="date-selection mb-4">
               <div className="grid grid-cols-2 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">

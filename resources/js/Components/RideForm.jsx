@@ -5,8 +5,6 @@ import { toast } from 'react-toastify';
 import './SearchForms.css';
 import 'react-toastify/dist/ReactToastify.css';
 
-// --- COMPONENT DEFINITIONS MOVED OUTSIDE ---
-
 const DesktopSearchBar = ({ 
   formData, 
   handleChange, 
@@ -28,7 +26,11 @@ const DesktopSearchBar = ({
           name="location"
           value={formData.location}
           onChange={handleChange}
-          onFocus={() => locationSuggestions.length > 0 && setIsSuggestionsOpen(true)}
+          onFocus={() => {
+            if (formData.location.length > 0 && locationSuggestions.length > 0) {
+              setIsSuggestionsOpen(true);
+            }
+          }}
           placeholder="Search destination"
           className="inputType formForm"
         />
@@ -37,19 +39,22 @@ const DesktopSearchBar = ({
         <X
           className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
           size={18}
-          onClick={() =>
-            handleChange({ target: { name: 'location', value: '' } })
-          }
+          onClick={() => {
+            handleChange({ target: { name: 'location', value: '' } });
+            setIsSuggestionsOpen(false);
+          }}
         />}
 
         {isLoadingSuggestions && <Loader2 className="loader-icon animate-spin" />}
         {isSuggestionsOpen && (
-
           <div style={{borderRadius: '0px'}} className="mini absolute z-50 w-full bg-white border mt-1 shadow-lg max-h-48 overflow-y-auto">
             {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
               <div
                 key={index}
-                onClick={() => handleLocationSelect(location, 'pickup_location')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLocationSelect(location);
+                }}
                 className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
               >
                 {location}
@@ -142,11 +147,18 @@ const MobileSearchModal = ({
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
-                onFocus={() => locationSuggestions.length > 0 && setIsSuggestionsOpen(true)}
+                onFocus={() => {
+                  if (formData.location.length > 0 && locationSuggestions.length > 0) {
+                    setIsSuggestionsOpen(true);
+                  }
+                }}
                 placeholder="Search destinations"
                 className="rounded-md"
               />
-              {formData.location && <X className="clear-icon" onClick={() => handleChange({ target: { name: 'location', value: '' } })} />}
+              {formData.location && <X className="clear-icon" onClick={() => {
+                handleChange({ target: { name: 'location', value: '' } });
+                setIsSuggestionsOpen(false);
+              }} />}
               {isLoadingSuggestions && <Loader2 className="loader-icon animate-spin" />}
             </div>
             {isSuggestionsOpen && (
@@ -154,7 +166,10 @@ const MobileSearchModal = ({
                   {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
                     <div
                       key={index}
-                      onClick={() => handleLocationSelect(location, 'destination')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLocationSelect(location);
+                      }}
                       className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
                     >
                       {location}
@@ -208,7 +223,6 @@ const MobileSearchModal = ({
   </div>
 );
 
-// --- MAIN RIDEFORM COMPONENT ---
 export default function RideForm() {
   const [formData, setFormData] = useState({
     location: '',
@@ -248,12 +262,21 @@ export default function RideForm() {
         setIsSuggestionsOpen(false);
         return;
       }
+      
+      // Don't fetch if we're not showing suggestions
+      if (!isSuggestionsOpen && inputRef.current !== document.activeElement) {
+        return;
+      }
+
       setIsLoadingSuggestions(true);
       try {
         const res = await fetch(`/locations?query=${encodeURIComponent(formData.location)}`);
         const data = await res.json();
         setLocationSuggestions(data);
-        setIsSuggestionsOpen(data.length > 0);
+        // Only open if the input is focused
+        if (inputRef.current === document.activeElement) {
+          setIsSuggestionsOpen(data.length > 0);
+        }
       } catch (err) {
         console.error(err);
         setLocationSuggestions([]);
@@ -264,7 +287,7 @@ export default function RideForm() {
 
     const delay = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(delay);
-  }, [formData.location]);
+  }, [formData.location, isSuggestionsOpen]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -294,6 +317,7 @@ export default function RideForm() {
   const handleLocationSelect = (loc) => {
     setFormData((prev) => ({ ...prev, location: loc }));
     setIsSuggestionsOpen(false);
+    setIsLoadingSuggestions(false);
   };
 
   const handleSubmit = () => {
@@ -332,25 +356,23 @@ export default function RideForm() {
         />
       ) : (
         <>
-         
           <MobileSearchTrigger onClick={openModal} />
-           {isModalOpen &&
-          <>
-          <MobileSearchModal
-            isModalOpen={isModalOpen}
-            closeModal={closeModal}
-            modalRef={modalRef}
-            suggestionRef={suggestionRef}
-            inputRef={inputRef}
-            formData={formData}
-            handleChange={handleChange}
-            handleLocationSelect={handleLocationSelect}
-            handleSubmit={handleSubmit}
-            isLoadingSuggestions={isLoadingSuggestions}
-            isSuggestionsOpen={isSuggestionsOpen}
-            locationSuggestions={locationSuggestions}
-          />
-          </>}
+          {isModalOpen &&
+            <MobileSearchModal
+              isModalOpen={isModalOpen}
+              closeModal={closeModal}
+              modalRef={modalRef}
+              suggestionRef={suggestionRef}
+              inputRef={inputRef}
+              formData={formData}
+              handleChange={handleChange}
+              handleLocationSelect={handleLocationSelect}
+              handleSubmit={handleSubmit}
+              isLoadingSuggestions={isLoadingSuggestions}
+              isSuggestionsOpen={isSuggestionsOpen}
+              locationSuggestions={locationSuggestions}
+            />
+          }
         </>
       )}
     </>

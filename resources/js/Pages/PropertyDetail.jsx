@@ -22,7 +22,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         <LayoutProvider>
           <Head title="Welcome" />
           <HomeLayout>
-            <div className="py-8 container mx-auto">
+            <div className="py-8 max-w-5xl mx-auto">
               {/* Main Section */}
               <section className="main">
                 <div className="container f-reverse">

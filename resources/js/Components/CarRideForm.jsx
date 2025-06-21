@@ -172,7 +172,7 @@ const CarRideForm = ({ car }) => {
 
             {/* Date Selection */}
             <div className="date-selection mb-4">
-              <div className="grid grid-cols-2 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+              <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                 {/* Check-in Date */}
                 <div className="border-r border-gray-300 dark:border-gray-600 p-3">
                   <div className="flex flex-col">

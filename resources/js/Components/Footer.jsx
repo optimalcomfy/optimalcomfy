@@ -26,7 +26,7 @@ function Footer() {
         />
       </div>
       <div className="container">
-        <div className="grid sm:grid-cols-2 gap-[30px] lg:flex justify-between mb-[60px] relative z-[1] ">
+        <div className="grid md:grid-cols-2 gap-[30px] lg:flex justify-between mb-[60px] relative z-[1] ">
           <div className="rts__widget">
             <Link href={route('home')}>
               <img

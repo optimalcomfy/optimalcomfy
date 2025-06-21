@@ -415,6 +415,7 @@ const PropertyBookingForm = () => {
                       />
                     </div>
 
+                    {!data.is_registered && (
                     <div className="relative">
                       <Phone className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                       <input
@@ -424,7 +425,7 @@ const PropertyBookingForm = () => {
                         onChange={(e) => updateData('phone', e.target.value)}
                         className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
                       />
-                    </div>
+                    </div>)}
                   </div>
 
                   {/* Additional Details for New Users */}

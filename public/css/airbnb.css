@@ -780,7 +780,6 @@ img {
 	}
 
 	.img__container--hero img {
-		height: 100%;
 		width: 100%;
 		object-position: center;
 		object-fit: cover;
@@ -792,7 +791,6 @@ img {
 
 	.img__collage .img__container img {
 		width: 100%;
-		height: 100%;
 		object-position: center;
 		object-fit: cover;
 	}

@@ -145,12 +145,12 @@ const CarBookingForm = () => {
   }, []);
 
   return (
-    <div className="w-full p-4 bg-gray-50 min-h-screen">
+    <div className="w-full bg-gray-50 min-h-screen">
       <div className="grid grid-cols-1 lg:grid-cols-3 justify-center gap-6">
         
         {/* Left Column - Booking Form */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm p-2 lg:p-6">
             
             {/* Header */}
             <div className="flex items-center gap-4 mb-6">
@@ -181,7 +181,7 @@ const CarBookingForm = () => {
               {currentStep === 1 && (
                 <div className="mt-4 p-4 border rounded-lg bg-gray-50">
                   <div className="mb-4 flex flex-col gap-4">
-                    <div className="flex gap-4 mb-4">
+                    <div className="flex flex-col lg:flex-row gap-4 mb-4">
                       <label className="flex items-center">
                         <input
                           type="radio"
@@ -242,6 +242,7 @@ const CarBookingForm = () => {
                         {errors.password && <div className="text-red-500 text-sm mt-1">{errors.password}</div>}
                       </div>
 
+                      {!data.is_registered && (
                       <div className="relative rounded-md">
                         <input
                           type="tel"
@@ -251,7 +252,7 @@ const CarBookingForm = () => {
                           className="w-full p-3 rounded-lg"
                         />
                         {errors.phone && <div className="text-red-500 text-sm mt-1">{errors.phone}</div>}
-                      </div>
+                      </div>)}
 
                     </div>
 

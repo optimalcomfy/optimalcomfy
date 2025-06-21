@@ -22,7 +22,7 @@ export default function CarBooking({ auth, laravelVersion, phpVersion }) {
                 aria-label="section"
                 className="no-top py-10"
               >
-                <div className="container py-24">
+                <div className="container lg:py-24">
                   <div className="row align-items-center">
                     <div className="col-lg-12 xs:-mt-4 lg:-mt-20 sm-mt-0">
                       <div className="spacer-single sm-hide" />

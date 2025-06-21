@@ -268,7 +268,7 @@ const PropertyBookingForm = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-4">
+      <div className="max-w-7xl mx-auto lg:p-4">
         
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -287,7 +287,7 @@ const PropertyBookingForm = () => {
           <div className="space-y-6">
             
             {/* Step 1: Date Selection & Reserve */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 lg:p-6">
               <StepIndicator 
                 step={1} 
                 currentStep={currentStep} 
@@ -299,7 +299,7 @@ const PropertyBookingForm = () => {
                 <div className="space-y-4">
                   {/* Date Selection */}
                   <div className="flex flex-col lg:flex-row border border-gray-300 rounded-xl overflow-hidden">
-                    <div className="border-r flex-1 border-gray-300 p-4">
+                    <div className="border-b lg:border-r flex-1 border-gray-300 p-4">
                       <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
                         Check-in
                       </label>
@@ -342,7 +342,7 @@ const PropertyBookingForm = () => {
 
             {/* Step 2: User Information */}
             {currentStep >= 2 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 lg:p-6">
                 <StepIndicator 
                   step={2} 
                   currentStep={currentStep} 
@@ -352,7 +352,7 @@ const PropertyBookingForm = () => {
                 
                 <div className="space-y-6">
                   {/* User Type Selection */}
-                  <div className="flex gap-4 p-4 bg-gray-50 rounded-xl">
+                  <div className="flex flex-col lg:flex-row gap-4 p-4 bg-gray-50 rounded-xl">
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
@@ -429,10 +429,10 @@ const PropertyBookingForm = () => {
 
                   {/* Additional Details for New Users */}
                   {!data.is_registered && (
-                    <div className="space-y-4 pt-4 border-t border-gray-200">
+                    <div className="space-y-4 pt-4 p-2 border-t border-gray-200">
                       <h4 className="font-medium text-gray-900">Additional Details</h4>
                       
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid lg:grid-cols-2 gap-4">
                         <input
                           type="text"
                           placeholder="Nationality"
@@ -503,7 +503,7 @@ const PropertyBookingForm = () => {
                         )}
                       </div>
 
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid lg:grid-cols-3 gap-4">
                         <input
                           type="text"
                           placeholder="Address"
@@ -527,7 +527,7 @@ const PropertyBookingForm = () => {
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid lg:grid-cols-2 gap-4">
                         <input
                           type="text"
                           placeholder="Emergency contact name"
@@ -571,7 +571,7 @@ const PropertyBookingForm = () => {
 
             {/* Step 3: Review and Confirm */}
             {currentStep >= 3 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 lg:p-6">
                 <StepIndicator 
                   step={3} 
                   currentStep={currentStep} 
@@ -615,7 +615,7 @@ const PropertyBookingForm = () => {
 
           {/* Right Column - Property Summary */}
           <div className="lg:sticky lg:top-4 lg:self-start">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 lg:p-6 space-y-6">
               
               {/* Property Preview */}
               <div className="flex gap-4">

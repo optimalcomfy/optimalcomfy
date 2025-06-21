@@ -98,7 +98,7 @@ function Footer() {
       </div>
       <div className="border-t-[1px] border-[#e5e5e5] p-[40px_0] relative z-10">
         <div className="container">
-          <div className="flex flex-wrap md:justify-between justify-center items-center gap-[30px]">
+          <div className="flex flex-col-reverse md:flex-row flex-wrap md:justify-between md:items-center gap-[30px]">
             <p className="mb-0">Copyright © 2025 Ristay. All rights reserved.</p>
             <div className="flex flex-col md:flex-row md:items-center gap-[30px]">
               <a target='_blank'

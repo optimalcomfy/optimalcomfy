@@ -133,7 +133,7 @@ const Dashboard = () => {
     const trendIcon = trend?.value > 0 ? '↑' : trend?.value < 0 ? '↓' : '→';
     
     return (
-      <div className={`p-3`}>
+      <div className="flex-1 p-3 min-w-[250px]">
         <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
           <div className="flex justify-between gap-4 items-center mb-3">
             <h3 className="text-lg font-semibold">{title}</h3>
@@ -158,7 +158,7 @@ const Dashboard = () => {
   // User Profile Card
   const UserProfileCard = () => {
     return (
-      <div className={`p-3`}>
+      <div className="p-3">
         <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
           <div className="flex items-center gap-4">
             <img 
@@ -183,12 +183,12 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <div>
+          <div className="flex flex-wrap mt-4 gap-4">
+            <div className="flex-1 min-w-[120px]">
               <p className="text-sm text-gray-500">Member Since</p>
               <p>{new Date(auth.user.created_at).toLocaleDateString()}</p>
             </div>
-            <div>
+            <div className="flex-1 min-w-[120px]">
               <p className="text-sm text-gray-500">Verification</p>
               <p className="text-green-500 flex items-center gap-1">
                 <Check size={14} />
@@ -211,7 +211,7 @@ const Dashboard = () => {
     const COLORS = ['#3B82F6', '#10B981'];
 
     return (
-      <div className={`p-3`}>
+      <div className="flex-1 p-3 min-w-[300px]">
         <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
           <h3 className="text-lg font-semibold mb-4">Earnings Breakdown</h3>
           <div className="h-64">
@@ -256,7 +256,7 @@ const Dashboard = () => {
   // Financial Summary Card
   const FinancialSummary = () => {
     return (
-      <div className={`p-3`}>
+      <div className="flex-1 p-3 min-w-[300px]">
         <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <CreditCard size={18} />
@@ -314,7 +314,7 @@ const Dashboard = () => {
   // Recent Transactions Table
   const RecentTransactions = () => {
     return (
-      <div className={`p-3 col-span-2`}>
+      <div className="flex-[2] p-3 min-w-full">
         <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Activity size={18} />
@@ -373,7 +373,7 @@ const Dashboard = () => {
       
       {/* Flash Messages */}
       {flash && (
-        <div className={`p-3`}>
+        <div className="p-3">
           <div className={`p-4 rounded-lg ${
             flash.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
           }`}>
@@ -382,35 +382,36 @@ const Dashboard = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3">
+      <div className="flex flex-col lg:flex-row gap-4">
         {/* First Column */}
-        <div className="col-span-1">
+        <div className="flex flex-col flex-1 gap-4">
           <UserProfileCard />
-          {(roleId === 1 || roleId === 2) &&
-          <FinancialSummary />}
+          {(roleId === 1 || roleId === 2) && <FinancialSummary />}
         </div>
 
         {/* Second Column */}
-        <div className="col-span-1 lg:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 pt-2">
-            {(roleId === 1 || roleId === 2) &&
-            <InfoCard 
-              title="Total Properties" 
-              value={propertiesCount} 
-              icon={Home} 
-              iconColor="blue" 
-              description="Your listed properties"
-              trend={{ value: 12, period: 'this month' }}
-            />}
-            {(roleId === 1 || roleId === 2) &&
-            <InfoCard 
-              title="Total Vehicles" 
-              value={carsCount} 
-              icon={Car} 
-              iconColor="purple" 
-              description="Your listed vehicles"
-              trend={{ value: 5, period: 'this month' }}
-            />}
+        <div className="flex flex-col flex-[2] gap-4">
+          <div className="flex flex-wrap -mx-3">
+            {(roleId === 1 || roleId === 2) && (
+              <InfoCard 
+                title="Total Properties" 
+                value={propertiesCount} 
+                icon={Home} 
+                iconColor="blue" 
+                description="Your listed properties"
+                trend={{ value: 12, period: 'this month' }}
+              />
+            )}
+            {(roleId === 1 || roleId === 2) && (
+              <InfoCard 
+                title="Total Vehicles" 
+                value={carsCount} 
+                icon={Car} 
+                iconColor="purple" 
+                description="Your listed vehicles"
+                trend={{ value: 5, period: 'this month' }}
+              />
+            )}
             <InfoCard 
               title="Total Bookings" 
               value={totalBookingsCount} 
@@ -421,57 +422,57 @@ const Dashboard = () => {
             />
           </div>
 
-         {(roleId === 1 || roleId === 2) &&
-          <div className="grid grid-cols-1 lg:grid-cols-2">
-            <EarningsBreakdown />
-            
-            <div className={`p-3`}>
-              <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
-                <h3 className="text-lg font-semibold mb-4">Monthly Performance</h3>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={monthlyEarnings}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                     <Tooltip 
-                        formatter={(value) => {
-                            const num = parseFloat(value);
-                            return [isNaN(num) ? value : num.toFixed(2), 'Amount'];
-                        }}
+          {(roleId === 1 || roleId === 2) && (
+            <div className="flex flex-wrap -mx-3">
+              <EarningsBreakdown />
+              
+              <div className="flex-1 p-3 min-w-[300px]">
+                <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+                  <h3 className="text-lg font-semibold mb-4">Monthly Performance</h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={monthlyEarnings}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                       <Tooltip 
+                          formatter={(value) => {
+                              const num = parseFloat(value);
+                              return [isNaN(num) ? value : num.toFixed(2), 'Amount'];
+                          }}
+                          />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="total" 
+                          stroke="#3B82F6" 
+                          activeDot={{ r: 8 }} 
+                          strokeWidth={2} 
+                          name="Total Earnings"
                         />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="total" 
-                        stroke="#3B82F6" 
-                        activeDot={{ r: 8 }} 
-                        strokeWidth={2} 
-                        name="Total Earnings"
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="property_earnings" 
-                        stroke="#10B981" 
-                        strokeWidth={2} 
-                        name="Property Earnings"
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="car_earnings" 
-                        stroke="#8B5CF6" 
-                        strokeWidth={2} 
-                        name="Car Earnings"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                        <Line 
+                          type="monotone" 
+                          dataKey="property_earnings" 
+                          stroke="#10B981" 
+                          strokeWidth={2} 
+                          name="Property Earnings"
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="car_earnings" 
+                          stroke="#8B5CF6" 
+                          strokeWidth={2} 
+                          name="Car Earnings"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>}
+          )}
 
-          {(roleId === 1 || roleId === 2) &&
-          <RecentTransactions />}
+          {(roleId === 1 || roleId === 2) && <RecentTransactions />}
         </div>
       </div>
     </Layout>

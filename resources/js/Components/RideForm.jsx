@@ -32,7 +32,16 @@ const DesktopSearchBar = ({
           placeholder="Search destination"
           className="inputType formForm"
         />
-        {formData.location && <X className="clear-icon" onClick={() => handleChange({ target: { name: 'location', value: '' } })} />}
+        
+        {formData.location &&     
+        <X
+          className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+          size={18}
+          onClick={() =>
+            handleChange({ target: { name: 'location', value: '' } })
+          }
+        />}
+
         {isLoadingSuggestions && <Loader2 className="loader-icon animate-spin" />}
         {isSuggestionsOpen && (
 

@@ -330,7 +330,7 @@ const CarBookingForm = () => {
                           value={data.pickup_location}
                           onChange={(e) => setData('pickup_location', e.target.value)}
                           onFocus={() => setShowPickupSuggestions(true)}
-                          className="w-full pl-10 p-3 rounded-lg"
+                          className="w-full pl-10 p-3 rounded-lg focus:outline-none focus:border-none focus:ring-0"
                         />
                         {data.pickup_location && (
                           <X 

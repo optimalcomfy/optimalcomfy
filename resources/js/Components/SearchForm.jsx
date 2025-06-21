@@ -28,7 +28,7 @@ const DesktopSearchBar = ({ formData, handleChange, handleLocationSelect, handle
           }}
         />
         {formData.location && (
-          <X className="clear-icon" onClick={() => handleChange({ target: { name: 'location', value: '' } })} />
+          <X className="clear-icon absolute right-2 bottom-3" onClick={() => handleChange({ target: { name: 'location', value: '' } })} />
         )}
         {isLoadingSuggestions && <Loader2 className="loader-icon" />}
         {isSuggestionsOpen && (

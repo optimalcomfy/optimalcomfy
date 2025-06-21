@@ -83,6 +83,19 @@ width: 100%;
 font-size: 0.75rem;
 }
 
+input {
+    background: none;
+    border: none;
+    margin-top: 6px;
+    padding: 0.2rem 0 0 0;
+    width: 100%;
+    font-size: 0.75rem;
+}
+
+input:focus {
+    outline: none !important;
+}
+
 .inputType:focus {
 outline: none !important;
 }

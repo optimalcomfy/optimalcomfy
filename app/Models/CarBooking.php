@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class CarBooking extends Model
 {
@@ -23,6 +24,24 @@ class CarBooking extends Model
         'checked_out',
         'number'
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($carBooking) {
+            $carBooking->number = self::generateUniqueNumber();
+        });
+    }
+
+    public static function generateUniqueNumber()
+    {
+        do {
+            $number = 'CAR-' . strtoupper(Str::random(8));
+        } while (self::where('number', $number)->exists());
+
+        return $number;
+    }
 
     public function user()
     {

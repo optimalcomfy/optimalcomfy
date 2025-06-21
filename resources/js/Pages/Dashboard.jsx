@@ -7,9 +7,10 @@ import {
   Home, Users, Calendar, Star, DollarSign, Loader, Check, Car, Plus, 
   Wallet, Settings, MapPin, Briefcase, CreditCard, Activity 
 } from 'lucide-react';
-import { usePage } from '@inertiajs/react';
+import { usePage, useForm } from '@inertiajs/react';
 import { LayoutContext } from '@/Layouts/layout/context/layoutcontext';
 import Layout from "@/Layouts/layout/layout.jsx";
+
 
 const Dashboard = () => {
   // Get all available data from props
@@ -28,12 +29,28 @@ const Dashboard = () => {
     auth,
     flash
   } = usePage().props;
+
+  const { data, setData, get, processing } = useForm({
+    type: "", 
+    number: "",
+  });
   
   const [lineOptions, setLineOptions] = useState({});
   const { layoutConfig } = useContext(LayoutContext);
   const roleId = parseInt(auth.user?.role_id);
   const isDarkMode = layoutConfig.colorScheme === 'dark';
   const [isLoading, setIsLoading] = useState(false);
+
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!data.type || !data.number) return;
+
+    get(route("bookings.lookup"), {
+      preserveScroll: true,
+    });
+  };
 
   // Theme setup for charts
   const applyLightTheme = () => {
@@ -384,10 +401,11 @@ const Dashboard = () => {
 
       <div className="flex flex-col lg:flex-row gap-4">
         {/* First Column */}
+        {(roleId !== 4) && (
         <div className="flex flex-col flex-1 gap-4">
           <UserProfileCard />
           {(roleId === 1 || roleId === 2) && <FinancialSummary />}
-        </div>
+        </div>)}
 
         {/* Second Column */}
         <div className="flex flex-col flex-[2] gap-4">
@@ -412,6 +430,7 @@ const Dashboard = () => {
                 trend={{ value: 5, period: 'this month' }}
               />
             )}
+             {(roleId !== 4) && (
             <InfoCard 
               title="Total Bookings" 
               value={totalBookingsCount} 
@@ -419,8 +438,48 @@ const Dashboard = () => {
               iconColor="green" 
               description="All-time bookings"
               trend={{ value: 8, period: 'this month' }}
-            />
+            />)}
           </div>
+
+          {(roleId === 4) && (
+            <div className="max-w-2xl bg-white p-6 rounded-lg shadow-md">
+              <h1 className="text-lg font-bold mb-4">Find Booking</h1>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium">Booking Type</label>
+                  <select
+                    value={data.type}
+                    onChange={(e) => setData("type", e.target.value)}
+                    className="w-full border px-3 py-2 rounded"
+                  >
+                    <option value="">Select Type</option>
+                    <option value="property">Property</option>
+                    <option value="car">Car</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium">Booking Number</label>
+                  <input
+                    type="text"
+                    value={data.number}
+                    onChange={(e) => setData("number", e.target.value)}
+                    className="w-full border px-3 py-2 rounded"
+                    placeholder="e.g. BKG-XXXX or CAR-XXXX"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                  disabled={processing}
+                >
+                  {processing ? "Searching..." : "Search Booking"}
+                </button>
+              </form>
+            </div>
+          )}
+
 
           {(roleId === 1 || roleId === 2) && (
             <div className="flex flex-wrap -mx-3">

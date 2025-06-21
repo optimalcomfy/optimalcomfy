@@ -5,8 +5,8 @@ import { FaCalendarAlt, FaMapMarkerAlt, FaUser, FaHome, FaMoneyBillWave, FaCheck
 import Swal from 'sweetalert2';
 
 const BookingShow = () => {
-  const { booking } = usePage().props;
-  
+  const { booking, auth } = usePage().props;
+   const roleId = parseInt(auth.user?.role_id);
   // Calculate number of nights
   const checkIn = new Date(booking.check_in_date);
   const checkOut = new Date(booking.check_out_date);
@@ -101,12 +101,13 @@ const BookingShow = () => {
       <div className="max-w-7xl p-4">
         {/* Header with back button */}
         <div className="flex items-center mb-6">
+          {roleId !== 4 &&
           <Link
             href={route('bookings.index')}
             className="flex items-center text-peachDark mr-4"
           >
             <FaArrowLeft className="mr-2" /> Back to Bookings
-          </Link>
+          </Link>}
           <h1 className="text-3xl font-bold text-gray-800">Booking Details</h1>
         </div>
 

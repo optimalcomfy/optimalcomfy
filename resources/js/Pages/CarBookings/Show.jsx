@@ -5,8 +5,8 @@ import { FaCar, FaCalendarAlt, FaMapMarkerAlt, FaUser, FaMoneyBillWave, FaCheckC
 import Swal from 'sweetalert2';
 
 const CarBookingShow = () => {
-  const { carBooking: booking } = usePage().props;
-  
+  const { carBooking: booking, auth } = usePage().props;
+  const roleId = parseInt(auth.user?.role_id);
   // Calculate number of days
   const startDate = new Date(booking.start_date);
   const endDate = new Date(booking.end_date);
@@ -113,12 +113,13 @@ const CarBookingShow = () => {
       <div className="max-w-7xl p-4">
         {/* Header with back button */}
         <div className="flex items-center mb-6">
+          {roleId !== 4 &&
           <Link
             href={route('car-bookings.index')}
             className="flex items-center text-blue-600 hover:text-blue-800 mr-4"
           >
             <FaArrowLeft className="mr-2" /> Back to Bookings
-          </Link>
+          </Link>}
           <h1 className="text-3xl font-bold text-gray-800">Car Rental Details</h1>
         </div>
 

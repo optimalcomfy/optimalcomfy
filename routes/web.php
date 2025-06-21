@@ -147,6 +147,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/properties/{property}/features', [PropertyFeatureController::class, 'getByProperty'])->name('properties.features.byProperty');
 
     Route::post('/withdraw', [WithdrawalController::class, 'processDisbursement'])->name('withdraw');
+
+    Route::get('/books/lookup', [BookingController::class, 'lookup'])->name('bookings.lookup');
 });
 
 

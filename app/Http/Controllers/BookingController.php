@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
+use App\Models\CarBooking;
 use App\Models\User;
 use App\Models\Property;
 use Inertia\Inertia;
@@ -106,6 +107,30 @@ class BookingController extends Controller
 
         return back()->withErrors('Payment initiation failed');
     }
+
+    public function lookup(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|in:car,property',
+            'number' => 'required|string',
+        ]);
+
+        if ($request->type === 'car') {
+            $booking = CarBooking::where('number', $request->number)->first();
+
+            return redirect()->route('car-bookings.show', $booking->id); 
+        } else {
+            $booking = Booking::where('number', $request->number)->first();
+
+            return redirect()->route('bookings.show', $booking->id); 
+        }
+
+        if (!$booking) {
+            return back()->withErrors(['number' => 'Booking not found.']);
+        }
+
+    }
+
 
 
     public function show(Booking $booking)

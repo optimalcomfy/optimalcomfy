@@ -8,38 +8,43 @@ use App\Models\User;
 use App\Models\Company;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
 
     public function index(Request $request)
     {
-        // Start the query with eager loading
-        $query = User::query(); // Eager-load company, whether it exists or not
-    
+        $user = Auth::user();
+
+        // Start the query with eager loading of company if needed
+        $query = User::with('company');
+
         if ($request->has('search')) {
             $search = $request->input('search');
-    
+
             // Apply search conditions to the existing query
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%$search%")
-                  ->orWhere('email', 'LIKE', "%$search%");
+                ->orWhere('email', 'LIKE', "%$search%");
             });
         }
-    
+
+        if ($user->role_id == 2 || $user->role_id == '2') {
+            $query->where('host_id', '=', $user->id);
+        }
+
         $query->orderBy('created_at', 'desc');
-        
+
         // Paginate the query
         $users = $query->paginate(10);
-    
+
         return Inertia::render('Users/Index', [
-            'users' => $users->items(),
-            'pagination' => $users,
+            'users' => $users->items(), 
             'flash' => session('flash'),
         ]);
     }
-    
-    
 
 
     public function create()
@@ -55,10 +60,20 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request)
     {
-        User::create($request->validated());
+        $user = Auth::user();
+        $input = $request->validated();
+
+        $input['host_id'] = $user->id;
+
+        if (!empty($input['password'])) {
+            $input['password'] = Hash::make($input['password']);
+        }
+
+        User::create($input);
 
         return redirect()->route('users.index')->with('success', 'User created successfully.');
     }
+
 
 
     public function show(User $user)
@@ -82,10 +97,19 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user)
     {
-        $user->update($request->validated());
+        $data = $request->validated();
+
+        if (!empty($data['password'])) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']); 
+        }
+
+        $user->update($data);
 
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }
+
 
 
     public function destroy(User $user)

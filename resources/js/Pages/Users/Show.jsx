@@ -21,10 +21,6 @@ const Show = ({ user }) => {
             <strong className="text-gray-600">Phone:</strong> 
             <span className="text-gray-800">{user.phone}</span>
           </div>
-          <div className="flex justify-between">
-            <strong className="text-gray-600">Position:</strong> 
-            <span className="text-gray-800">{user.position}</span>
-          </div>
         </div>
 
         <div className="mt-8 text-left">

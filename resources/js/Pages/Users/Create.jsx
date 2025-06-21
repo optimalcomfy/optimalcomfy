@@ -1,32 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm, usePage, Link } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import Select from 'react-select';  
+import { Eye, EyeOff } from 'lucide-react'; // Use `lucide-react` or change to your preferred icon lib
 
 const Create = () => {
-    const { companies } = usePage().props; 
-
-    const companyOptions = companies.map(company => ({
-        value: company.id,
-        label: company.name
-    }));
-
     const { data, setData, post, errors } = useForm({
         name: '',
         phone: '',
         email: '',
-        role_id: 2, 
-        password: '1234boys',  
-        company_id: '', 
+        role_id: 4,
+        password: '',
     });
+
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = (e) => {
         e.preventDefault();
         post(route('users.store'));
-    };
-
-    const handleCompanyChange = (selectedOption) => {
-        setData('company_id', selectedOption ? selectedOption.value : ''); 
     };
 
     return (
@@ -70,17 +60,22 @@ const Create = () => {
                         {errors.email && <div className="text-sm text-red-500 mt-1">{errors.email}</div>}
                     </div>
 
-                    {/* Company Select (React Select) */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Company</label>
-                        <Select
-                            options={companyOptions}
-                            value={companyOptions.find(option => option.value === data.company_id)}  // Set selected option
-                            onChange={handleCompanyChange}
-                            className="mt-1 block w-full py-2"
-                            placeholder="Select a company"
+                    {/* Password Input */}
+                    <div className="relative">
+                        <label className="block text-sm font-medium text-gray-700">Password</label>
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            value={data.password}
+                            onChange={(e) => setData('password', e.target.value)}
+                            className="mt-1 block w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
-                        {errors.company_id && <div className="text-sm text-red-500 mt-1">{errors.company_id}</div>}
+                        <div
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute top-9 right-3 cursor-pointer text-gray-500"
+                        >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </div>
+                        {errors.password && <div className="text-sm text-red-500 mt-1">{errors.password}</div>}
                     </div>
 
                     {/* Submit Button */}

@@ -33,7 +33,8 @@ class StoreCarBookingRequest extends FormRequest
             'status' => 'nullable',
             'special_requests' => 'nullable',
             'checked_in' => 'nullable',
-            'checked_out' => 'nullable'
+            'checked_out' => 'nullable',
+            'number' => 'nullable'
         ];
     }
 }

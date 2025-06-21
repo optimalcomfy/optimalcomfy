@@ -51,7 +51,8 @@ class StoreUserRequest extends FormRequest
             'preferred_payment_method' => 'nullable',
             'emergency_contact' => 'nullable',
             'contact_phone' => 'nullable',
-            'user_type' => 'nullable'
+            'user_type' => 'nullable',
+            'host_id' => 'nullable'
         ];
     }
 }

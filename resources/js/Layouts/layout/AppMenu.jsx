@@ -12,9 +12,9 @@ const AppMenu = () => {
         {
             label: 'Home',
             items: [
-                { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: route('dashboard'), roles: [1, 2, 3] },
-                { label: 'Users', icon: 'pi pi-fw pi-users', to: route('users.index'), roles: [1] },
-                { label: 'Profile', icon: 'pi pi-fw pi-user', to: route('profile.edit'), roles: [1, 2, 3] }
+                { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: route('dashboard'), roles: [1, 2, 3, 4] },
+                { label: 'Users', icon: 'pi pi-fw pi-users', to: route('users.index'), roles: [1, 2] },
+                { label: 'Profile', icon: 'pi pi-fw pi-user', to: route('profile.edit'), roles: [1, 2, 3, 4] }
             ]
         },
         {

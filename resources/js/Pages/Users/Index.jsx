@@ -83,6 +83,18 @@ const Index = () => {
               <h1 className="text-2xl font-semibold text-gray-900 w-full sm:w-auto my-auto">
                 Users Directory
               </h1>
+
+              <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">
+                <Link
+                  href={route('users.create')}
+                  className="flex items-center justify-center px-4 py-2 bg-peachDark text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                >
+                  <Plus className="w-4 h-4 mr-2 my-auto" />
+                  <span className='my-auto'>
+                  Create
+                  </span>
+                </Link>
+              </div>
           </div>
 
           {/* Search Input */}
@@ -128,6 +140,12 @@ const Index = () => {
                     <td className="px-6 py-4 whitespace-wrap">{user.email}</td>
                     <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
+                        <Link
+                          href={route("users.edit", user.id)}
+                          className="inline-flex items-center px-3 py-1 text-sm font-medium text-green-600 bg-green-100 hover:bg-green-200 rounded-md transition-all duration-200"
+                        >
+                          ✏️ Edit
+                        </Link>
                         <Link
                           href={route('users.show', user.id)}
                           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"

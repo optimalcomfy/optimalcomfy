@@ -1,35 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm, usePage, Link } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import Select from 'react-select';
+import { Eye, EyeOff } from 'lucide-react'; // Make sure you have this installed or use your preferred icon set
 
-const EditUSer = ({ errors }) => {
-  const { companies, user } = usePage().props; 
+const EditUser = ({ errors }) => {
+  const { user } = usePage().props;
 
   const { data, setData, put, processing } = useForm({
     name: user.name,
     email: user.email,
     phone: user.phone,
-    company_id: user.company_id, 
+    password: ''
   });
 
-  const [selectedCompany, setSelectedCompany] = useState(null);
-
-  useEffect(() => {
-    if (user.company_id) {
-      const defaultCompany = companies.find((c) => c.id === user?.company_id);
-      setSelectedCompany(defaultCompany);
-    }
-  }, [user, companies]);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    put(route('users.update', { user: user.id })); 
-  };
-
-  const handleCompanyChange = (selectedOption) => {
-    setData('company_id', selectedOption ? selectedOption.value : '');
-    setSelectedCompany(selectedOption);
+    put(route('users.update', { user: user.id }));
   };
 
   return (
@@ -73,19 +61,22 @@ const EditUSer = ({ errors }) => {
             {errors.phone && <div className="text-sm text-red-500 mt-1">{errors.phone}</div>}
           </div>
 
-          {/* Company Select */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Company</label>
-            <Select
-              value={selectedCompany}
-              onChange={handleCompanyChange}
-              options={companies.map((company) => ({
-                value: company.id,
-                label: company.name
-              }))}
-              placeholder="Select a company"
+          {/* Password Input */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700">New Password (leave blank to keep current)</label>
+            <input
+              type={showPassword ? "text" : "password"}
+              value={data.password}
+              onChange={(e) => setData('password', e.target.value)}
+              className="mt-1 block w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            {errors.company_id && <div className="text-sm text-red-500 mt-1">{errors.company_id}</div>}
+            <div
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute top-9 right-3 cursor-pointer text-gray-500"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </div>
+            {errors.password && <div className="text-sm text-red-500 mt-1">{errors.password}</div>}
           </div>
 
           {/* Submit Button */}
@@ -97,10 +88,13 @@ const EditUSer = ({ errors }) => {
             {processing ? 'Saving...' : 'Save'}
           </button>
         </form>
-        <Link href={route('users.index')} className="mt-4 inline-block text-sm text-blue-600">Back to Users</Link>
+
+        <Link href={route('users.index')} className="mt-4 inline-block text-sm text-blue-600">
+          Back to Users
+        </Link>
       </div>
     </Layout>
   );
 };
 
-export default EditUSer;
+export default EditUser;

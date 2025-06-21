@@ -438,7 +438,7 @@ const Wallet = ({ user }) => {
                                     Recent Transactions
                                 </h2>
                                 <div>
-                                    {recentTransactions.map((transaction, index) => (
+                                    {recentTransactions.length > 0 && recentTransactions?.map((transaction, index) => (
                                         <div key={index} style={{
                                             display: 'flex',
                                             justifyContent: 'space-between',

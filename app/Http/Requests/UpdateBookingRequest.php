@@ -29,7 +29,8 @@ class UpdateBookingRequest extends FormRequest
             'total_price' => 'nullable',
             'status' => 'nullable',
             'checked_in' => 'nullable',
-            'checked_out' => 'nullable'
+            'checked_out' => 'nullable',
+            'number' => 'nullable'
         ];
     }
 }

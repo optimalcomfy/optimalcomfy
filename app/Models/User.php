@@ -48,7 +48,8 @@ class User extends Authenticatable
         'preferred_payment_method',
         'emergency_contact',
         'contact_phone',
-        'user_type'
+        'user_type',
+        'host_id'
     ];
 
     /**

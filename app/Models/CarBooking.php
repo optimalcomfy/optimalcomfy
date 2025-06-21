@@ -20,7 +20,8 @@ class CarBooking extends Model
         'status',
         'special_requests',
         'checked_in',
-        'checked_out'
+        'checked_out',
+        'number'
     ];
 
     public function user()

@@ -41,7 +41,7 @@ export default function CarMapDetails({ car }) {
   };
 
   return (
-    <div className="relative container mx-auto" style={{ height: contentHeight }}>
+    <div className="relative" style={{ height: contentHeight }}>
       {isLoaded && (
         <GoogleMap
           mapContainerClassName="w-full h-full"

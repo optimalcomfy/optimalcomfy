@@ -159,7 +159,7 @@ const CarBookingForm = () => {
 
             {/* Step 1: Login or Sign Up */}
             <div className="mb-6">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-peachDark text-white rounded-full flex items-center justify-center font-semibold">
                     1
@@ -179,7 +179,7 @@ const CarBookingForm = () => {
               </div>
 
               {currentStep === 1 && (
-                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                   <div className="mb-4 flex flex-col gap-4">
                     <div className="flex flex-col lg:flex-row gap-4 mb-4">
                       <label className="flex items-center">
@@ -271,7 +271,7 @@ const CarBookingForm = () => {
 
             {/* Step 2: Trip Details */}
             <div className="mb-6">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 ${currentStep >= 2 ? 'bg-peachDark text-white' : 'bg-gray-200 text-gray-600'} rounded-full flex items-center justify-center font-semibold`}>
                     2
@@ -291,7 +291,7 @@ const CarBookingForm = () => {
               </div>
 
               {currentStep === 2 && (
-                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                   <div className="grid gap-4">
                     {/* Date Selection */}
                     <div className="grid grid-cols-2 gap-4">
@@ -382,7 +382,7 @@ const CarBookingForm = () => {
 
             {/* Step 3: Review Request */}
             <div className="mb-6">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 ${currentStep >= 3 ? 'bg-peachDark text-white' : 'bg-gray-200 text-gray-600'} rounded-full flex items-center justify-center font-semibold`}>
                     3

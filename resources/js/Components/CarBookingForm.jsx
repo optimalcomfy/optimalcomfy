@@ -188,7 +188,7 @@ const CarBookingForm = () => {
                           name="userType"
                           checked={!data.is_registered}
                           onChange={() => setData('is_registered', false)}
-                          className="mr-2"
+                          className="mr-2 text-red-300"
                         />
                         New User
                       </label>
@@ -198,7 +198,7 @@ const CarBookingForm = () => {
                           name="userType"
                           checked={data.is_registered}
                           onChange={() => setData('is_registered', true)}
-                          className="mr-2"
+                          className="mr-2 text-red-300"
                         />
                         Existing User
                       </label>
@@ -330,7 +330,7 @@ const CarBookingForm = () => {
                           value={data.pickup_location}
                           onChange={(e) => setData('pickup_location', e.target.value)}
                           onFocus={() => setShowPickupSuggestions(true)}
-                          className="w-full pl-10 p-3 rounded-lg focus:outline-none focus:border-none focus:ring-0"
+                          className="w-full pl-10 p-3 rounded-lg"
                         />
                         {data.pickup_location && (
                           <X 

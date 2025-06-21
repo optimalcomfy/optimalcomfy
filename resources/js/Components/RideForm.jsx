@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { router } from '@inertiajs/react';
-import { Search, Loader2, X, MapPin, Calendar, CarIcon } from 'lucide-react';
+import { Search, Loader2, X, MapPin, Calendar } from 'lucide-react';
 import { toast } from 'react-toastify';
 import './SearchForms.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -14,7 +14,8 @@ const DesktopSearchBar = ({
   isSuggestionsOpen, 
   locationSuggestions, 
   suggestionRef,
-  inputRef
+  inputRef,
+  setIsSuggestionsOpen
 }) => (
   <div className="search-container desktop-search">
     <div className="bar">
@@ -48,7 +49,7 @@ const DesktopSearchBar = ({
         {isLoadingSuggestions && <Loader2 className="loader-icon animate-spin" />}
         {isSuggestionsOpen && (
           <div style={{borderRadius: '0px'}} className="mini absolute z-50 w-full bg-white border mt-1 shadow-lg max-h-48 overflow-y-auto">
-            {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
+            {locationSuggestions.map((location, index) => (
               <div
                 key={index}
                 onClick={(e) => {
@@ -121,7 +122,8 @@ const MobileSearchModal = ({
   handleSubmit,
   isLoadingSuggestions,
   isSuggestionsOpen,
-  locationSuggestions
+  locationSuggestions,
+  setIsSuggestionsOpen
 }) => (
   <div className={`mobile-search-modal ${isModalOpen ? 'active' : ''}`}>
     <div className="modal-overlay" onClick={closeModal}></div>
@@ -163,18 +165,18 @@ const MobileSearchModal = ({
             </div>
             {isSuggestionsOpen && (
               <ul style={{borderRadius: '0px'}} className="mobile-suggestions-dropdown">
-                  {locationSuggestions.length > 0 && locationSuggestions?.map((location, index) => (
-                    <div
-                      key={index}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleLocationSelect(location);
-                      }}
-                      className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                    >
-                      {location}
-                    </div>
-                  ))}
+                {locationSuggestions.map((location, index) => (
+                  <div
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLocationSelect(location);
+                    }}
+                    className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                  >
+                    {location}
+                  </div>
+                ))}
               </ul>
             )}
           </div>
@@ -236,6 +238,7 @@ export default function RideForm() {
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [lastSelectedLocation, setLastSelectedLocation] = useState('');
 
   const suggestionRef = useRef(null);
   const inputRef = useRef(null);
@@ -263,8 +266,8 @@ export default function RideForm() {
         return;
       }
       
-      // Don't fetch if we're not showing suggestions
-      if (!isSuggestionsOpen && inputRef.current !== document.activeElement) {
+      // Don't fetch if we just selected a location
+      if (formData.location === lastSelectedLocation) {
         return;
       }
 
@@ -273,8 +276,8 @@ export default function RideForm() {
         const res = await fetch(`/locations?query=${encodeURIComponent(formData.location)}`);
         const data = await res.json();
         setLocationSuggestions(data);
-        // Only open if the input is focused
-        if (inputRef.current === document.activeElement) {
+        // Only open if the input is focused and we didn't just select a location
+        if (inputRef.current === document.activeElement && formData.location !== lastSelectedLocation) {
           setIsSuggestionsOpen(data.length > 0);
         }
       } catch (err) {
@@ -287,7 +290,7 @@ export default function RideForm() {
 
     const delay = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(delay);
-  }, [formData.location, isSuggestionsOpen]);
+  }, [formData.location, lastSelectedLocation]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -312,10 +315,12 @@ export default function RideForm() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setLastSelectedLocation(''); // Reset last selected when typing
   };
 
   const handleLocationSelect = (loc) => {
     setFormData((prev) => ({ ...prev, location: loc }));
+    setLastSelectedLocation(loc); // Track the last selected location
     setIsSuggestionsOpen(false);
     setIsLoadingSuggestions(false);
   };
@@ -353,6 +358,7 @@ export default function RideForm() {
           locationSuggestions={locationSuggestions}
           suggestionRef={suggestionRef}
           inputRef={inputRef}
+          setIsSuggestionsOpen={setIsSuggestionsOpen}
         />
       ) : (
         <>
@@ -371,6 +377,7 @@ export default function RideForm() {
               isLoadingSuggestions={isLoadingSuggestions}
               isSuggestionsOpen={isSuggestionsOpen}
               locationSuggestions={locationSuggestions}
+              setIsSuggestionsOpen={setIsSuggestionsOpen}
             />
           }
         </>

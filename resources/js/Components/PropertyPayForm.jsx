@@ -281,7 +281,7 @@ const PropertyBookingForm = () => {
           <h1 className="text-2xl font-semibold">Request to book</h1>
         </div>
 
-        <div className="grid grid-cols-1 justify-center lg:grid-cols-2 gap-8">
+        <div className="flex flex-col lg:flex-row justify-center lg:grid-cols-2 gap-8">
           
           {/* Left Column - Booking Form */}
           <div className="space-y-6">
@@ -298,8 +298,8 @@ const PropertyBookingForm = () => {
               {currentStep >= 1 && (
                 <div className="space-y-4">
                   {/* Date Selection */}
-                  <div className="grid grid-cols-2 border border-gray-300 rounded-xl overflow-hidden">
-                    <div className="border-r border-gray-300 p-4">
+                  <div className="flex flex-col lg:flex-row border border-gray-300 rounded-xl overflow-hidden">
+                    <div className="border-r flex-1 border-gray-300 p-4">
                       <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
                         Check-in
                       </label>
@@ -313,7 +313,7 @@ const PropertyBookingForm = () => {
                       />
                     </div>
                     
-                    <div className="p-4">
+                    <div className="p-4 flex-1">
                       <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
                         Check-out
                       </label>
@@ -331,7 +331,7 @@ const PropertyBookingForm = () => {
                   {currentStep === 1 && (
                     <button
                       onClick={handleReserveClick}
-                      className="w-full py-4 bg-gradient-to-r bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200"
+                      className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200"
                     >
                       Continue
                     </button>

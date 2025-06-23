@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { FaCalendarAlt, FaMapMarkerAlt, FaUser, FaHome, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaEye, FaUser, FaHome, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const BookingShow = () => {
@@ -224,6 +224,9 @@ const BookingShow = () => {
                   <p className="text-sm text-gray-500">Address</p>
                   <p className="font-medium">{booking.user.address}, {booking.user.city}, {booking.user.country}</p>
                 </div>
+                <Link href={route('users.show', booking.user?.id)}>
+                  <p className="text-lg font-bold text-gray-500 flex items-center gap-2"> <FaEye /> View user kyc</p>
+                </Link>
               </div>
             </div>
 

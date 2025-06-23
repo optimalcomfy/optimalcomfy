@@ -145,6 +145,14 @@ body.header-fixed {
   }
 }
 
+@media (max-width: 768px) {
+  .logo-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+}
+
 .logo-image {
   max-width: 180px;
   padding-top: 12px;

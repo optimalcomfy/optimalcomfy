@@ -155,7 +155,7 @@ const MobileSearchModal = ({
                   }
                 }}
                 placeholder="Search destinations"
-                className="rounded-md"
+                className="rounded-md w-full"
               />
               {formData.location && <X className="clear-icon" onClick={() => {
                 handleChange({ target: { name: 'location', value: '' } });
@@ -193,7 +193,7 @@ const MobileSearchModal = ({
                 value={formData.checkIn}
                 onChange={handleChange}
                 min={new Date().toISOString().split("T")[0]}
-                className="rounded-md"
+                className="rounded-md w-full"
               />
             </div>
           </div>
@@ -210,13 +210,13 @@ const MobileSearchModal = ({
                 value={formData.checkOut}
                 onChange={handleChange}
                 min={formData.checkIn}
-                className="rounded-md"
+                className="rounded-md w-full"
               />
             </div>
           </div>
         </div>
         <div className="modal-footer flex justify-end my-2 gap-8">
-          <button className="submit-search-btn flex items-center gap-4 bg-[#0d3c46] text-white px-4 py-1 rounded-md" onClick={handleSubmit}>
+          <button className="submit-search-btn w-full flex justify-center items-center gap-4 bg-[#0d3c46] text-white px-4 py-1 rounded-md" onClick={handleSubmit}>
             Search <Search className="ml-2" size={16} />
           </button>
         </div>
@@ -362,7 +362,8 @@ export default function RideForm() {
         />
       ) : (
         <>
-          <MobileSearchTrigger onClick={openModal} />
+        {!isModalOpen &&
+          <MobileSearchTrigger onClick={openModal} />}
           {isModalOpen &&
             <MobileSearchModal
               isModalOpen={isModalOpen}

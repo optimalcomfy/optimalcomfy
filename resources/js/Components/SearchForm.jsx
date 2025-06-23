@@ -129,7 +129,7 @@ const MobileSearchModal = ({
     <div className="modal-overlay" onClick={closeModal}></div>
     <div className="modal-content" ref={modalRef}>
       <div className="modal-header flex justify-between my-2">
-        <h2 className="modal-title text-xl">Search Rides</h2>
+        <h2 className="modal-title text-xl">Search stays</h2>
         <button className="modal-close-btn flex items-center bg-[#f37e5d] rounded-md px-2 py-1" onClick={closeModal}>
           <X size={24} /> close
         </button>
@@ -155,7 +155,7 @@ const MobileSearchModal = ({
                   }
                 }}
                 placeholder="Search destinations"
-                className="rounded-md"
+                className="rounded-md w-full"
               />
               {formData.location && <X className="clear-icon" onClick={() => {
                 handleChange({ target: { name: 'location', value: '' } });
@@ -193,7 +193,7 @@ const MobileSearchModal = ({
                 value={formData.checkIn}
                 onChange={handleChange}
                 min={new Date().toISOString().split("T")[0]}
-                className="rounded-md"
+                className="rounded-md w-full"
               />
             </div>
           </div>
@@ -210,14 +210,14 @@ const MobileSearchModal = ({
                 value={formData.checkOut}
                 onChange={handleChange}
                 min={formData.checkIn}
-                className="rounded-md"
+                className="rounded-md w-full"
               />
             </div>
           </div>
         </div>
         <div className="modal-footer flex justify-end my-2 gap-8">
-          <button className="submit-search-btn flex items-center gap-4 bg-[#0d3c46] text-white px-4 py-1 rounded-md" onClick={handleSubmit}>
-            Search <Search className="ml-2" size={16} />
+          <button className="submit-search-btn w-full flex items-center justify-center gap-2 bg-[#0d3c46] text-white px-4 py-1 rounded-md" onClick={handleSubmit}>
+            Search <Search className="" size={16} />
           </button>
         </div>
       </div>
@@ -362,7 +362,8 @@ export default function RideForm() {
         />
       ) : (
         <>
-          <MobileSearchTrigger onClick={openModal} />
+          {!isModalOpen &&
+          <MobileSearchTrigger onClick={openModal} />}
           {isModalOpen &&
             <MobileSearchModal
               isModalOpen={isModalOpen}

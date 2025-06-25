@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
+            $table->string('apartment_name')->nullable();
+            $table->string('block')->nullable();
+            $table->string('house_number')->nullable();
+            $table->text('lock_box_location')->nullable();
+            $table->string('wifi_name')->nullable();
             $table->string('property_name')->unique();
             $table->string('type')->nullable();
             $table->string('wifi_password')->nullable();
@@ -21,7 +26,7 @@ return new class extends Migration
             $table->string('emergency_contact')->nullable();
             $table->text('key_location')->nullable();
             $table->decimal('price_per_night', 10, 2);
-            $table->double('amount')->nullable()->after('price_per_night');
+            $table->double('amount')->nullable();
             $table->integer('max_guests')->default(0);
             $table->integer('max_adults')->default(0);
             $table->integer('max_children')->default(0);

@@ -157,6 +157,10 @@ const ShowProperty = ({ property }) => {
                 <div className="bg-gray-50 p-4 sm:p-6 rounded-lg">
                   <h2 className="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">Lock box details</h2>
                   <div className="space-y-2 sm:space-y-3">
+                     <div className="flex justify-between border-b border-gray-200 pb-2 gap-2 sm:gap-4">
+                      <span className="text-sm sm:text-base text-gray-600">Wifi name</span>
+                      <span className="text-sm sm:text-base font-medium text-gray-800 break-all">{property.wifi_name}</span>
+                    </div>
                     <div className="flex justify-between border-b border-gray-200 pb-2 gap-2 sm:gap-4">
                       <span className="text-sm sm:text-base text-gray-600">Wifi password</span>
                       <span className="text-sm sm:text-base font-medium text-gray-800 break-all">{property.wifi_password}</span>
@@ -176,6 +180,22 @@ const ShowProperty = ({ property }) => {
                     <div className="flex justify-between border-b border-gray-200 pb-2 gap-2 sm:gap-4">
                       <span className="text-sm sm:text-base text-gray-600">Key location</span>
                       <span className="text-sm sm:text-base font-medium text-gray-800">{property.key_location}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-200 pb-2 gap-2 sm:gap-4">
+                      <span className="text-sm sm:text-base text-gray-600">Apartment name</span>
+                      <span className="text-sm sm:text-base font-medium text-gray-800">{property.apartment_name}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-200 pb-2 gap-2 sm:gap-4">
+                      <span className="text-sm sm:text-base text-gray-600">Block</span>
+                      <span className="text-sm sm:text-base font-medium text-gray-800">{property.block}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-200 pb-2 gap-2 sm:gap-4">
+                      <span className="text-sm sm:text-base text-gray-600">House number</span>
+                      <span className="text-sm sm:text-base font-medium text-gray-800">{property.house_number}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-200 pb-2 gap-2 sm:gap-4">
+                      <span className="text-sm sm:text-base text-gray-600">Lock box location</span>
+                      <span className="text-sm sm:text-base font-medium text-gray-800">{property.lock_box_location}</span>
                     </div>
                   </div>
                 </div>

@@ -11,6 +11,11 @@ class Property extends Model
 
     protected $fillable = [
         'property_name',
+        'apartment_name',
+        'block',
+        'house_number',
+        'lock_box_location',
+        'wifi_name',
         'type',
         'price_per_night',
         'amount',

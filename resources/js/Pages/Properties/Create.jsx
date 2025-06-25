@@ -22,7 +22,12 @@ const CreateProperty = ({ errors }) => {
     cook: "",
     cleaner: "",
     emergency_contact: "",
-    key_location: ""
+    key_location: "",
+    apartment_name: "",
+    block: "",
+    house_number: "",
+    lock_box_location: "",
+    wifi_name: ""
   });
 
   // Calculate host earnings whenever amount changes
@@ -252,6 +257,22 @@ const CreateProperty = ({ errors }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Wifi className="w-4 h-4 mr-2" />
+                    <span>WiFi name</span>
+                  </div>
+                </label>
+                <input
+                  type="text"
+                  value={data.wifi_name}
+                  onChange={(e) => setData("wifi_name", e.target.value)}
+                  className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
+                  placeholder="Optional"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className="flex items-center">
+                    <Wifi className="w-4 h-4 mr-2" />
                     <span>WiFi Password</span>
                   </div>
                 </label>
@@ -275,6 +296,71 @@ const CreateProperty = ({ errors }) => {
                   type="text"
                   value={data.key_location}
                   onChange={(e) => setData("key_location", e.target.value)}
+                  className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
+                  placeholder="Where guests can find the key"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className="flex items-center">
+                    <Key className="w-4 h-4 mr-2" />
+                    <span>Apartment name</span>
+                  </div>
+                </label>
+                <input
+                  type="text"
+                  value={data.apartment_name}
+                  onChange={(e) => setData("apartment_name", e.target.value)}
+                  className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
+                  placeholder="Where guests can find the key"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className="flex items-center">
+                    <Key className="w-4 h-4 mr-2" />
+                    <span>Block</span>
+                  </div>
+                </label>
+                <input
+                  type="text"
+                  value={data.block}
+                  onChange={(e) => setData("block", e.target.value)}
+                  className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
+                  placeholder="Where guests can find the key"
+                />
+              </div>
+
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className="flex items-center">
+                    <Key className="w-4 h-4 mr-2" />
+                    <span>House number</span>
+                  </div>
+                </label>
+                <input
+                  type="text"
+                  value={data.house_number}
+                  onChange={(e) => setData("house_number", e.target.value)}
+                  className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
+                  placeholder="Where guests can find the key"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className="flex items-center">
+                    <Key className="w-4 h-4 mr-2" />
+                    <span>Lock box location</span>
+                  </div>
+                </label>
+                <input
+                  type="text"
+                  value={data.lock_box_location}
+                  onChange={(e) => setData("lock_box_location", e.target.value)}
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
                   placeholder="Where guests can find the key"
                 />

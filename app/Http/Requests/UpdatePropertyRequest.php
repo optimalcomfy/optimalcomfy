@@ -38,7 +38,12 @@ class UpdatePropertyRequest extends FormRequest
             'cook' => 'nullable',
             'cleaner' => 'nullable',
             'emergency_contact' => 'nullable',
-            'key_location' => 'nullable'
+            'key_location' => 'nullable',
+            'apartment_name' => 'nullable',
+            'block' => 'nullable',
+            'house_number' => 'nullable',
+            'lock_box_location' => 'nullable',
+            'wifi_name' => 'nullable'
         ];
     }
 }

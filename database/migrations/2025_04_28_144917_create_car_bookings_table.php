@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('car_bookings', function (Blueprint $table) {
             $table->id();
+            $table->string('number')->nullable();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('car_id')->constrained()->cascadeOnDelete();
             $table->date('start_date');

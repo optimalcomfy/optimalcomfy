@@ -145,6 +145,7 @@ const CarBookingShow = () => {
                 </p>
               </div>
             </div>
+            {roleId !== 3 &&
             <div className="flex space-x-2">
               {!booking.checked_in && !booking.checked_out && (
                 <button
@@ -162,7 +163,7 @@ const CarBookingShow = () => {
                   <FaSignOutAlt className="mr-2" /> Check Out
                 </button>
               )}
-            </div>
+            </div>}
           </div>
         </div>
 

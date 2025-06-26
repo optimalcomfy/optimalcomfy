@@ -204,7 +204,7 @@ function Header() {
                         <li className="navigation__menu--item has-child has-arrow dark:before:!text-white">
                         <Link
                           href={route('home')}
-                          className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking') ? 'lowBorder' : ''}`}
+                          className={`navigation__menu--item__link dark:text-white flex items-center gap-2 ${(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking' || isWhich === '/privacy-policy' || isWhich === '/host-calendar-policy' || isWhich === '/terms-and-conditions') ? 'lowBorder' : ''}`}
                           >
                             <img src='/image/houses.png' alt='' className='h-8' />
                             Stays
@@ -292,7 +292,7 @@ function Header() {
               </div>
 
               <div className={`logo-container px-2`}>
-                {(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking') &&
+                {(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking' || isWhich === '/privacy-policy' || isWhich === '/host-calendar-policy' || isWhich === '/terms-and-conditions') &&
                   <SearchBar />
                 }
                 {(isWhich === '/all-cars' || isWhich === '/search-cars' || isWhich === '/rent-now' || isWhich === '/car-booking') &&

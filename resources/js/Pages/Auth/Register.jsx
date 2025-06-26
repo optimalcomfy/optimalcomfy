@@ -27,6 +27,9 @@ export default function Register() {
         emergency_contact: '',
         contact_phone: '',
         user_type: 'guest', // 'guest' or 'host'
+        // Add new checkbox fields
+        agree_terms: false,
+        confirm_age: false,
     });
 
     // Separate name fields state
@@ -59,8 +62,22 @@ export default function Register() {
         setData('name', fullName);
     };
 
+    // Check if both checkboxes are checked
+    const canSubmit = data.agree_terms && data.confirm_age;
+
     const submit = (e) => {
         e.preventDefault();
+
+        // Validate checkboxes before submission
+        if (!data.agree_terms) {
+            toast.error('You must agree to the Terms & Conditions and Privacy Policy to continue.');
+            return;
+        }
+
+        if (!data.confirm_age) {
+            toast.error('You must confirm that you are 18 years or older to continue.');
+            return;
+        }
 
         post(route('register'), {
             preserveScroll: true,
@@ -87,8 +104,8 @@ export default function Register() {
         <PrimeReactProvider>
         <LayoutProvider>
             <HomeLayout>
-            <div className="min-h-screen flex flex-col items-center justify-center px-4 text-xl">
-                <Head title="Register - Airbnb Clone" />
+            <div className="min-h-screen flex flex-col items-center justify-center px-4 text-xl py-10">
+                <Head title="Register - Ristay" />
                 
                 <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-8">
                     <h2 className="text-center text-3xl font-bold mb-6 text-peachDark">Create Your Account</h2>
@@ -281,7 +298,7 @@ export default function Register() {
                             <div>
                                 <h3 className="text-xl font-semibold mb-4">Profile Details</h3>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                     <div>
                                         <label htmlFor="address" className="block mb-1">Address</label>
                                         <input 
@@ -367,6 +384,73 @@ export default function Register() {
                                         />
                                     </div>
                                 </div>
+
+                                {/* Required Checkboxes Section */}
+                                <div className="border-t pt-6">
+                                    <h4 className="text-lg font-semibold mb-4 text-gray-800">Agreement & Confirmation</h4>
+                                    
+                                    <div className="space-y-4">
+                                        {/* Terms & Conditions Checkbox */}
+                                        <div className="flex items-center space-x-3">
+                                            <input
+                                                type="checkbox"
+                                                id="agree_terms"
+                                                checked={data.agree_terms}
+                                                onChange={(e) => setData('agree_terms', e.target.checked)}
+                                                className="mt-1 text-peachDark border-peachDark rounded focus:ring-peachDark focus:ring-2"
+                                                required
+                                            />
+                                            <label htmlFor="agree_terms" className="text-sm text-gray-700 leading-5">
+                                                I agree to the{' '}
+                                                <Link 
+                                                    href="/terms-and-conditions" 
+                                                    className="text-peachDark hover:underline font-medium"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    Terms & Conditions
+                                                </Link>
+                                                {' '}and{' '}
+                                                <Link 
+                                                    href="/privacy-policy" 
+                                                    className="text-peachDark hover:underline font-medium"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    Privacy Policy
+                                                </Link>
+                                                {' '}of Ristay.
+                                            </label>
+                                        </div>
+
+                                        {/* Age Confirmation Checkbox */}
+                                        <div className="flex items-center space-x-3">
+                                            <input
+                                                type="checkbox"
+                                                id="confirm_age"
+                                                checked={data.confirm_age}
+                                                onChange={(e) => setData('confirm_age', e.target.checked)}
+                                                className="mt-1 text-peachDark border-peachDark rounded focus:ring-peachDark focus:ring-2"
+                                                required
+                                            />
+                                            <label htmlFor="confirm_age" className="text-sm text-gray-700 leading-5">
+                                                I confirm that I am 18 years or older.
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Error messages for unchecked boxes */}
+                                    {errors.agree_terms && (
+                                        <div className="mt-2 text-sm text-red-600">
+                                            {errors.agree_terms}
+                                        </div>
+                                    )}
+                                    {errors.confirm_age && (
+                                        <div className="mt-2 text-sm text-red-600">
+                                            {errors.confirm_age}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -385,7 +469,7 @@ export default function Register() {
                                 <button 
                                     type="button" 
                                     onClick={nextStep} 
-                                    className="px-4 py-2 bg-peach text-white rounded hover:bg-peachDark transition"
+                                    className="px-4 py-2 bg-peach text-white rounded hover:bg-peachDark transition ml-auto"
                                 >
                                     Next
                                 </button>
@@ -394,8 +478,12 @@ export default function Register() {
                             {step === totalSteps && (
                                 <button 
                                     type="submit" 
-                                    disabled={processing} 
-                                    className="px-4 py-2 bg-peach text-white rounded hover:bg-peachDark transition"
+                                    disabled={processing || !canSubmit} 
+                                    className={`px-4 py-2 rounded transition ml-auto ${
+                                        canSubmit && !processing
+                                            ? 'bg-peach text-white hover:bg-peachDark' 
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
                                 >
                                     {processing ? 'Creating Account...' : 'Create Account'}
                                 </button>

@@ -61,6 +61,16 @@ function Footer() {
                   Ristay Host Calendar & Booking Policy
                 </Link>
               </li>
+              <li>
+                <Link className="hover:text-primary" href={route('privacy-policy')}>
+                  Ristay privacy policy
+                </Link>
+              </li>
+              <li>
+                <Link className="hover:text-primary" href={route('terms-and-conditions')}>
+                  Ristay terms and conditions
+                </Link>
+              </li>
             </ul>
           </div>
           <div className="rts__widget">

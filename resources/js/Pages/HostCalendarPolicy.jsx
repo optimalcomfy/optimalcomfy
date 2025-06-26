@@ -9,8 +9,21 @@ import React, { useContext } from "react";
 import HomeLayout from "@/Layouts/HomeLayout";
 import '../../css/main'
 import CarRideForm from "@/Components/CarRideForm";
+import { Button } from 'primereact/button';
+import { FaFilePdf } from 'react-icons/fa';
 
 export default function RentNow({ auth, laravelVersion, phpVersion }) {
+
+  const handleDownload = () => {
+    // Replace with your actual PDF file path
+    const pdfUrl = '/assets/Ristay Host Calendar Policy.docx';
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = 'Ristay Host Calendar Policy.docx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <>
@@ -19,7 +32,15 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
           <Head title="Ristay Host Calendar & Booking Policy" />
           <HomeLayout>
             <div className="container mx-auto px-4 py-8">
-              <h1 className="text-3xl font-bold mb-6">Ristay Host Calendar & Booking Policy</h1>
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">Ristay Host Calendar & Booking Policy</h1>
+                <Button 
+                  label="Download Document" 
+                  icon={<FaFilePdf className="mr-2" />}
+                  onClick={handleDownload}
+                  className="p-button-outlined p-button-secondary"
+                />
+              </div>
               
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">1. Booking Visibility & Availability</h2>

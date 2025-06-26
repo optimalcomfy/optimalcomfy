@@ -128,6 +128,14 @@ class HomeController extends Controller
     return Inertia::render('HostCalendarPolicy');
    }
 
+   public function privacyPolicy(){
+    return Inertia::render('PrivacyPolicy');
+   }
+
+   public function termsAndConditions(){
+    return Inertia::render('TermsAndConditions');
+   }
+
     public function carBooking(Request $request)
     {
         $input = $request->all();

@@ -72,6 +72,8 @@ Route::get('/rent-now', [HomeController::class, 'rentNow'])->name('rent-now');
 Route::get('/car-booking', [HomeController::class, 'carBooking'])->name('car-booking');
 Route::get('/property-booking', [HomeController::class, 'propertyBooking'])->name('property-booking');
 Route::get('/host-calendar-policy', [HomeController::class, 'hostCalendarPolicy'])->name('host-calendar-policy');
+Route::get('/privacy-policy', [HomeController::class, 'privacyPolicy'])->name('privacy-policy');
+Route::get('/terms-and-conditions', [HomeController::class, 'termsAndConditions'])->name('terms-and-conditions');
 
 Route::get('/joby/{job}', [HomeController::class, 'showJob'])->name('jobShow');
 

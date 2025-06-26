@@ -4,6 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Company;
+use App\Models\User;
+use App\Models\Booking;
+use App\Models\PropertyGallery;
+use App\Models\PropertyAmenity;
+use App\Models\PropertyFeature;
+use App\Models\PropertyService;
 
 class Property extends Model
 {
@@ -37,9 +44,19 @@ class Property extends Model
         'price_per_night' => 'decimal:2',
     ];
 
+    protected $appends = ['platform_price', 'platform_charges'];
+
+    /**
+     * Relationships
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function bookings()
@@ -66,5 +83,35 @@ class Property extends Model
     {
         return $this->hasMany(PropertyService::class);
     }
-    
+
+    /**
+     * Accessor: Platform price (price + platform charges)
+     */
+    public function getPlatformPriceAttribute()
+    {
+        $company = Company::first();
+
+        if (!$company || !$company->percentage) {
+            return $this->price_per_night;
+        }
+
+        $base = $this->price_per_night;
+        $charges = $base * $company->percentage / 100;
+
+        return round($base + $charges, 2);
+    }
+
+    /**
+     * Accessor: Platform charges (commission only)
+     */
+    public function getPlatformChargesAttribute()
+    {
+        $company = Company::first();
+
+        if (!$company || !$company->percentage) {
+            return 0;
+        }
+
+        return round($this->price_per_night * $company->percentage / 100, 2);
+    }
 }

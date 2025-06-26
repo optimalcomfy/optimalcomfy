@@ -4,6 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Company;
+use App\Models\User;
+use App\Models\CarCategory;
+use App\Models\CarMedia;
+use App\Models\CarFeature;
+use App\Models\CarBooking;
 
 class Car extends Model
 {
@@ -38,10 +44,15 @@ class Car extends Model
         'license_plate'
     ];
 
+    protected $casts = [
+        'price_per_day' => 'decimal:2',
+    ];
+
+    protected $appends = ['platform_price', 'platform_charges'];
+
     /**
      * Relationships
      */
-
     public function category()
     {
         return $this->belongsTo(CarCategory::class, 'car_category_id');
@@ -75,5 +86,37 @@ class Car extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+
+    /**
+     * Accessor: Platform price (price + platform charges)
+     */
+    public function getPlatformPriceAttribute()
+    {
+        $company = Company::first();
+
+        if (!$company || !$company->percentage) {
+            return $this->price_per_day;
+        }
+
+        $base = $this->price_per_day;
+        $charges = $base * $company->percentage / 100;
+
+        return round($base + $charges, 2);
+    }
+
+    /**
+     * Accessor: Platform charges (commission only)
+     */
+    public function getPlatformChargesAttribute()
+    {
+        $company = Company::first();
+
+        if (!$company || !$company->percentage) {
+            return 0;
+        }
+
+        return round($this->price_per_day * $company->percentage / 100, 2);
     }
 }

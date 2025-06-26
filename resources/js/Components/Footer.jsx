@@ -40,38 +40,43 @@ function Footer() {
             <span className="block text-[20px] heading text-[#F26722] capitalize mb-[20px]">
               quick links
             </span>
-            <ul className="grid grid-cols-2 gap-[10px]">
-              <li>
-                <Link className="hover:text-primary" href={route('home')}>
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link className="hover:text-primary" href={route('home')}>
-                  Stays
-                </Link>
-              </li>
-              <li>
-                <Link className="hover:text-primary" href={route('all-cars')}>
-                  Rides
-                </Link>
-              </li>
-              <li>
-                <Link className="hover:text-primary" href={route('host-calendar-policy')}>
-                  Ristay Host Calendar & Booking Policy
-                </Link>
-              </li>
-              <li>
-                <Link className="hover:text-primary" href={route('privacy-policy')}>
-                  Ristay privacy policy
-                </Link>
-              </li>
-              <li>
-                <Link className="hover:text-primary" href={route('terms-and-conditions')}>
-                  Ristay terms and conditions
-                </Link>
-              </li>
-            </ul>
+            <div className='flex flex-col lg:flex-row w-full'>
+              <ul className="flex flex-1 flex-col gap-[10px]">
+                <li className="">
+                  <Link className="hover:text-primary" href={route('home')}>
+                    Home
+                  </Link>
+                </li>
+                <li className="">
+                  <Link className="hover:text-primary" href={route('home')}>
+                    Stays
+                  </Link>
+                </li>
+                <li className="">
+                  <Link className="hover:text-primary" href={route('all-cars')}>
+                    Rides
+                  </Link>
+                </li>
+              </ul>
+
+              <ul className="flex flex-1 flex-col gap-[10px]">
+                <li className="">
+                  <Link className="hover:text-primary" href={route('host-calendar-policy')}>
+                    Ristay Host Calendar & Booking Policy
+                  </Link>
+                </li>
+                <li className="">
+                  <Link className="hover:text-primary" href={route('privacy-policy')}>
+                    Ristay privacy policy
+                  </Link>
+                </li>
+                <li className="">
+                  <Link className="hover:text-primary" href={route('terms-and-conditions')}>
+                    Ristay terms and conditions
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
           <div className="rts__widget">
             <span className="block text-[20px] heading text-[#F26722] capitalize mb-[20px]">

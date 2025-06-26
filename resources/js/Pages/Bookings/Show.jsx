@@ -258,6 +258,10 @@ const BookingShow = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
+                  <p className="text-sm text-gray-500">Wifi name</p>
+                  <p className="font-medium">{booking.property.wifi_name}</p>
+                </div>
+                <div>
                   <p className="text-sm text-gray-500">Wifi password</p>
                   <p className="font-medium">{booking.property.wifi_password}</p>
                 </div>
@@ -276,6 +280,22 @@ const BookingShow = () => {
                 <div>
                   <p className="text-sm text-gray-500">Key location</p>
                   <p className="font-medium">{booking.property.key_location}</p>
+                </div>
+                                <div>
+                  <p className="text-sm text-gray-500">Apartment name</p>
+                  <p className="font-medium">{booking.property.apartment_name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Block</p>
+                  <p className="font-medium">{booking.property.block}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">House number</p>
+                  <p className="font-medium">{booking.property.house_number}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Lock box location</p>
+                  <p className="font-medium">{booking.property.lock_box_location}</p>
                 </div>
               </div>
             </div>

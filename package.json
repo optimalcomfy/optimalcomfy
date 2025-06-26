@@ -34,6 +34,7 @@
         "primeflex": "^3.3.1",
         "primeicons": "^6.0.1",
         "primereact": "^10.0.9",
+        "qrcode.react": "^4.2.0",
         "react-calendar": "^5.1.0",
         "react-datepicker": "^7.6.0",
         "react-daterange-picker": "^2.0.1",

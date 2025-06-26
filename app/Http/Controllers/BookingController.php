@@ -121,8 +121,17 @@ class BookingController extends Controller
             return redirect()->route('car-bookings.show', $booking->id); 
         } else {
             $booking = Booking::where('number', $request->number)->first();
-
-            return redirect()->route('bookings.show', $booking->id); 
+            
+            return Inertia::render('RistayPass', [
+                'booking' => $booking->load([
+                    'user',
+                    'property.propertyAmenities',
+                    'property.propertyFeatures',
+                    'property.initialGallery',   // Gallery
+                    'property.PropertyServices',
+                    'property.user',             // Property owner
+                ]),
+            ]);
         }
 
         if (!$booking) {

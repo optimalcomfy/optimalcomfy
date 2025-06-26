@@ -40,7 +40,7 @@ function Footer() {
             <span className="block text-[20px] heading text-[#F26722] capitalize mb-[20px]">
               quick links
             </span>
-            <ul className="flex flex-col gap-[10px]">
+            <ul className="grid grid-cols-2 gap-[10px]">
               <li>
                 <Link className="hover:text-primary" href={route('home')}>
                   Home
@@ -54,6 +54,11 @@ function Footer() {
               <li>
                 <Link className="hover:text-primary" href={route('all-cars')}>
                   Rides
+                </Link>
+              </li>
+              <li>
+                <Link className="hover:text-primary" href={route('host-calendar-policy')}>
+                  Ristay Host Calendar & Booking Policy
                 </Link>
               </li>
             </ul>

@@ -124,6 +124,10 @@ class HomeController extends Controller
         ]);
     }
 
+   public function hostCalendarPolicy(){
+    return Inertia::render('HostCalendarPolicy');
+   }
+
     public function carBooking(Request $request)
     {
         $input = $request->all();

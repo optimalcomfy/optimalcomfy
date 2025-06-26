@@ -29342,3 +29342,13 @@ pre.app-code code {
   background: #ECCFFF;
   color: #694382;
 }
+
+
+.text-peachDark {
+  color: #f07e5b !important;
+}
+
+
+.bg-peachDark {
+  background-color: #f07e5b !important;
+}

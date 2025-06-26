@@ -1256,3 +1256,8 @@ img {
 		display: flex;
 	}
 }
+
+
+.text-peachDark {
+  color: #f07e5b !important;
+}

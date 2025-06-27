@@ -214,7 +214,6 @@ const CreateCar = () => {
 
                   <div className="bg-white p-3 rounded-md border border-gray-200 mb-4">
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Platform fee ({company.percentage}%)</span>
                       <span className="font-medium">
                         {data.host_earnings ? `KES ${(data.host_earnings * (company.percentage / 100)).toFixed(2)}` : 'KES 0.00'}
                       </span>

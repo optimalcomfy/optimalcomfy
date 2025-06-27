@@ -386,7 +386,6 @@ const EditCar = ({ car, categories, company }) => {
                   {company?.percentage && (
                     <div className="pricing-breakdown">
                       <div className="pricing-item">
-                        <span className="pricing-label">Platform fee ({company.percentage}%)</span>
                         <span className="pricing-value">
                           {data.host_earnings ? `KES ${(data.host_earnings * (company.percentage / 100)).toFixed(2)}` : 'KES 0.00'}
                         </span>

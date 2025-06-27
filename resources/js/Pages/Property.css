@@ -22,8 +22,9 @@
 }
 
 .img__container--hero {
-  flex: 2;
+  flex: 1;
   min-width: 50%;
+  max-width: 50%;
   border-radius: 0.5rem;
   overflow: hidden;
 }
@@ -39,7 +40,8 @@
   flex: 1;
   display: grid;
   gap: 0.5rem;
-  min-width: 0;
+  min-width: 50%;
+  max-width: 50%;
 }
 
 /* Dynamic grid layouts based on number of secondary images */
@@ -103,12 +105,15 @@
   .img__container--hero {
     height: 250px;
     min-width: 100%;
+    max-width: 100%;
     flex: none;
   }
   
   .img__collage {
     height: 180px;
     flex: none;
+    min-width: 100%;
+    max-width: 100%;
   }
   
   /* Tablet layouts */

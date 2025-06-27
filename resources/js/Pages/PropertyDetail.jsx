@@ -9,6 +9,7 @@ import React, { useContext } from "react";
 import HomeLayout from "@/Layouts/HomeLayout";
 import "../../css/main";
 import PropertyBookingForm from "@/Components/PropertyBookingForm";
+import './Property.css'
 
 export default function Welcome({ auth, laravelVersion, phpVersion }) {
   const { property, similarProperties, flash, pagination } = usePage().props;
@@ -44,43 +45,45 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                   </div>
                   {/* images */}
 
-                  {property?.initial_gallery?.length > 1 ?
-                  <>
-                  {property?.initial_gallery[0]?.image &&
-                  <div className="hero-images">
-                    <div className="img__container--hero">
-                      <img src={`/storage/${property?.initial_gallery[0]?.image}`} alt="room" />
-                    </div>
-                    {property?.initial_gallery[1]?.image &&
-                    <div className="img__collage">
-                      <div className="img__container">
-                        <img src={`/storage/${property?.initial_gallery[1]?.image}`} alt="room" />
+                  {property?.initial_gallery?.length > 1 ? (
+                    // Multiple images layout
+                    property?.initial_gallery[0]?.image && (
+                      <div className="hero-images">
+                        <div className="img__container--hero">
+                          <img 
+                            src={`/storage/${property?.initial_gallery[0]?.image}`} 
+                            alt="room" 
+                          />
+                        </div>
+                        
+                        {property?.initial_gallery[1]?.image && (
+                          <div className={`img__collage img__collage--${Math.min(property.initial_gallery.length - 1, 4)}`}>
+                            {property?.initial_gallery.slice(1, 5).map((item, index) => (
+                              item?.image && (
+                                <div key={index} className="img__container">
+                                  <img 
+                                    src={`/storage/${item.image}`} 
+                                    alt="room" 
+                                  />
+                                </div>
+                              )
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      
-                      <div className="img__container">
-                        {property?.initial_gallery[2]?.image &&
-                        <img src={`/storage/${property?.initial_gallery[2]?.image}`}alt="room" />}
+                    )
+                  ) : (
+                    // Single image layout
+                    property?.initial_gallery?.[0]?.image && (
+                      <div className="single-image-container">
+                        <img 
+                          src={`/storage/${property?.initial_gallery[0]?.image}`} 
+                          className="single-image" 
+                          alt="room" 
+                        />
                       </div>
-                     
-                      <div className="img__container">
-                         {property?.initial_gallery[3]?.image &&
-                        <img src={`/storage/${property?.initial_gallery[3]?.image}`} alt="room" />}
-                      </div>
-                      
-                      <div className="img__container">
-                        {property?.initial_gallery[4]?.image &&
-                        <img src={`/storage/${property?.initial_gallery[4]?.image}`} alt="room" />}
-                      </div>
-                    </div>}
-                  </div>}
-                  </>
-                  :
-                  <>
-                  {property?.initial_gallery[0]?.image &&
-                  <div className="rounded-lg overflow-hidden mt-4">
-                    <img src={`/storage/${property?.initial_gallery[0]?.image}`} className="w-full h-[50vh] object-cover object-center" alt="room" />
-                  </div>}
-                  </>}
+                    )
+                  )}
                 </div>
               </section>
               <div className="container-m">
@@ -105,7 +108,9 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     {property.property_amenities.some(amenity => amenity.amenity_id === 8) && (
                       <div className="small-detail">
                         <div className="img__container">
-                          <img src="/images/icons/parking.svg" alt="parking" />
+                          <p>
+                            <img src="/images/icons/parking.svg" style={{height: 'auto !important'}} alt="parking" />
+                          </p>
                         </div>
                         <div className="small-detail__detail">
                           <h4 className="small-detail__heading">Park for free</h4>

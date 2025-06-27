@@ -9,6 +9,7 @@ import React, { useContext } from "react";
 import HomeLayout from "@/Layouts/HomeLayout";
 import '../../css/main'
 import CarRideForm from "@/Components/CarRideForm";
+import './Property.css'
 
 export default function RentNow({ auth, laravelVersion, phpVersion }) {
   const { car } = usePage().props;

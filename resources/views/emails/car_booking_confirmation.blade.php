@@ -95,6 +95,11 @@
             <span class="info-label">Booking Reference:</span>
             <span>#{{ $booking->id }}</span>
         </div>
+
+        <div class="info-row">
+            <span class="info-label">Booking number:</span>
+            <span>#{{ $booking->number }}</span>
+        </div>
         
         <div class="info-row">
             <span class="info-label">Car:</span>

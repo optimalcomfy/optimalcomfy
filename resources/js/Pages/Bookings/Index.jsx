@@ -120,6 +120,7 @@ const BookingsIndex = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">User</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Property</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Number</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Check-in</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Check-out</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Total Price</th>
@@ -132,6 +133,7 @@ const BookingsIndex = () => {
                 pagination.data.map((booking) => (
                   <tr key={booking.id}>
                     <td className="px-6 py-4 whitespace-wrap">{booking.user?.name || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{booking.number || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-wrap">{booking.property?.property_name || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-wrap">{formatDate(booking.check_in_date)}</td>
                     <td className="px-6 py-4 whitespace-wrap">{formatDate(booking.check_out_date)}</td>

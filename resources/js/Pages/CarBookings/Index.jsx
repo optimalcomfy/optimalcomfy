@@ -117,6 +117,7 @@ const CarBookingsIndex = () => {
             <thead className="bg-gray-100">
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">User</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Number</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Car</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">License</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Start Date</th>
@@ -133,6 +134,7 @@ const CarBookingsIndex = () => {
                 pagination.data.map((booking) => (
                   <tr key={booking.id}>
                     <td className="px-6 py-4 whitespace-wrap">{booking.user?.name || '-'}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{booking.number || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-wrap">{booking.car?.name || '-'}</td>
                     <td className="px-6 py-4 whitespace-wrap">{booking.car?.license_plate || '-'}</td>
                     <td className="px-6 py-4 whitespace-wrap">{formatDate(booking.start_date)}</td>

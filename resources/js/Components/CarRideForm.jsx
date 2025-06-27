@@ -127,7 +127,7 @@ const CarRideForm = ({ car }) => {
   useEffect(() => {
     if (data.check_in_date && data.check_out_date) {
       const days = calculateDays(data.check_in_date, data.check_out_date);
-      const basePrice = days * (car.price_per_day || 0);
+      const basePrice = days * (car.platform_price || 0);
       
       setData(prev => ({
         ...prev,
@@ -143,7 +143,7 @@ const CarRideForm = ({ car }) => {
     }
   }, [data.check_in_date, data.check_out_date]);
 
-  const subtotal = data.days > 0 ? (car.price_per_day || 0) * data.days : 0;
+  const subtotal = data.days > 0 ? (car.platform_price || 0) * data.days : 0;
 
   // Get all booked dates for display
   const bookedDates = car.bookings.flatMap(booking => {
@@ -166,7 +166,7 @@ const CarRideForm = ({ car }) => {
             {/* Price and Rating Section */}
             <div className="price-detail mb-6">
               <h2 className="price text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                KES {car.price_per_day || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">day</span>
+                KES {car.platform_price || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">day</span>
               </h2>
             </div>
 
@@ -246,7 +246,7 @@ const CarRideForm = ({ car }) => {
               <>
                 <div className="sticky-card__detail flex justify-between items-center mb-3">
                   <a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:underline">
-                    KES {car.price_per_day || 0} x {data.days} day{data.days !== 1 ? 's' : ''}
+                    KES {car.platform_price || 0} x {data.days} day{data.days !== 1 ? 's' : ''}
                   </a>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     KES {subtotal}
@@ -277,7 +277,7 @@ const CarRideForm = ({ car }) => {
             {/* Price and Rating Section */}
             <div className="price-detail mb-6">
               <h2 className="price text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                KES {car.price_per_day || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">day</span>
+                KES {car.platform_price || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">day</span>
               </h2>
             </div>
 
@@ -357,7 +357,7 @@ const CarRideForm = ({ car }) => {
               <>
                 <div className="sticky-card__detail flex justify-between items-center mb-3">
                   <a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:underline">
-                    KES {car.price_per_day || 0} x {data.days} day{data.days !== 1 ? 's' : ''}
+                    KES {car.platform_price || 0} x {data.days} day{data.days !== 1 ? 's' : ''}
                   </a>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     KES {subtotal}

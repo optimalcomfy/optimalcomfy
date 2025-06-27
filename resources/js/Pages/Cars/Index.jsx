@@ -5,10 +5,11 @@ import Swal from 'sweetalert2';
 import { Filter, X } from 'lucide-react';
 
 const CarsIndex = () => {
-  const { cars, pagination, flash } = usePage().props;
+  const { cars, pagination, flash, auth } = usePage().props;
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const roleId = parseInt(auth.user?.role_id);
 
   const {
     delete: destroy,
@@ -119,6 +120,11 @@ const CarsIndex = () => {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Model</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Year</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Price/Day</th>
+                {roleId === 1 &&
+                <>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Customer Price</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Platform charges</th>
+                </>}
                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -132,6 +138,11 @@ const CarsIndex = () => {
                     <td className="px-6 py-4 whitespace-wrap">{car.model}</td>
                     <td className="px-6 py-4 whitespace-wrap">{car.year}</td>
                     <td className="px-6 py-4 whitespace-wrap">{car.price_per_day}</td>
+                    {roleId === 1 &&
+                    <>
+                    <td className="px-6 py-4 whitespace-wrap">KES {property.platform_price}</td>
+                    <td className="px-6 py-4 whitespace-wrap">KES {property.platform_charges}</td>
+                    </>}
                     <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
                         <Link

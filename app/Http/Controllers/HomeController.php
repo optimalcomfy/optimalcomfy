@@ -8,6 +8,7 @@ use App\Models\Job;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use App\Models\Property;
+use App\Models\Company;
 use App\Models\Repayment;
 use App\Models\Food;
 use App\Models\Car;
@@ -198,7 +199,8 @@ class HomeController extends Controller
         $propertiesCount = $isAdmin ? Property::count() : Property::where('user_id', $user->id)->count();
 
         // Calculate pending payouts
-        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal) * 0.85; // Assuming 15% platform fee
+
+        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal);
 
         // Recent transactions
         $recentTransactions = collect([
@@ -219,6 +221,8 @@ class HomeController extends Controller
                         'type' => 'property',
                         'title' => $booking->property->title,
                         'amount' => $booking->total_price,
+                        'platform_price' => $booking->property->platform_price,
+                        'platform_charges' => $booking->property->platform_charges,
                         'guest' => $booking->user->name,
                         'date' => $booking->created_at,
                         'status' => 'completed'
@@ -242,6 +246,8 @@ class HomeController extends Controller
                         'type' => 'car',
                         'title' => $booking->car->make . ' ' . $booking->car->model,
                         'amount' => $booking->total_price,
+                        'platform_price' => $booking->car->platform_price,
+                        'platform_charges' => $booking->car->platform_charges,
                         'guest' => $booking->user->name,
                         'date' => $booking->created_at,
                         'status' => 'completed'
@@ -299,7 +305,7 @@ class HomeController extends Controller
             'carBookingTotal' => $carBookingTotal,
             'totalEarnings' => $propertyBookingTotal + $carBookingTotal,
             'pendingPayouts' => $pendingPayouts,
-            'availableBalance' => $pendingPayouts * 0.6, // Assuming some amount is available
+            'availableBalance' => $pendingPayouts, // Assuming some amount is available
             'monthlyEarnings' => $monthlyEarnings,
             'recentTransactions' => $recentTransactions,
 

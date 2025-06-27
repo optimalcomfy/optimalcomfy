@@ -42,7 +42,7 @@ const CarBookingForm = () => {
   };
 
   const days = calculateDays();
-  const totalPrice = days * car.price_per_day;
+  const totalPrice = days * car.platform_price;
 
   const handleLocationSelect = (location, field) => {
     setData(field, location);
@@ -463,7 +463,7 @@ const CarBookingForm = () => {
               <div className="border-t pt-4">
                 <h4 className="font-medium mb-2">Price details</h4>
                 <div className="flex justify-between text-sm mb-2">
-                  <span>KSh {car.price_per_day.toLocaleString()} x {days} days</span>
+                  <span>KSh {car.platform_price.toLocaleString()} x {days} days</span>
                   <span>KSh {totalPrice.toLocaleString()}</span>
                 </div>
                 <div className="border-t pt-2 mt-2">

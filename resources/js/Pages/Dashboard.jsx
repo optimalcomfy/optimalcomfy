@@ -346,6 +346,11 @@ const Dashboard = () => {
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">Type</th>
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">Guest</th>
                     <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Amount</th>
+                    {roleId === 2 &&
+                    <>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Customer Price</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Platform charges</th>
+                    </>}
                     <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Status</th>
                   </tr>
                 </thead>
@@ -358,6 +363,11 @@ const Dashboard = () => {
                       <td className="py-3 px-3 text-sm text-right font-medium">
                         {parseFloat(transaction.amount).toFixed(2)}
                       </td>
+                      {roleId === 2 &&
+                      <>
+                      <td className="px-6 py-4 whitespace-wrap">KES {transaction.platform_price}</td>
+                      <td className="px-6 py-4 whitespace-wrap">KES {transaction.platform_charges}</td>
+                      </>}
                       <td className="py-3 px-3 text-sm text-right">
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           transaction.status === 'completed' 

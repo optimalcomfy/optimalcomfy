@@ -119,9 +119,9 @@ const PropertyBookingForm = () => {
 
   // Price calculation effect
   useEffect(() => {
-    if (data.check_in_date && data.check_out_date && property?.price_per_night) {
+    if (data.check_in_date && data.check_out_date && property?.platform_price) {
       const nights = calculateDays(data.check_in_date, data.check_out_date);
-      const basePrice = nights * property.price_per_night;
+      const basePrice = nights * property.platform_price;
       const serviceFee = Math.round(basePrice * 0.12);
       
       setData(prev => ({
@@ -136,7 +136,7 @@ const PropertyBookingForm = () => {
         total_price: 0
       }));
     }
-  }, [data.check_in_date, data.check_out_date, property?.price_per_night]);
+  }, [data.check_in_date, data.check_out_date, property?.platform_price]);
 
   const handleReserveClick = () => {
     if (!data.check_in_date || !data.check_out_date) {
@@ -234,7 +234,7 @@ const PropertyBookingForm = () => {
 
   // Calculate pricing
   const nights = calculateDays(data.check_in_date, data.check_out_date);
-  const subtotal = nights * (property?.price_per_night || 0);
+  const subtotal = nights * (property?.platform_price || 0);
   const serviceFee = Math.round(subtotal * 0.12);
   const totalPrice = subtotal + serviceFee;
 
@@ -674,7 +674,7 @@ const PropertyBookingForm = () => {
                   
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm">KES {(property.price_per_night || 0).toLocaleString()} × {nights} night{nights !== 1 ? 's' : ''}</span>
+                      <span className="text-sm">KES {(property.platform_price || 0).toLocaleString()} × {nights} night{nights !== 1 ? 's' : ''}</span>
                       <span className="text-sm">KES {subtotal.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">

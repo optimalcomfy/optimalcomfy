@@ -124,7 +124,7 @@ const PropertyBookingForm = ({ property }) => {
   useEffect(() => {
     if (data.check_in_date && data.check_out_date) {
       const nights = calculateDays(data.check_in_date, data.check_out_date);
-      const basePrice = nights * (property.price_per_night || 0);
+      const basePrice = nights * (property.platform_price || 0);
       
       setData(prev => ({
         ...prev,
@@ -140,7 +140,7 @@ const PropertyBookingForm = ({ property }) => {
     }
   }, [data.check_in_date, data.check_out_date]);
 
-  const subtotal = data.nights > 0 ? (property.price_per_night || 0) * data.nights : 0;
+  const subtotal = data.nights > 0 ? (property.platform_price || 0) * data.nights : 0;
 
   // Get all booked dates for display
   const bookedDates = property.bookings.flatMap(booking => {
@@ -163,7 +163,7 @@ const PropertyBookingForm = ({ property }) => {
             {/* Price and Rating Section */}
             <div className="price-detail mb-6">
               <h2 className="price text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                KES {property.price_per_night || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">night</span>
+                KES {property.platform_price || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">night</span>
               </h2>
             </div>
 
@@ -243,7 +243,7 @@ const PropertyBookingForm = ({ property }) => {
               <>
                 <div className="sticky-card__detail flex justify-between items-center mb-3">
                   <a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:underline">
-                    KES {property.price_per_night || 0} x {data.nights} night{data.nights !== 1 ? 's' : ''}
+                    KES {property.platform_price || 0} x {data.nights} night{data.nights !== 1 ? 's' : ''}
                   </a>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     KES {subtotal}
@@ -274,7 +274,7 @@ const PropertyBookingForm = ({ property }) => {
             {/* Price and Rating Section */}
             <div className="price-detail mb-6">
               <h2 className="price text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                KES {property.price_per_night || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">night</span>
+                KES {property.platform_price || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">night</span>
               </h2>
             </div>
 
@@ -354,7 +354,7 @@ const PropertyBookingForm = ({ property }) => {
               <>
                 <div className="sticky-card__detail flex justify-between items-center mb-3">
                   <a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:underline">
-                    KES {property.price_per_night || 0} x {data.nights} night{data.nights !== 1 ? 's' : ''}
+                    KES {property.platform_price || 0} x {data.nights} night{data.nights !== 1 ? 's' : ''}
                   </a>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     KES {subtotal}

@@ -12,7 +12,7 @@ const ProductCar = (props) => {
     model,
     year,
     location_address, // Using location_address from data
-    price_per_day, // Changed from price_per_night to price_per_day
+    platform_price, // Changed from price_per_night to platform_price
     id,
     initial_gallery
   } = props;
@@ -71,7 +71,7 @@ const ProductCar = (props) => {
         <div className="text-[#717171] col-span-2">{locationDisplay}</div>
         <div className="text-[#717171] col-span-2">{yearDisplay}</div>
         <div className="mt-[6px] col-span-2">
-          <span className="font-semibold">KES {price_per_day}</span> per day
+          <span className="font-semibold">KES {platform_price}</span> per day
         </div>
       </Link>
     </div>
@@ -92,7 +92,7 @@ ProductCar.propTypes = {
     })
   ).isRequired,
   location_address: PropTypes.string,
-  price_per_day: PropTypes.string.isRequired,
+  platform_price: PropTypes.string.isRequired,
   id: PropTypes.number.isRequired,
 };
 

@@ -15,7 +15,7 @@ const Product = (props) => {
     starRate,
     location,
     dayRange,
-    price_per_night,
+    platform_price,
     time,
     id
   } = props;
@@ -58,7 +58,7 @@ const Product = (props) => {
           {property_name} in {location}
         </div>
         <div className="mt-[6px] col-span-2">
-          <span className="font-light">KES {price_per_night} for one night</span> 
+          <span className="font-light">KES {platform_price} for one night</span> 
         </div>
       </Link>
     </div>
@@ -73,7 +73,7 @@ Product.propTypes = {
   starRate: PropTypes.number,
   location: PropTypes.string,
   dayRange: PropTypes.string,
-  price_per_night: PropTypes.number.isRequired,
+  platform_price: PropTypes.number.isRequired,
   time: PropTypes.string,
 };
 

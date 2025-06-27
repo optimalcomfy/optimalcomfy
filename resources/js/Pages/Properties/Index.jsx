@@ -5,10 +5,11 @@ import Swal from 'sweetalert2';
 import { Filter, X } from 'lucide-react';
 
 const IndexProperties = () => {
-  const { properties, pagination, flash } = usePage().props;
+  const { properties, pagination, flash, auth } = usePage().props;
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const roleId = parseInt(auth.user?.role_id);
 
   const {
     delete: destroy,
@@ -115,7 +116,12 @@ const IndexProperties = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Stay Name</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Price</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Host Price</th>
+                {roleId === 1 &&
+                <>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Customer Price</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Platform charges</th>
+                </>}
                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -126,6 +132,11 @@ const IndexProperties = () => {
                     <td className="px-6 py-4 whitespace-wrap">{property.property_name}</td>
                     <td className="px-6 py-4 whitespace-wrap">{property.type}</td>
                     <td className="px-6 py-4 whitespace-wrap">KES {property.price_per_night}</td>
+                    {roleId === 1 &&
+                    <>
+                    <td className="px-6 py-4 whitespace-wrap">KES {property.platform_price}</td>
+                    <td className="px-6 py-4 whitespace-wrap">KES {property.platform_charges}</td>
+                    </>}
                     <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
                         <Link

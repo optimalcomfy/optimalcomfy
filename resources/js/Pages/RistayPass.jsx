@@ -41,7 +41,7 @@ const RistayPass = () => {
   const generateQRData = () => {
     // Option 1: Link to booking verification page
     const baseUrl = window.location.origin;
-    return `${baseUrl}/booking/${booking.id}`;
+    return `${baseUrl}/bookings/${booking.id}`;
   };
 
   // Print functionality

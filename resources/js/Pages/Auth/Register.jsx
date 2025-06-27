@@ -153,7 +153,7 @@ export default function Register() {
                             <div>
                                 <h3 className="text-xl font-semibold mb-4">Personal Information</h3>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="firstName" className="block mb-1">First Name</label>
                                         <input 
@@ -238,7 +238,7 @@ export default function Register() {
                             <div>
                                 <h3 className="text-xl font-semibold mb-4">Account Security</h3>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="password" className="block mb-1">Password</label>
                                         <input 
@@ -298,7 +298,7 @@ export default function Register() {
                             <div>
                                 <h3 className="text-xl font-semibold mb-4">Profile Details</h3>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                                     <div>
                                         <label htmlFor="address" className="block mb-1">Address</label>
                                         <input 

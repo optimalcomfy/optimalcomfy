@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, usePage,useForm, router } from '@inertiajs/react';
+import { Link, usePage, useForm, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import Swal from 'sweetalert2';
 import { FileText, FileSpreadsheet, Plus, Filter, X } from 'lucide-react';
@@ -8,7 +8,7 @@ import "jspdf-autotable";
 import * as XLSX from 'xlsx';
 
 const Index = () => {
-  const { users, flash, pagination } = usePage().props; // Assuming pagination data is passed
+  const { users, flash, pagination } = usePage().props;
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -27,7 +27,6 @@ const Index = () => {
     });
   };
 
-  // Function to handle delete confirmation
   const handleDelete = (userId) => {
     Swal.fire({
       title: 'Are you sure?',
@@ -39,13 +38,11 @@ const Index = () => {
       confirmButtonText: 'Yes, delete it!',
     }).then((result) => {
       if (result.isConfirmed) {
-        // Use Inertia.delete for making the delete request
         destroy(route('users.destroy', userId), {
           onSuccess: () => {
-            // Optionally you can handle success actions here
+            // Optionally handle success
           },
           onError: (err) => {
-            // Optionally handle errors
             console.error('Delete error:', err);
           },
         });
@@ -57,44 +54,41 @@ const Index = () => {
     <Layout>
       <div className="w-full">
         {/* Header Section */}
-          <div className="lg:hidden mb-4">
-            <button 
-              onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-              className="inline-flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              {mobileFiltersOpen ? (
-                <>
-                  <X className="w-5 h-5 mr-2" /> Close Filters
-                </>
-              ) : (
-                <>
-                  <Filter className="w-5 h-5 mr-2" /> Open Filters
-                </>
-              )}
-            </button>
-          </div>
+        <div className="lg:hidden mb-4">
+          <button 
+            onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+            className="inline-flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            {mobileFiltersOpen ? (
+              <>
+                <X className="w-5 h-5 mr-2" /> Close Filters
+              </>
+            ) : (
+              <>
+                <Filter className="w-5 h-5 mr-2" /> Open Filters
+              </>
+            )}
+          </button>
+        </div>
 
-          {/* Top Section - Responsive */}
-          <div className={`
-            ${mobileFiltersOpen ? 'block' : 'hidden'} 
-            lg:block bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4
-          `}>
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <h1 className="text-2xl font-semibold text-gray-900 w-full sm:w-auto my-auto">
-                Users Directory
-              </h1>
-
-              <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">
-                <Link
-                  href={route('users.create')}
-                  className="flex items-center justify-center px-4 py-2 bg-peachDark text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                >
-                  <Plus className="w-4 h-4 mr-2 my-auto" />
-                  <span className='my-auto'>
-                  Create
-                  </span>
-                </Link>
-              </div>
+        {/* Top Section - Responsive */}
+        <div className={`
+          ${mobileFiltersOpen ? 'block' : 'hidden'} 
+          lg:block bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4
+        `}>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 className="text-2xl font-semibold text-gray-900 w-full sm:w-auto my-auto">
+              Users Directory
+            </h1>
+            <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">
+              <Link
+                href={route('users.create')}
+                className="flex items-center justify-center px-4 py-2 bg-peachDark text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                <Plus className="w-4 h-4 mr-2 my-auto" />
+                <span className='my-auto'>Create</span>
+              </Link>
+            </div>
           </div>
 
           {/* Search Input */}
@@ -108,7 +102,7 @@ const Index = () => {
             />
             {loading && <p className="text-sm text-gray-500 mt-2">Searching...</p>}
           </div>
-      </div>
+        </div>
 
         {/* Flash Message */}
         {flash?.success && (
@@ -131,8 +125,8 @@ const Index = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {users.length > 0 ? (
-                users.map((user) => (
+              {pagination.data?.length > 0 ? (
+                pagination.data.map((user) => (
                   <tr key={user.id}>
                     <td className="px-6 py-4 whitespace-wrap">{user.name}</td>
                     <td className="px-6 py-4 whitespace-wrap">{user.email}</td>
@@ -152,24 +146,19 @@ const Index = () => {
                         >
                           View
                         </Link>
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            handleDelete(user.id); // Call SweetAlert2 on delete
-                          }}
-                          className="inline"
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200"
                         >
-                          <button type="submit" className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200">
-                            Delete
-                          </button>
-                        </form>
+                          Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center py-4">No users found.</td>
+                  <td colSpan="5" className="text-center py-4">No users found.</td>
                 </tr>
               )}
             </tbody>
@@ -177,24 +166,66 @@ const Index = () => {
         </div>
 
         {/* Pagination */}
-        {pagination && pagination.total > pagination.per_page && (
+        {pagination && (
           <div className="my-6 flex justify-center">
-            <div className="inline-flex gap-2">
-              {pagination.prev_page_url && (
+            <div className="flex items-center gap-2">
+              {/* Previous Page Link */}
+              {pagination.prev_page_url ? (
                 <Link
                   href={pagination.prev_page_url}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
+                  preserveState
                 >
                   Previous
                 </Link>
+              ) : (
+                <span className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed">
+                  Previous
+                </span>
               )}
-              {pagination.next_page_url && (
+
+              {/* Page Numbers */}
+              {pagination.links.map((link, index) => (
+                <React.Fragment key={index}>
+                  {link.url ? (
+                    <Link
+                      href={link.url}
+                      className={`px-4 py-2 rounded-lg ${
+                        link.active
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-blue-600 border border-blue-600 hover:bg-blue-50'
+                      }`}
+                      preserveState
+                    >
+                      {link.label.replace('&laquo;', '').replace('&raquo;', '')}
+                    </Link>
+                  ) : (
+                    <span
+                      className={`px-4 py-2 rounded-lg ${
+                        link.active
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-gray-400'
+                      }`}
+                    >
+                      {link.label.replace('&laquo;', '').replace('&raquo;', '')}
+                    </span>
+                  )}
+                </React.Fragment>
+              ))}
+
+              {/* Next Page Link */}
+              {pagination.next_page_url ? (
                 <Link
                   href={pagination.next_page_url}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
+                  preserveState
                 >
                   Next
                 </Link>
+              ) : (
+                <span className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed">
+                  Next
+                </span>
               )}
             </div>
           </div>

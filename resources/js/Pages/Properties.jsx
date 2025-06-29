@@ -82,21 +82,6 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
     setIsMobileMapVisible(!isMobileMapVisible);
   };
 
-  if (!properties || properties.length === 0) {
-      return (
-          <PrimeReactProvider>
-              <LayoutProvider>
-                  <Head title="Stays" />
-                  <HomeLayout>
-                      <div className="padding-container p-5">
-                          <h2>No properties available at the moment</h2>
-                      </div>
-                  </HomeLayout>
-              </LayoutProvider>
-          </PrimeReactProvider>
-      );
-  }
-
   return (
     <PrimeReactProvider>
       <LayoutProvider>

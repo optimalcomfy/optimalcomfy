@@ -210,7 +210,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         return (
             <PrimeReactProvider>
                 <LayoutProvider>
-                    <Head title="Welcome" />
+                    <Head title="Rides" />
                     <HomeLayout>
                         <div className="padding-container p-5">
                             <h2>No cars available at the moment</h2>
@@ -224,7 +224,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
     return (
         <PrimeReactProvider>
             <LayoutProvider>
-                <Head title="Welcome" />
+                <Head title="Rides" />
                 <HomeLayout>
                     {sortedLocations.map((location) => {
                         const locationCars = groupedCars[location];

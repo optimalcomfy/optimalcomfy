@@ -19,7 +19,7 @@ class UserController extends Controller
         $user = Auth::user();
 
         // Start the query with eager loading of company if needed
-        $query = User::with('company');
+        $query = User::query();
 
         if ($request->has('search')) {
             $search = $request->input('search');
@@ -31,8 +31,8 @@ class UserController extends Controller
             });
         }
 
-        if ($user->role_id == 2 || $user->role_id == '2') {
-            $query->where('host_id', '=', $user->id);
+        if ($user->role_id == 2) { // Removed the string comparison as it's redundant
+            $query->where('host_id', $user->id); // Simplified the where clause
         }
 
         $query->orderBy('created_at', 'desc');
@@ -41,11 +41,11 @@ class UserController extends Controller
         $users = $query->paginate(10);
 
         return Inertia::render('Users/Index', [
-            'users' => $users->items(), 
+            'users' => $users,
+            'pagination' => $users,
             'flash' => session('flash'),
         ]);
     }
-
 
     public function create()
     {

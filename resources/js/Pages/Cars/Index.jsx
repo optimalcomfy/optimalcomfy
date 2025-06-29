@@ -140,8 +140,8 @@ const CarsIndex = () => {
                     <td className="px-6 py-4 whitespace-wrap">{car.price_per_day}</td>
                     {roleId === 1 &&
                     <>
-                    <td className="px-6 py-4 whitespace-wrap">KES {property.platform_price}</td>
-                    <td className="px-6 py-4 whitespace-wrap">KES {property.platform_charges}</td>
+                    <td className="px-6 py-4 whitespace-wrap">KES {car.platform_price}</td>
+                    <td className="px-6 py-4 whitespace-wrap">KES {car.platform_charges}</td>
                     </>}
                     <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">

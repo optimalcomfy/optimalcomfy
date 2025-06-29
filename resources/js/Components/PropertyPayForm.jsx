@@ -235,8 +235,7 @@ const PropertyBookingForm = () => {
   // Calculate pricing
   const nights = calculateDays(data.check_in_date, data.check_out_date);
   const subtotal = nights * (property?.platform_price || 0);
-  const serviceFee = Math.round(subtotal * 0.12);
-  const totalPrice = subtotal + serviceFee;
+  const totalPrice = subtotal;
 
   const StepIndicator = ({ step, currentStep, title, completed = false }) => (
     <div className="flex items-center gap-3 mb-6">
@@ -676,10 +675,6 @@ const PropertyBookingForm = () => {
                     <div className="flex justify-between">
                       <span className="text-sm">KES {(property.platform_price || 0).toLocaleString()} × {nights} night{nights !== 1 ? 's' : ''}</span>
                       <span className="text-sm">KES {subtotal.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Service fee</span>
-                      <span className="text-sm">KES {serviceFee.toLocaleString()}</span>
                     </div>
                   </div>
                   

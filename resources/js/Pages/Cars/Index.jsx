@@ -137,7 +137,7 @@ const CarsIndex = () => {
                     <td className="px-6 py-4 whitespace-wrap">{car.brand}</td>
                     <td className="px-6 py-4 whitespace-wrap">{car.model}</td>
                     <td className="px-6 py-4 whitespace-wrap">{car.year}</td>
-                    <td className="px-6 py-4 whitespace-wrap">{car.price_per_day}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{car.amount}</td>
                     {roleId === 1 &&
                     <>
                     <td className="px-6 py-4 whitespace-wrap">KES {car.platform_price}</td>

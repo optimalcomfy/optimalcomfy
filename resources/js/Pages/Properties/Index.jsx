@@ -131,7 +131,7 @@ const IndexProperties = () => {
                   <tr key={property.id}>
                     <td className="px-6 py-4 whitespace-wrap">{property.property_name}</td>
                     <td className="px-6 py-4 whitespace-wrap">{property.type}</td>
-                    <td className="px-6 py-4 whitespace-wrap">KES {property.price_per_night}</td>
+                    <td className="px-6 py-4 whitespace-wrap">KES {property.amount}</td>
                     {roleId === 1 &&
                     <>
                     <td className="px-6 py-4 whitespace-wrap">KES {property.platform_price}</td>

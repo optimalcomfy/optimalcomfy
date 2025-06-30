@@ -92,10 +92,10 @@ class Property extends Model
         $company = Company::first();
 
         if (!$company || !$company->percentage) {
-            return $this->price_per_night;
+            return $this->amount;
         }
 
-        $base = $this->price_per_night;
+        $base = $this->amount;
         $charges = $base * $company->percentage / 100;
 
         return round($base + $charges, 2);
@@ -112,6 +112,6 @@ class Property extends Model
             return 0;
         }
 
-        return round($this->price_per_night * $company->percentage / 100, 2);
+        return round($this->amount * $company->percentage / 100, 2);
     }
 }

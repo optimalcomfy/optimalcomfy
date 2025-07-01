@@ -82,3 +82,48 @@
 }
 
 
+/* Mobile Layout Styles */
+.mobile-layout {
+  padding: 1rem;
+}
+
+.mobile-grid-container {
+  margin-bottom: 2rem;
+}
+
+.mobile-county-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.mobile-properties-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.mobile-property-item {
+  width: 100%;
+}
+
+/* Responsive adjustments for larger mobile screens */
+@media (min-width: 480px) and (max-width: 768px) {
+  .mobile-properties-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+/* Ensure the Product component works well in mobile grid */
+@media (max-width: 768px) {
+  .mobile-property-item .product-card {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  .mobile-layout .padding-container {
+    padding: 0.5rem !important;
+  }
+}

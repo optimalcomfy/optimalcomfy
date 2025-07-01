@@ -16,6 +16,7 @@ import "slick-carousel/slick/slick-theme.css";
 import "../../css/main";
 import "./Welcome.css";
 import ProductCar from "@/Components/ProductCar";
+import './Cars.css'
 
 function NextArrow({ onClick, disabled }) {
   return (
@@ -77,6 +78,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
     const [currentSlides, setCurrentSlides] = useState({});
     const [userLocation, setUserLocation] = useState(null);
     const [groupedCars, setGroupedCars] = useState({});
+    const [isMobile, setIsMobile] = useState(false);
 
     // Initialize form data and setData function using useForm
     const { data, setData, errors } = useForm({
@@ -88,6 +90,18 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         "Collection Date": "",
         "Collection Time": "",
     });
+
+    // Check if device is mobile
+    useEffect(() => {
+        const checkIsMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkIsMobile();
+        window.addEventListener('resize', checkIsMobile);
+        
+        return () => window.removeEventListener('resize', checkIsMobile);
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -171,12 +185,6 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     slidesToShow: 2,
                 },
             },
-            {
-                breakpoint: 480,
-                settings: {
-                    slidesToShow: 1,
-                },
-            },
         ],
     };
 
@@ -205,6 +213,20 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         }));
     };
 
+    // Mobile Grid Component for Cars
+    const MobileCarGrid = ({ cars, location }) => (
+        <div className="mobile-grid-container">
+            <h2 className="mobile-location-title">Rides in {location}</h2>
+            <div className="mobile-cars-grid">
+                {cars.map((car, index) => (
+                    <div key={car.id || index} className="mobile-car-item">
+                        <ProductCar {...car} />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
     // Early return if no cars data
     if (!cars || cars.length === 0) {
         return (
@@ -226,47 +248,64 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
             <LayoutProvider>
                 <Head title="Rides" />
                 <HomeLayout>
-                    {sortedLocations.map((location) => {
-                        const locationCars = groupedCars[location];
-                        const currentSlide = currentSlides[location] || 0;
-                        const totalSlides = locationCars.length;
-                        const slidesToShow = 7;
+                    {isMobile ? (
+                        // Mobile Layout - Vertical Grid
+                        <div className="mobile-layout">
+                            {sortedLocations.map((location) => {
+                                const locationCars = groupedCars[location];
+                                return (
+                                    <MobileCarGrid 
+                                        key={location} 
+                                        cars={locationCars} 
+                                        location={location} 
+                                    />
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        // Desktop Layout - Slider
+                        sortedLocations.map((location) => {
+                            const locationCars = groupedCars[location];
+                            const currentSlide = currentSlides[location] || 0;
+                            const totalSlides = locationCars.length;
+                            const slidesToShow = 7;
 
-                        // Create ref for this location if it doesn't exist
-                        if (!sliderRefs.current[location]) {
-                            sliderRefs.current[location] = React.createRef();
-                        }
+                            // Create ref for this location if it doesn't exist
+                            if (!sliderRefs.current[location]) {
+                                sliderRefs.current[location] = React.createRef();
+                            }
 
-                        const locationSliderSettings = {
-                            ...sliderSettings,
-                            infinite: locationCars.length > 7,
-                            beforeChange: (oldIndex, newIndex) => handleSliderChange(location, newIndex),
-                        };
+                            const locationSliderSettings = {
+                                ...sliderSettings,
+                                infinite: locationCars.length > 7,
+                                beforeChange: (oldIndex, newIndex) => handleSliderChange(location, newIndex),
+                            };
 
-                        return (
-                            <div key={location} className="product-slider-container padding-container p-5">
-                                <div className="slider-header">
-                                    <h2>Rides in {location}</h2>
-                                    <div className="slider-arrows">
-                                        <PrevArrow
-                                            onClick={() => sliderRefs.current[location]?.current?.slickPrev()}
-                                            disabled={currentSlide === 0}
-                                        />
-                                        <NextArrow
-                                            onClick={() => sliderRefs.current[location]?.current?.slickNext()}
-                                            disabled={currentSlide >= totalSlides - slidesToShow}
-                                        />
+                            return (
+                                <div key={location} className="product-slider-container padding-container p-5">
+                                    <div className="slider-header">
+                                        <h2>Rides in {location}</h2>
+                                        <div className="slider-arrows">
+                                            <PrevArrow
+                                                onClick={() => sliderRefs.current[location]?.current?.slickPrev()}
+                                                disabled={currentSlide === 0}
+                                            />
+                                            <NextArrow
+                                                onClick={() => sliderRefs.current[location]?.current?.slickNext()}
+                                                disabled={currentSlide >= totalSlides - slidesToShow}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
 
-                                <Slider ref={sliderRefs.current[location]} {...locationSliderSettings}>
-                                    {locationCars.map((car, index) => (
-                                        <ProductCar key={car.id || index} {...car} />
-                                    ))}
-                                </Slider>
-                            </div>
-                        );
-                    })}
+                                    <Slider ref={sliderRefs.current[location]} {...locationSliderSettings}>
+                                        {locationCars.map((car, index) => (
+                                            <ProductCar key={car.id || index} {...car} />
+                                        ))}
+                                    </Slider>
+                                </div>
+                            );
+                        })
+                    )}
                 </HomeLayout>
             </LayoutProvider>
         </PrimeReactProvider>

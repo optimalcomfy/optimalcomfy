@@ -77,6 +77,19 @@ export default function Welcome() {
   const [currentSlides, setCurrentSlides] = useState({});
   const [userLocation, setUserLocation] = useState(null);
   const [groupedProperties, setGroupedProperties] = useState({});
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
 
   useEffect(() => {
     // Filter out properties with invalid locations
@@ -148,12 +161,6 @@ export default function Welcome() {
           slidesToShow: 2,
         },
       },
-      {
-        breakpoint: 480,
-        settings: {
-          slidesToShow: 1,
-        },
-      },
     ],
   };
 
@@ -181,68 +188,98 @@ export default function Welcome() {
     }));
   };
 
+  // Mobile Grid Component
+  const MobileGrid = ({ properties, county }) => (
+    <div className="mobile-grid-container">
+      <h2 className="mobile-county-title">Stays in {county}</h2>
+      <div className="mobile-properties-grid">
+        {properties.map((data, index) => (
+          <div key={index} className="mobile-property-item">
+            <Product {...data} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
-    if (!properties || properties.length === 0) {
-        return (
-            <PrimeReactProvider>
-                <LayoutProvider>
-                    <Head title="Stays" />
-                    <HomeLayout>
-                        <div className="padding-container p-5">
-                            <h2>No properties available at the moment</h2>
-                        </div>
-                    </HomeLayout>
-                </LayoutProvider>
-            </PrimeReactProvider>
-        );
-    }
+  if (!properties || properties.length === 0) {
+    return (
+      <PrimeReactProvider>
+        <LayoutProvider>
+          <Head title="Stays" />
+          <HomeLayout>
+            <div className="padding-container p-5">
+              <h2>No properties available at the moment</h2>
+            </div>
+          </HomeLayout>
+        </LayoutProvider>
+      </PrimeReactProvider>
+    );
+  }
 
   return (
     <PrimeReactProvider>
       <LayoutProvider>
         <Head title="Stays" />
         <HomeLayout>
-          {sortedCounties.map((county) => {
-            const countyProperties = groupedProperties[county];
-            const currentSlide = currentSlides[county] || 0;
-            const totalSlides = countyProperties.length;
-            const slidesToShow = 7;
+          {isMobile ? (
+            // Mobile Layout - Vertical Grid
+            <div className="mobile-layout">
+              {sortedCounties.map((county) => {
+                const countyProperties = groupedProperties[county];
+                return (
+                  <MobileGrid 
+                    key={county} 
+                    properties={countyProperties} 
+                    county={county} 
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            // Desktop Layout - Slider
+            sortedCounties.map((county) => {
+              const countyProperties = groupedProperties[county];
+              const currentSlide = currentSlides[county] || 0;
+              const totalSlides = countyProperties.length;
+              const slidesToShow = 7;
 
-            // Create ref for this county if it doesn't exist
-            if (!sliderRefs.current[county]) {
-              sliderRefs.current[county] = React.createRef();
-            }
+              // Create ref for this county if it doesn't exist
+              if (!sliderRefs.current[county]) {
+                sliderRefs.current[county] = React.createRef();
+              }
 
-            const countySliderSettings = {
-              ...sliderSettings,
-              infinite: countyProperties.length > 7,
-              beforeChange: (oldIndex, newIndex) => handleSliderChange(county, newIndex),
-            };
+              const countySliderSettings = {
+                ...sliderSettings,
+                infinite: countyProperties.length > 7,
+                beforeChange: (oldIndex, newIndex) => handleSliderChange(county, newIndex),
+              };
 
-            return (
-              <div key={county} className="product-slider-container padding-container p-5">
-                <div className="slider-header">
-                  <h2>Stays in {county}</h2>
-                  <div className="slider-arrows">
-                    <PrevArrow
-                      onClick={() => sliderRefs.current[county]?.current?.slickPrev()}
-                      disabled={currentSlide === 0}
-                    />
-                    <NextArrow
-                      onClick={() => sliderRefs.current[county]?.current?.slickNext()}
-                      disabled={currentSlide >= totalSlides - slidesToShow}
-                    />
+              return (
+                <div key={county} className="product-slider-container padding-container p-5">
+                  <div className="slider-header">
+                    <h2>Stays in {county}</h2>
+                    <div className="slider-arrows">
+                      <PrevArrow
+                        onClick={() => sliderRefs.current[county]?.current?.slickPrev()}
+                        disabled={currentSlide === 0}
+                      />
+                      <NextArrow
+                        onClick={() => sliderRefs.current[county]?.current?.slickNext()}
+                        disabled={currentSlide >= totalSlides - slidesToShow}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <Slider ref={sliderRefs.current[county]} {...countySliderSettings}>
-                  {countyProperties.map((data, index) => (
-                    <Product key={index} {...data} />
-                  ))}
-                </Slider>
-              </div>
-            );
-          })}
+                  <Slider ref={sliderRefs.current[county]} {...countySliderSettings}>
+                    {countyProperties.map((data, index) => (
+                      <Product key={index} {...data} />
+                    ))}
+                  </Slider>
+                </div>
+              );
+            })
+          )}
         </HomeLayout>
       </LayoutProvider>
     </PrimeReactProvider>

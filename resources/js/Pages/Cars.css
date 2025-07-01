@@ -1,0 +1,74 @@
+/* Mobile Layout Styles for Cars */
+.mobile-layout {
+  padding: 1rem;
+}
+
+.mobile-grid-container {
+  margin-bottom: 2rem;
+}
+
+.mobile-location-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.mobile-cars-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.mobile-car-item {
+  width: 100%;
+}
+
+/* Responsive adjustments for larger mobile screens */
+@media (min-width: 480px) and (max-width: 768px) {
+  .mobile-cars-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+/* Ensure the ProductCar component works well in mobile grid */
+@media (max-width: 768px) {
+  .mobile-car-item .car-card,
+  .mobile-car-item .product-car {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  .mobile-layout .padding-container {
+    padding: 0.5rem !important;
+  }
+  
+  /* Adjust car card spacing and layout for mobile */
+  .mobile-car-item {
+    display: block;
+    width: 100%;
+  }
+  
+  /* Make sure car images are responsive */
+  .mobile-car-item img {
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* Additional mobile optimizations for car listings */
+@media (max-width: 480px) {
+  .mobile-location-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .mobile-cars-grid {
+    gap: 0.75rem;
+  }
+  
+  .mobile-grid-container {
+    margin-bottom: 1.5rem;
+  }
+}

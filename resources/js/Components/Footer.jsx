@@ -89,17 +89,17 @@ function Footer() {
                   aria-label="footer__contact"
                   href="tel:+245741574797"
                 >
-                  <i className="flaticon-phone-flip" /> +245741574797
+                  <i className="flaticon-phone-flip" /> +245769 88 00 88
                 </a>
               </li>
               <li>
                 <a
                   className="flex gap-2 items-center"
                   aria-label="footer__contact"
-                  href="mailto:info@ristay.co.ke"
+                  href="mailto:support@ristay.co.ke"
                 >
                   <i className="flaticon-envelope" />
-                  info@ristay.co.ke
+                  support@ristay.co.ke
                 </a>
               </li>
               <li>
@@ -116,7 +116,7 @@ function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t-[1px] border-[#e5e5e5] p-[40px_0] relative z-10">
+      <div className="border-t-[1px] border-b-[1px] border-[#ffffff20] p-[40px_0] relative z-10">
         <div className="container">
           <div className="flex flex-col-reverse md:flex-row flex-wrap md:justify-between md:items-center gap-[30px]">
             <p className="mb-0">Copyright © 2025 Ristay. All rights reserved.</p>
@@ -147,6 +147,14 @@ function Footer() {
               </a>
             </div>
           </div>
+        </div>
+      </div>
+       <div className="pb-4">
+        <div className="container">
+            <div className="text-center text-xs md:text-sm text-[#a8d8e0] pt-4 mx-auto max-w-3xl">
+              <p className="mb-1">Ristay Connect Limited | Company No. PVT-GYU536G5 | Registered in Kenya</p>
+              <p className="mb-1">62157-00200, City Square</p>
+            </div>
         </div>
       </div>
     </div>

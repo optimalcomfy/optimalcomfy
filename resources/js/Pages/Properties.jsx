@@ -20,10 +20,11 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isMobileMapVisible, setIsMobileMapVisible] = useState(false);
 
+  let mk = 'AIzaSyAeUR-8KmrETaqattlD7STr7FkSCIdpNqo';
 
   // Google Maps
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API,
+    googleMapsApiKey: mk,
   });
 
   const center = useMemo(() => ({ lat: -1.2921, lng: 36.8219 }), []);

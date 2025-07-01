@@ -33,8 +33,10 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
     return "/cars/images/icons/4-green.svg";
   };
 
+  let mk = 'AIzaSyAeUR-8KmrETaqattlD7STr7FkSCIdpNqo';
+
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API,
+    googleMapsApiKey: mk,
   });
   
 

@@ -14,7 +14,7 @@ export default function CarBooking({ auth, laravelVersion, phpVersion }) {
     <>
       <PrimeReactProvider>
         <LayoutProvider>
-          <Head title="Car Booking" />
+          <Head title="Ride Booking" />
           <HomeLayout>
             <div className="no-bottom no-top py-10" id="content">
               <section

@@ -122,12 +122,11 @@ const PropertyBookingForm = () => {
     if (data.check_in_date && data.check_out_date && property?.platform_price) {
       const nights = calculateDays(data.check_in_date, data.check_out_date);
       const basePrice = nights * property.platform_price;
-      const serviceFee = Math.round(basePrice * 0.12);
       
       setData(prev => ({
         ...prev,
         nights: nights,
-        total_price: basePrice + serviceFee
+        total_price: basePrice
       }));
     } else {
       setData(prev => ({

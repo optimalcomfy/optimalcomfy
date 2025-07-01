@@ -21,10 +21,9 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
   const [isMobileMapVisible, setIsMobileMapVisible] = useState(false);
 
 
-
   // Google Maps
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_Maps_API_KEY,
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API,
   });
 
   const center = useMemo(() => ({ lat: -1.2921, lng: 36.8219 }), []);

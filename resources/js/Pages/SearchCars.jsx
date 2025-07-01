@@ -34,7 +34,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
   };
 
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_Maps_API_KEY,
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API,
   });
   
 

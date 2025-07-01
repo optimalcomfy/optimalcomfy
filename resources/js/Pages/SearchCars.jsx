@@ -20,7 +20,7 @@ import ProductCar from "@/Components/ProductCar";
 
 export default function SearchCars({ auth, laravelVersion, phpVersion }) {
 
-  const { flash, pagination, cars } = usePage().props;
+  const { flash, pagination, cars, keys } = usePage().props;
 
   const [hoveredProperty, setHoveredProperty] = useState(null);
   const [selectedProperty, setSelectedProperty] = useState(null);
@@ -28,15 +28,10 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
   
   
   // Function to get proper icon for the car type
-  const getCarTypeIcon = (body_type) => {
-    // Default to SUV icon if body_type doesn't match known types
-    return "/cars/images/icons/4-green.svg";
-  };
 
-  let mk = 'AIzaSyAeUR-8KmrETaqattlD7STr7FkSCIdpNqo';
 
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: mk,
+    googleMapsApiKey: keys,
   });
   
 

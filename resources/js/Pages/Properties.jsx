@@ -14,17 +14,15 @@ import Product from "@/Components/Product";
 import './Welcome.css'
 
 export default function Properties({ auth, laravelVersion, phpVersion }) {
-  const { properties } = usePage().props;
+  const { properties, keys } = usePage().props;
 
   const [hoveredProperty, setHoveredProperty] = useState(null);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isMobileMapVisible, setIsMobileMapVisible] = useState(false);
 
-  let mk = 'AIzaSyAeUR-8KmrETaqattlD7STr7FkSCIdpNqo';
-
   // Google Maps
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: mk,
+    googleMapsApiKey: keys,
   });
 
   const center = useMemo(() => ({ lat: -1.2921, lng: 36.8219 }), []);

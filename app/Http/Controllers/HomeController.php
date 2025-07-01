@@ -77,7 +77,24 @@ class HomeController extends Controller
     public function searchCars(Request $request)
     {
 
-        $cars = Car::with(['bookings', 'initialGallery', 'carFeatures'])->get();
+        $query = Car::with(['bookings', 'initialGallery', 'carFeatures']);
+
+                // ✅ Availability Check
+        if ($request->filled(['checkIn', 'checkOut'])) {
+            $checkIn = Carbon::parse($request->input('checkIn'));
+            $checkOut = Carbon::parse($request->input('checkOut'));
+    
+            $query->whereDoesntHave('bookings', function ($bookingQuery) use ($checkIn, $checkOut) {
+                $bookingQuery->where(function ($q) use ($checkIn, $checkOut) {
+                    $q->where('start_date', '<', $checkOut)
+                      ->where('end_date', '>', $checkIn);
+                });
+            });
+        }
+
+        $cars = $query->get();
+
+        $keys = env('VITE_GOOGLE_MAP_API');
 
         return Inertia::render('SearchCars', [
             'canLogin' => Route::has('login'),
@@ -85,7 +102,8 @@ class HomeController extends Controller
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
             'flash' => session('flash'),
-            'cars'=> $cars
+            'cars'=> $cars,
+            'keys'=>$keys
         ]);
     }
 
@@ -587,10 +605,13 @@ class HomeController extends Controller
         }
     
         $properties = $query->get();
+
+        $keys = env('VITE_GOOGLE_MAP_API');
     
         return Inertia::render('Properties', [
             'properties'=> $properties,
             'filters' => $request->all(),
+            'keys'=> $keys
         ]);
     }
     

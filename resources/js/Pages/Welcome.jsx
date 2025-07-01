@@ -72,7 +72,7 @@ function groupPropertiesByLocation(properties) {
 }
 
 export default function Welcome() {
-  const { properties } = usePage().props;
+  const { properties, pagination } = usePage().props;
   const sliderRefs = useRef({});
   const [currentSlides, setCurrentSlides] = useState({});
   const [userLocation, setUserLocation] = useState(null);

@@ -24,23 +24,6 @@ class HomeController extends Controller
 
     public function index(Request $request)
     {
-        $query = Job::query();
-
-        if ($request->has('search')) {
-            $search = trim($request->input('search'));
-
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'LIKE', "%$search%")
-                  ->orWhere('company_name', 'LIKE', "%$search%")
-                  ->orWhere('location', 'LIKE', "%$search%")
-                  ->orWhere('job_type', 'LIKE', "%$search%")
-                  ->orWhere('salary_min', 'LIKE', "%$search%")
-                  ->orWhere('salary_max', 'LIKE', "%$search%");
-            });
-        }
-
-        $query->orderBy('created_at', 'desc');
-        $jobs = $query->paginate(10);
 
         $query = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])->orderBy('created_at', 'desc');
 
@@ -58,7 +41,6 @@ class HomeController extends Controller
             'canRegister' => Route::has('register'),
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
-            'jobs' => $jobs,
             'properties'=> $properties,
             'flash' => session('flash'),
         ]);

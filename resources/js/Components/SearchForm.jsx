@@ -66,7 +66,7 @@ const DesktopSearchBar = ({
       </div>
 
       <div className="check-in relative">
-        <p className="field-label absolute text-xs">Pick up date</p>
+        <p className="field-label absolute text-xs">Check in date</p>
         <input
           type="date"
           name="checkIn"
@@ -78,7 +78,7 @@ const DesktopSearchBar = ({
       </div>
 
       <div className="check-out relative">
-        <p className="field-label absolute text-xs">Drop date</p>
+        <p className="field-label absolute text-xs">Checkout date</p>
         <input
           type="date"
           name="checkOut"
@@ -184,7 +184,7 @@ const MobileSearchModal = ({
           <div className="mobile-field-group">
             <label className="mobile-field-label">
               <Calendar size={20} />
-              <span>Pick up date</span>
+              <span>Check in date</span>
             </label>
             <div className="mobile-field-input">
               <input
@@ -201,7 +201,7 @@ const MobileSearchModal = ({
           <div className="mobile-field-group">
             <label className="mobile-field-label">
               <Calendar size={20} />
-              <span>Drop date</span>
+              <span>Checkout date</span>
             </label>
             <div className="mobile-field-input">
               <input
@@ -333,7 +333,7 @@ export default function RideForm() {
 
     if (isMobile) setIsModalOpen(false);
 
-    router.get('/search-cars', {
+    router.get('/all-properties', {
       location,
       checkIn,
       checkOut,

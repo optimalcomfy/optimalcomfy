@@ -85,7 +85,7 @@ class LoanController extends Controller
             'loans' => $loans->items(),
             'pagination' => $loans,
             'flash' => session('flash'),
-            'params' => $request->all(), 
+            'params' => $request->all()
         ]);
     }
     

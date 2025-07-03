@@ -59,7 +59,7 @@ export default function PropertyMap({ property }) {
         <h2 className="font-bold text-lg mb-2">{property.property_name}</h2>
         <div className="text-sm text-gray-600 mb-1">Type: {property.type}</div>
         <div className="text-sm text-gray-600 mb-1">Location: {property.location}</div>
-        <div className="text-sm text-gray-600">Price per night: KES {property.price_per_night}</div>
+        <div className="text-sm text-gray-600">Price per night: KES {property.platform_price}</div>
       </div>
     </div>
   );

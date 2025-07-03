@@ -76,13 +76,21 @@ class HomeController extends Controller
 
     public function searchCars(Request $request)
     {
+        $input = $request->all();
 
         $query = Car::with(['bookings', 'initialGallery', 'carFeatures']);
 
+        if ($input['location']) {
+            $location = $input['location'];
+            $query->where(function ($q) use ($location) {
+                $q->where('location_address', 'LIKE', "%$location%");
+            });
+        }
+
                 // ✅ Availability Check
         if ($request->filled(['checkIn', 'checkOut'])) {
-            $checkIn = Carbon::parse($request->input('checkIn'));
-            $checkOut = Carbon::parse($request->input('checkOut'));
+            $checkIn = Carbon::parse($input['checkIn']);
+            $checkOut = Carbon::parse($input['checkOut']);
     
             $query->whereDoesntHave('bookings', function ($bookingQuery) use ($checkIn, $checkOut) {
                 $bookingQuery->where(function ($q) use ($checkIn, $checkOut) {
@@ -571,30 +579,22 @@ class HomeController extends Controller
     {
         $query = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])
             ->orderBy('created_at', 'desc');
+
+        $input = $request->all();
     
         // Search by name/type/price
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%$search%")
-                  ->orWhere('type', 'LIKE', "%$search%")
-                  ->orWhere('price', 'LIKE', "%$search%");
+        if ($input['location']) {
+            $location = $input['location'];
+            $query->where(function ($q) use ($location) {
+                $q->where('location', 'LIKE', "%$location%");
             });
         }
-    
-        // Filter by adult/child capacity
-        if ($request->has('adult')) {
-            $query->where('max_adults', '>=', (int) $request->input('adult'));
-        }
-    
-        if ($request->has('child')) {
-            $query->where('max_children', '>=', (int) $request->input('child'));
-        }
+
     
         // ✅ Availability Check
         if ($request->filled(['checkIn', 'checkOut'])) {
-            $checkIn = Carbon::parse($request->input('checkIn'));
-            $checkOut = Carbon::parse($request->input('checkOut'));
+            $checkIn = Carbon::parse($input['checkIn']);
+            $checkOut = Carbon::parse($input['checkOut']);
     
             $query->whereDoesntHave('bookings', function ($bookingQuery) use ($checkIn, $checkOut) {
                 $bookingQuery->where(function ($q) use ($checkIn, $checkOut) {

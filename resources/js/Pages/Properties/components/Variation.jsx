@@ -22,7 +22,7 @@ const Variation = ({ property }) => {
 
   const fetchVariations = async () => {
     try {
-      const response = await axios.get(`/properties/${property.id}/variation`);
+      const response = await axios.get(`/properties/${property?.id}/variation`);
       setVariations(response.data);
     } catch (error) {
       console.error("Failed to fetch variations:", error);
@@ -50,11 +50,11 @@ const Variation = ({ property }) => {
         type: newVariation.type,
         price: newVariation.price,
         property_id: newVariation.property_id,
-        id:editingVariation.id
+        id:editingVariation?.id
       };
 
       if (editingVariation) {
-        await axios.put(`/propertyVariations/${editingVariation.id}`, payload2);
+        await axios.put(`/propertyVariations/${editingVariation?.id}`, payload2);
       } else {
         await axios.post("/propertyVariations", payload);
       }
@@ -122,7 +122,7 @@ const Variation = ({ property }) => {
             </thead>
             <tbody>
               {variations.map((variation) => (
-                <tr key={variation.id}>
+                <tr key={variation?.id}>
                   <td>{variation.type}</td>
                   <td>{variation.price ? `${variation.price}` : '-'}</td>
                   <td className="actions">
@@ -133,7 +133,7 @@ const Variation = ({ property }) => {
                       Edit
                     </button>
                     <button 
-                      onClick={() => handleRemoveVariation(variation.id)}
+                      onClick={() => handleRemoveVariation(variation?.id)}
                       className="delete-btn my-auto"
                     >
                       Delete

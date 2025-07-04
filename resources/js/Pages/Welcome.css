@@ -169,3 +169,143 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.view-all-images {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.view-all-images:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.view-all-images svg {
+  width: 16px;
+  height: 16px;
+}
+
+.img__container--hero, .single-image-container {
+  position: relative;
+}
+
+
+.image-group-m {
+  position: relative;
+}
+
+.img__container.main-image {
+  position: relative;
+}
+
+.img__container--hero, 
+.rounded-lg.overflow-hidden.mt-4 {
+  position: relative;
+}
+
+
+/* For the single image case */
+.rounded-lg.overflow-hidden.mt-4 .view-all-images {
+  bottom: 15px;
+  right: 15px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.rounded-lg.overflow-hidden.mt-4 .view-all-images svg {
+  width: 14px;
+  height: 14px;
+}
+
+
+
+/* Popup Gallery Styles */
+.popup-gallery .p-dialog-mask {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+.popup-gallery .p-dialog {
+  width: 80%;
+  background: transparent;
+  box-shadow: none;
+}
+
+.gallery-container {
+  position: relative;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.gallery-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.gallery-main-image {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-main-image img {
+  height: 60vh;
+  width: 100%;
+  object-fit: cover;
+}
+
+.gallery-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 20px;
+}
+
+.gallery-nav {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 2rem;
+}
+
+.gallery-thumbnails {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 0;
+}
+
+.gallery-thumbnails img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.gallery-thumbnails img.active {
+  opacity: 1;
+  border: 2px solid white;
+}

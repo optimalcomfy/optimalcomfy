@@ -10,12 +10,13 @@ import HomeLayout from "@/Layouts/HomeLayout";
 import "../../css/main";
 import PropertyBookingForm from "@/Components/PropertyBookingForm";
 import './Property.css'
+import { PopupGallery } from "@/Components/PopupGallery";
 
 export default function Welcome({ auth, laravelVersion, phpVersion }) {
   const { property, similarProperties, flash, pagination } = usePage().props;
 
   // Default fallback image
-  const fallbackImage = "../images/pages/header__bg.webp";
+  const [galleryVisible, setGalleryVisible] = useState(false);
 
   return (
     <>
@@ -54,6 +55,14 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                             src={`/storage/${property?.initial_gallery[0]?.image}`} 
                             alt="room" 
                           />
+                          <button type="button" onClick={() => setGalleryVisible(true)} className="view-all-images">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                              <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span>View all {property.initial_gallery.length} images</span>
+                          </button>
                         </div>
                         
                         {property?.initial_gallery[1]?.image && (
@@ -81,6 +90,14 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                           className="single-image" 
                           alt="room" 
                         />
+                        <button type="button" onClick={() => setGalleryVisible(true)} className="view-all-images">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                          </svg>
+                          <span>View image</span>
+                        </button>
                       </div>
                     )
                   )}
@@ -131,9 +148,22 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     </p>
                       {property?.initial_gallery[0]?.image &&
                         <div className="image-group-m">
-                          <div className="img__container">
+                          {/* First image container with view all button */}
+                          <div className="img__container main-image">
                             <img src={`/storage/${property?.initial_gallery[0]?.image}`} alt="room" />
+                            {property?.initial_gallery?.length > 1 && (
+                              <button type="button" onClick={() => setGalleryVisible(true)} className="view-all-images">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                  <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <span>View all {property.initial_gallery.length} images</span>
+                              </button>
+                            )}
                           </div>
+                          
+                          {/* Other images */}
                           {property?.initial_gallery[1]?.image &&
                             <div className="img__container">
                               <img src={`/storage/${property?.initial_gallery[1]?.image}`} alt="room" />
@@ -180,6 +210,12 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                   <PropertyBookingForm property={property} />
                 </div>
               </section>
+
+               <PopupGallery 
+                images={property?.initial_gallery || []} 
+                visible={galleryVisible} 
+                onHide={() => setGalleryVisible(false)} 
+              />
             </div>
 
           </HomeLayout>

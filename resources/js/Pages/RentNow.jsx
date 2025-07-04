@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect,useState } from "react";
 import { Link, Head, usePage } from "@inertiajs/react";
 import {
   LayoutContext,
@@ -10,10 +10,12 @@ import HomeLayout from "@/Layouts/HomeLayout";
 import '../../css/main'
 import CarRideForm from "@/Components/CarRideForm";
 import './Property.css'
+import { PopupGallery } from "@/Components/PopupGallery";
 
 export default function RentNow({ auth, laravelVersion, phpVersion }) {
   const { car } = usePage().props;
-  const url = usePage().url;
+
+  const [galleryVisible, setGalleryVisible] = useState(false);
 
   return (
     <>
@@ -48,48 +50,64 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                         <div className="hero-images">
                           <div className="img__container--hero">
                             <img src={`/storage/${car?.initial_gallery[0]?.image}`} alt="car" />
+                            <button type="button" onClick={() => setGalleryVisible(true)} className="view-all-images">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                              </svg>
+                              <span>View all {car.initial_gallery.length} photos</span>
+                            </button>
                           </div>
-                          {car?.initial_gallery[1]?.image && (
-                            <div className="img__collage">
-                              <div className="img__container">
-                                <img src={`/storage/${car?.initial_gallery[1]?.image}`} alt="car" />
-                              </div>
-                              
-                              <div className="img__container">
-                                {car?.initial_gallery[2]?.image && (
-                                  <img src={`/storage/${car?.initial_gallery[2]?.image}`} alt="car" />
-                                )}
-                              </div>
-                             
-                              <div className="img__container">
-                                {car?.initial_gallery[3]?.image && (
-                                  <img src={`/storage/${car?.initial_gallery[3]?.image}`} alt="car" />
-                                )}
-                              </div>
-                              
-                              <div className="img__container">
-                                {car?.initial_gallery[4]?.image && (
-                                  <img src={`/storage/${car?.initial_gallery[4]?.image}`} alt="car" />
-                                )}
-                              </div>
+                        {car?.initial_gallery[1]?.image && (
+                          <div className="img__collage">
+                            <div className="img__container">
+                              <img src={`/storage/${car?.initial_gallery[1]?.image}`} alt="car" />
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {car?.initial_gallery[0]?.image && (
-                        <div className="rounded-lg overflow-hidden mt-4">
-                          <img 
-                            src={`/storage/${car?.initial_gallery[0]?.image}`} 
-                            className="w-full h-[50vh] object-cover object-center" 
-                            alt="car" 
-                          />
-                        </div>
-                      )}
-                    </>
-                  )}
+                            
+                            <div className="img__container">
+                              {car?.initial_gallery[2]?.image && (
+                                <img src={`/storage/${car?.initial_gallery[2]?.image}`} alt="car" />
+                              )}
+                            </div>
+                          
+                            <div className="img__container">
+                              {car?.initial_gallery[3]?.image && (
+                                <img src={`/storage/${car?.initial_gallery[3]?.image}`} alt="car" />
+                              )}
+                            </div>
+                            
+                            <div className="img__container">
+                              {car?.initial_gallery[4]?.image && (
+                                <img src={`/storage/${car?.initial_gallery[4]?.image}`} alt="car" />
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {car?.initial_gallery[0]?.image && (
+                      <div className="rounded-lg overflow-hidden mt-4 relative">
+                        <img 
+                          src={`/storage/${car?.initial_gallery[0]?.image}`} 
+                          className="w-full h-[50vh] object-cover object-center" 
+                          alt="car" 
+                        />
+                        <button type="button" onClick={() => setGalleryVisible(true)} className="view-all-images">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                          </svg>
+                          <span>View photo</span>
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
                 </div>
               </section>
               <div className="container-m">
@@ -218,6 +236,12 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                   <CarRideForm car={car} />
                 </div>
               </section>
+
+               <PopupGallery 
+                  images={car?.initial_gallery || []} 
+                  visible={galleryVisible} 
+                  onHide={() => setGalleryVisible(false)} 
+                />
             </div>
           </HomeLayout>
         </LayoutProvider>

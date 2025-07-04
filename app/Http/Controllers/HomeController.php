@@ -176,6 +176,21 @@ class HomeController extends Controller
         ]);
     }
 
+    public function propertyGallery(Request $request)
+    {
+        $input = $request->all();
+        $property = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])->where('id', '=', $input['property_id'])->first();
+
+        return Inertia::render('PropertyGallery', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'laravelVersion' => Application::VERSION,
+            'phpVersion' => PHP_VERSION,
+            'flash' => session('flash'),
+            'property'=> $property
+        ]);
+    }
+
 
    public function dashboard(Request $request)
     {

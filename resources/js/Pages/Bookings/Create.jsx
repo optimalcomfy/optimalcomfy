@@ -197,7 +197,7 @@ const CreateBooking = () => {
           </div>
 
           {/* Main Form */}
-          <div className="p-8 space-y-8">
+          <div className="p-8 space-y-8 min-h-[60vh]">
             <form onSubmit={(e) => { e.preventDefault(); post(route('bookings.add')); }} className="space-y-8">
               
               {/* User and Property Selection */}

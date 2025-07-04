@@ -22,7 +22,8 @@ class CarBooking extends Model
         'special_requests',
         'checked_in',
         'checked_out',
-        'number'
+        'number',
+        'external_booking'
     ];
 
     protected static function boot()

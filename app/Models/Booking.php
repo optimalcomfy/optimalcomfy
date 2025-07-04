@@ -21,7 +21,8 @@ class Booking extends Model
         'checked_in',
         'checked_out',
         'number',
-        'variation_id'
+        'variation_id',
+        'external_booking'
     ];
 
     protected static function boot()

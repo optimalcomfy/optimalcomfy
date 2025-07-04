@@ -106,6 +106,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('applications', ApplicationController::class);
 
     Route::resource('bookings', BookingController::class);
+    Route::post('/bookings/add', [BookingController::class, 'add'])->name('bookings.add');
     Route::resource('foods', FoodController::class);
     Route::resource('foodOrders', FoodOrderController::class);
 

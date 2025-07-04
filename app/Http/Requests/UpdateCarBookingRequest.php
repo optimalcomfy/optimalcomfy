@@ -33,7 +33,8 @@ class UpdateCarBookingRequest extends FormRequest
             'special_requests' => 'nullable',
             'checked_in' => 'nullable',
             'checked_out' => 'nullable',
-            'number' => 'nullable'
+            'number' => 'nullable',
+            'external_booking' => 'nullable'
         ];
     }
 }

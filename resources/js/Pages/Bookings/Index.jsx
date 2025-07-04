@@ -90,6 +90,15 @@ const BookingsIndex = () => {
             <h1 className="text-2xl font-semibold text-gray-900 w-full sm:w-auto my-auto">
               Bookings
             </h1>
+            {roleId === 2 &&
+            <div className="w-full sm:w-auto">
+              <Link 
+                href={route('bookings.create')} 
+                className="inline-flex items-center px-4 py-2 bg-peachDark text-white rounded-md hover:bg-peachDarker transition-colors"
+              >
+                Add an external booking
+              </Link>
+            </div>}
           </div>
 
           {/* Search Input */}
@@ -125,6 +134,7 @@ const BookingsIndex = () => {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Check-out</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Total Price</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">External booking</th>
                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -149,6 +159,7 @@ const BookingsIndex = () => {
                         {booking.status}
                       </span>
                     </td>
+                    <td className="px-6 py-4 whitespace-wrap">{booking.external_booking}</td>
                     <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
                         <Link

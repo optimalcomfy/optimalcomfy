@@ -52,11 +52,17 @@ class BookingController extends Controller
     public function create()
     {
         $users = User::all();
-        $properties = Property::where('status', 'available')->get();
+        $user = Auth::user();
+
+        $query = Property::with(['bookings', 'variations']);
+
+        if ($user->role_id == 2) { 
+            $query->where('user_id', $user->id);  // Simplified the relationship query
+        }
 
         return Inertia::render('Bookings/Create', [
             'users' => $users,
-            'properties' => $properties,
+            'properties' => $query->get(),  // Added ->get() to execute the query
         ]);
     }
 
@@ -109,6 +115,33 @@ class BookingController extends Controller
 
         return back()->withErrors('Payment initiation failed');
     }
+
+
+    public function add(Request $request)
+    {
+        $request->validate([
+            'property_id' => 'required|exists:properties,id',
+            'check_in_date' => 'required|date',
+            'check_out_date' => 'required|date|after:check_in_date',
+            'total_price' => 'required|numeric|min:1',
+            'variation_id' => 'nullable',
+        ]);
+
+        $user = Auth::user();
+
+        $booking = Booking::create([
+            'user_id' => $user->id,
+            'property_id' => $request->property_id,
+            'check_in_date' => $request->check_in_date,
+            'check_out_date' => $request->check_out_date,
+            'total_price' => $request->total_price,
+            'status' => 'pending',
+            'variation_id'=>$request->variation_id
+        ]);
+
+        return redirect()->route('bookings.index')->with('success', 'Booking added successfully.');
+    }
+
 
     public function lookup(Request $request)
     {

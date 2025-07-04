@@ -9,7 +9,6 @@ const CreateBooking = () => {
   const [bookedDates, setBookedDates] = useState([]);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [hoveredDate, setHoveredDate] = useState(null);
   const [selectedVariation, setSelectedVariation] = useState(null);
 
   const { data, setData, post, errors, processing } = useForm({
@@ -19,7 +18,7 @@ const CreateBooking = () => {
     check_in_date: '',
     check_out_date: '',
     total_price: '',
-    status: 'confirmed',
+    status: 'paid',
     external_booking: 'Yes'
   });
 
@@ -45,7 +44,8 @@ const CreateBooking = () => {
   const calculatePrice = (startDate, endDate) => {
     if (!selectedProperty || !startDate || !endDate) return '';
     
-    const diffDays = differenceInDays(endDate, startDate);
+    const diffDays = differenceInDays(endDate, startDate) + 1;
+    
     let pricePerNight = parseFloat(selectedProperty.price_per_night);
     
     if (selectedVariation) {
@@ -418,9 +418,7 @@ const CreateBooking = () => {
                             <span className="relative z-10">{date.getDate()}</span>
                             {isBooked && (
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-white opacity-75" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                </svg>
+
                               </div>
                             )}
                           </button>
@@ -479,21 +477,6 @@ const CreateBooking = () => {
                 </div>
               )}
 
-              {/* Status Selection */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Booking Status</label>
-                <select 
-                  value={data.status} 
-                  onChange={(e) => setData('status', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="paid">Paid</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-                {errors.status && <p className="mt-2 text-sm text-red-600">{errors.status}</p>}
-              </div>
 
               {/* Form Actions */}
               <div className="flex items-center justify-between pt-8 border-t border-gray-200">

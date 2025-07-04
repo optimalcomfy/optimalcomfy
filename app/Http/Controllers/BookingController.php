@@ -135,7 +135,7 @@ class BookingController extends Controller
             'check_in_date' => $request->check_in_date,
             'check_out_date' => $request->check_out_date,
             'total_price' => $request->total_price,
-            'status' => 'pending',
+            'status' => 'paid',
             'variation_id'=>$request->variation_id
         ]);
 

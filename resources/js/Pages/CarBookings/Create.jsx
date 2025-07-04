@@ -1,170 +1,661 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm, usePage, Link } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import Select from 'react-select';
+import { format, addDays, isWithinInterval, parseISO, differenceInDays, isSameDay, isAfter, isBefore } from 'date-fns';
+import { X } from 'lucide-react';
 
-const EditCarBooking = () => {
-  const { users, cars } = usePage().props; // Make sure 'cars' and 'users' are passed from backend
+const CreateCarBooking = () => {
+  const { users, cars, booking, auth } = usePage().props;
+  const [bookedDates, setBookedDates] = useState([]);
+  const [selectedCar, setSelectedCar] = useState(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [pricePerDay, setPricePerDay] = useState(0);
+  
+  // Location suggestions state
+  const [pickupSuggestions, setPickupSuggestions] = useState([]);
+  const [dropoffSuggestions, setDropoffSuggestions] = useState([]);
+  const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
+  const [showDropoffSuggestions, setShowDropoffSuggestions] = useState(false);
+  
+  const pickupRef = useRef(null);
+  const dropoffRef = useRef(null);
 
-  const { data, setData, put, errors, processing } = useForm({
-    user_id: '',
+  const { data, setData, post, errors, processing } = useForm({
+    user_id: auth.user?.id,
     car_id: '',
     start_date: '',
     end_date: '',
     total_price: '',
     pickup_location: '',
     dropoff_location: '',
-    status: 'pending',
+    status: 'paid',
     special_requests: '',
+    external_booking: 'Yes'
   });
+
+  // Initialize form with booking data
+  useEffect(() => {
+    if (booking) {
+      const car = cars.find(c => c.id === booking.car_id);
+      if (car) {
+        setSelectedCar(car);
+        setPricePerDay(parseFloat(car.price_per_day));
+        const dates = car.bookings
+          .filter(b => b.id !== booking.id) 
+          .map(booking => ({
+            start: parseISO(booking.start_date),
+            end: parseISO(booking.end_date)
+          }));
+        setBookedDates(dates);
+        
+        // Initialize form data with booking data
+        setData({
+          ...data,
+          car_id: booking.car_id,
+          start_date: booking.start_date,
+          end_date: booking.end_date,
+          total_price: booking.total_price,
+          pickup_location: booking.pickup_location,
+          dropoff_location: booking.dropoff_location,
+          status: booking.status,
+          special_requests: booking.special_requests
+        });
+      }
+    }
+  }, [booking, cars]);
+
+  // Load booked dates when car is selected
+  useEffect(() => {
+    if (data.car_id) {
+      const car = cars.find(c => c.id === data.car_id);
+      if (car) {
+        setSelectedCar(car);
+        setPricePerDay(parseFloat(car.price_per_day));
+        const dates = car.bookings.map(booking => ({
+          start: parseISO(booking.start_date),
+          end: parseISO(booking.end_date)
+        }));
+        setBookedDates(dates);
+      }
+    }
+  }, [data.car_id, cars]);
+
+  // Fetch location suggestions
+  useEffect(() => {
+    const fetchSuggestions = async (query, setSuggestions) => {
+      if (query.length < 3) {
+        setSuggestions([]);
+        return;
+      }
+      try {
+        const res = await fetch(`/locations?query=${encodeURIComponent(query)}`);
+        if (!res.ok) throw new Error('Failed to fetch suggestions');
+        const suggestions = await res.json();
+        setSuggestions(suggestions);
+      } catch (err) {
+        console.error("Error fetching location suggestions:", err);
+        setSuggestions([]);
+      }
+    };
+
+    const pickupDelay = setTimeout(() => {
+      fetchSuggestions(data.pickup_location, setPickupSuggestions);
+    }, 300);
+
+    const dropoffDelay = setTimeout(() => {
+      fetchSuggestions(data.dropoff_location, setDropoffSuggestions);
+    }, 300);
+
+    return () => {
+      clearTimeout(pickupDelay);
+      clearTimeout(dropoffDelay);
+    };
+  }, [data.pickup_location, data.dropoff_location]);
+
+  // Handle click outside to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (pickupRef.current && !pickupRef.current.contains(event.target)) {
+        setShowPickupSuggestions(false);
+      }
+      if (dropoffRef.current && !dropoffRef.current.contains(event.target)) {
+        setShowDropoffSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLocationSelect = (location, field) => {
+    setData(field, location);
+    if (field === 'pickup_location') {
+      setShowPickupSuggestions(false);
+    } else {
+      setShowDropoffSuggestions(false);
+    }
+  };
+
+  // Calculate price based on selected dates
+  const calculatePrice = (startDate, endDate) => {
+    if (!startDate || !endDate) return '';
+    const diffDays = differenceInDays(endDate, startDate) + 1;
+    return (diffDays * pricePerDay).toFixed(2);
+  };
+
+  // Handle date selection
+  const handleDateClick = (date) => {
+    const isBooked = bookedDates.some(range => 
+      isWithinInterval(date, { start: range.start, end: range.end })
+    );
+    
+    if (isBooked) {
+      alert('This date is already booked. Please select an available date.');
+      return;
+    }
+
+    if (!data.start_date || (data.start_date && data.end_date)) {
+      setData({
+        ...data,
+        start_date: format(date, 'yyyy-MM-dd'),
+        end_date: '',
+        total_price: ''
+      });
+    } else {
+      // Second selection
+      const startDate = new Date(data.start_date);
+      const endDate = isAfter(date, startDate) ? date : startDate;
+      const newStartDate = isAfter(date, startDate) ? startDate : date;
+      
+      // Check if any date in range is booked
+      const datesInRange = [];
+      let currentDate = new Date(newStartDate);
+      while (currentDate <= endDate) {
+        datesInRange.push(new Date(currentDate));
+        currentDate = addDays(currentDate, 1);
+      }
+      
+      const hasConflict = datesInRange.some(rangeDate => 
+        bookedDates.some(bookedRange => 
+          isWithinInterval(rangeDate, { start: bookedRange.start, end: bookedRange.end })
+        )
+      );
+      
+      if (hasConflict) {
+        alert('Some dates in your selection are already booked. Please select different dates.');
+        return;
+      }
+      
+      setData({
+        ...data,
+        start_date: format(newStartDate, 'yyyy-MM-dd'),
+        end_date: format(endDate, 'yyyy-MM-dd'),
+        total_price: calculatePrice(newStartDate, endDate)
+      });
+    }
+  };
+
+  // Generate calendar days
+  const generateCalendarDays = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    const days = [];
+    const endDate = new Date(lastDay);
+    endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
+    
+    let currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      days.push(new Date(currentDate));
+      currentDate = addDays(currentDate, 1);
+    }
+    
+    return days;
+  };
+
+  // Check if date is selected
+  const isDateSelected = (date) => {
+    if (!data.start_date) return false;
+    
+    const startDate = new Date(data.start_date);
+    if (isSameDay(date, startDate)) return true;
+    
+    if (data.end_date) {
+      const endDate = new Date(data.end_date);
+      return isWithinInterval(date, { start: startDate, end: endDate });
+    }
+    
+    return false;
+  };
+
+  // Check if date is booked
+  const isDateBooked = (date) => {
+    return bookedDates.some(range => 
+      isWithinInterval(date, { start: range.start, end: range.end })
+    );
+  };
+
+  // Check if date is in current month
+  const isCurrentMonth = (date) => {
+    return date.getMonth() === currentMonth.getMonth() && 
+           date.getFullYear() === currentMonth.getFullYear();
+  };
+
+  // Navigate month
+  const navigateMonth = (direction) => {
+    const newMonth = new Date(currentMonth);
+    newMonth.setMonth(currentMonth.getMonth() + direction);
+    setCurrentMonth(newMonth);
+  };
+
+  const carOptions = cars.map(car => ({ 
+    value: car.id, 
+    label: `${car.brand} ${car.model} (${car.year}) - ${car.price_per_day}/day`
+  }));
+
+  const calendarDays = generateCalendarDays();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    put(route('car-bookings.update', { booking: booking.id }));
+    const routeName = 'car-bookings.add';
+    post(route(routeName));
   };
-
-  const userOptions = users.map(user => ({ value: user.id, label: user.name }));
-  const carOptions = cars.map(car => ({ value: car.id, label: car.name }));
 
   return (
     <Layout>
-      <div className="max-w-2xl bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-3xl font-semibold mb-6">Edit Car Booking</h1>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-
-          {/* User Select */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">User</label>
-            <Select
-              options={userOptions}
-              value={userOptions.find(option => option.value === data.user_id)}
-              onChange={(selected) => setData('user_id', selected ? selected.value : '')}
-              placeholder="Select a user"
-            />
-            {errors.user_id && <div className="text-sm text-red-500 mt-1">{errors.user_id}</div>}
+      <div className="max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Header */}
+          <div className="bg-peachDark px-8 py-6">
+            <h1 className="text-3xl font-bold text-white">
+              {booking ? 'Edit Car Booking' : 'Create New Car Booking'}
+            </h1>
+            <p className="text-blue-100 mt-2">
+              {booking ? 'Update booking details' : 'Select car, dates, and customer details'}
+            </p>
           </div>
 
-          {/* Car Select */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Car</label>
-            <Select
-              options={carOptions}
-              value={carOptions.find(option => option.value === data.car_id)}
-              onChange={(selected) => setData('car_id', selected ? selected.value : '')}
-              placeholder="Select a car"
-            />
-            {errors.car_id && <div className="text-sm text-red-500 mt-1">{errors.car_id}</div>}
+          {/* Main Form */}
+          <div className="p-8 space-y-8 min-h-[60vh]">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              
+              {/* User and Car Selection */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Car</label>
+                  <Select
+                    options={carOptions}
+                    value={carOptions.find(option => option.value === data.car_id)}
+                    onChange={(selected) => setData('car_id', selected ? selected.value : '')}
+                    placeholder="Select car..."
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    isDisabled={!!booking} // Disable if editing existing booking
+                  />
+                  {errors.car_id && <p className="mt-2 text-sm text-red-600">{errors.car_id}</p>}
+                </div>
+              </div>
+
+              {/* Car Details */}
+              {selectedCar && (
+                <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-2xl border border-gray-200">
+                  <h3 className="font-semibold text-xl text-gray-800 mb-4">Car Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 rounded-xl shadow-sm">
+                      <div className="flex items-center">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <svg className="w-5 h-5 text-peachDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-500">Brand/Model</p>
+                          <p className="text-sm font-semibold text-gray-900">{selectedCar.brand} {selectedCar.model}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded-xl shadow-sm">
+                      <div className="flex items-center">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-500">Price</p>
+                          <p className="text-sm font-semibold text-gray-900">{selectedCar.price_per_day}/day</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded-xl shadow-sm">
+                      <div className="flex items-center">
+                        <div className="p-2 bg-purple-100 rounded-lg">
+                          <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-500">Seats</p>
+                          <p className="text-sm font-semibold text-gray-900">{selectedCar.seats} seats</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded-xl shadow-sm">
+                      <div className="flex items-center">
+                        <div className="p-2 bg-yellow-100 rounded-lg">
+                          <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-500">Fuel Type</p>
+                          <p className="text-sm font-semibold text-gray-900">{selectedCar.fuel_type}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Custom Calendar */}
+              {selectedCar && (
+                <div className="space-y-6">
+                  <h3 className="text-xl font-semibold text-gray-900">Select Rental Dates</h3>
+                  
+                  {/* Calendar Legend */}
+                  <div className="flex flex-wrap gap-6 text-sm">
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                      <span className="text-gray-600">Selected</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                      <span className="text-gray-600">Booked</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 bg-gray-200 rounded mr-2"></div>
+                      <span className="text-gray-600">Available</span>
+                    </div>
+                  </div>
+
+                  {/* Calendar */}
+                  <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
+                    {/* Calendar Header */}
+                    <div className="flex items-center justify-between mb-6">
+                      <button
+                        type="button"
+                        onClick={() => navigateMonth(-1)}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {format(currentMonth, 'MMMM yyyy')}
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => navigateMonth(1)}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Days of Week */}
+                    <div className="grid grid-cols-7 gap-1 mb-2">
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                        <div key={day} className="p-3 text-center text-sm font-medium text-gray-500">
+                          {day}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7 gap-1">
+                      {calendarDays.map((date, index) => {
+                        const isSelected = isDateSelected(date);
+                        const isBooked = isDateBooked(date);
+                        const isCurrentMonthDate = isCurrentMonth(date);
+                        const isPast = isBefore(date, new Date()) && !isSameDay(date, new Date());
+                        const isDisabled = isBooked || isPast;
+
+                        return (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => !isDisabled && handleDateClick(date)}
+                            disabled={isDisabled}
+                            className={`
+                              relative p-3 text-sm font-medium rounded-lg transition-all duration-200
+                              ${isCurrentMonthDate ? 'text-gray-900' : 'text-gray-400'}
+                              ${isSelected ? 'bg-blue-500 text-white shadow-lg' : ''}
+                              ${isBooked ? 'bg-red-500 text-white cursor-not-allowed' : ''}
+                              ${isPast && !isBooked ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}
+                              ${!isSelected && !isBooked && !isPast && isCurrentMonthDate ? 'hover:bg-gray-100' : ''}
+                              ${!isDisabled ? 'cursor-pointer' : ''}
+                            `}
+                          >
+                            <span className="relative z-10">{date.getDate()}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Selected Dates Display */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Pickup Date</label>
+                      <input
+                        type="date"
+                        value={data.start_date}
+                        onChange={(e) => {
+                          const newStartDate = e.target.value;
+                          setData('start_date', newStartDate);
+                          if (data.end_date) {
+                            const endDate = new Date(data.end_date);
+                            const startDate = new Date(newStartDate);
+                            setData('total_price', calculatePrice(startDate, endDate));
+                          }
+                        }}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        min={format(new Date(), 'yyyy-MM-dd')}
+                        required
+                      />
+                      {errors.start_date && <p className="mt-1 text-sm text-red-600">{errors.start_date}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Return Date</label>
+                      <input
+                        type="date"
+                        value={data.end_date}
+                        onChange={(e) => {
+                          const newEndDate = e.target.value;
+                          setData('end_date', newEndDate);
+                          if (data.start_date) {
+                            const startDate = new Date(data.start_date);
+                            const endDate = new Date(newEndDate);
+                            setData('total_price', calculatePrice(startDate, endDate));
+                          }
+                        }}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        min={data.start_date || format(new Date(), 'yyyy-MM-dd')}
+                        required
+                      />
+                      {errors.end_date && <p className="mt-1 text-sm text-red-600">{errors.end_date}</p>}
+                    </div>
+                  </div>
+
+                  {/* Price Summary */}
+                  {data.start_date && data.end_date && data.total_price && (
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="text-lg font-semibold text-blue-900">Rental Summary</h4>
+                          <p className="text-blue-700 mt-1">
+                            {differenceInDays(new Date(data.end_date), new Date(data.start_date))} days
+                            × {pricePerDay} per day
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-blue-700">Total Amount</p>
+                          <p className="text-3xl font-bold text-blue-900">{data.total_price}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Location and Status Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Pickup Location with Suggestions */}
+                <div className="relative" ref={pickupRef}>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Pickup Location</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={data.pickup_location}
+                      onChange={(e) => setData('pickup_location', e.target.value)}
+                      onFocus={() => setShowPickupSuggestions(true)}
+                      placeholder="Search pickup location"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                    {data.pickup_location && (
+                      <button
+                        type="button"
+                        onClick={() => setData('pickup_location', '')}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                  {showPickupSuggestions && pickupSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {pickupSuggestions.map((location, index) => (
+                        <div
+                          key={index}
+                          onClick={() => handleLocationSelect(location, 'pickup_location')}
+                          className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                        >
+                          {location}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {errors.pickup_location && <p className="mt-1 text-sm text-red-600">{errors.pickup_location}</p>}
+                </div>
+                
+                {/* Dropoff Location with Suggestions */}
+                <div className="relative" ref={dropoffRef}>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Drop-off Location</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={data.dropoff_location}
+                      onChange={(e) => setData('dropoff_location', e.target.value)}
+                      onFocus={() => setShowDropoffSuggestions(true)}
+                      placeholder="Search drop-off location"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                    {data.dropoff_location && (
+                      <button
+                        type="button"
+                        onClick={() => setData('dropoff_location', '')}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                  {showDropoffSuggestions && dropoffSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {dropoffSuggestions.map((location, index) => (
+                        <div
+                          key={index}
+                          onClick={() => handleLocationSelect(location, 'dropoff_location')}
+                          className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                        >
+                          {location}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {errors.dropoff_location && <p className="mt-1 text-sm text-red-600">{errors.dropoff_location}</p>}
+                </div>
+              </div>
+
+              {/* Status and Special Requests */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div className='col-span-2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Special Requests</label>
+                  <textarea
+                    value={data.special_requests}
+                    onChange={(e) => setData('special_requests', e.target.value)}
+                    placeholder="Any special requests or notes?"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows="3"
+                  />
+                  {errors.special_requests && <p className="mt-1 text-sm text-red-600">{errors.special_requests}</p>}
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex items-center justify-between pt-8 border-t border-gray-200">
+                <Link 
+                  href={route('car-bookings.index')} 
+                  className="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center py-3 px-8 border border-transparent shadow-sm text-sm font-medium rounded-xl text-white bg-gradient-to-r from-peachDark to-peachDark hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  disabled={processing || !data.start_date || !data.end_date || !data.car_id || !data.pickup_location}
+                >
+                  {processing ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {booking ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      {booking ? 'Update Booking' : 'Create Booking'}
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
-
-          {/* Start Date */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Start Date</label>
-            <input 
-              type="date"
-              value={data.start_date}
-              onChange={(e) => setData('start_date', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.start_date && <div className="text-sm text-red-500 mt-1">{errors.start_date}</div>}
-          </div>
-
-          {/* End Date */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">End Date</label>
-            <input 
-              type="date"
-              value={data.end_date}
-              onChange={(e) => setData('end_date', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.end_date && <div className="text-sm text-red-500 mt-1">{errors.end_date}</div>}
-          </div>
-
-          {/* Total Price */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Total Price</label>
-            <input 
-              type="number"
-              value={data.total_price}
-              onChange={(e) => setData('total_price', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.total_price && <div className="text-sm text-red-500 mt-1">{errors.total_price}</div>}
-          </div>
-
-          {/* Pickup Location */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Pickup Location</label>
-            <input 
-              type="text"
-              value={data.pickup_location}
-              onChange={(e) => setData('pickup_location', e.target.value)}
-              placeholder="Enter pickup location"
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.pickup_location && <div className="text-sm text-red-500 mt-1">{errors.pickup_location}</div>}
-          </div>
-
-          {/* Dropoff Location */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Drop-off Location</label>
-            <input 
-              type="text"
-              value={data.dropoff_location}
-              onChange={(e) => setData('dropoff_location', e.target.value)}
-              placeholder="Enter drop-off location"
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.dropoff_location && <div className="text-sm text-red-500 mt-1">{errors.dropoff_location}</div>}
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select
-              value={data.status}
-              onChange={(e) => setData('status', e.target.value)}
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            {errors.status && <div className="text-sm text-red-500 mt-1">{errors.status}</div>}
-          </div>
-
-          {/* Special Requests */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Special Requests</label>
-            <textarea
-              value={data.special_requests}
-              onChange={(e) => setData('special_requests', e.target.value)}
-              placeholder="Any special requests?"
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md"
-              rows="4"
-            />
-            {errors.special_requests && <div className="text-sm text-red-500 mt-1">{errors.special_requests}</div>}
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full mt-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            disabled={processing}
-          >
-            {processing ? 'Updating...' : 'Update Car Booking'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <Link href={route('car-bookings.index')} className="text-indigo-600 hover:text-indigo-800">
-            Back to Car Bookings
-          </Link>
         </div>
       </div>
     </Layout>
   );
 };
 
-export default EditCarBooking;
+export default CreateCarBooking;

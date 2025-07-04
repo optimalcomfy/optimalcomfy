@@ -52,11 +52,19 @@ class CarBookingController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+
     public function create()
     {
-        $cars = Car::all(); // Fetch all cars for the booking
+        $user = Auth::user();
+
+        $query = Car::with(['bookings']);
+
+        if ($user->role_id == 2) {
+            $query->where('user_id', $user->id);
+        }
+
         return Inertia::render('CarBookings/Create', [
-            'cars' => $cars,
+            'cars' => $query->get(),
         ]);
     }
 
@@ -114,6 +122,40 @@ class CarBookingController extends Controller
 	    }
 
 	    return back()->withErrors('Payment initiation failed');
+	}
+
+
+    public function add(StoreCarBookingRequest $request)
+	{
+	    $validatedData = $request->validated();
+	    $user = Auth::user();
+	    $validatedData['user_id'] = $user->id;
+
+	    $car = Car::findOrFail($request->car_id); // Use findOrFail for safety
+
+	    // Calculate number of days
+	    $startDate = Carbon::parse($request->start_date);
+	    $endDate = Carbon::parse($request->end_date);
+	    $days = $startDate->diffInDays($endDate);
+
+	    // Ensure at least 1 day
+	    $days = max($days, 1);
+
+	    $totalPrice = $car->price_per_day * $days;
+
+	    $booking = CarBooking::create([
+	        'user_id'         => $user->id,
+	        'car_id'          => $request->car_id,
+	        'start_date'      => $request->start_date,
+	        'end_date'        => $request->end_date,
+	        'total_price'     => $totalPrice,
+	        'pickup_location' => $request->pickup_location,
+	        'dropoff_location'=> $request->pickup_location,
+	        'status'          => 'pending',
+	        'special_requests'=> $request->special_requests,
+	    ]);
+
+        return redirect()->route('car-bookings.index')->with('success', 'Car booking added successfully.');
 	}
 
     /**

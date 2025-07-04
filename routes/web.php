@@ -115,6 +115,7 @@ Route::middleware('auth')->group(function () {
     ]);
 
     Route::resource('car-bookings', CarBookingController::class);
+    Route::post('/car-bookings/add', [CarBookingController::class, 'add'])->name('car-bookings.add');
     Route::resource('car-categories', CarCategoryController::class);
     Route::resource('carFeatures', CarFeatureController::class);
     Route::resource('carMedias', CarMediaController::class);

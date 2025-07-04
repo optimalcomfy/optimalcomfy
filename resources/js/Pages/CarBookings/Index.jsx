@@ -88,6 +88,16 @@ const CarBookingsIndex = () => {
             <h1 className="text-2xl font-semibold text-gray-900 w-full sm:w-auto my-auto">
               Ride Bookings
             </h1>
+
+            {roleId === 2 &&
+            <div className="w-full sm:w-auto">
+              <Link 
+                href={route('car-bookings.create')} 
+                className="inline-flex items-center px-4 py-2 bg-peachDark text-white rounded-md hover:bg-peachDarker transition-colors"
+              >
+                Add an external booking
+              </Link>
+            </div>}
           </div>
 
           {/* Search Input */}

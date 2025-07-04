@@ -68,6 +68,7 @@ class BookingController extends Controller
             'check_in_date' => 'required|date',
             'check_out_date' => 'required|date|after:check_in_date',
             'total_price' => 'required|numeric|min:1',
+            'variation_id' => 'nullable',
         ]);
 
         $user = Auth::user();
@@ -79,6 +80,7 @@ class BookingController extends Controller
             'check_out_date' => $request->check_out_date,
             'total_price' => $request->total_price,
             'status' => 'pending',
+            'variation_id'=>$request->variation_id
         ]);
 
         try {

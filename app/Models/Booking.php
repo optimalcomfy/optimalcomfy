@@ -20,7 +20,8 @@ class Booking extends Model
         'status',
         'checked_in',
         'checked_out',
-        'number'
+        'number',
+        'variation_id'
     ];
 
     protected static function boot()

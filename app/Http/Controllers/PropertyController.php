@@ -28,7 +28,8 @@ class PropertyController extends Controller
             'propertyAmenities',
             'propertyFeatures',
             'PropertyServices',
-            'user'
+            'user',
+            'variations'
         ])->orderBy('created_at', 'desc');
 
         // Filter by user role (Agent only sees own properties)
@@ -124,13 +125,16 @@ class PropertyController extends Controller
      */
     public function show(Property $property)
     {
-        $property->load('bookings', 'initialGallery', 'propertyAmenities.amenity', 'propertyFeatures', 'PropertyServices', 'user');
+        $property->load('bookings', 'initialGallery', 'propertyAmenities.amenity', 'propertyFeatures', 'PropertyServices', 'user', 'variations');
 
         $amenities = Amenity::all();
 
+        $keys = env('VITE_GOOGLE_MAP_API');
+
         return Inertia::render('Properties/Show', [
             'property' => $property,
-            'amenities'=>$amenities
+            'amenities'=>$amenities,
+            'keys'=>$keys
         ]);
     }
 

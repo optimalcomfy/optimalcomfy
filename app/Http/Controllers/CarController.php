@@ -123,9 +123,12 @@ class CarController extends Controller
 
         $features = Feature::all();
 
+        $keys = env('VITE_GOOGLE_MAP_API');
+
         return Inertia::render('Cars/Show', [
             'car' => $car,
-            'features'=> $features
+            'features'=> $features,
+            'keys'=>$keys
         ]);
     }
 

@@ -2,24 +2,26 @@ import { useEffect, useRef, useState } from "react";
 import {
   GoogleMap,
   Marker,
-  useJsApiLoader,
+  useLoadScript,
 } from "@react-google-maps/api";
-
+import { usePage } from "@inertiajs/react";
 // Optional: Custom map styles
 const mapStyles = [/* Your full styles here */];
 
 export default function CarMapDetails({ car }) {
   const [contentHeight, setContentHeight] = useState(0);
   const mapRef = useRef(null);
+  const { keys } = usePage().props; 
+  
 
   const lat = parseFloat(car.latitude);
   const lng = parseFloat(car.longitude);
   const carPosition = { lat, lng };
 
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API, // Replace with env var in prod
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: keys,
   });
+
 
   useEffect(() => {
     const updateHeight = () => {

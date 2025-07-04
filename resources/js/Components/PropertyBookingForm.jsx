@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useForm, Link } from '@inertiajs/react';
 
 const PropertyBookingForm = ({ property }) => {
+  const [selectedVariation, setSelectedVariation] = useState(null);
+  
   const { data, setData, errors } = useForm({
     property_id: property.id,
     check_in_date: '',
     check_out_date: '',
     nights: 0,
-    total_price: 0
+    total_price: 0,
+    variation_id: null
   });
 
   // Function to check if a date is within any booked range
@@ -121,10 +124,28 @@ const PropertyBookingForm = ({ property }) => {
     }
   };
 
+  const handleVariationChange = (variation) => {
+    setSelectedVariation(variation);
+    setData('variation_id', variation.id);
+    
+    // Recalculate total price if dates are already selected
+    if (data.check_in_date && data.check_out_date) {
+      const nights = calculateDays(data.check_in_date, data.check_out_date);
+      const basePrice = nights * variation.platform_price;
+      
+      setData(prev => ({
+        ...prev,
+        nights: nights,
+        total_price: basePrice
+      }));
+    }
+  };
+
   useEffect(() => {
     if (data.check_in_date && data.check_out_date) {
       const nights = calculateDays(data.check_in_date, data.check_out_date);
-      const basePrice = nights * (property.platform_price || 0);
+      const pricePerNight = selectedVariation ? selectedVariation.platform_price : property.platform_price;
+      const basePrice = nights * pricePerNight;
       
       setData(prev => ({
         ...prev,
@@ -138,9 +159,13 @@ const PropertyBookingForm = ({ property }) => {
         total_price: 0
       }));
     }
-  }, [data.check_in_date, data.check_out_date]);
+  }, [data.check_in_date, data.check_out_date, selectedVariation]);
 
-  const subtotal = data.nights > 0 ? (property.platform_price || 0) * data.nights : 0;
+  const getCurrentPrice = () => {
+    return selectedVariation ? selectedVariation.platform_price : property.platform_price;
+  };
+
+  const subtotal = data.nights > 0 ? getCurrentPrice() * data.nights : 0;
 
   // Get all booked dates for display
   const bookedDates = property.bookings.flatMap(booking => {
@@ -163,9 +188,53 @@ const PropertyBookingForm = ({ property }) => {
             {/* Price and Rating Section */}
             <div className="price-detail mb-6">
               <h2 className="price text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                KES {property.platform_price || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">night</span>
+                KES {getCurrentPrice() || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">/night</span>
               </h2>
             </div>
+
+            {/* Variations Selection */}
+            {property.variations && property.variations.length > 0 && (
+              <div className="variations-selection mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Select Room Type
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  <div 
+                    className={`p-3 border rounded-lg cursor-pointer ${!selectedVariation ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}
+                    onClick={() => {
+                      setSelectedVariation(null);
+                      setData('variation_id', null);
+                    }}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {property.type} (Standard)
+                      </span>
+                      <span className="text-gray-900 dark:text-white">
+                        KES {property.platform_price}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {property.variations.map((variation) => (
+                    <div 
+                      key={variation.id}
+                      className={`p-3 border rounded-lg cursor-pointer ${selectedVariation?.id === variation.id ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}
+                      onClick={() => handleVariationChange(variation)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {variation.type}
+                        </span>
+                        <span className="text-gray-900 dark:text-white">
+                          KES {variation.platform_price}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Date Selection */}
             <div className="date-selection mb-4">
@@ -225,7 +294,8 @@ const PropertyBookingForm = ({ property }) => {
                   href={route('property-booking', { 
                     property_id: property.id, 
                     check_in_date: data.check_in_date, 
-                    check_out_date: data.check_out_date  
+                    check_out_date: data.check_out_date,
+                    variation_id: selectedVariation?.id || null
                   })}
                   className="btn btn--pink w-full py-3 text-center px-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-lg transition-all duration-200 mb-4"
                 >
@@ -243,7 +313,7 @@ const PropertyBookingForm = ({ property }) => {
               <>
                 <div className="sticky-card__detail flex justify-between items-center mb-3">
                   <a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:underline">
-                    KES {property.platform_price || 0} x {data.nights} night{data.nights !== 1 ? 's' : ''}
+                    KES {getCurrentPrice()} x {data.nights} night{data.nights !== 1 ? 's' : ''}
                   </a>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     KES {subtotal}
@@ -269,14 +339,58 @@ const PropertyBookingForm = ({ property }) => {
 
       {/* Mobile version */}
       <div className="mt-2 sm:hidden">
-<div className="sticky-content">
+        <div className="sticky-content">
           <div className="sticky-card bg-white dark:bg-[#2D2D2D] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6">
             {/* Price and Rating Section */}
             <div className="price-detail mb-6">
               <h2 className="price text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                KES {property.platform_price || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">night</span>
+                KES {getCurrentPrice() || 0}<span className="text-base font-normal text-gray-600 dark:text-gray-400">/night</span>
               </h2>
             </div>
+
+            {/* Variations Selection */}
+            {property.variations && property.variations.length > 0 && (
+              <div className="variations-selection mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Select Room Type
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  <div 
+                    className={`p-3 border rounded-lg cursor-pointer ${!selectedVariation ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}
+                    onClick={() => {
+                      setSelectedVariation(null);
+                      setData('variation_id', null);
+                    }}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {property.type} (Standard)
+                      </span>
+                      <span className="text-gray-900 dark:text-white">
+                        KES {property.platform_price}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {property.variations.map((variation) => (
+                    <div 
+                      key={variation.id}
+                      className={`p-3 border rounded-lg cursor-pointer ${selectedVariation?.id === variation.id ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}
+                      onClick={() => handleVariationChange(variation)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {variation.type}
+                        </span>
+                        <span className="text-gray-900 dark:text-white">
+                          KES {variation.platform_price}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Date Selection */}
             <div className="date-selection mb-4">
@@ -336,7 +450,8 @@ const PropertyBookingForm = ({ property }) => {
                   href={route('property-booking', { 
                     property_id: property.id, 
                     check_in_date: data.check_in_date, 
-                    check_out_date: data.check_out_date  
+                    check_out_date: data.check_out_date,
+                    variation_id: selectedVariation?.id || null
                   })}
                   className="btn btn--pink w-full py-3 text-center px-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-lg transition-all duration-200 mb-4"
                 >
@@ -354,7 +469,7 @@ const PropertyBookingForm = ({ property }) => {
               <>
                 <div className="sticky-card__detail flex justify-between items-center mb-3">
                   <a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:underline">
-                    KES {property.platform_price || 0} x {data.nights} night{data.nights !== 1 ? 's' : ''}
+                    KES {getCurrentPrice()} x {data.nights} night{data.nights !== 1 ? 's' : ''}
                   </a>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     KES {subtotal}

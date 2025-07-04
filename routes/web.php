@@ -40,7 +40,7 @@ use App\Http\Controllers\CarMediaController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\PesapalController;
 use App\Http\Controllers\WithdrawalController;
-
+use App\Http\Controllers\VariationController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -127,6 +127,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('services', ServiceController::class);
     Route::resource('serviceBookings', ServiceBookingController::class);
     Route::resource('propertyGalleries', PropertyGalleryController::class);
+    Route::resource('propertyVariations', VariationController::class);
     Route::resource('propertyAmenities', PropertyAmenityController::class);
     Route::resource('amenities', AmenityController::class);
     Route::resource('propertyFeatures', PropertyFeatureController::class);
@@ -136,6 +137,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/properties/gallery/store', [PropertyGalleryController::class, 'store'])->name('properties.gallery.store');
     Route::delete('/properties/gallery/{propertyGallery}', [PropertyGalleryController::class, 'destroy'])->name('properties.gallery.destroy');
     Route::get('/properties/{property}/gallery', [PropertyGalleryController::class, 'getByProperty'])->name('properties.gallery.byProperty');
+
+    Route::post('/properties/variation/store', [VariationController::class, 'store'])->name('properties.variation.store');
+    Route::delete('/properties/variation/{propertyVariation}', [VariationController::class, 'destroy'])->name('properties.variation.destroy');
+    Route::get('/properties/{variation}/variation', [VariationController::class, 'getByProperty'])->name('properties.variation.byProperty');
 
     Route::post('/properties/amenities/store', [PropertyAmenityController::class, 'store'])->name('properties.amenities.store');
     Route::delete('/properties/amenities/{propertyAmenity}', [PropertyAmenityController::class, 'destroy'])->name('properties.amenities.destroy');

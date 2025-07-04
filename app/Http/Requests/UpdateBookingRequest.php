@@ -30,7 +30,8 @@ class UpdateBookingRequest extends FormRequest
             'status' => 'nullable',
             'checked_in' => 'nullable',
             'checked_out' => 'nullable',
-            'number' => 'nullable'
+            'number' => 'nullable',
+            'variation_id' => 'nullable'
         ];
     }
 }

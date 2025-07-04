@@ -25,7 +25,7 @@ class HomeController extends Controller
     public function index(Request $request)
     {
 
-        $query = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])->orderBy('created_at', 'desc');
+        $query = Property::with(['bookings','variations', 'initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])->orderBy('created_at', 'desc');
 
         if ($request->has('search')) {
             $search = $request->input('search');
@@ -164,7 +164,7 @@ class HomeController extends Controller
     public function propertyBooking(Request $request)
     {
         $input = $request->all();
-        $property = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices'])->where('id', '=', $input['property_id'])->first();
+        $property = Property::with(['bookings','initialGallery','propertyAmenities','propertyFeatures','PropertyServices','variations'])->where('id', '=', $input['property_id'])->first();
 
         return Inertia::render('PropertyBooking', [
             'canLogin' => Route::has('login'),
@@ -540,7 +540,8 @@ class HomeController extends Controller
             'propertyAmenities.amenity',
             'propertyFeatures',
             'PropertyServices',
-            'user'
+            'user',
+            'variations'
         ])->orderBy('created_at', 'desc');
     
         if ($request->has('id')) {

@@ -9,10 +9,14 @@ const PropertyBookingForm = () => {
   
   const checkInDate = params.get('check_in_date');
   const checkOutDate = params.get('check_out_date');
+  const variationId = params.get('variation_id');
   const today = new Date().toISOString().split('T')[0];
 
   const [currentStep, setCurrentStep] = useState(1);
   const [processing, setProcessing] = useState(false);
+  const [selectedVariation, setSelectedVariation] = useState(
+    variationId ? property.variations.find(v => v.id == variationId) : null
+  );
   const [data, setData] = useState({
     property_id: property.id,
     check_in_date: checkInDate || '',
@@ -20,6 +24,7 @@ const PropertyBookingForm = () => {
     total_price: 0,
     nights: 0,
     status: 'Booked',
+    variation_id: variationId || null,
 
     // User fields
     name: '',
@@ -79,6 +84,19 @@ const PropertyBookingForm = () => {
     updateData(name, value);
   };
 
+  const handleVariationChange = (variation) => {
+    setSelectedVariation(variation);
+    updateData('variation_id', variation.id);
+    
+    // Recalculate price if dates are already selected
+    if (data.check_in_date && data.check_out_date) {
+      const nights = calculateDays(data.check_in_date, data.check_out_date);
+      const basePrice = nights * variation.platform_price;
+      
+      updateData('total_price', basePrice);
+    }
+  };
+
   const handleLocationSelect = (location) => {
     updateData('current_location', location);
     setShowLocationSuggestions(false);
@@ -119,23 +137,18 @@ const PropertyBookingForm = () => {
 
   // Price calculation effect
   useEffect(() => {
-    if (data.check_in_date && data.check_out_date && property?.platform_price) {
+    if (data.check_in_date && data.check_out_date) {
       const nights = calculateDays(data.check_in_date, data.check_out_date);
-      const basePrice = nights * property.platform_price;
+      const pricePerNight = selectedVariation ? selectedVariation.platform_price : property.platform_price;
+      const basePrice = nights * pricePerNight;
       
-      setData(prev => ({
-        ...prev,
-        nights: nights,
-        total_price: basePrice
-      }));
+      updateData('nights', nights);
+      updateData('total_price', basePrice);
     } else {
-      setData(prev => ({
-        ...prev,
-        nights: 0,
-        total_price: 0
-      }));
+      updateData('nights', 0);
+      updateData('total_price', 0);
     }
-  }, [data.check_in_date, data.check_out_date, property?.platform_price]);
+  }, [data.check_in_date, data.check_out_date, selectedVariation]);
 
   const handleReserveClick = () => {
     if (!data.check_in_date || !data.check_out_date) {
@@ -233,7 +246,8 @@ const PropertyBookingForm = () => {
 
   // Calculate pricing
   const nights = calculateDays(data.check_in_date, data.check_out_date);
-  const subtotal = nights * (property?.platform_price || 0);
+  const pricePerNight = selectedVariation ? selectedVariation.platform_price : property.platform_price;
+  const subtotal = nights * pricePerNight;
   const totalPrice = subtotal;
 
   const StepIndicator = ({ step, currentStep, title, completed = false }) => (
@@ -295,6 +309,50 @@ const PropertyBookingForm = () => {
               
               {currentStep >= 1 && (
                 <div className="space-y-4">
+                  {/* Variations Selection */}
+                  {property.variations && property.variations.length > 0 && (
+                    <div className="variations-selection mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Room Type
+                      </label>
+                      <div className="grid grid-cols-1 gap-2">
+                        <div 
+                          className={`p-3 border rounded-lg cursor-pointer ${!selectedVariation ? 'border-orange-400 bg-orange-50' : 'border-gray-300 hover:border-gray-400'}`}
+                          onClick={() => {
+                            setSelectedVariation(null);
+                            updateData('variation_id', null);
+                          }}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">
+                              {property.type} (Standard)
+                            </span>
+                            <span>
+                              KES {property.platform_price}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {property.variations.map((variation) => (
+                          <div 
+                            key={variation.id}
+                            className={`p-3 border rounded-lg cursor-pointer ${selectedVariation?.id === variation.id ? 'border-orange-400 bg-orange-50' : 'border-gray-300 hover:border-gray-400'}`}
+                            onClick={() => handleVariationChange(variation)}
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium">
+                                {variation.type}
+                              </span>
+                              <span>
+                                KES {variation.platform_price}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Date Selection */}
                   <div className="flex flex-col lg:flex-row border border-gray-300 rounded-xl overflow-hidden">
                     <div className="border-b lg:border-r flex-1 border-gray-300 p-4">
@@ -628,6 +686,9 @@ const PropertyBookingForm = () => {
                 <div className="flex-1">
                   <p className="text-sm text-gray-600 mb-1">{property.type}</p>
                   <h3 className="font-semibold text-lg mb-2">{property.property_name}</h3>
+                  {selectedVariation && (
+                    <p className="text-sm text-gray-600">{selectedVariation.type}</p>
+                  )}
                 </div>
               </div>
 
@@ -672,7 +733,9 @@ const PropertyBookingForm = () => {
                   
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm">KES {(property.platform_price || 0).toLocaleString()} × {nights} night{nights !== 1 ? 's' : ''}</span>
+                      <span className="text-sm">
+                        KES {pricePerNight.toLocaleString()} × {nights} night{nights !== 1 ? 's' : ''}
+                      </span>
                       <span className="text-sm">KES {subtotal.toLocaleString()}</span>
                     </div>
                   </div>

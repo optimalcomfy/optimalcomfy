@@ -64,6 +64,11 @@ class Property extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function variations()
+    {
+        return $this->hasMany(Variation::class);
+    }
+
     public function initialGallery()
     {
         return $this->hasMany(PropertyGallery::class);
@@ -87,18 +92,19 @@ class Property extends Model
     /**
      * Accessor: Platform price (price + platform charges)
      */
+    
     public function getPlatformPriceAttribute()
     {
         $company = Company::first();
 
         if (!$company || !$company->percentage) {
-            return $this->amount;
+            return round($this->amount / 100) * 100;  // Round to nearest hundred
         }
 
         $base = $this->amount;
         $charges = $base * $company->percentage / 100;
 
-        return round($base + $charges, 2);
+        return round(($base + $charges) / 100) * 100;  // Round to nearest hundred
     }
 
     /**
@@ -112,6 +118,6 @@ class Property extends Model
             return 0;
         }
 
-        return round($this->amount * $company->percentage / 100, 2);
+        return round(($this->amount * $company->percentage / 100) / 100) * 100;  // Round to nearest hundred
     }
 }

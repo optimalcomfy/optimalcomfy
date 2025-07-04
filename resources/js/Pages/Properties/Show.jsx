@@ -7,6 +7,7 @@ import Service from "./components/Service";
 import Feature from "./components/Feature";
 import Swal from 'sweetalert2';
 import Map from "./components/Map";
+import Variation from "./components/Variation";
 
 const ShowProperty = ({ property }) => {
   const [activeTab, setActiveTab] = useState("details");
@@ -67,6 +68,16 @@ const ShowProperty = ({ property }) => {
                 }`}
               >
                 Stay Details
+              </button>
+              <button
+                onClick={() => setActiveTab("variations")}
+                className={`px-3 py-2 sm:px-4 sm:py-3 font-medium text-xs sm:text-sm transition-colors duration-200 ${
+                  activeTab === "variations"
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300"
+                }`}
+              >
+                Variations
               </button>
               <button
                 onClick={() => setActiveTab("gallery")}
@@ -202,7 +213,8 @@ const ShowProperty = ({ property }) => {
               </div>
             </div>
           )}
-          
+
+          {activeTab === "variations" && <Variation property={property} />}
           {activeTab === "gallery" && <Gallery property={property} />}
           {activeTab === "amenity" && <Amenity property={property} amenities={amenities} />}
           {activeTab === "map" && <Map property={property} />}

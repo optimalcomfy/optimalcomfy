@@ -103,7 +103,7 @@ const CarGallery = ({ car }) => {
       {showGalleryPopup && (
         <div className="gallery-popup">
           <div className="popup-content flex flex-col items-start justify-start gap-4">
-            <h2>Add Image to Gallery</h2>
+            <h4>Add Image to Gallery</h4>
             <div className="flex items-center justify-between w-full">
               <button 
                 onClick={() => {
@@ -111,12 +111,11 @@ const CarGallery = ({ car }) => {
                   setPreviewUrl(null);
                   setNewImage(null);
                 }} 
-                className="cancel-btn"
+                className="cancel-btn bg-red-400 px-4 py-1 rounded-md ml-auto text-white"
               >
                 Cancel
               </button>
-              <h3>Upload New Image</h3>
-              <div></div> {/* Empty div for flex spacing */}
+              <div></div> 
             </div>
             {previewUrl && <img src={previewUrl} alt="Preview" className="preview-img" />}
             <input type="file" onChange={handleFileChange} className="file-input" accept="image/*" />

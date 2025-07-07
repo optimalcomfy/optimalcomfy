@@ -53,7 +53,7 @@ class CarMediaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'car_id' => 'required|exists:properties,id',
+            'car_id' => 'required|exists:cars,id',
             'image' => 'required',
         ]);
         

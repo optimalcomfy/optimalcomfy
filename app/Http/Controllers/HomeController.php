@@ -428,7 +428,7 @@ class HomeController extends Controller
 
         // Calculate total revenue from car bookings (only non-external bookings)
         $carBookingTotal = CarBooking::where("status", "=", "Paid")
-            ->whereNull("external_booking") // Only include non-external bookings
+            ->whereNull("external_booking")
             ->whereHas("car", function ($query) use ($user) {
                 $query->where("user_id", $user->id);
             })
@@ -439,13 +439,13 @@ class HomeController extends Controller
         $propertiesCount = Property::where("user_id", "=", $user->id)->count();
 
         // Calculate pending payouts
-        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal) * 0.85;
+        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal);
 
         // Recent transactions (only non-external bookings)
         $recentTransactions = collect([
             // Property bookings
             ...Booking::where("status", "Paid")
-                ->whereNull("external_booking") // Only include non-external bookings
+                ->whereNull("external_booking") 
                 ->whereHas("property", function ($query) use ($user) {
                     $query->where("user_id", $user->id);
                 })
@@ -466,7 +466,7 @@ class HomeController extends Controller
 
             // Car bookings
             ...CarBooking::where("status", "Paid")
-                ->whereNull("external_booking") // Only include non-external bookings
+                ->whereNull("external_booking")
                 ->whereHas("car", function ($query) use ($user) {
                     $query->where("user_id", $user->id);
                 })
@@ -497,7 +497,7 @@ class HomeController extends Controller
             $monthEnd = $month->endOfMonth()->toDateString();
 
             $propertyEarnings = Booking::where("status", "Paid")
-                ->whereNull("external_booking") // Only include non-external bookings
+                ->whereNull("external_booking") 
                 ->whereHas("property", function ($query) use ($user) {
                     $query->where("user_id", $user->id);
                 })
@@ -505,7 +505,7 @@ class HomeController extends Controller
                 ->sum("total_price");
 
             $carEarnings = CarBooking::where("status", "Paid")
-                ->whereNull("external_booking") // Only include non-external bookings
+                ->whereNull("external_booking") 
                 ->whereHas("car", function ($query) use ($user) {
                     $query->where("user_id", $user->id);
                 })
@@ -551,12 +551,12 @@ class HomeController extends Controller
             "averageCarBookingValue" =>
                 $carsCount > 0 ? $carBookingTotal / max($carsCount, 1) : 0,
             "totalBookingsCount" =>
-                Booking::whereNull("external_booking") // Only include non-external bookings
+                Booking::whereNull("external_booking")
                     ->whereHas("property", function ($query) use ($user) {
                         $query->where("user_id", $user->id);
                     })
                     ->count() +
-                CarBooking::whereNull("external_booking") // Only include non-external bookings
+                CarBooking::whereNull("external_booking")
                     ->whereHas("car", function ($query) use ($user) {
                         $query->where("user_id", $user->id);
                     })

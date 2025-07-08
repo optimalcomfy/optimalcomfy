@@ -48,14 +48,14 @@ class CustomResetPassword extends Notification implements ShouldQueue
         ], false));
 
         return (new MailMessage)
-            ->subject(Lang::get('Your OptimalComfy Password Reset'))
-            ->from('no-reply@optimalcomfy.com', 'OptimalComfy Team')
+            ->subject(Lang::get('Your Ristay Password Reset'))
+            ->from('no-reply@ristay.com', 'Ristay Team')
             ->greeting(Lang::get('Hello!'))
             ->line(Lang::get('You are receiving this email because we received a password reset request for your account.'))
             ->action(Lang::get('Reset Password'), $resetUrl)
             ->line(Lang::get('This password reset link will expire in :count minutes.', ['count' => config('auth.passwords.'.config('auth.defaults.passwords').'.expire')]))
             ->line(Lang::get('If you did not request a password reset, no further action is required.'))
-            ->salutation(Lang::get("Regards,\nOptimalComfy"))
+            ->salutation(Lang::get("Regards,\nRistay"))
             // Add physical address for CAN-SPAM compliance
             ->markdown('vendor.notifications.email', [
                 'actionText' => 'Reset Password',

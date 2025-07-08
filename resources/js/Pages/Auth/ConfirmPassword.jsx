@@ -6,6 +6,14 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, useForm } from '@inertiajs/react';
 
+import HomeLayout from "@/Layouts/HomeLayout";
+
+import {
+    LayoutContext,
+    LayoutProvider,
+} from "@/Layouts/layout/context/layoutcontext.jsx";
+import { PrimeReactProvider } from "primereact/api";
+
 export default function ConfirmPassword() {
     const { data, setData, post, processing, errors, reset } = useForm({
         password: '',
@@ -24,8 +32,11 @@ export default function ConfirmPassword() {
     };
 
     return (
-        <GuestLayout>
+        <PrimeReactProvider>
+            <LayoutProvider>
             <Head title="Confirm Password" />
+
+            <HomeLayout>
 
             <div className="mb-4 text-sm text-gray-600">
                 This is a secure area of the application. Please confirm your password before continuing.
@@ -54,6 +65,8 @@ export default function ConfirmPassword() {
                     </PrimaryButton>
                 </div>
             </form>
-        </GuestLayout>
+               </HomeLayout>
+            </LayoutProvider>
+        </PrimeReactProvider>
     );
 }

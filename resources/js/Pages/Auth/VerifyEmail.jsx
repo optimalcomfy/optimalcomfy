@@ -1,6 +1,13 @@
 import GuestLayout from '@/Layouts/GuestLayout';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, useForm } from '@inertiajs/react';
+import HomeLayout from "@/Layouts/HomeLayout";
+
+import {
+    LayoutContext,
+    LayoutProvider,
+} from "@/Layouts/layout/context/layoutcontext.jsx";
+import { PrimeReactProvider } from "primereact/api";
 
 export default function VerifyEmail({ status }) {
     const { post, processing } = useForm({});
@@ -12,8 +19,11 @@ export default function VerifyEmail({ status }) {
     };
 
     return (
-        <GuestLayout>
+        <PrimeReactProvider>
+            <LayoutProvider>
             <Head title="Email Verification" />
+
+            <HomeLayout>
 
             <div className='w-full flex flex-col min-h-screen'>
             <div className='w-full flex flex-col py-[200px]'>
@@ -46,6 +56,8 @@ export default function VerifyEmail({ status }) {
             </div>
             </div>
 
-        </GuestLayout>
+                </HomeLayout>
+            </LayoutProvider>
+        </PrimeReactProvider>
     );
 }

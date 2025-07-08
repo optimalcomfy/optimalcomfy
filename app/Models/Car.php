@@ -97,13 +97,13 @@ class Car extends Model
         $company = Company::first();
 
         if (!$company || !$company->percentage) {
-            return $this->amount;
+            return round($this->price_per_day / 100) * 100;  // Round to nearest hundred
         }
 
-        $base = $this->amount;
+        $base = $this->price_per_day;
         $charges = $base * $company->percentage / 100;
 
-        return round($base + $charges, 2);
+        return round(($base + $charges) / 100) * 100;  // Round to nearest hundred
     }
 
     /**
@@ -117,6 +117,6 @@ class Car extends Model
             return 0;
         }
 
-        return round($this->amount * $company->percentage / 100, 2);
+        return round(($this->price_per_day * $company->percentage / 100) / 100) * 100;  // Round to nearest hundred
     }
 }

@@ -84,7 +84,7 @@ const Wallet = ({ user }) => {
 
     return (
         <Layout>
-            <div className="max-w-full bg-white shadow-md rounded-lg overflow-hidden">
+            <div className="max-w-full bg-white pb-8 shadow-md rounded-lg overflow-hidden">
                 <div className='' style={{
                     minHeight: '100vh',
                     padding: '0px 20px',

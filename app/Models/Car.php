@@ -48,7 +48,7 @@ class Car extends Model
         'price_per_day' => 'decimal:2',
     ];
 
-    protected $appends = ['platform_price', 'platform_charges'];
+    protected $appends = ['platform_price', 'platform_charges', 'amount'];
 
     /**
      * Relationships
@@ -97,10 +97,10 @@ class Car extends Model
         $company = Company::first();
 
         if (!$company || !$company->percentage) {
-            return round($this->price_per_day / 100) * 100;  // Round to nearest hundred
+            return round($this->amount / 100) * 100;  // Round to nearest hundred
         }
 
-        $base = $this->price_per_day;
+        $base = $this->amount;
         $charges = $base * $company->percentage / 100;
 
         return round(($base + $charges) / 100) * 100;  // Round to nearest hundred
@@ -117,6 +117,12 @@ class Car extends Model
             return 0;
         }
 
-        return round(($this->price_per_day * $company->percentage / 100) / 100) * 100;  // Round to nearest hundred
+        return round(($this->amount * $company->percentage / 100) / 100) * 100;  // Round to nearest hundred
+    }
+
+    public function getAmountAttribute($value)
+    {
+        $originalAmount = $value ?? $this->attributes['amount'] ?? 0;
+        return round($originalAmount / 100) * 100;
     }
 }

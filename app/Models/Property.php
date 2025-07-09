@@ -98,13 +98,13 @@ class Property extends Model
         $company = Company::first();
 
         if (!$company || !$company->percentage) {
-            return round($this->amount / 100) * 100;  // Round to nearest hundred
+            return round($this->amount / 100) * 100;
         }
 
         $base = $this->amount;
         $charges = $base * $company->percentage / 100;
 
-        return round(($base + $charges) / 100) * 100;  // Round to nearest hundred
+        return round(($base + $charges) / 100) * 100;
     }
 
     /**
@@ -118,6 +118,6 @@ class Property extends Model
             return 0;
         }
 
-        return round(($this->amount * $company->percentage / 100) / 100) * 100;  // Round to nearest hundred
+        return round(($this->amount * $company->percentage / 100) / 100) * 100;
     }
 }

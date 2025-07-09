@@ -236,6 +236,9 @@ class HomeController extends Controller
         $user = Auth::user();
         $isAdmin = $user->role_id === 1 || $user->role_id === "1";
 
+        $company = Company::first();
+        $p = 1 - $company->percentage / 100;
+
         // Calculate total revenue from property bookings (excluding external bookings)
         $propertyBookingTotal = Booking::where("status", "Paid")
             ->whereNull("external_booking") // Exclude external bookings
@@ -267,7 +270,7 @@ class HomeController extends Controller
             : Property::where("user_id", $user->id)->count();
 
         // Calculate pending payouts
-        $pendingPayouts = $propertyBookingTotal + $carBookingTotal;
+        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal) * $p;
 
         // Recent transactions (excluding external bookings)
         $recentTransactions = collect([
@@ -361,9 +364,9 @@ class HomeController extends Controller
 
             $monthlyEarnings[] = [
                 "month" => $month->format("M Y"),
-                "property_earnings" => $propertyEarnings,
-                "car_earnings" => $carEarnings,
-                "total" => $propertyEarnings + $carEarnings,
+                "property_earnings" => $propertyEarnings * $p,
+                "car_earnings" => $carEarnings * $p,
+                "total" => ($propertyEarnings * $p) + ($carEarnings * $p),
             ];
         }
 
@@ -377,9 +380,9 @@ class HomeController extends Controller
             // Wallet specific data
             "carsCount" => $carsCount,
             "propertiesCount" => $propertiesCount,
-            "propertyBookingTotal" => $propertyBookingTotal,
-            "carBookingTotal" => $carBookingTotal,
-            "totalEarnings" => $propertyBookingTotal + $carBookingTotal,
+            "propertyBookingTotal" => $propertyBookingTotal * $p,
+            "carBookingTotal" => $carBookingTotal * $p,
+            "totalEarnings" => ($propertyBookingTotal * $p) + ($carBookingTotal * $p),
             "pendingPayouts" => $pendingPayouts,
             "availableBalance" => $pendingPayouts,
             "monthlyEarnings" => $monthlyEarnings,
@@ -438,8 +441,12 @@ class HomeController extends Controller
         $carsCount = Car::where("user_id", "=", $user->id)->count();
         $propertiesCount = Property::where("user_id", "=", $user->id)->count();
 
+        $company = Company::first();
+        $p = 1 - $company->percentage / 100;
+
+
         // Calculate pending payouts
-        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal);
+        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal) * $p;
 
         // Recent transactions (only non-external bookings)
         $recentTransactions = collect([
@@ -534,9 +541,9 @@ class HomeController extends Controller
             // Wallet specific data
             "carsCount" => $carsCount,
             "propertiesCount" => $propertiesCount,
-            "propertyBookingTotal" => $propertyBookingTotal,
+            "propertyBookingTotal" => $propertyBookingTotal * $p,
             "carBookingTotal" => $carBookingTotal,
-            "totalEarnings" => $propertyBookingTotal + $carBookingTotal,
+            "totalEarnings" => ($propertyBookingTotal * $p) + ($carBookingTotal * $p),
             "pendingPayouts" => $pendingPayouts,
             "repaymentAmount" => $repaymentAmount,
             "availableBalance" => $pendingPayouts - $repaymentAmount,

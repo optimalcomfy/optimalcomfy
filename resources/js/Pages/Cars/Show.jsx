@@ -75,6 +75,10 @@ const ShowCar = ({ car }) => {
             </div>
             <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
               <span className="text-gray-600 font-medium">Price/Day:</span>
+              <span className="font-semibold">KES {car.amount}</span>
+            </div>
+            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+              <span className="text-gray-600 font-medium">Customer Price/Day:</span>
               <span className="font-semibold">KES {car.price_per_day}</span>
             </div>
             {car.description && (

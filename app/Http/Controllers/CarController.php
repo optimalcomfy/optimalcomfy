@@ -106,6 +106,13 @@ class CarController extends Controller
 
         $validated['user_id'] = $user->id;
 
+        $company = Company::first();
+        $base = $validated['price_per_day'];
+        $charges = $base * $company->percentage / 100;
+        $total = $validated['price_per_day'] - $charges;
+
+        $validated['amount'] = $total;
+
         // Create the car record in the database
         Car::create($validated);
 
@@ -174,6 +181,13 @@ class CarController extends Controller
                 $validated['longitude'] = $coordinates['longitude'];
             }
         }
+
+        $company = Company::first();
+        $base = $validated['price_per_day'];
+        $charges = $base * $company->percentage / 100;
+        $total = $validated['price_per_day'] - $charges;
+
+        $validated['amount'] = $total;
 
         // Update the car record with the validated data
         $car->update($validated);

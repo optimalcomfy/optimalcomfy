@@ -195,7 +195,7 @@ const CarBookingShow = () => {
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <div className="flex items-center text-gray-600">
                       <FaTachometerAlt className="mr-1" />
-                      <span>{booking.car.mileage.toLocaleString()} km</span>
+                      <span>{booking?.car?.mileage?.toLocaleString()} km</span>
                     </div>
                     <div className="flex items-center text-gray-600">
                       <FaGasPump className="mr-1" />
@@ -290,8 +290,8 @@ const CarBookingShow = () => {
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{days} day{days !== 1 ? 's' : ''} × {booking.car.price_per_day}</span>
-                  <span className="font-medium">KES {parseFloat(booking.car.price_per_day) * days}</span>
+                  <span className="text-gray-600">{days} day{days !== 1 ? 's' : ''} × {booking.car.platform_price}</span>
+                  <span className="font-medium">KES {parseFloat(booking.car.platform_price) * days}</span>
                 </div>
                 <div className="flex justify-between border-t pt-2">
                   <span className="text-gray-600">Taxes & Fees</span>

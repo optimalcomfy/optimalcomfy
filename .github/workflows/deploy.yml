@@ -28,7 +28,7 @@ jobs:
       run: composer install --no-dev --optimize-autoloader
 
     - name: Install Node.js dependencies
-      run: npm install --force
+      run: npm install -f
 
     - name: Build assets
       run: |
@@ -37,33 +37,70 @@ jobs:
 
     - name: Setup SSH
       run: |
-        mkdir -p "$HOME/.ssh"
-        chmod 700 "$HOME/.ssh"
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > "$HOME/.ssh/deploy_key"
-        chmod 600 "$HOME/.ssh/deploy_key"
-        ssh-keyscan -H 104.219.248.24 >> "$HOME/.ssh/known_hosts"
+        # Create SSH directory with proper permissions
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        
+        # Add private key
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        
+        # Create SSH config
+        cat > ~/.ssh/config <<EOF
+        Host my-server
+          HostName champagne.hostns.io
+          User ristayco
+          Port 22
+          IdentityFile ~/.ssh/deploy_key
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
+        EOF
+        chmod 600 ~/.ssh/config
+        
+        # Verify setup
+        ls -la ~/.ssh/
+        ssh-keygen -y -f ~/.ssh/deploy_key
 
-    - name: Deploy Files
+    - name: Test SSH Connection
+      run: ssh -v -F ~/.ssh/config my-server "echo 'SSH connection successful'"
+
+    - name: Deploy to Server
       run: |
+        # Set the full path to SSH config
+        SSH_CONFIG_PATH="$HOME/.ssh/config"
+        
+        # Sync files using direct SSH command (more reliable than config file)
         rsync -avz --delete \
-          -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+          -e "ssh -i ~/.ssh/deploy_key -p 22 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
           --exclude='.git' \
           --exclude='.github' \
           --exclude='.env' \
+          --exclude='.htaccess' \
           --exclude='node_modules' \
           --exclude='storage/*.key' \
           --exclude='tests' \
-          ./ ristayco@104.219.248.24:/home/ristayco/public_html/
+          --exclude='phpunit.xml' \
+          --exclude='vite.config.js' \
+          --exclude='*.md' \
+          ./ ristayco@champagne.hostns.io:/home/ristayco/public_html/
 
-    - name: Run Post-Deployment Commands
-      run: |
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ristayco@104.219.248.24 "
+        # Run post-deployment commands
+        ssh -i ~/.ssh/deploy_key -p 22 -o StrictHostKeyChecking=no ristayco@champagne.hostns.io "
           cd /home/ristayco/public_html
+          
+          # Set permissions
           find . -type d -exec chmod 755 {} \;
           find . -type f -exec chmod 644 {} \;
-          chmod -R 775 storage bootstrap/cache
+          chmod -R 775 storage/
+          chmod -R 775 bootstrap/cache/
+          
+          # Laravel optimization
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
+          
+          # Fix Vite manifest permissions
+          chmod 664 public/build/manifest.json 2> /dev/null || true
+          
           echo 'Deployment completed successfully!'
         "

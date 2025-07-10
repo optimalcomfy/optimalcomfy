@@ -1,106 +1,43 @@
-name: Deploy LaraReact to cPanel
+name: Deploy Laravel React App
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main 
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-
-    - name: Install PHP
+    - name: Set up PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.2'
-        extensions: mbstring, ctype, fileinfo, openssl, PDO, tokenizer, xml, gd, mysql, pgsql, bcmath, curl
-        tools: composer
+        php-version: 8.3 
+        extensions: mbstring, bcmath, openssl, pdo, pdo_mysql
 
-    - name: Install Composer dependencies
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16 
+
+    - name: Install PHP dependencies
       run: composer install --no-dev --optimize-autoloader
 
     - name: Install Node.js dependencies
       run: npm install -f
 
-    - name: Build assets
-      run: |
-        npm run build
-        rm -rf node_modules
+    - name: Build React application
+      run: npm run build
 
-    - name: Setup SSH
-      run: |
-        # Create SSH directory with proper permissions
-        mkdir -p ~/.ssh
-        chmod 700 ~/.ssh
-        
-        # Add private key
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-        chmod 600 ~/.ssh/deploy_key
-        
-        # Create SSH config
-        cat > ~/.ssh/config <<EOF
-        Host my-server
-          HostName 91.204.209.31
-          User ristayco
-          Port 21098
-          IdentityFile ~/.ssh/deploy_key
-          StrictHostKeyChecking no
-          UserKnownHostsFile /dev/null
-        EOF
-        chmod 600 ~/.ssh/config
-        
-        # Verify setup
-        ls -la ~/.ssh/
-        ssh-keygen -y -f ~/.ssh/deploy_key
-
-    - name: Test SSH Connection
-      run: ssh -v -F ~/.ssh/config my-server "echo 'SSH connection successful'"
-
-    - name: Deploy to Server
-      run: |
-        # Set the full path to SSH config
-        SSH_CONFIG_PATH="$HOME/.ssh/config"
-        
-        # Sync files using direct SSH command (more reliable than config file)
-        rsync -avz --delete \
-          -e "ssh -i ~/.ssh/deploy_key -p 21098 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
-          --exclude='.git' \
-          --exclude='.github' \
-          --exclude='.env' \
-          --exclude='.htaccess' \
-          --exclude='node_modules' \
-          --exclude='storage/*.key' \
-          --exclude='tests' \
-          --exclude='phpunit.xml' \
-          --exclude='vite.config.js' \
-          --exclude='*.md' \
-          ./ ristayco@91.204.209.31:/home/ristayco/public_html/
-
-        # Run post-deployment commands
-        ssh -i ~/.ssh/deploy_key -p 21098 -o StrictHostKeyChecking=no ristayco@91.204.209.31 "
-          cd /home/ristayco/public_html
-          
-          # Set permissions
-          find . -type d -exec chmod 755 {} \;
-          find . -type f -exec chmod 644 {} \;
-          chmod -R 775 storage/
-          chmod -R 775 bootstrap/cache/
-          
-          # Laravel optimization
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
-          
-          # Fix Vite manifest permissions
-          chmod 664 public/build/manifest.json 2> /dev/null || true
-          
-          echo 'Deployment completed successfully!'
-        "
+    - name: Deploy via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./ 
+        server-dir: /public_html/ 

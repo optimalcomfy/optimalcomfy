@@ -25,9 +25,9 @@ If the button doesn't work, copy this link into your browser:
 {{ $actionUrl }}
 
 Thank you,  
-The Ristay Team  
-123 Company Address, City, State ZIP  
-support@ristay.com | https://ristay.com  
+Ristay Connect Limited | Company No. PVT-GYU536G5 | Registered in Kenya
+62157-00200, City Square
+support@ristay.co.ke | https://ristay.co.ke
 
 <small>For your security, this email was automatically generated. Please do not reply directly.</small>
 @endcomponent

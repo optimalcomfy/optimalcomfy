@@ -315,7 +315,7 @@ const BookingShow = () => {
                 </div>
                 <div className="flex justify-between border-t pt-2 font-bold text-lg">
                   <span>Total</span>
-                  <span>KES {booking.total_price}</span>
+                  <span>KES {parseFloat(booking.property.platform_price) * nights}</span>
                 </div>
               </div>
 

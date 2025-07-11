@@ -141,7 +141,13 @@ const CarBookingsIndex = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {pagination.data?.length > 0 ? (
-                pagination.data.map((booking) => (
+                pagination.data.map((booking) =>{
+
+                    const startDate = new Date(booking.start_date);
+                    const endDate = new Date(booking.end_date);
+                    const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+                   return  (
                   <tr key={booking.id}>
                     <td className="px-6 py-4 whitespace-wrap">{booking.user?.name || '-'}</td>
                     <td className="px-6 py-4 whitespace-wrap">{booking.number || 'N/A'}</td>
@@ -151,7 +157,7 @@ const CarBookingsIndex = () => {
                     <td className="px-6 py-4 whitespace-wrap">{formatDate(booking.end_date)}</td>
                     <td className="px-6 py-4 whitespace-wrap">{booking.pickup_location}</td>
                     <td className="px-6 py-4 whitespace-wrap">{booking.dropoff_location}</td>
-                    <td className="px-6 py-4 whitespace-wrap">{formatCurrency(booking.total_price)}</td>
+                    <td className="px-6 py-4 whitespace-wrap">KES {parseFloat(booking.car.platform_price) * days}</td>
                     <td className="px-6 py-4 whitespace-wrap">
                       <span 
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
@@ -181,7 +187,7 @@ const CarBookingsIndex = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                )})
               ) : (
                 <tr>
                   <td colSpan="10" className="text-center py-4">No bookings found.</td>

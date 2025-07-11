@@ -140,14 +140,20 @@ const BookingsIndex = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {pagination.data?.length > 0 ? (
-                pagination.data.map((booking) => (
+                pagination.data.map((booking) => {
+
+                    const checkIn = new Date(booking.check_in_date);
+                    const checkOut = new Date(booking.check_out_date);
+                    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+
+                   return (
                   <tr key={booking.id}>
                     <td className="px-6 py-4 whitespace-wrap">{booking.user?.name || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-wrap">{booking.number || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-wrap">{booking.property?.property_name || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-wrap">{formatDate(booking.check_in_date)}</td>
                     <td className="px-6 py-4 whitespace-wrap">{formatDate(booking.check_out_date)}</td>
-                    <td className="px-6 py-4 whitespace-wrap">{formatCurrency(booking.total_price)}</td>
+                    <td className="px-6 py-4 whitespace-wrap">KES {parseFloat(booking.property.platform_price) * nights}</td>
                     <td className="px-6 py-4 whitespace-wrap">
                       <span 
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
@@ -178,7 +184,7 @@ const BookingsIndex = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                )})
               ) : (
                 <tr>
                   <td colSpan="7" className="text-center py-4">No bookings found.</td>

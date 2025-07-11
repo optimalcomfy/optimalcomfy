@@ -51,6 +51,14 @@ const CarBookingForm = () => {
     }
   };
 
+  const handleDivClick = (inputId) => {
+    const inputElement = document.getElementById(inputId);
+    if (inputElement) {
+      inputElement.focus();
+      inputElement.showPicker();
+    }
+  };
+
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (data.pickup_location.length < 3) {
@@ -295,11 +303,12 @@ const CarBookingForm = () => {
                   <div className="grid gap-4">
                     {/* Date Selection */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
+                      <div onClick={() => handleDivClick('start_date')}>
                         <label className="block text-sm font-medium mb-2">Pickup Date</label>
                         <div className="relative rounded-md">
                           <input
                             type="date"
+                            id="start_date"
                             value={data.start_date}
                             onChange={(e) => setData('start_date', e.target.value)}
                             className="w-full pl-10 p-3 rounded-lg"
@@ -307,11 +316,12 @@ const CarBookingForm = () => {
                           {errors.start_date && <div className="text-red-500 text-sm mt-1">{errors.start_date}</div>}
                         </div>
                       </div>
-                      <div>
+                      <div onClick={() => handleDivClick('end_date')}>
                         <label className="block text-sm font-medium mb-2">Return Date</label>
                         <div className="relative rounded-md">
                           <input
                             type="date"
+                            id="end_date"
                             value={data.end_date}
                             onChange={(e) => setData('end_date', e.target.value)}
                             className="w-full pl-10 p-3 rounded-lg"

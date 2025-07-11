@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Star, X, Loader2, MapPin, Calendar, User, CreditCard, Eye, Check, Mail, Shield, Phone } from 'lucide-react';
 import { Link, Head, router, usePage } from "@inertiajs/react";
+import Swal from 'sweetalert2';
 
 const PropertyBookingForm = () => {
   const { flash, pagination, property } = usePage().props;
@@ -50,6 +51,44 @@ const PropertyBookingForm = () => {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const locationRef = useRef(null);
 
+  // Function to check if a date range is booked for a specific variation (or standard)
+  const isRangeBooked = (startDate, endDate, variationId = null) => {
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    
+    const end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
+    
+    return property.bookings.some(booking => {
+      // Skip if we're checking for standard and this booking is for a variation
+      if (variationId === null && booking.variation_id !== null) return false;
+      
+      // Skip if we're checking for a variation and this booking is for standard or a different variation
+      if (variationId !== null && booking.variation_id !== variationId) return false;
+      
+      const bookingStart = new Date(booking.check_in_date);
+      bookingStart.setHours(0, 0, 0, 0);
+      
+      const bookingEnd = new Date(booking.check_out_date);
+      bookingEnd.setHours(0, 0, 0, 0);
+      
+      return (
+        (start >= bookingStart && start < bookingEnd) || // Start date is within a booking
+        (end > bookingStart && end <= bookingEnd) ||    // End date is within a booking
+        (start <= bookingStart && end >= bookingEnd)     // Range encompasses a booking
+      );
+    });
+  };
+
+  const showErrorAlert = (message) => {
+    Swal.fire({
+      icon: 'error',
+      title: 'Booking Conflict',
+      text: message,
+      confirmButtonColor: '#f97316',
+    });
+  };
+
   // Helper function to update data
   const updateData = (key, value) => {
     setData(prev => ({
@@ -72,28 +111,67 @@ const PropertyBookingForm = () => {
     const { name, value } = e.target;
 
     if (name === 'check_out_date' && data.check_in_date && new Date(value) <= new Date(data.check_in_date)) {
-      alert('Check-out date must be after check-in date');
+      showErrorAlert('Check-out date must be after check-in date');
       return;
     }
 
     if (name === 'check_in_date' && data.check_out_date && new Date(value) >= new Date(data.check_out_date)) {
-      alert('Check-in date must be before check-out date');
+      showErrorAlert('Check-in date must be before check-out date');
       return;
+    }
+
+    // Check if this date is booked for the selected variation (or standard)
+    if (name === 'check_in_date' && isRangeBooked(value, value, data.variation_id)) {
+      const message = data.variation_id 
+        ? 'This date is already booked for the selected room type. Please choose different dates.'
+        : 'This date is already booked for the standard room. Please choose different dates.';
+      showErrorAlert(message);
+      return;
+    }
+
+    // If changing check-in date and we have a check-out date, validate the range
+    if (name === 'check_in_date' && data.check_out_date && isRangeBooked(value, data.check_out_date, data.variation_id)) {
+      const message = data.variation_id 
+        ? 'The selected dates overlap with an existing booking for this room type.'
+        : 'The selected dates overlap with an existing booking for the standard room.';
+      showErrorAlert(message);
+      updateData('check_out_date', '');
     }
 
     updateData(name, value);
   };
 
   const handleVariationChange = (variation) => {
+    const newVariationId = variation?.id || null;
+    
+    // Check if current selected dates are available for the new variation
+    if (data.check_in_date && data.check_out_date) {
+      if (isRangeBooked(data.check_in_date, data.check_out_date, newVariationId)) {
+        const message = variation 
+          ? 'The currently selected dates are not available for this room type. Please choose different dates.'
+          : 'The currently selected dates are not available for the standard room. Please choose different dates.';
+        showErrorAlert(message);
+        return;
+      }
+    }
+    
     setSelectedVariation(variation);
-    updateData('variation_id', variation.id);
+    updateData('variation_id', newVariationId);
     
     // Recalculate price if dates are already selected
     if (data.check_in_date && data.check_out_date) {
       const nights = calculateDays(data.check_in_date, data.check_out_date);
-      const basePrice = nights * variation.platform_price;
+      const basePrice = nights * (variation ? variation.platform_price : property.platform_price);
       
       updateData('total_price', basePrice);
+    }
+  };
+
+  const handleDivClick = (inputId) => {
+    const inputElement = document.getElementById(inputId);
+    if (inputElement) {
+      inputElement.focus();
+      inputElement.showPicker();
     }
   };
 
@@ -152,7 +230,7 @@ const PropertyBookingForm = () => {
 
   const handleReserveClick = () => {
     if (!data.check_in_date || !data.check_out_date) {
-      alert('Please select check-in and check-out dates first');
+      showErrorAlert('Please select check-in and check-out dates first');
       return;
     }
     setCurrentStep(2);
@@ -161,12 +239,12 @@ const PropertyBookingForm = () => {
   const handleContinueToStep3 = () => {
     // Validate required fields for step 2
     if (!data.email || !data.password) {
-      alert('Please fill in email and password');
+      showErrorAlert('Please fill in email and password');
       return;
     }
     
     if (!data.is_registered && !data.name) {
-      alert('Please fill in your name');
+      showErrorAlert('Please fill in your name');
       return;
     }
     
@@ -178,7 +256,7 @@ const PropertyBookingForm = () => {
     setProcessing(true);
 
     if (!data.check_in_date || !data.check_out_date || data.nights <= 0) {
-      alert('Please select valid check-in and check-out dates');
+      showErrorAlert('Please select valid check-in and check-out dates');
       setProcessing(false);
       return;
     }
@@ -222,12 +300,12 @@ const PropertyBookingForm = () => {
         },
         onError: (errors) => {
           console.error('Booking creation failed:', errors);
-          alert('Booking creation failed. Please try again.');
+          showErrorAlert('Booking creation failed. Please try again.');
         }
       });
     } catch (error) {
       console.error('Error:', error);
-      alert(error.response?.data?.message || 'An error occurred. Please try again.');
+      showErrorAlert(error.response?.data?.message || 'An error occurred. Please try again.');
     } finally {
       setProcessing(false);
     }
@@ -318,10 +396,7 @@ const PropertyBookingForm = () => {
                       <div className="grid grid-cols-1 gap-2">
                         <div 
                           className={`p-3 border rounded-lg cursor-pointer ${!selectedVariation ? 'border-orange-400 bg-orange-50' : 'border-gray-300 hover:border-gray-400'}`}
-                          onClick={() => {
-                            setSelectedVariation(null);
-                            updateData('variation_id', null);
-                          }}
+                          onClick={() => handleVariationChange(null)}
                         >
                           <div className="flex justify-between items-center">
                             <span className="font-medium">
@@ -355,28 +430,36 @@ const PropertyBookingForm = () => {
 
                   {/* Date Selection */}
                   <div className="flex flex-col lg:flex-row border border-gray-300 rounded-xl overflow-hidden">
-                    <div className="border-b lg:border-r flex-1 border-gray-300 p-4">
+                    <div 
+                      className="border-b lg:border-r flex-1 border-gray-300 p-4 cursor-pointer"
+                      onClick={() => handleDivClick('check_in_date')}
+                    >
                       <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
                         Check-in
                       </label>
                       <input
                         type="date"
+                        id="check_in_date"
                         name="check_in_date"
-                        className="w-full bg-transparent text-sm font-medium text-gray-900 border-none focus:outline-none"
+                        className="w-full bg-transparent text-sm font-medium text-gray-900 border-none focus:outline-none pointer-events-none"
                         value={data.check_in_date}
                         onChange={handleDateChange}
                         min={today}
                       />
                     </div>
                     
-                    <div className="p-4 flex-1">
+                    <div 
+                      className="p-4 flex-1 cursor-pointer"
+                      onClick={() => handleDivClick('check_out_date')}
+                    >
                       <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
                         Check-out
                       </label>
                       <input
                         type="date"
+                        id="check_out_date"
                         name="check_out_date"
-                        className="w-full bg-transparent text-sm font-medium text-gray-900 border-none focus:outline-none"
+                        className="w-full bg-transparent text-sm font-medium text-gray-900 border-none focus:outline-none pointer-events-none"
                         value={data.check_out_date}
                         onChange={handleDateChange}
                         min={data.check_in_date || today}

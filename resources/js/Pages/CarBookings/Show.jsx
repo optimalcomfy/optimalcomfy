@@ -293,13 +293,9 @@ const CarBookingShow = () => {
                   <span className="text-gray-600">{days} day{days !== 1 ? 's' : ''} × {booking.car.platform_price}</span>
                   <span className="font-medium">KES {parseFloat(booking.car.platform_price) * days}</span>
                 </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-gray-600">Taxes & Fees</span>
-                  <span className="font-medium">KES 0.00</span>
-                </div>
                 <div className="flex justify-between border-t pt-2 font-bold text-lg">
                   <span>Total</span>
-                  <span>KES {booking.total_price}</span>
+                  <span>KES {parseFloat(booking.car.platform_price) * days}</span>
                 </div>
               </div>
 

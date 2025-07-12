@@ -213,11 +213,6 @@ const CreateCar = () => {
                   </div>
 
                   <div className="bg-white p-3 rounded-md border border-gray-200 mb-4">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium">
-                        {data.host_earnings ? `KES ${(data.host_earnings * (company.percentage / 100)).toFixed(2)}` : 'KES 0.00'}
-                      </span>
-                    </div>
                     <div className="flex justify-between text-sm font-medium text-gray-800">
                       <span>You'll receive:</span>
                       <span className="text-green-600">KES {data.host_earnings || '0.00'}</span>

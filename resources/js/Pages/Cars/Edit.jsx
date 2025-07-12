@@ -383,20 +383,6 @@ const EditCar = ({ car, categories, company }) => {
                     {errors.host_earnings && <div className="form-error">{errors.host_earnings}</div>}
                   </div>
 
-                  {company?.percentage && (
-                    <div className="pricing-breakdown">
-                      <div className="pricing-item">
-                        <span className="pricing-value">
-                          {data.host_earnings ? `KES ${(data.host_earnings * (company.percentage / 100)).toFixed(2)}` : 'KES 0.00'}
-                        </span>
-                      </div>
-                      <div className="pricing-item earnings">
-                        <span className="pricing-label">You'll receive:</span>
-                        <span className="pricing-value earnings-value">KES {data.host_earnings || '0.00'}</span>
-                      </div>
-                    </div>
-                  )}
-
                   <div className="form-field">
                     <label className="form-label">
                       <DollarSign className="form-field-icon" />

@@ -110,7 +110,7 @@ const CreateProperty = ({ errors }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             {/* Property Basic Information */}
-            <div className="space-y-6">
+            <div className="space-y-6 flex-1">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Property Name</label>
                 <input
@@ -180,7 +180,7 @@ const CreateProperty = ({ errors }) => {
             </div>
 
             {/* Pricing Information */}
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="bg-gray-50 p-4 rounded-lg flex-1">
               <h3 className="font-medium text-gray-800 mb-3">Pricing Details</h3>
               
               <div className="mb-4">
@@ -196,11 +196,6 @@ const CreateProperty = ({ errors }) => {
               </div>
 
               <div className="bg-white p-3 rounded-md border border-gray-200 mb-4">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium">
-                    {data.amount ? `KES ${(data.amount * (company.percentage / 100)).toFixed(2)}` : 'KES 0.00'}
-                  </span>
-                </div>
                 <div className="flex justify-between text-sm font-medium text-gray-800">
                   <span>You'll receive:</span>
                   <span className="text-green-600">KES {data.amount}</span>
@@ -222,7 +217,7 @@ const CreateProperty = ({ errors }) => {
 
           {/* Capacity Information */}
           <div className="grid md:grid-cols-2 gap-6">
-            <div>
+            <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Max Adults</label>
               <input
                 type="number"
@@ -234,7 +229,7 @@ const CreateProperty = ({ errors }) => {
               {errors.max_adults && <p className="text-red-500 text-sm mt-1">{errors.max_adults}</p>}
             </div>
 
-            <div>
+            <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Max Children</label>
               <input
                 type="number"
@@ -251,8 +246,8 @@ const CreateProperty = ({ errors }) => {
           <div className="border-t border-gray-200 pt-6">
             <h3 className="text-lg font-medium text-gray-800 mb-4">Additional Information</h3>
             
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="lg:w-[48%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Wifi className="w-4 h-4 mr-2" />
@@ -268,7 +263,7 @@ const CreateProperty = ({ errors }) => {
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[48%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Wifi className="w-4 h-4 mr-2" />
@@ -284,7 +279,7 @@ const CreateProperty = ({ errors }) => {
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[48%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Key className="w-4 h-4 mr-2" />
@@ -300,7 +295,7 @@ const CreateProperty = ({ errors }) => {
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[48%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Key className="w-4 h-4 mr-2" />
@@ -312,11 +307,11 @@ const CreateProperty = ({ errors }) => {
                   value={data.apartment_name}
                   onChange={(e) => setData("apartment_name", e.target.value)}
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
-                  placeholder="Where guests can find the key"
+                  placeholder="Apartment name"
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[48%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Key className="w-4 h-4 mr-2" />
@@ -328,12 +323,11 @@ const CreateProperty = ({ errors }) => {
                   value={data.block}
                   onChange={(e) => setData("block", e.target.value)}
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
-                  placeholder="Where guests can find the key"
+                  placeholder="Block number/name"
                 />
               </div>
 
-
-              <div>
+              <div className="lg:w-[48%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Key className="w-4 h-4 mr-2" />
@@ -345,11 +339,11 @@ const CreateProperty = ({ errors }) => {
                   value={data.house_number}
                   onChange={(e) => setData("house_number", e.target.value)}
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
-                  placeholder="Where guests can find the key"
+                  placeholder="House number"
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[48%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Key className="w-4 h-4 mr-2" />
@@ -361,11 +355,11 @@ const CreateProperty = ({ errors }) => {
                   value={data.lock_box_location}
                   onChange={(e) => setData("lock_box_location", e.target.value)}
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
-                  placeholder="Where guests can find the key"
+                  placeholder="Lock box location"
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[48%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Utensils className="w-4 h-4 mr-2" />
@@ -381,7 +375,7 @@ const CreateProperty = ({ errors }) => {
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[48%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Sparkles className="w-4 h-4 mr-2" />
@@ -397,7 +391,7 @@ const CreateProperty = ({ errors }) => {
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div className="lg:w-[48%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Phone className="w-4 h-4 mr-2" />
@@ -415,7 +409,7 @@ const CreateProperty = ({ errors }) => {
             </div>
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-center pt-4">
             <button
               type="submit"
               className="bg-peach hover:bg-peach-dark text-white font-medium py-2 px-6 rounded-lg transition duration-200 flex items-center"

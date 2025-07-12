@@ -115,7 +115,7 @@ const EditProperty = ({ property, errors }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             {/* Property Basic Information */}
-            <div className="space-y-6">
+            <div className="space-y-6 flex-1">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Property Name</label>
                 <input
@@ -199,11 +199,6 @@ const EditProperty = ({ property, errors }) => {
               </div>
 
               <div className="bg-white p-3 rounded-md border border-gray-200 mb-4">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium">
-                    {data.amount ? `KES ${(data.amount * (company.percentage / 100)).toFixed(2)}` : 'KES 0.00'}
-                  </span>
-                </div>
                 <div className="flex justify-between text-sm font-medium text-gray-800">
                   <span>You'll receive:</span>
                   <span className="text-green-600">KES {data.amount}</span>
@@ -225,7 +220,7 @@ const EditProperty = ({ property, errors }) => {
 
           {/* Capacity Information */}
           <div className="grid md:grid-cols-2 gap-6">
-            <div>
+            <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Max Adults</label>
               <input
                 type="number"
@@ -237,7 +232,7 @@ const EditProperty = ({ property, errors }) => {
               {errors.max_adults && <p className="text-red-500 text-sm mt-1">{errors.max_adults}</p>}
             </div>
 
-            <div>
+            <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Max Children</label>
               <input
                 type="number"
@@ -255,7 +250,7 @@ const EditProperty = ({ property, errors }) => {
             <h3 className="text-lg font-medium text-gray-800 mb-4">Additional Information</h3>
             
             <div className="grid md:grid-cols-2 gap-6">
-              <div>
+              <div className="lg:w-[46%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Wifi className="w-4 h-4 mr-2" />
@@ -271,7 +266,7 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[46%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Wifi className="w-4 h-4 mr-2" />
@@ -287,7 +282,7 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[46%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Key className="w-4 h-4 mr-2" />
@@ -303,7 +298,7 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[46%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Key className="w-4 h-4 mr-2" />
@@ -320,7 +315,7 @@ const EditProperty = ({ property, errors }) => {
               </div>
 
 
-              <div>
+              <div className="lg:w-[46%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Key className="w-4 h-4 mr-2" />
@@ -336,7 +331,7 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[46%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Key className="w-4 h-4 mr-2" />
@@ -352,7 +347,7 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[46%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Key className="w-4 h-4 mr-2" />
@@ -368,7 +363,7 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[46%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Utensils className="w-4 h-4 mr-2" />
@@ -384,7 +379,7 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div>
+              <div className="lg:w-[46%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Sparkles className="w-4 h-4 mr-2" />
@@ -400,7 +395,7 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div className="lg:w-[46%]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
                     <Phone className="w-4 h-4 mr-2" />
@@ -418,7 +413,7 @@ const EditProperty = ({ property, errors }) => {
             </div>
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-center pt-4">
             <button
               type="submit"
               className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200 flex items-center"

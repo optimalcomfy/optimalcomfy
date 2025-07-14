@@ -15,10 +15,32 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
                 ->name('register');
 
+    Route::get('c-register', [RegisteredUserController::class, 'customerCreate'])
+                ->name('c-register');
+
+    Route::get('cr-register', [RegisteredUserController::class, 'customerRideCreate'])
+                ->name('cr-register');
+
     Route::post('register', [RegisteredUserController::class, 'store']);
+
+    Route::get('c-login', [AuthenticatedSessionController::class, 'customerCreate'])
+                ->name('c-login');
+
+    Route::get('cr-login', [AuthenticatedSessionController::class, 'customerRideCreate'])
+                ->name('cr-login');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
                 ->name('login');
+
+    Route::post('customer-register', [RegisteredUserController::class, 'customerStore'])->name('customer-register');
+
+    Route::post('customer-ride-register', [RegisteredUserController::class, 'customerRideStore'])->name('customer-ride-register');
+
+    Route::post('customer-login', [AuthenticatedSessionController::class, 'customerStore'])
+                ->name('customer-login');
+
+    Route::post('customer-ride-login', [AuthenticatedSessionController::class, 'customerRideStore'])
+                ->name('customer-ride-login');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 

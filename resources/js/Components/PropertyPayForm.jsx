@@ -4,7 +4,7 @@ import { Link, Head, router, usePage } from "@inertiajs/react";
 import Swal from 'sweetalert2';
 
 const PropertyBookingForm = () => {
-  const { flash, pagination, property } = usePage().props;
+  const { flash, pagination, property, auth } = usePage().props;
   const url = usePage().url;
   const params = new URLSearchParams(url.split('?')[1]);
   
@@ -236,20 +236,11 @@ const PropertyBookingForm = () => {
     setCurrentStep(2);
   };
 
-  const handleContinueToStep3 = () => {
-    // Validate required fields for step 2
-    if (!data.email || !data.password) {
-      showErrorAlert('Please fill in email and password');
-      return;
+  useEffect(()=>{
+    if(auth.user) {
+      setCurrentStep(3)
     }
-    
-    if (!data.is_registered && !data.name) {
-      showErrorAlert('Please fill in your name');
-      return;
-    }
-    
-    setCurrentStep(3);
-  };
+  },[auth])
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -262,39 +253,14 @@ const PropertyBookingForm = () => {
     }
 
     try {
-      let userId = null;
-      
-      // Register user
-      const response = await axios.post(route('register'), {
-        email: data.email,
-        password: data.password,
-        name: data.name,
-        user_type: data.user_type,
-        phone: data.phone,
-        nationality: data.nationality,
-        current_location: data.current_location,
-        passport_number: data.passport_number,
-        address: data.address,
-        city: data.city,
-        country: data.country,
-        emergency_contact: data.emergency_contact,
-        contact_phone: data.contact_phone,
-      });
-      
-      userId = response.data.user_id;
-
-      // Login user
-      await axios.post(route('login'), {
-        email: data.email,
-        password: data.password
-      });
+      let userId = auth.user?.id;
 
       if (userId) {
         updateData('user_id', userId);
       }
 
       // Create booking
-      await router.post(route('bookings.store'), data, {
+      router.post(route('bookings.store'), data, {
         onSuccess: () => {
           window.location.href = route('booking.confirmation');
         },
@@ -491,6 +457,7 @@ const PropertyBookingForm = () => {
                 
                 <div className="space-y-6">
                   {/* User Type Selection */}
+                  {!auth.user &&
                   <div className="flex flex-col lg:flex-row gap-4 p-4 bg-gray-50 rounded-xl">
                     <label className="flex items-center cursor-pointer">
                       <input
@@ -512,198 +479,47 @@ const PropertyBookingForm = () => {
                       />
                       <span className="ml-3 font-medium">Existing User</span>
                     </label>
-                  </div>
+                  </div>}
 
-                  {/* Basic Information */}
-                  <div className="space-y-4">
-                    {!data.is_registered && (
-                      <div className="relative">
-                        <User className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <input
-                          type="text"
-                          placeholder="Full Name"
-                          value={data.name}
-                          onChange={(e) => updateData('name', e.target.value)}
-                          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                          required={!data.is_registered}
-                        />
-                      </div>
-                    )}
-
-                    <div className="relative">
-                      <Mail className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="email"
-                        placeholder="Email address"
-                        value={data.email}
-                        onChange={(e) => updateData('email', e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                        required
-                      />
+                  {auth.user &&
+                    <div className='flex flex-col'>
+                      <div className='flex gap-4'><p>Name:</p> <p>{auth.user?.name}</p></div>
+                      <div className='flex gap-4'><p>Email:</p> <p>{auth.user?.email}</p></div>
                     </div>
-
-                    <div className="relative">
-                      <Shield className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="password"
-                        placeholder="Password"
-                        value={data.password}
-                        onChange={(e) => updateData('password', e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                        required={!data.is_registered}
-                      />
-                    </div>
-
-                    {!data.is_registered && (
-                    <div className="relative">
-                      <Phone className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="tel"
-                        placeholder="Phone number"
-                        value={data.phone}
-                        onChange={(e) => updateData('phone', e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                      />
-                    </div>)}
-                  </div>
-
-                  {/* Additional Details for New Users */}
-                  {!data.is_registered && (
-                    <div className="space-y-4 pt-4 p-2 border-t border-gray-200">
-                      <h4 className="font-medium text-gray-900">Additional Details</h4>
-                      
-                      <div className="grid lg:grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          placeholder="Nationality"
-                          value={data.nationality}
-                          onChange={(e) => updateData('nationality', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                        />
-                        <input
-                          type="text"
-                          placeholder="ID/Passport Number"
-                          value={data.passport_number}
-                          onChange={(e) => updateData('passport_number', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                        />
-                      </div>
-
-                      {/* Current Location with Search */}
-                      <div className="relative" ref={locationRef}>
-                        <div className="relative">
-                          <MapPin className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                          <input
-                            type="text"
-                            placeholder="Current location"
-                            value={data.current_location}
-                            onChange={(e) => updateData('current_location', e.target.value)}
-                            onFocus={() => data.current_location.length >= 3 && setShowLocationSuggestions(true)}
-                            className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                          />
-                          {isLoadingSuggestions && (
-                            <Loader2 className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
-                          )}
-                          {data.current_location && (
-                            <X 
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer w-5 h-5 hover:text-gray-600"
-                              onClick={() => {
-                                updateData('current_location', '');
-                                setShowLocationSuggestions(false);
-                              }}
-                            />
-                          )}
-                        </div>
-                        
-                        {/* Location Suggestions */}
-                        {showLocationSuggestions && (
-                          <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-xl mt-2 shadow-lg max-h-48 overflow-y-auto">
-                            {isLoadingSuggestions ? (
-                              <div className="p-4 text-center text-gray-500">
-                                <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                                Searching locations...
-                              </div>
-                            ) : locationSuggestions.length > 0 ? (
-                              locationSuggestions.map((location, index) => (
-                                <div
-                                  key={index}
-                                  onClick={() => handleLocationSelect(location)}
-                                  className="p-4 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 flex items-center gap-3"
-                                >
-                                  <MapPin className="w-4 h-4 text-gray-400" />
-                                  <span>{location}</span>
-                                </div>
-                              ))
-                            ) : data.current_location.length >= 3 ? (
-                              <div className="p-4 text-center text-gray-500">
-                                No locations found for "{data.current_location}"
-                              </div>
-                            ) : null}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="grid lg:grid-cols-3 gap-4">
-                        <input
-                          type="text"
-                          placeholder="Address"
-                          value={data.address}
-                          onChange={(e) => updateData('address', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                        />
-                        <input
-                          type="text"
-                          placeholder="City"
-                          value={data.city}
-                          onChange={(e) => updateData('city', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Country"
-                          value={data.country}
-                          onChange={(e) => updateData('country', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                        />
-                      </div>
-
-                      <div className="grid lg:grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          placeholder="Emergency contact name"
-                          value={data.emergency_contact}
-                          onChange={(e) => updateData('emergency_contact', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Emergency contact phone"
-                          value={data.contact_phone}
-                          onChange={(e) => updateData('contact_phone', e.target.value)}
-                          className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Message */}
-                  <div>
-                    <textarea
-                      placeholder="Any special requests or message for the host?"
-                      value={data.message}
-                      onChange={(e) => updateData('message', e.target.value)}
-                      rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-peachDark focus:border-peachDark resize-none"
-                    />
-                  </div>
+                  }
 
                   {currentStep === 2 && (
-                    <button
-                      onClick={handleContinueToStep3}
-                      className="w-full py-4 bg-gradient-to-r bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200"
+                    <>
+                    {data.is_registered === true ?
+                    <Link
+                      type="button"
+                      href={route('c-login', { 
+                        property_id: property.id, 
+                        check_in_date: checkInDate, 
+                        check_out_date: checkOutDate,
+                        variation_id: variationId || null
+                      })}
                     >
-                      Continue
-                    </button>
+                      <button className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200">
+                        Continue
+                      </button>
+                    </Link>
+                    :
+                    <Link
+                      type="button"
+                      href={route('c-register', { 
+                        property_id: property.id, 
+                        check_in_date: checkInDate, 
+                        check_out_date: checkOutDate,
+                        variation_id: variationId || null
+                      })}
+                    >
+                      <button className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200">
+                        Continue
+                      </button>
+                    </Link>
+                    }
+                    </>
                   )}
                 </div>
               </div>

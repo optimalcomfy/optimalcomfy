@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Property;
+use App\Models\Car;
 use App\Models\Job;
 use App\Models\Application;
 use App\Models\Notification;
@@ -44,6 +46,45 @@ class RegisteredUserController extends Controller
             'notification'=> $notification
         ]);
     }
+
+    public function customerCreate(Request $request): Response
+    {
+        $notification = Notification::orderBy('created_at', 'desc')->first();
+
+        $input = $request->all();
+
+        $property = Property::with([
+            "bookings",
+            "initialGallery",
+            "propertyAmenities.amenity",
+            "propertyFeatures",
+            "PropertyServices",
+            "user",
+            "variations",
+        ])->where('id', '=', $input['property_id'])->first();
+        
+        return Inertia::render('Auth/CustomerRegistration', [
+            'notification'=> $notification,
+            'property'=>$property
+        ]);
+    }
+
+    public function customerRideCreate(Request $request): Response
+    {
+        $notification = Notification::orderBy('created_at', 'desc')->first();
+
+        $input = $request->all();
+
+        $car = Car::with(["bookings", "initialGallery", "carFeatures"])
+        ->where("id", "=", $input["car_id"])
+        ->first();
+        
+        return Inertia::render('Auth/CRRegistration', [
+            'notification'=> $notification,
+            'car'=>$car
+        ]);
+    }
+
 
     /**
      * Handle an incoming registration request.
@@ -100,6 +141,103 @@ class RegisteredUserController extends Controller
             return back()->withErrors([
                 'message' => 'An unexpected error occurred. Please try again later.'
             ])->withInput();
+        }
+    }
+
+
+    public function customerStore(StoreUserRequest $request)
+    {
+        try {
+            $validated = $request->validated();
+
+            // Check if user already exists
+            $existingUser = User::where('email', $validated['email'])->first();
+
+            if ($existingUser) {
+                Auth::login($existingUser);
+                return response()->json(['success' => true]);
+            }
+
+            // Handle file uploads
+            if ($request->hasFile('profile_picture')) {
+                $validated['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
+            }
+
+            if ($request->hasFile('id_verification')) {
+                $validated['id_verification'] = $request->file('id_verification')->store('id_verifications', 'public');
+            }
+
+            // Hash password if provided
+            if (!empty($validated['password'])) {
+                $validated['password'] = Hash::make($validated['password']);
+            }
+
+            // Set role
+            $validated['role_id'] = $validated['user_type'] === 'guest' ? 3 : 2;
+
+            // Create user
+            $user = User::create($validated);
+
+            // Log in the new user
+            Auth::login($user);
+
+            return Inertia::render('Auth/CustomerRegistration', ['success' => true]);
+
+        } catch (\Exception $e) {
+            Log::error('User creation failed: ' . $e->getMessage());
+            return response()->json([
+                'errors' => [
+                    'message' => ['An unexpected error occurred. Please try again later.']
+                ]
+            ], 500);
+        }
+    }
+
+    public function customerRideStore(StoreUserRequest $request)
+    {
+        try {
+            $validated = $request->validated();
+
+            // Check if user already exists
+            $existingUser = User::where('email', $validated['email'])->first();
+
+            if ($existingUser) {
+                Auth::login($existingUser);
+                return response()->json(['success' => true]);
+            }
+
+            // Handle file uploads
+            if ($request->hasFile('profile_picture')) {
+                $validated['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
+            }
+
+            if ($request->hasFile('id_verification')) {
+                $validated['id_verification'] = $request->file('id_verification')->store('id_verifications', 'public');
+            }
+
+            // Hash password if provided
+            if (!empty($validated['password'])) {
+                $validated['password'] = Hash::make($validated['password']);
+            }
+
+            // Set role
+            $validated['role_id'] = $validated['user_type'] === 'guest' ? 3 : 2;
+
+            // Create user
+            $user = User::create($validated);
+
+            // Log in the new user
+            Auth::login($user);
+
+            return Inertia::render('Auth/CRRegistration', ['success' => true]);
+
+        } catch (\Exception $e) {
+            Log::error('User creation failed: ' . $e->getMessage());
+            return response()->json([
+                'errors' => [
+                    'message' => ['An unexpected error occurred. Please try again later.']
+                ]
+            ], 500);
         }
     }
 

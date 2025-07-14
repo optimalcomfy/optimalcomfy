@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Models\Property;
+use App\Models\Car;
 use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
@@ -25,6 +27,42 @@ class AuthenticatedSessionController extends Controller
         ]);
     }
 
+    public function customerRideCreate(Request $request): Response
+    {
+        $input = $request->all();
+        
+        $car = Car::with(["bookings", "initialGallery", "carFeatures"])
+        ->where("id", "=", $input["car_id"])
+        ->first();
+
+        return Inertia::render('Auth/CRLogin', [
+            'canResetPassword' => Route::has('password.request'),
+            'status' => session('status'),
+            'car'=> $car
+        ]);
+    }
+
+    public function customerCreate(Request $request): Response
+    {
+        $input = $request->all();
+        
+        $property = Property::with([
+            "bookings",
+            "initialGallery",
+            "propertyAmenities.amenity",
+            "propertyFeatures",
+            "PropertyServices",
+            "user",
+            "variations",
+        ])->where('id', '=', $input['property_id'])->first();
+
+        return Inertia::render('Auth/CustomerLogin', [
+            'canResetPassword' => Route::has('password.request'),
+            'status' => session('status'),
+            'property'=> $property
+        ]);
+    }
+
     /**
      * Handle an incoming authentication request.
      */
@@ -35,6 +73,60 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         return redirect()->intended(RouteServiceProvider::HOME);
+    }
+
+    public function customerStore(LoginRequest $request)
+    {
+        $input = $request->all();
+
+        $property = Property::with([
+            "bookings",
+            "initialGallery",
+            "propertyAmenities.amenity",
+            "propertyFeatures",
+            "PropertyServices",
+            "user",
+            "variations",
+        ])->where('id', '=', $input['property_id'])->first();
+
+        $request->authenticate();
+
+        $request->session()->regenerate();
+
+        return Inertia::render('PropertyBooking', [
+            'property' => $property,
+            'auth' => [
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email
+                ] : null
+            ]
+        ]);
+    }
+
+    public function customerRideStore(LoginRequest $request)
+    {
+        $input = $request->all();
+
+        $car = Car::with(["bookings", "initialGallery", "carFeatures"])
+        ->where("id", "=", $input["car_id"])
+        ->first();
+
+        $request->authenticate();
+
+        $request->session()->regenerate();
+
+        return Inertia::render('CarBooking', [
+            'car' => $car,
+            'auth' => [
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email
+                ] : null
+            ]
+        ]);
     }
 
     /**

@@ -5,7 +5,7 @@ import { Link, Head, router, usePage, useForm } from "@inertiajs/react";
 import './CarBookingForm.css'
 
 const CarBookingForm = () => {
-  const { flash, car } = usePage().props;
+  const { flash, car, auth } = usePage().props;
   const url = usePage().url;
   const params = new URLSearchParams(url.split('?')[1]);
 
@@ -189,6 +189,7 @@ const CarBookingForm = () => {
               {currentStep === 1 && (
                 <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                   <div className="mb-4 flex flex-col gap-4">
+                    {!auth.user &&
                     <div className="flex flex-col lg:flex-row gap-4 mb-4">
                       <label className="flex items-center">
                         <input
@@ -210,68 +211,47 @@ const CarBookingForm = () => {
                         />
                         Existing User
                       </label>
-                    </div>
+                    </div>}
 
-                    {!data.is_registered && (
-                      <div className="grid gap-4">
-                        <div className="relative rounded-md">
-                          <input
-                            type="text"
-                            placeholder="Full Name"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            className="w-full p-3 rounded-lg"
-                          />
-                          {errors.name && <div className="text-red-500 text-sm mt-1">{errors.name}</div>}
-                        </div>
+
+
+                    {auth.user &&
+                      <div className='flex flex-col'>
+                        <div className='flex gap-4'><p>Name:</p> <p>{auth.user?.name}</p></div>
+                        <div className='flex gap-4'><p>Email:</p> <p>{auth.user?.email}</p></div>
                       </div>
-                    )}
+                    }
 
-                    <div className="grid gap-4">
-                       <div className="relative rounded-md">
-                        <input
-                          type="email"
-                          placeholder="Email"
-                          value={data.email}
-                          onChange={(e) => setData('email', e.target.value)}
-                          className="w-full p-3 rounded-md"
-                        />
-                        {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
-                       </div>
-
-                      <div className="relative rounded-md">
-                        <input
-                          type="password"
-                          placeholder="Password"
-                          value={data.password}
-                          onChange={(e) => setData('password', e.target.value)}
-                          className="w-full p-3 rounded-lg"
-                        />
-                        {errors.password && <div className="text-red-500 text-sm mt-1">{errors.password}</div>}
-                      </div>
-
-                      {!data.is_registered && (
-                      <div className="relative rounded-md">
-                        <input
-                          type="tel"
-                          placeholder="Phone Number"
-                          value={data.phone}
-                          onChange={(e) => setData('phone', e.target.value)}
-                          className="w-full p-3 rounded-lg"
-                        />
-                        {errors.phone && <div className="text-red-500 text-sm mt-1">{errors.phone}</div>}
-                      </div>)}
-
-                    </div>
-
+                    {!auth.user &&
                     <div className="relative">
-                      <button
-                        onClick={handleContinue}
-                        className="w-full mx-auto py-3 bg-peachDark text-white rounded-lg hover:bg-pink-600 transition-colors"
+                      {data.is_registered === true ?
+                      <Link
+                        type="button"
+                        href={route('cr-login', { 
+                          car_id: car.id, 
+                          check_in_date: checkInDate, 
+                          check_out_date: checkOutDate
+                        })}
                       >
-                        Continue
-                      </button>
-                    </div>
+                        <button className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200">
+                          Continue
+                        </button>
+                      </Link>
+                      :
+                      <Link
+                        type="button"
+                        href={route('cr-register', { 
+                          car_id: car.id, 
+                          check_in_date: checkInDate, 
+                          check_out_date: checkOutDate
+                        })}
+                      >
+                        <button className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200">
+                          Continue
+                        </button>
+                      </Link>
+                      }
+                    </div>}
                   </div>
                 </div>
               )}

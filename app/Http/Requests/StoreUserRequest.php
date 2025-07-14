@@ -52,7 +52,13 @@ class StoreUserRequest extends FormRequest
             'emergency_contact' => 'nullable',
             'contact_phone' => 'nullable',
             'user_type' => 'nullable',
-            'host_id' => 'nullable'
+            'host_id' => 'nullable',
+            'property_id'=> 'nullable',
+            'car_id'=> 'nullable',
+            'check_in_date'=> 'nullable',
+            'check_out_date'=> 'nullable',
+            'variation_id'=> 'nullable'
         ];
     }
+    
 }

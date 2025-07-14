@@ -14,7 +14,7 @@ export default function PropertyBooking({ auth, laravelVersion, phpVersion }) {
     <>
       <PrimeReactProvider>
         <LayoutProvider>
-          <Head title="Car Booking" />
+          <Head title="Property Booking" />
           <HomeLayout>
             <div className="no-bottom no-top py-10" id="content">
               <section

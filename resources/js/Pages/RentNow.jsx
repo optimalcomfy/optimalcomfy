@@ -89,7 +89,7 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                   </>
                 ) : (
                   <>
-                    {car?.initial_gallery[0]?.image && (
+                    {car?.initial_gallery[0]?.image ? (
                       <div className="rounded-lg overflow-hidden mt-4 relative">
                         <img 
                           src={`/storage/${car?.initial_gallery[0]?.image}`} 
@@ -105,7 +105,15 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                           <span>View photo</span>
                         </button>
                       </div>
-                    )}
+                    ):
+                    <div className="rounded-lg overflow-hidden mt-4 relative">
+                        <img 
+                          src='/images/no-pic.avif'
+                          className="w-full h-[50vh] object-contain object-center" 
+                          alt="car" 
+                        />
+                      </div>
+                    }
                   </>
                 )}
                 </div>

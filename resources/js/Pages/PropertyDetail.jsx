@@ -83,7 +83,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     )
                   ) : (
                     // Single image layout
-                    property?.initial_gallery?.[0]?.image && (
+                    property?.initial_gallery?.[0]?.image ? (
                       <div className="single-image-container">
                         <img 
                           src={`/storage/${property?.initial_gallery[0]?.image}`} 
@@ -100,6 +100,14 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                         </button>
                       </div>
                     )
+                    :
+                    <div className="single-image-container">
+                        <img 
+                          src='/images/no-pic.avif'
+                          className="single-image" 
+                          alt="room" 
+                        />
+                      </div>
                   )}
                 </div>
               </section>

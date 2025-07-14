@@ -25,15 +25,26 @@ const Product = (props) => {
       {/* Image Slider */}
       <div className="relative rounded-xl overflow-hidden">
         <PropertySlider page={page} setPage={setPage}>
-          {initial_gallery?.map((image, index) => (
-            <img
-              key={index}
-              src={`/storage/${image.image}`}
-              onClick={() => router.visit(route('property-detail', { id }))}
-              alt={`Image ${index + 1} of ${property_name}`}
-              className="w-full aspect-[20/19] object-cover"
-            />
-          ))}
+          {initial_gallery.length > 0 ?
+          <>
+            {initial_gallery?.map((image, index) => (
+              <img
+                key={index}
+                src={`/storage/${image.image}`}
+                onClick={() => router.visit(route('property-detail', { id }))}
+                alt={`Image ${index + 1} of ${property_name}`}
+                className="w-full aspect-[20/19] object-cover"
+              />
+            ))}
+          </>
+          :
+          <img
+            src='/images/no-pic.avif'
+            onClick={() => router.visit(route('property-detail', { id }))}
+            alt={`Image of ${property_name}`}
+            className="w-full aspect-[20/19] object-cover"
+          />
+          }
         </PropertySlider>
 
         {/* Pagination Dots */}

@@ -104,7 +104,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     <div className="single-image-container">
                         <img 
                           src='/images/no-pic.avif'
-                          className="single-image" 
+                          className="w-full h-[50vh] object-contain object-cente" 
                           alt="room" 
                         />
                       </div>

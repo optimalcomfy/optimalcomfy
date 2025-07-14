@@ -89,6 +89,12 @@ const CarBookingForm = () => {
     }
   };
 
+    useEffect(()=>{
+      if(auth.user) {
+        setCurrentStep(2)
+      }
+    },[auth])
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -108,18 +114,10 @@ const CarBookingForm = () => {
     }
 
     try {
-      let userId = null;
       const bookingData = { ...data }; 
 
-      const registrationResponse = await axios.post(route('register'), {
-        email: data.email,
-        password: data.password,
-        name: data.name,
-        user_type: data.user_type, 
-        phone: data.phone
-      });
-      
-      userId = registrationResponse.data.user_id; 
+      let userId = auth.user?.id;
+
       bookingData.user_id = userId; 
 
       post(route('car-bookings.store'), {
@@ -390,7 +388,7 @@ const CarBookingForm = () => {
                         <p><strong>Pickup:</strong> {data.pickup_location || 'Not selected'}</p>
                         <p><strong>Dropoff:</strong> {data.pickup_location || 'Not selected'}</p>
                         <p><strong>Dates:</strong> {data.start_date} to {data.end_date} ({days} days)</p>
-                        <p><strong>Customer:</strong> {data.name} ({data.email})</p>
+                        <p><strong>Customer:</strong> {auth?.user?.name} ({auth?.user?.email})</p>
                         {data.message && <p><strong>Requests:</strong> {data.message}</p>}
                       </div>
                     </div>

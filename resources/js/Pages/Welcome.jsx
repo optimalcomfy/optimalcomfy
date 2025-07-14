@@ -144,7 +144,7 @@ export default function Welcome() {
     dots: false,
     infinite: false,
     speed: 500,
-    slidesToShow: 7,
+    slidesToShow: 6,
     slidesToScroll: 1,
     centerMode: false,
     variableWidth: false,

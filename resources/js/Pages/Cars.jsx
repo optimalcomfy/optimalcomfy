@@ -168,7 +168,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         dots: false,
         infinite: false,
         speed: 500,
-        slidesToShow: 7,
+        slidesToShow: 6,
         slidesToScroll: 1,
         centerMode: false,
         variableWidth: false,

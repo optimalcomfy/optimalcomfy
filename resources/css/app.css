@@ -41,3 +41,10 @@ body {
 .text-peachDark {
   color: #f07e5b !important;
 }
+
+@media (max-width: 991px) {
+  .riffy {
+    height: 25vh;
+  }
+}
+

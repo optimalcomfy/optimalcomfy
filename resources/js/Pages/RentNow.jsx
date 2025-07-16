@@ -61,23 +61,23 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                           </div>
                         {car?.initial_gallery[1]?.image && (
                           <div className="img__collage">
-                            <div className="img__container">
+                            <div className="img__container riffy">
                               <img src={`/storage/${car?.initial_gallery[1]?.image}`} alt="car" />
                             </div>
                             
-                            <div className="img__container">
+                            <div className="img__container riffy">
                               {car?.initial_gallery[2]?.image && (
                                 <img src={`/storage/${car?.initial_gallery[2]?.image}`} alt="car" />
                               )}
                             </div>
                           
-                            <div className="img__container">
+                            <div className="img__container riffy">
                               {car?.initial_gallery[3]?.image && (
                                 <img src={`/storage/${car?.initial_gallery[3]?.image}`} alt="car" />
                               )}
                             </div>
                             
-                            <div className="img__container">
+                            <div className="img__container riffy">
                               {car?.initial_gallery[4]?.image && (
                                 <img src={`/storage/${car?.initial_gallery[4]?.image}`} alt="car" />
                               )}

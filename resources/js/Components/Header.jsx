@@ -34,7 +34,7 @@ function Header() {
       
       if (currentScrollPosition === 0) {
         // Only open if at the top of the page
-        if (!isModalOpen && isMobile && (isWhich === '/' || isWhich === 'all-cars')) {
+        if (!isModalOpen && isMobile && (isWhich === '/' || isWhich === '/all-cars')) {
           setIsModalOpen(true);
         }
       } else if (currentScrollPosition > lastScrollPosition) {

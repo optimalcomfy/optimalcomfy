@@ -64,7 +64,6 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                             <span>View all {property.initial_gallery.length} images</span>
                           </button>
                         </div>
-                        
                         {property?.initial_gallery[1]?.image && (
                           <div className={`img__collage img__collage--${Math.min(property.initial_gallery.length - 1, 4)}`}>
                             {property?.initial_gallery.slice(1, 5).map((item, index) => (

@@ -17,6 +17,41 @@ function Header() {
   const { url } = usePage();
   const [isWhich] = useState(url.split('?')[0]);
 
+  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const [lastScrollPosition, setLastScrollPosition] = useState(0);
+
+    useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollPosition = window.pageYOffset;
+      
+      if (currentScrollPosition < lastScrollPosition) {
+        // Scrolling up
+        if (!isModalOpen && isMobile) {
+          setIsModalOpen(true);
+        }
+      } else if (currentScrollPosition > lastScrollPosition) {
+        // Scrolling down
+        if (isModalOpen && isMobile) {
+          setIsModalOpen(false);
+        }
+      }
+      
+      setLastScrollPosition(currentScrollPosition);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollPosition, isModalOpen, isMobile]);
+  
+
   const toggleProfileDropdown = () => {
     setProfileDropdownOpen(!profileDropdownOpen);
   };
@@ -274,7 +309,7 @@ function Header() {
         </div>
       </div>
       
-      <div className='text-center d-none d-lg-block'>
+      <div className='text-center d-none d-lg-block pt-2'>
           <h4 className='rideH2'>Let's ride and let's stay - <br /> the Ristay way </h4>
       </div>
       
@@ -293,10 +328,19 @@ function Header() {
 
               <div className={`logo-container px-2`}>
                 {(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking' || isWhich === '/privacy-policy' || isWhich === '/host-calendar-policy' || isWhich === '/terms-and-conditions') &&
-                  <SearchBar />
+                  <>
+                  {isModalOpen &&
+                    <SearchBar />
+                  }
+                  </>
                 }
                 {(isWhich === '/all-cars' || isWhich === '/search-cars' || isWhich === '/rent-now' || isWhich === '/car-booking') &&
-                <RideForm />}
+                <>
+                 {isModalOpen &&
+                 <RideForm />
+                 }
+                </>
+                }
               </div>
               
               <div className={`header-right mopper ${isScrolled ? 'mopper-scrolled' : ''}`}>

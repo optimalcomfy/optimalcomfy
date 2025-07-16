@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { router } from '@inertiajs/react';
+import { router, Link, usePage } from '@inertiajs/react';
 import { Search, Loader2, X, MapPin, Calendar } from 'lucide-react';
 import { toast } from 'react-toastify';
 import './SearchForms.css';
@@ -98,17 +98,6 @@ const DesktopSearchBar = ({
   </div>
 );
 
-const MobileSearchTrigger = ({ onClick }) => (
-  <div className="mobile-search-trigger" onClick={onClick}>
-    <div className="search-trigger-content">
-      <Search size={20} className="search-trigger-icon" />
-      <div className="search-trigger-text">
-        <span className="search-trigger-title">Where to?</span>
-        <span className="search-trigger-subtitle">Anywhere • Any week • Add guests</span>
-      </div>
-    </div>
-  </div>
-);
 
 const MobileSearchModal = ({
   isModalOpen,
@@ -124,106 +113,160 @@ const MobileSearchModal = ({
   isSuggestionsOpen,
   locationSuggestions,
   setIsSuggestionsOpen
-}) => (
-  <div className={`mobile-search-modal ${isModalOpen ? 'active' : ''}`}>
-    <div className="modal-overlay" onClick={closeModal}></div>
-    <div className="modal-content" ref={modalRef}>
-      <div className="modal-header flex justify-between my-2">
-        <h2 className="modal-title text-xl">Search stays</h2>
-        <button className="modal-close-btn flex items-center bg-[#f37e5d] rounded-md px-2 py-1" onClick={closeModal}>
-          <X size={24} /> close
-        </button>
-      </div>
+}) => {
+  const handleTouchMove = (e) => {
+    if (isSuggestionsOpen) {
+      e.preventDefault();
+    }
+  };
 
-      <div className="modal-body">
-        <div className="mobile-search-fields flex flex-col gap-2">
-          <div className="mobile-field-group" ref={suggestionRef}>
-            <label className="mobile-field-label">
-              <MapPin size={20} />
-              <span>Where</span>
-            </label>
-            <div className="mobile-field-input">
-              <input
-                ref={inputRef}
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                onFocus={() => {
-                  if (formData.location.length > 0 && locationSuggestions.length > 0) {
-                    setIsSuggestionsOpen(true);
-                  }
-                }}
-                placeholder="Search destinations"
-                className="rounded-md w-full"
-              />
-              {formData.location && <X className="clear-icon" onClick={() => {
-                handleChange({ target: { name: 'location', value: '' } });
-                setIsSuggestionsOpen(false);
-              }} />}
-              {isLoadingSuggestions && <Loader2 className="loader-icon animate-spin" />}
-            </div>
-            {isSuggestionsOpen && (
-              <ul style={{borderRadius: '0px'}} className="mobile-suggestions-dropdown">
-                {locationSuggestions.map((location, index) => (
-                  <div
-                    key={index}
+  const { url } = usePage();
+  const [isWhich] = useState(url.split('?')[0]);
+
+  return (
+    <div 
+      className={`mobile-search-modal ${isModalOpen ? 'active' : ''}`}
+      onTouchMove={handleTouchMove}
+    >
+      <div className="modal-overlay" onClick={closeModal}></div>
+      <div className="modal-content" ref={modalRef}>
+        <div className="modal-header flex justify-between my-2 border-b border-gray-200">
+          <Link 
+            href={route('home')} 
+            className={`modal-title px-4 py-2 text-lg font-medium ${(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking' || isWhich === '/privacy-policy' || isWhich === '/host-calendar-policy' || isWhich === '/terms-and-conditions') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
+          >
+            Search stays
+          </Link>
+          <Link 
+            href={route('all-cars')} 
+            className={`modal-title px-4 py-2 text-lg font-medium ${route().current('all-cars') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
+          >
+            Search Rides
+          </Link>
+        </div>
+
+        <div className="modal-body">
+          <div className="mobile-search-fields flex flex-col gap-2">
+            <div className="mobile-field-group" ref={suggestionRef}>
+              <label className="mobile-field-label">
+                <MapPin size={20} />
+                <span>Where</span>
+              </label>
+              <div className="mobile-field-input relative">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  onFocus={() => {
+                    if (formData.location.length > 0) {
+                      setIsSuggestionsOpen(true);
+                    }
+                  }}
+                  placeholder="Search destinations"
+                  className="rounded-md w-full"
+                />
+                {formData.location && (
+                  <X 
+                    className="clear-icon absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    size={18}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleLocationSelect(location);
-                    }}
-                    className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                  >
-                    {location}
-                  </div>
-                ))}
-              </ul>
-            )}
-          </div>
+                      handleChange({ target: { name: 'location', value: '' } });
+                      setIsSuggestionsOpen(false);
+                    }} 
+                  />
+                )}
+                {isLoadingSuggestions && (
+                  <Loader2 className="loader-icon animate-spin absolute right-8 top-1/2 transform -translate-y-1/2" />
+                )}
+              </div>
+              {isSuggestionsOpen && (
+                <ul 
+                  className="mobile-suggestions-dropdown absolute z-50 w-full bg-white border mt-1 shadow-lg"
+                  style={{
+                    borderRadius: '0px',
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    WebkitOverflowScrolling: 'touch'
+                  }}
+                >
+                  {locationSuggestions.length > 0 ? (
+                    locationSuggestions.map((location, index) => (
+                      <div
+                        key={index}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleLocationSelect(location);
+                        }}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleLocationSelect(location);
+                        }}
+                        className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 active:bg-gray-200"
+                      >
+                        {location}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-3 text-gray-500">
+                      {isLoadingSuggestions ? 'Searching...' : 'No results found'}
+                    </div>
+                  )}
+                </ul>
+              )}
+            </div>
 
-          <div className="mobile-field-group">
-            <label className="mobile-field-label">
-              <Calendar size={20} />
-              <span>Check in date</span>
-            </label>
-            <div className="mobile-field-input">
-              <input
-                type="date"
-                name="checkIn"
-                value={formData.checkIn}
-                onChange={handleChange}
-                min={new Date().toISOString().split("T")[0]}
-                className="rounded-md w-full"
-              />
+            <div className="mobile-field-group">
+              <label className="mobile-field-label">
+                <Calendar size={20} />
+                <span>Check in date</span>
+              </label>
+              <div className="mobile-field-input">
+                <input
+                  type="date"
+                  name="checkIn"
+                  value={formData.checkIn}
+                  onChange={handleChange}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="rounded-md w-full"
+                />
+              </div>
+            </div>
+
+            <div className="mobile-field-group">
+              <label className="mobile-field-label">
+                <Calendar size={20} />
+                <span>Checkout date</span>
+              </label>
+              <div className="mobile-field-input">
+                <input
+                  type="date"
+                  name="checkOut"
+                  value={formData.checkOut}
+                  onChange={handleChange}
+                  min={formData.checkIn}
+                  className="rounded-md w-full"
+                />
+              </div>
             </div>
           </div>
-
-          <div className="mobile-field-group">
-            <label className="mobile-field-label">
-              <Calendar size={20} />
-              <span>Checkout date</span>
-            </label>
-            <div className="mobile-field-input">
-              <input
-                type="date"
-                name="checkOut"
-                value={formData.checkOut}
-                onChange={handleChange}
-                min={formData.checkIn}
-                className="rounded-md w-full"
-              />
-            </div>
+          <div className="modal-footer flex justify-end my-2 gap-8">
+            <button 
+              className="submit-search-btn w-full flex items-center justify-center gap-2 bg-[#0d3c46] text-white px-4 py-1 rounded-md" 
+              onClick={handleSubmit}
+            >
+              Search <Search className="" size={16} />
+            </button>
           </div>
-        </div>
-        <div className="modal-footer flex justify-end my-2 gap-8">
-          <button className="submit-search-btn w-full flex items-center justify-center gap-2 bg-[#0d3c46] text-white px-4 py-1 rounded-md" onClick={handleSubmit}>
-            Search <Search className="" size={16} />
-          </button>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function RideForm() {
   const [formData, setFormData] = useState({
@@ -259,6 +302,17 @@ export default function RideForm() {
   }, [isModalOpen, isMobile]);
 
   useEffect(() => {
+    const handleRouteChange = () => {
+      if (isMobile) {
+        setIsModalOpen(false);
+      }
+    };
+    
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, [isMobile]);
+
+  useEffect(() => {
     const fetchSuggestions = async () => {
       if (formData.location.length < 3) {
         setLocationSuggestions([]);
@@ -266,7 +320,6 @@ export default function RideForm() {
         return;
       }
       
-      // Don't fetch if we just selected a location
       if (formData.location === lastSelectedLocation) {
         return;
       }
@@ -276,7 +329,6 @@ export default function RideForm() {
         const res = await fetch(`/locations?query=${encodeURIComponent(formData.location)}`);
         const data = await res.json();
         setLocationSuggestions(data);
-        // Only open if the input is focused and we didn't just select a location
         if (inputRef.current === document.activeElement && formData.location !== lastSelectedLocation) {
           setIsSuggestionsOpen(data.length > 0);
         }
@@ -309,20 +361,27 @@ export default function RideForm() {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, [isMobile]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setLastSelectedLocation(''); // Reset last selected when typing
+    setLastSelectedLocation('');
   };
 
   const handleLocationSelect = (loc) => {
     setFormData((prev) => ({ ...prev, location: loc }));
-    setLastSelectedLocation(loc); // Track the last selected location
+    setLastSelectedLocation(loc);
     setIsSuggestionsOpen(false);
     setIsLoadingSuggestions(false);
+    if (isMobile) {
+      inputRef.current.blur();
+    }
   };
 
   const handleSubmit = () => {
@@ -342,7 +401,15 @@ export default function RideForm() {
     });
   };
 
-  const openModal = () => setIsModalOpen(true);
+  const openModal = () => {
+    setIsModalOpen(true);
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
+  };
+
   const closeModal = () => setIsModalOpen(false);
 
   return (
@@ -362,25 +429,21 @@ export default function RideForm() {
         />
       ) : (
         <>
-          {!isModalOpen &&
-          <MobileSearchTrigger onClick={openModal} />}
-          {isModalOpen &&
-            <MobileSearchModal
-              isModalOpen={isModalOpen}
-              closeModal={closeModal}
-              modalRef={modalRef}
-              suggestionRef={suggestionRef}
-              inputRef={inputRef}
-              formData={formData}
-              handleChange={handleChange}
-              handleLocationSelect={handleLocationSelect}
-              handleSubmit={handleSubmit}
-              isLoadingSuggestions={isLoadingSuggestions}
-              isSuggestionsOpen={isSuggestionsOpen}
-              locationSuggestions={locationSuggestions}
-              setIsSuggestionsOpen={setIsSuggestionsOpen}
-            />
-          }
+          <MobileSearchModal
+            isModalOpen={isModalOpen}
+            closeModal={closeModal}
+            modalRef={modalRef}
+            suggestionRef={suggestionRef}
+            inputRef={inputRef}
+            formData={formData}
+            handleChange={handleChange}
+            handleLocationSelect={handleLocationSelect}
+            handleSubmit={handleSubmit}
+            isLoadingSuggestions={isLoadingSuggestions}
+            isSuggestionsOpen={isSuggestionsOpen}
+            locationSuggestions={locationSuggestions}
+            setIsSuggestionsOpen={setIsSuggestionsOpen}
+          />
         </>
       )}
     </>

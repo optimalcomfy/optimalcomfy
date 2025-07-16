@@ -396,7 +396,7 @@ body.header-fixed {
       grid-template-columns: 1fr;
       justify-content: center;
       align-items: center;
-      padding: 20px 0;
+      padding: 0px 0;
       transition: all 0.3s ease;
   }
 }

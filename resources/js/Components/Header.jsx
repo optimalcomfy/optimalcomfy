@@ -32,13 +32,13 @@ function Header() {
     const handleScroll = () => {
       const currentScrollPosition = window.pageYOffset;
       
-      if (currentScrollPosition < lastScrollPosition) {
-        // Scrolling up
-        if (!isModalOpen && isMobile) {
+      if (currentScrollPosition === 0) {
+        // Only open if at the top of the page
+        if (!isModalOpen && isMobile && (isWhich === '/' || isWhich === 'all-cars')) {
           setIsModalOpen(true);
         }
       } else if (currentScrollPosition > lastScrollPosition) {
-        // Scrolling down
+        // Close when scrolling down (anywhere on the page)
         if (isModalOpen && isMobile) {
           setIsModalOpen(false);
         }

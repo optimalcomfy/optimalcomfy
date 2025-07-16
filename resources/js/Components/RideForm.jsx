@@ -98,17 +98,6 @@ const DesktopSearchBar = ({
   </div>
 );
 
-const MobileSearchTrigger = ({ onClick }) => (
-  <div className="mobile-search-trigger" onClick={onClick}>
-    <div className="search-trigger-content">
-      <Search size={20} className="search-trigger-icon" />
-      <div className="search-trigger-text">
-        <span className="search-trigger-title">Need a ride?</span>
-        <span className="search-trigger-subtitle">Any location • Any dates</span>
-      </div>
-    </div>
-  </div>
-);
 
 const MobileSearchModal = ({
   isModalOpen,
@@ -414,14 +403,6 @@ export default function RideForm() {
     });
   };
 
-  const openModal = () => {
-    setIsModalOpen(true);
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, 100);
-  };
 
   const closeModal = () => setIsModalOpen(false);
 

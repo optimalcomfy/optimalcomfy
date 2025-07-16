@@ -44,7 +44,7 @@ body {
 
 @media (max-width: 991px) {
   .riffy {
-    height: 25vh;
+    display:none;
   }
 }
 

@@ -60,28 +60,17 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                             </button>
                           </div>
                         {car?.initial_gallery[1]?.image && (
-                          <div className="img__collage riffy">
-                            <div className="img__container">
-                              <img src={`/storage/${car?.initial_gallery[1]?.image}`} alt="car" />
-                            </div>
-                            
-                            <div className="img__container">
-                              {car?.initial_gallery[2]?.image && (
-                                <img src={`/storage/${car?.initial_gallery[2]?.image}`} alt="car" />
-                              )}
-                            </div>
-                          
-                            <div className="img__container">
-                              {car?.initial_gallery[3]?.image && (
-                                <img src={`/storage/${car?.initial_gallery[3]?.image}`} alt="car" />
-                              )}
-                            </div>
-                            
-                            <div className="img__container">
-                              {car?.initial_gallery[4]?.image && (
-                                <img src={`/storage/${car?.initial_gallery[4]?.image}`} alt="car" />
-                              )}
-                            </div>
+                          <div className={`img__collage img__collage--${Math.min(car.initial_gallery.length - 1, 4)}`}>
+                            {car?.initial_gallery.slice(1, 5).map((item, index) => (
+                              item?.image && (
+                                <div key={index} className="img__container">
+                                  <img 
+                                    src={`/storage/${item.image}`} 
+                                    alt="room" 
+                                  />
+                                </div>
+                              )
+                            ))}
                           </div>
                         )}
                       </div>

@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 class MpesaStkService
 {
@@ -13,126 +13,130 @@ class MpesaStkService
     protected $passkey;
     protected $businessShortCode;
     protected $callbackUrl;
+    protected $baseUrl;
 
     public function __construct()
     {
-        $this->consumerKey = env('MPESA_CONSUMER_KEY');
-        $this->consumerSecret = env('MPESA_CONSUMER_SECRET');
-        $this->passkey = env('MPESA_PASSKEY');
-        $this->businessShortCode = env('MPESA_SHORTCODE');
-        $this->callbackUrl = env('MPESA_CALLBACK_URL');
+        $config = config('services.mpesa');
+
+        $this->consumerKey = $config['consumer_key'];
+        $this->consumerSecret = $config['consumer_secret'];
+        $this->passkey = $config['passkey'];
+        $this->businessShortCode = $config['business_shortcode'];
+        $this->callbackUrl = $config['callback_url'];
+        $this->baseUrl = $config['env'] === 'sandbox'
+            ? 'https://sandbox.safaricom.co.ke'
+            : 'https://api.safaricom.co.ke';
 
         $this->validateConfig();
     }
 
-    public function initiateStkPush($phone, $amount, $reference, $description)
+    protected function validateConfig(): void
     {
-        try {
-            $phone = $this->formatPhoneNumber($phone);
-            $accessToken = $this->generateAccessToken();
-            $timestamp = date('YmdHis');
-            
-            $password = base64_encode($this->businessShortCode . $this->passkey . $timestamp);
-
-            $response = Http::withToken($accessToken)
-                ->timeout(30) // Production should have slightly longer timeout
-                ->retry(3, 100) // Retry 3 times with 100ms delay
-                ->post('https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest', [
-                    'BusinessShortCode' => $this->businessShortCode,
-                    'Password' => $password,
-                    'Timestamp' => $timestamp,
-                    'TransactionType' => 'CustomerPayBillOnline',
-                    'Amount' => $amount,
-                    'PartyA' => $phone,
-                    'PartyB' => $this->businessShortCode,
-                    'PhoneNumber' => $phone,
-                    'CallBackURL' => $this->callbackUrl,
-                    'AccountReference' => $reference,
-                    'TransactionDesc' => $description
-                ]);
-
-            return $this->handleResponse($response);
-
-        } catch (Exception $e) {
-            Log::error('M-Pesa STK Push Exception', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return ['error' => 'MPESA_SERVICE_UNAVAILABLE'];
-        }
-    }
-
-    protected function handleResponse($response)
-    {
-        $responseData = $response->json();
-
-        if (!$response->successful()) {
-            Log::error('M-Pesa API HTTP Error', $responseData);
-            return ['error' => 'MPESA_API_ERROR'];
-        }
-
-        if ($responseData['ResponseCode'] == '0') {
-            return [
-                'success' => true,
-                'CheckoutRequestID' => $responseData['CheckoutRequestID'],
-                'MerchantRequestID' => $responseData['MerchantRequestID'],
-                'ResponseDescription' => $responseData['ResponseDescription']
-            ];
-        }
-
-        Log::error('M-Pesa STK Push Error', $responseData);
-        return [
-            'error' => 'MPESA_REQUEST_FAILED',
-            'code' => $responseData['ResponseCode'],
-            'description' => $responseData['ResponseDescription']
+        $required = [
+            'consumerKey',
+            'consumerSecret',
+            'passkey',
+            'businessShortCode',
+            'callbackUrl',
         ];
+
+        foreach ($required as $key) {
+            if (empty($this->$key)) {
+                throw new \RuntimeException("M-Pesa configuration '{$key}' is not set.");
+            }
+        }
     }
 
-    protected function generateAccessToken()
+    protected function getAccessToken(): string
     {
         $response = Http::withBasicAuth($this->consumerKey, $this->consumerSecret)
-            ->timeout(15)
-            ->retry(2, 100)
-            ->get('https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials');
+            ->retry(3, 100)
+            ->timeout(10)
+            ->get("{$this->baseUrl}/oauth/v1/generate?grant_type=client_credentials");
 
-        if (!$response->successful()) {
-            throw new Exception('Failed to get M-Pesa access token');
+        if (!$response->ok()) {
+            Log::error('Failed to get M-Pesa access token', [
+                'response' => $response->body(),
+                'status' => $response->status(),
+            ]);
+            throw new \RuntimeException('Failed to get M-Pesa access token.');
         }
 
         return $response->json()['access_token'];
     }
 
-    protected function formatPhoneNumber($phone)
+    protected function formatPhone(string $phone): string
     {
-        $phone = preg_replace('/[^0-9]/', '', $phone);
+        $phone = preg_replace('/\D/', '', $phone); // Remove non-digits
 
-        // Convert 07... or 7... to 2547...
-        if (preg_match('/^0?7[0-9]{8}$/', $phone)) {
-            return '254' . substr($phone, -9);
+        if (str_starts_with($phone, '0')) {
+            $phone = '254' . substr($phone, 1);
+        } elseif (str_starts_with($phone, '+')) {
+            $phone = substr($phone, 1);
         }
 
-        // Leave 254... numbers as-is
-        if (preg_match('/^2547[0-9]{8}$/', $phone)) {
-            return $phone;
-        }
-
-        throw new Exception('Invalid phone number format');
+        return $phone;
     }
 
-    protected function validateConfig()
+    public function stkPush(string $phone, int $amount, string $accountReference = 'Hayaan Travel', string $transactionDesc = 'Booking Payment'): array
     {
-        $required = [
-            'consumer_key',
-            'consumer_secret',
-            'passkey',
-            'business_shortcode',
-            'callback_url'
-        ];
+        try {
+            $accessToken = $this->getAccessToken();
+            $timestamp = now()->format('YmdHis');
+            $password = base64_encode($this->businessShortCode . $this->passkey . $timestamp);
 
-        foreach ($required as $key) {
-            if (empty($this->$key)) {
-                throw new Exception("MPesa $key is not configured");
+            $payload = [
+                'BusinessShortCode' => $this->businessShortCode,
+                'Password' => $password,
+                'Timestamp' => $timestamp,
+                'TransactionType' => 'CustomerPayBillOnline',
+                'Amount' => $amount,
+                'PartyA' => $this->formatPhone($phone),
+                'PartyB' => $this->businessShortCode,
+                'PhoneNumber' => $this->formatPhone($phone),
+                'CallBackURL' => $this->callbackUrl,
+                'AccountReference' => $accountReference,
+                'TransactionDesc' => $transactionDesc,
+            ];
+
+            $response = Http::withToken($accessToken)
+                ->retry(3, 200)
+                ->timeout(15)
+                ->post("{$this->baseUrl}/mpesa/stkpush/v1/processrequest", $payload);
+
+            $result = $response->json();
+
+            if ($response->successful() && isset($result['ResponseCode']) && $result['ResponseCode'] === '0') {
+                return [
+                    'success' => true,
+                    'message' => $result['ResponseDescription'] ?? 'STK Push sent successfully.',
+                    'CheckoutRequestID' => $result['CheckoutRequestID'] ?? null,
+                ];
             }
+
+            Log::warning('M-Pesa STK Push failed', [
+                'request' => $payload,
+                'response' => $result,
+            ]);
+
+            return [
+                'success' => false,
+                'message' => $result['errorMessage'] ?? $result['ResponseDescription'] ?? 'M-Pesa STK Push failed.',
+                'code' => $result['errorCode'] ?? null,
+            ];
+        } catch (Exception $e) {
+            Log::error('M-Pesa STK Push Exception', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'phone' => $phone,
+                'amount' => $amount,
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'MPESA_SERVICE_UNAVAILABLE',
+            ];
         }
     }
 }

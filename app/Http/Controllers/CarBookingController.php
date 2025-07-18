@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\PesapalController;
 use Carbon\Carbon;
 use App\Http\Controllers\MpesaStkController;
+use App\Services\MpesaStkService;
 
 class CarBookingController extends Controller
 {
@@ -73,7 +74,7 @@ class CarBookingController extends Controller
      * Store a newly created resource in storage.
      */
 
-     
+
     public function store(StoreCarBookingRequest $request)
     {
         $validatedData = $request->validated();

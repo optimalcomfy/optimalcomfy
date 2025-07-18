@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\PesapalController;
 use App\Http\Controllers\MpesaStkController;
+use App\Services\MpesaStkService;
 
 class BookingController extends Controller
 {

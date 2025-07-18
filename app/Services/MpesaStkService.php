@@ -54,6 +54,8 @@ class MpesaStkService
             $password = base64_encode($this->businessShortCode . $this->passkey . $timestamp);
             $accessToken = $this->generateAccessToken();
 
+            Log::info('Initiating STK');
+
             $response = Http::withToken($accessToken)
                 ->post("{$this->baseUrl}/mpesa/stkpush/v1/processrequest", [
                     'BusinessShortCode' => $this->businessShortCode,
@@ -68,6 +70,11 @@ class MpesaStkService
                     'AccountReference' => $reference,
                     'TransactionDesc' => $description
                 ]);
+
+            Log::info('M-Pesa STK Response', [
+                'response' => $response->json()
+            ]);
+
 
             return $response->json();
         } catch (Exception $e) {

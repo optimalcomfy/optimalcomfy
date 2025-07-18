@@ -14,6 +14,8 @@ const PropertyBookingForm = ({ property }) => {
     variation_id: null
   });
 
+  // 
+
   // Function to check if a date range is booked for a specific variation (or standard)
   const isRangeBooked = (startDate, endDate, variationId = null) => {
     const start = new Date(startDate);

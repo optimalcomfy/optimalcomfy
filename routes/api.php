@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PesapalController;
 use App\Http\Controllers\WithdrawalController;
+use App\Http\Controllers\MpesaStkController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,5 +28,4 @@ Route::post('/mpesa/result', [WithdrawalController::class, 'handleMpesaCallback'
 
 Route::post('/mpesa/timeout', [WithdrawalController::class, 'handleTimeout'])->name('mpesa.timeout');
 
-Route::post('/mpesa/stk/initiate', [MpesaStkController::class, 'initiatePayment']);
 Route::post('/mpesa/stk/callback', [MpesaStkController::class, 'handleCallback']);

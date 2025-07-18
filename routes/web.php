@@ -41,6 +41,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\PesapalController;
 use App\Http\Controllers\WithdrawalController;
 use App\Http\Controllers\VariationController;
+use App\Http\Controllers\MpesaStkController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -181,6 +182,8 @@ Route::get('/booking/success', function () {
 Route::get('/booking/failed', function () {
     return view('failed');
 })->name('bookings.failed');
+
+Route::post('/mpesa/stk/initiate', [MpesaStkController::class, 'initiatePayment']);
 
 
 

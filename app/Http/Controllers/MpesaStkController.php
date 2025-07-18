@@ -75,12 +75,16 @@ class MpesaStkController extends Controller
                 "Payment for {$request->booking_type} booking #{$request->booking_id}"
             );
 
+            // Updated response handling to match the service's return format
             if (isset($response['error'])) {
                 $payment->update(['status' => 'Failed']);
-                return response()->json(['success' => false, 'message' => $response['error']], 500);
+                return response()->json([
+                    'success' => false,
+                    'message' => $response['description'] ?? $response['error']
+                ], 500);
             }
 
-            if ($response['ResponseCode'] == '0') {
+            if ($response['success'] ?? false) {
                 $payment->update([
                     'checkout_request_id' => $response['CheckoutRequestID'],
                     'merchant_request_id' => $response['MerchantRequestID']
@@ -88,7 +92,7 @@ class MpesaStkController extends Controller
                 
                 return response()->json([
                     'success' => true,
-                    'message' => 'STK Push initiated successfully. Please check your phone to complete payment.',
+                    'message' => $response['ResponseDescription'] ?? 'STK Push initiated successfully',
                     'data' => $response
                 ]);
             }
@@ -96,14 +100,20 @@ class MpesaStkController extends Controller
             $payment->update(['status' => 'Failed']);
             return response()->json([
                 'success' => false,
-                'message' => $response['ResponseDescription'] ?? 'Payment initiation failed',
+                'message' => $response['description'] ?? 'Payment initiation failed',
                 'data' => $response
             ]);
 
         } catch (\Exception $e) {
             $payment->update(['status' => 'Failed']);
-            Log::error('M-Pesa STK Push Error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Payment initiation failed'], 500);
+            Log::error('M-Pesa STK Push Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment initiation failed'
+            ], 500);
         }
     }
 
@@ -111,20 +121,32 @@ class MpesaStkController extends Controller
     {
         Log::info('M-Pesa STK Callback:', $request->all());
 
-        $callbackData = $request->all();
-        $stkCallback = $callbackData['Body']['stkCallback'];
+        try {
+            $callbackData = $request->all();
+            
+            // Validate callback structure
+            if (!isset($callbackData['Body']['stkCallback'])) {
+                throw new \Exception('Invalid callback structure');
+            }
 
-        // Find payment by CheckoutRequestID
-        $payment = Payment::where('checkout_request_id', $stkCallback['CheckoutRequestID'])
-                         ->first();
+            $stkCallback = $callbackData['Body']['stkCallback'];
 
-        if ($payment) {
+            // Find payment by CheckoutRequestID
+            $payment = Payment::where('checkout_request_id', $stkCallback['CheckoutRequestID'])
+                             ->first();
+
+            if (!$payment) {
+                throw new \Exception('Payment not found for CheckoutRequestID: ' . $stkCallback['CheckoutRequestID']);
+            }
+
             if ($stkCallback['ResultCode'] == 0) {
-                $callbackMetadata = $stkCallback['CallbackMetadata']['Item'];
+                if (!isset($stkCallback['CallbackMetadata']['Item'])) {
+                    throw new \Exception('Missing callback metadata');
+                }
+
                 $metadata = [];
-                
-                foreach ($callbackMetadata as $item) {
-                    $metadata[$item['Name']] = $item['Value'];
+                foreach ($stkCallback['CallbackMetadata']['Item'] as $item) {
+                    $metadata[$item['Name']] = $item['Value'] ?? null;
                 }
 
                 $payment->update([
@@ -142,72 +164,84 @@ class MpesaStkController extends Controller
             } else {
                 $payment->update([
                     'status' => 'Failed',
-                    'failure_reason' => $stkCallback['ResultDesc']
+                    'failure_reason' => $stkCallback['ResultDesc'] ?? 'Payment failed'
                 ]);
             }
-        }
 
-        return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Success']);
+            return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Success']);
+
+        } catch (\Exception $e) {
+            Log::error('M-Pesa Callback Processing Error', [
+                'error' => $e->getMessage(),
+                'data' => $request->all()
+            ]);
+            return response()->json(['ResultCode' => 1, 'ResultDesc' => 'Error processing callback']);
+        }
     }
 
     private function updateBookingStatus($bookingType, $payment)
     {
-        $booking = null;
-        $status = 'Paid';
-        
-        switch ($bookingType) {
-            case 'property':
-                $booking = Booking::find($payment->booking_id);
-                break;
-            case 'car':
-                $booking = CarBooking::find($payment->car_booking_id);
-                break;
-            case 'food':
-                // Handle food booking status update if needed
-                break;
-            case 'service':
-                // Handle service booking status update if needed
-                break;
-            default:
-                Log::warning('Unknown booking type in status update', ['type' => $bookingType]);
-                return;
-        }
+        try {
+            $booking = null;
+            $status = 'Paid';
+            
+            switch ($bookingType) {
+                case 'property':
+                    $booking = Booking::find($payment->booking_id);
+                    break;
+                case 'car':
+                    $booking = CarBooking::find($payment->car_booking_id);
+                    break;
+                case 'food':
+                    // Handle food booking status update if needed
+                    break;
+                case 'service':
+                    // Handle service booking status update if needed
+                    break;
+            }
 
-        if ($booking) {
-            $booking->status = $status;
-            $booking->save();
+            if ($booking) {
+                $booking->status = $status;
+                $booking->save();
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Booking status update failed', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
     private function sendConfirmationEmail($payment)
     {
         try {
-            $user = $payment->user;
-            
+            if (!$payment->user) {
+                throw new \Exception('User not found for payment');
+            }
+
             switch ($payment->booking_type) {
                 case 'property':
                     $booking = Booking::with(['property'])->find($payment->booking_id);
-                    Mail::to($user->email)->send(new BookingConfirmation($booking));
+                    if ($booking) {
+                        Mail::to($payment->user->email)->send(new BookingConfirmation($booking));
+                    }
                     break;
                 case 'car':
                     $booking = CarBooking::find($payment->car_booking_id);
-                    Mail::to($user->email)->send(new CarBookingConfirmation($booking, $user));
-                    break;
-                case 'food':
-                    // Handle food booking confirmation if needed
-                    break;
-                case 'service':
-                    // Handle service booking confirmation if needed
-                    break;
-                default:
-                    Log::warning('Unknown booking type in email confirmation', ['type' => $payment->booking_type]);
+                    if ($booking) {
+                        Mail::to($payment->user->email)->send(new CarBookingConfirmation($booking, $payment->user));
+                    }
                     break;
             }
-            
-            Log::info('Booking confirmation email sent for payment ID: ' . $payment->id);
-            
+
+            Log::info('Booking confirmation email sent', ['payment_id' => $payment->id]);
+
         } catch (\Exception $e) {
-            Log::error('Failed to send booking confirmation email: ' . $e->getMessage());
+            Log::error('Booking confirmation email failed', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 }

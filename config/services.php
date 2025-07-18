@@ -37,4 +37,12 @@ return [
         'api_url' => 'https://api.bulk.ke/sms/sendsms',
     ],
 
+    'mpesa' => [
+        'consumer_key' => env('MPESA_CONSUMER_KEY'),
+        'consumer_secret' => env('MPESA_CONSUMER_SECRET'),
+        'passkey' => env('MPESA_PASSKEY'),
+        'business_shortcode' => env('MPESA_SHORTCODE'),
+        'callback_url' => env('MPESA_CALLBACK_URL'),
+    ]
+
 ];

@@ -70,7 +70,7 @@ class Car extends Model
 
     public function bookings()
     {
-        return $this->hasMany(CarBooking::class);
+        return $this->hasMany(CarBooking::class)->where('status', 'Paid');
     }
 
     public function initialGallery()

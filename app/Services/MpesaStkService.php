@@ -16,11 +16,11 @@ class MpesaStkService
 
     public function __construct()
     {
-        $this->consumerKey = config('services.mpesa.consumer_key');
-        $this->consumerSecret = config('services.mpesa.consumer_secret');
-        $this->passkey = config('services.mpesa.passkey');
-        $this->businessShortCode = config('services.mpesa.business_shortcode');
-        $this->callbackUrl = config('services.mpesa.callback_url');
+        $this->consumerKey = env('MPESA_CONSUMER_KEY');
+        $this->consumerSecret = env('MPESA_CONSUMER_SECRET');
+        $this->passkey = env('MPESA_PASSKEY');
+        $this->businessShortCode = env('MPESA_SHORTCODE');
+        $this->callbackUrl = env('MPESA_CALLBACK_URL');
 
         $this->validateConfig();
     }

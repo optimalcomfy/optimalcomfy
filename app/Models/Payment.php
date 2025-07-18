@@ -18,7 +18,14 @@ class Payment extends Model
         'method',
         'status',
         'car_booking_id',
-        'booking_type'
+        'booking_type',
+        'phone',
+        'checkout_request_id',
+        'merchant_request_id',
+        'mpesa_receipt',
+        'transaction_date',
+        'transaction_id',
+        'failure_reason'
     ];
 
     public function user()

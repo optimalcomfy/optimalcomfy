@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\PesapalController;
+use App\Http\Controllers\MpesaStkController;
 
 class BookingController extends Controller
 {
@@ -75,6 +76,7 @@ class BookingController extends Controller
             'check_out_date' => 'required|date|after:check_in_date',
             'total_price' => 'required|numeric|min:1',
             'variation_id' => 'nullable',
+            'phone' => 'required|string' // Add phone number validation for M-Pesa
         ]);
 
         $user = Auth::user();
@@ -85,35 +87,44 @@ class BookingController extends Controller
             'check_in_date' => $request->check_in_date,
             'check_out_date' => $request->check_out_date,
             'total_price' => $request->total_price,
-            'status' => 'pending',
-            'variation_id'=>$request->variation_id
+            'status' => 'pending', // Will be updated when payment is confirmed
+            'variation_id' => $request->variation_id
         ]);
 
         try {
-            $pesapal = new PesapalController();
-
-            $paymentResponse = $pesapal->initiatePayment(new Request([
+            $mpesaController = new MpesaStkController(new MpesaStkService());
+            
+            $paymentResponse = $mpesaController->initiatePayment(new Request([
+                'phone' => $request->phone,
                 'amount' => $booking->total_price,
                 'booking_id' => $booking->id,
                 'booking_type' => 'property'
             ]));
 
+            $responseData = $paymentResponse->getData();
 
+            if ($responseData->success) {
+                // STK Push initiated successfully
+                return redirect()->route('booking.payment.pending', [
+                    'booking' => $booking->id,
+                    'message' => 'Payment initiated. Please complete the M-Pesa payment on your phone.'
+                ]);
+            } else {
+                // STK Push initiation failed
+                $booking->update(['status' => 'failed']);
+                return back()
+                    ->withInput()
+                    ->withErrors(['payment' => $responseData->message ?? 'Payment initiation failed']);
+            }
 
         } catch (\Exception $e) {
-            \Log::error('Pesapal payment initiation failed: ' . $e->getMessage());
+            \Log::error('M-Pesa payment initiation failed: ' . $e->getMessage());
+            $booking->update(['status' => 'failed']);
 
-            return back()->withErrors('Payment initiation failed due to a system error.');
+            return back()
+                ->withInput()
+                ->withErrors(['payment' => 'Payment initiation failed due to a system error.']);
         }
-
-        if (!empty($paymentResponse->original['url']) && filter_var($paymentResponse->original['url'], FILTER_VALIDATE_URL)) {
-            return view('iframe', [
-                'iframeUrl' => $paymentResponse->original['url'],
-            ]);
-        }
-
-
-        return back()->withErrors('Payment initiation failed');
     }
 
 

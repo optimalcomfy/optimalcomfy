@@ -161,7 +161,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/books/lookup', [BookingController::class, 'lookup'])->name('bookings.lookup');
 });
 
-
 // Route to initiate the payment (usually triggered by a logged-in user)
 Route::middleware('auth')->post('/pesapal/initiate', [PesapalController::class, 'initiatePayment'])->name('pesapal.initiate');
 

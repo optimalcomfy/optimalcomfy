@@ -174,7 +174,12 @@ export default function CustomerLogin({ status, canResetPassword }) {
                                     <p className="text-center text-gray-600">
                                         Don't have an account?
                                         <Link
-                                            href={route('register')}
+                                            href={route('c-register', { 
+                                                property_id: property.id, 
+                                                check_in_date: checkInDate, 
+                                                check_out_date: checkOutDate,
+                                                variation_id: variationId || null
+                                            })}
                                             className="ml-2 text-peach hover:text-peachDark font-semibold hover:underline transition-colors"
                                         >
                                             Create one today

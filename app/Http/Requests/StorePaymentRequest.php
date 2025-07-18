@@ -30,7 +30,14 @@ class StorePaymentRequest extends FormRequest
             'method' => 'nullable',
             'status' => 'nullable',
             'car_booking_id' => 'nullable',
-            'transaction_id' => 'nullable'
+            'transaction_id' => 'nullable',
+            'phone' => 'nullable',
+            'checkout_request_id' => 'nullable',
+            'merchant_request_id' => 'nullable',
+            'mpesa_receipt' => 'nullable',
+            'transaction_date' => 'nullable',
+            'transaction_id' => 'nullable',
+            'failure_reason' => 'nullable'
         ];
     }
 }

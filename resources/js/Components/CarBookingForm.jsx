@@ -393,6 +393,44 @@ const CarBookingForm = () => {
                       </div>
                     </div>
 
+
+                    <div className="mb-4">
+                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                        Phone Number
+                      </label>
+                      <div className="relative flex gap-1">
+                        <div className="border rounded-tl-lg px-1 border-gray-300 rounded-bl-lg inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                          +254
+                        </div>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          className="pl-14 w-full px-4 py-3 rounded-tr-lg border-gray-300 rounded-br-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition-all"
+                          placeholder="712345678"
+                          pattern="[0-9]{9}"
+                          maxLength="9"
+                          required
+                          inputMode="numeric"
+                          value={data.phone.replace(/^254/, '')} // Remove 254 prefix if it exists
+                          onChange={(e) => {
+                            // Remove any non-digit characters
+                            const value = e.target.value.replace(/\D/g, '');
+                            
+                            // Update state with full phone number (254 prefix + entered digits)
+                            setData({
+                              ...data,
+                              phone: '254' + value
+                            });
+                            
+                            // Update the input value (without the prefix)
+                            e.target.value = value;
+                          }}
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">Enter your 9-digit phone number after 254</p>
+                    </div>
+
                     <button
                       onClick={handleSubmit}
                       disabled={processing}

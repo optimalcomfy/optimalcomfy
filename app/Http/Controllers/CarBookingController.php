@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\PesapalController;
 use Carbon\Carbon;
+use App\Http\Controllers\MpesaStkController;
 
 class CarBookingController extends Controller
 {
@@ -71,58 +72,73 @@ class CarBookingController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-	public function store(StoreCarBookingRequest $request)
-	{
-	    $validatedData = $request->validated();
-	    $user = Auth::user();
-	    $validatedData['user_id'] = $user->id;
 
-	    $car = Car::findOrFail($request->car_id); // Use findOrFail for safety
+     
+    public function store(StoreCarBookingRequest $request)
+    {
+        $validatedData = $request->validated();
+        $user = Auth::user();
+        $validatedData['user_id'] = $user->id;
 
-	    // Calculate number of days
-	    $startDate = Carbon::parse($request->start_date);
-	    $endDate = Carbon::parse($request->end_date);
-	    $days = $startDate->diffInDays($endDate);
+        $car = Car::findOrFail($request->car_id); // Use findOrFail for safety
 
-	    // Ensure at least 1 day
-	    $days = max($days, 1);
+        // Calculate number of days
+        $startDate = Carbon::parse($request->start_date);
+        $endDate = Carbon::parse($request->end_date);
+        $days = $startDate->diffInDays($endDate);
 
-	    $totalPrice = $car->price_per_day * $days;
+        // Ensure at least 1 day
+        $days = max($days, 1);
 
-	    $booking = CarBooking::create([
-	        'user_id'         => $user->id,
-	        'car_id'          => $request->car_id,
-	        'start_date'      => $request->start_date,
-	        'end_date'        => $request->end_date,
-	        'total_price'     => $totalPrice,
-	        'pickup_location' => $request->pickup_location,
-	        'dropoff_location'=> $request->pickup_location,
-	        'status'          => 'pending',
-	        'special_requests'=> $request->special_requests,
-	    ]);
+        $totalPrice = $car->price_per_day * $days;
 
-	    try {
-	        $pesapal = new PesapalController();
+        $booking = CarBooking::create([
+            'user_id'         => $user->id,
+            'car_id'          => $request->car_id,
+            'start_date'      => $request->start_date,
+            'end_date'        => $request->end_date,
+            'total_price'     => $totalPrice,
+            'pickup_location' => $request->pickup_location,
+            'dropoff_location'=> $request->pickup_location,
+            'status'          => 'pending',
+            'special_requests'=> $request->special_requests,
+        ]);
 
-	        $paymentResponse = $pesapal->initiatePayment(new Request([
-	            'amount' => $booking->total_price,
-	            'booking_id' => $booking->id,
-	            'booking_type' => 'car'
-	        ]));
+        try {
+            $mpesaController = new MpesaStkController(new MpesaStkService());
+            
+            $paymentResponse = $mpesaController->initiatePayment(new Request([
+                'phone' => $request->phone, // Make sure phone is included in your StoreCarBookingRequest validation
+                'amount' => $booking->total_price,
+                'booking_id' => $booking->id,
+                'booking_type' => 'car'
+            ]));
 
-	    } catch (\Exception $e) {
-	        \Log::error('Pesapal payment initiation failed: ' . $e->getMessage());
-	        return back()->withErrors('Payment initiation failed due to a system error.');
-	    }
+            $responseData = $paymentResponse->getData();
 
-	    if (!empty($paymentResponse->original['url']) && filter_var($paymentResponse->original['url'], FILTER_VALIDATE_URL)) {
-	        return view('iframe', [
-	            'iframeUrl' => $paymentResponse->original['url'],
-	        ]);
-	    }
+            if ($responseData->success) {
+                // STK Push initiated successfully
+                return redirect()->route('car.booking.payment.pending', [
+                    'booking' => $booking->id,
+                    'message' => 'Payment initiated. Please complete the M-Pesa payment on your phone.'
+                ]);
+            } else {
+                // STK Push initiation failed
+                $booking->update(['status' => 'failed']);
+                return back()
+                    ->withInput()
+                    ->withErrors(['payment' => $responseData->message ?? 'Payment initiation failed']);
+            }
 
-	    return back()->withErrors('Payment initiation failed');
-	}
+        } catch (\Exception $e) {
+            \Log::error('M-Pesa payment initiation failed: ' . $e->getMessage());
+            $booking->update(['status' => 'failed']);
+
+            return back()
+                ->withInput()
+                ->withErrors(['payment' => 'Payment initiation failed due to a system error.']);
+        }
+    }
 
 
     public function add(StoreCarBookingRequest $request)

@@ -172,7 +172,11 @@ export default function CRLogin({ status, canResetPassword }) {
                                     <p className="text-center text-gray-600">
                                         Don't have an account?
                                         <Link
-                                            href={route('register')}
+                                        href={route('cr-register', { 
+                                            car_id: car.id, 
+                                            check_in_date: checkInDate, 
+                                            check_out_date: checkOutDate
+                                        })}
                                             className="ml-2 text-peach hover:text-peachDark font-semibold hover:underline transition-colors"
                                         >
                                             Create one today

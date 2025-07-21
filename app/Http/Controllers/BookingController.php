@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\CarBooking;
 use App\Models\User;
 use App\Models\Property;
+use App\Models\Payment;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,9 +16,13 @@ use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\PesapalController;
 use App\Http\Controllers\MpesaStkController;
 use App\Services\MpesaStkService;
+use App\Traits\Mpesa;
 
 class BookingController extends Controller
 {
+
+    use Mpesa;
+
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -93,30 +98,27 @@ class BookingController extends Controller
         ]);
 
         try {
-            $mpesaController = new MpesaStkController(new MpesaStkService());
-            
-            $paymentResponse = $mpesaController->initiatePayment(new Request([
+
+            $callbackUrl = url('/').'/api/mpesa/stk/callback?data='.urlencode(json_encode([
                 'phone' => $request->phone,
                 'amount' => $booking->total_price,
                 'booking_id' => $booking->id,
                 'booking_type' => 'property'
             ]));
 
-            $responseData = $paymentResponse->getData();
+            $this->STKPush(
+                'Paybill',
+                $booking->total_price,
+                $request->phone,
+                $callbackUrl,
+                'reference',
+                'Appointment booking'
+            );
 
-            if ($responseData->success) {
-                // STK Push initiated successfully
-                return redirect()->route('booking.payment.pending', [
-                    'booking' => $booking->id,
-                    'message' => 'Payment initiated. Please complete the M-Pesa payment on your phone.'
-                ]);
-            } else {
-                // STK Push initiation failed
-                $booking->update(['status' => 'failed']);
-                return back()
-                    ->withInput()
-                    ->withErrors(['payment' => $responseData->message ?? 'Payment initiation failed']);
-            }
+            return redirect()->route('booking.payment.pending', [
+                'booking' => $booking->id,
+                'message' => 'Payment initiated. Please complete the M-Pesa payment on your phone.'
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('M-Pesa payment initiation failed: ' . $e->getMessage());
@@ -126,6 +128,127 @@ class BookingController extends Controller
                 ->withInput()
                 ->withErrors(['payment' => 'Payment initiation failed due to a system error.']);
         }
+    }
+
+    /**
+ * Handle M-Pesa STK Push callback
+ */
+    public function handleMpesaCallback(Request $request)
+    {
+        // Log the raw callback data for debugging
+        \Log::info('M-Pesa Callback Received:', $request->all());
+
+        try {
+            // Parse the callback data
+            $callbackData = $request->json()->all();
+            
+            // Extract the transaction details from callback
+            $resultCode = $callbackData['Body']['stkCallback']['ResultCode'] ?? null;
+            $resultDesc = $callbackData['Body']['stkCallback']['ResultDesc'] ?? null;
+            $merchantRequestID = $callbackData['Body']['stkCallback']['MerchantRequestID'] ?? null;
+            $checkoutRequestID = $callbackData['Body']['stkCallback']['CheckoutRequestID'] ?? null;
+            
+            // Get the additional data passed in the callback URL
+            $callbackParams = json_decode($request->query('data'), true);
+            
+            // Find the related booking
+            $booking = Booking::find($callbackParams['booking_id'] ?? null);
+            
+            if (!$booking) {
+                \Log::error('Booking not found for callback', ['callbackParams' => $callbackParams]);
+                return response()->json(['message' => 'Booking not found'], 404);
+            }
+
+            // Prepare payment data
+            $paymentData = [
+                'user_id' => $booking->user_id,
+                'booking_id' => $booking->id,
+                'amount' => $callbackParams['amount'] ?? $booking->total_price,
+                'method' => 'mpesa',
+                'phone' => $callbackParams['phone'] ?? null,
+                'checkout_request_id' => $checkoutRequestID,
+                'merchant_request_id' => $merchantRequestID,
+                'booking_type' => $callbackParams['booking_type'] ?? 'property',
+                'status' => $resultCode === 0 ? 'completed' : 'failed',
+                'failure_reason' => $resultCode !== 0 ? $resultDesc : null,
+            ];
+
+            // If payment was successful
+            if ($resultCode === 0) {
+                $callbackMetadata = $callbackData['Body']['stkCallback']['CallbackMetadata']['Item'] ?? [];
+                
+                // Extract M-Pesa receipt details from callback metadata
+                foreach ($callbackMetadata as $item) {
+                    switch ($item['Name']) {
+                        case 'MpesaReceiptNumber':
+                            $paymentData['mpesa_receipt'] = $item['Value'];
+                            break;
+                        case 'TransactionDate':
+                            $paymentData['transaction_date'] = date('Y-m-d H:i:s', strtotime($item['Value']));
+                            break;
+                        case 'Amount':
+                            $paymentData['amount'] = $item['Value'];
+                            break;
+                        case 'PhoneNumber':
+                            $paymentData['phone'] = $item['Value'];
+                            break;
+                    }
+                }
+
+                // Update booking status
+                $booking->update(['status' => 'paid']);
+            } else {
+                // Payment failed
+                $booking->update(['status' => 'failed']);
+            }
+
+            // Create payment record
+            $payment = Payment::create($paymentData);
+
+            \Log::info('Payment processed:', [
+                'booking_id' => $booking->id,
+                'status' => $payment->status,
+                'mpesa_receipt' => $payment->mpesa_receipt ?? null
+            ]);
+
+            // Return success response to M-Pesa
+            return response()->json([
+                'ResultCode' => 0,
+                'ResultDesc' => 'Callback processed successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('M-Pesa callback processing failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'callbackData' => $request->all()
+            ]);
+
+            return response()->json([
+                'ResultCode' => 1,
+                'ResultDesc' => 'Error processing callback'
+            ], 500);
+        }
+    }
+
+
+
+    public function paymentPending(Booking $booking, Request $request)
+    {
+        return Inertia::render('PaymentPending', [
+            'booking' => $booking,
+            'message' => $request->message ?? 'Payment is being processed.'
+        ]);
+    }
+
+
+    public function paymentStatus(Booking $booking)
+    {
+        return response()->json([
+            'status' => $booking->status,
+            'paid' => $booking->status === 'paid',
+            'amount' => $booking->total_price,
+            'last_updated' => $booking->updated_at->toISOString()
+        ]);
     }
 
 

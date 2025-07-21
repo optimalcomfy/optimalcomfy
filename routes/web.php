@@ -185,6 +185,11 @@ Route::get('/booking/failed', function () {
 
 Route::post('/mpesa/stk/initiate', [MpesaStkController::class, 'initiatePayment']);
 
+Route::get('/booking/{booking}/payment-pending', [BookingController::class, 'paymentPending'])
+    ->name('booking.payment.pending');
 
+
+Route::get('/api/booking/{booking}/payment-status', [BookingController::class, 'paymentStatus'])
+    ->name('booking.payment.status');
 
 require __DIR__.'/auth.php';

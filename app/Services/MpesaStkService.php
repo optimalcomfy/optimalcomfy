@@ -45,7 +45,6 @@ class MpesaStkService
         }
     }
 
-    // Example STK method
     public function initiateStkPush($phone, $amount, $reference, $description)
     {
         try {
@@ -53,8 +52,6 @@ class MpesaStkService
             $timestamp = now()->format('YmdHis');
             $password = base64_encode($this->businessShortCode . $this->passkey . $timestamp);
             $accessToken = $this->generateAccessToken();
-
-            Log::info('Initiating STK');
 
             $response = Http::withToken($accessToken)
                 ->post("{$this->baseUrl}/mpesa/stkpush/v1/processrequest", [
@@ -66,17 +63,22 @@ class MpesaStkService
                     'PartyA' => $phone,
                     'PartyB' => $this->businessShortCode,
                     'PhoneNumber' => $phone,
-                    'CallBackURL' => $this->callbackUrl,
+                    'CallBackURL' => $this->callbackUrl . '/mpesa/callback',
                     'AccountReference' => $reference,
                     'TransactionDesc' => $description
                 ]);
 
-            Log::info('M-Pesa STK Response', [
-                'response' => $response->json()
-            ]);
+            $body = $response->json();
 
+            if ($response->successful() && isset($body['ResponseCode']) && $body['ResponseCode'] == '0') {
+                return array_merge(['success' => true], $body);
+            }
 
-            return $response->json();
+            return [
+                'success' => false,
+                'error' => 'STK_PUSH_FAILED',
+                'description' => $body['errorMessage'] ?? 'Unknown error'
+            ];
         } catch (Exception $e) {
             Log::error('M-Pesa STK Push failed', ['error' => $e->getMessage()]);
             return ['error' => 'MPESA_REQUEST_FAILED'];
@@ -109,4 +111,26 @@ class MpesaStkService
 
         throw new Exception('Invalid phone number format');
     }
+
+    public function registerC2BUrls()
+    {
+        try {
+            $accessToken = $this->generateAccessToken();
+
+            $response = Http::withToken($accessToken)->post("{$this->baseUrl}/mpesa/c2b/v1/registerurl", [
+                "ShortCode" => $this->businessShortCode,
+                "ResponseType" => "Completed",
+                "ConfirmationURL" => $this->callbackUrl . "/mpesa/c2b/confirmation",
+                "ValidationURL" => $this->callbackUrl . "/mpesa/c2b/validation",
+            ]);
+
+            Log::info('Registered C2B URLs', ['response' => $response->json()]);
+
+            return $response->json();
+        } catch (Exception $e) {
+            Log::error('C2B URL Registration Failed', ['error' => $e->getMessage()]);
+            return ['error' => 'C2B_REGISTRATION_FAILED'];
+        }
+    }
 }
+

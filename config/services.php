@@ -40,10 +40,10 @@ return [
     'mpesa' => [
         'consumer_key' => env('MPESA_CONSUMER_KEY'),
         'consumer_secret' => env('MPESA_CONSUMER_SECRET'),
-        'passkey' => env('MPESA_PASSKEY'), // Optional, if you use passkey for STK
+        'passkey' => env('MPESA_PASSKEY'),
         'business_shortcode' => env('MPESA_BUSINESS_SHORTCODE'),
         'callback_url' => env('MPESA_CALLBACK_URL'),
-        'base_url' => env('MPESA_BASE_URL', 'https://sandbox.safaricom.co.ke'),
+        'base_url' => env('MPESA_BASE_URL', 'https://api.safaricom.co.ke'),
     ],
 
 ];

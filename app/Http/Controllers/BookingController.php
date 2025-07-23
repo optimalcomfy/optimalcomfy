@@ -82,7 +82,7 @@ class BookingController extends Controller
             'check_out_date' => 'required|date|after:check_in_date',
             'total_price' => 'required|numeric|min:1',
             'variation_id' => 'nullable',
-            'phone' => 'required|string' // Add phone number validation for M-Pesa
+            'phone' => 'required|string' 
         ]);
 
         $user = Auth::user();
@@ -93,18 +93,23 @@ class BookingController extends Controller
             'check_in_date' => $request->check_in_date,
             'check_out_date' => $request->check_out_date,
             'total_price' => $request->total_price,
-            'status' => 'pending', // Will be updated when payment is confirmed
+            'status' => 'pending',
             'variation_id' => $request->variation_id
         ]);
 
         try {
 
-            $callbackUrl = url('/').'/api/mpesa/stk/callback?data='.urlencode(json_encode([
+            $callbackBase = config('services.mpesa.callback_url') 
+                ?? secure_url('/api/mpesa/stk/callback');
+
+            $callbackData = [
                 'phone' => $request->phone,
                 'amount' => $booking->total_price,
                 'booking_id' => $booking->id,
                 'booking_type' => 'property'
-            ]));
+            ];
+
+            $callbackUrl = $callbackBase . '?data=' . urlencode(json_encode($callbackData));
 
             $this->STKPush(
                 'Paybill',

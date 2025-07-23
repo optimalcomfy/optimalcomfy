@@ -44,6 +44,11 @@ return [
         'business_shortcode' => env('MPESA_BUSINESS_SHORTCODE'),
         'callback_url' => env('MPESA_CALLBACK_URL'),
         'base_url' => env('MPESA_BASE_URL', 'https://api.safaricom.co.ke'),
+        // New Mpesa configuration properties
+        'initiator_name' => env('MPESA_INITIATOR_NAME'),
+        'security_credential' => env('MPESA_SECURITY_CREDENTIAL'),
+        'result_url' => env('MPESA_RESULT_URL'),
+        'queue_timeout_url' => env('MPESA_QUEUE_TIMEOUT_URL'),
     ],
 
 ];

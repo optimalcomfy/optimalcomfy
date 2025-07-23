@@ -12,8 +12,14 @@ trait Mpesa
     protected $consumerSecret;
     protected $passkey;
     protected $businessShortCode;
-    protected $callbackUrl;
+    protected $callbackUrl; // For STK Push callback
     protected $baseUrl;
+
+    // New properties for additional Mpesa APIs
+    protected $initiatorName;
+    protected $securityCredential; // Encrypted password for B2C, B2B, Reversal, Account Balance, Transaction Status, Check Identity
+    protected $resultURL;        // Common Result URL for asynchronous responses
+    protected $queueTimeOutURL;  // Common Queue Timeout URL for asynchronous responses
 
     public function __construct()
     {
@@ -22,8 +28,14 @@ trait Mpesa
         $this->consumerSecret = config('services.mpesa.consumer_secret');
         $this->passkey = config('services.mpesa.passkey');
         $this->businessShortCode = config('services.mpesa.business_shortcode');
-        $this->callbackUrl = config('services.mpesa.callback_url'); // You can set a default callback in your config
+        $this->callbackUrl = config('services.mpesa.callback_url'); // For STK Push callback
         $this->baseUrl = config('services.mpesa.base_url');
+
+        // Initialize new configuration properties
+        $this->initiatorName = config('services.mpesa.initiator_name');
+        $this->securityCredential = config('services.mpesa.security_credential'); // This should be an encrypted password
+        $this->resultURL = config('services.mpesa.result_url');
+        $this->queueTimeOutURL = config('services.mpesa.queue_timeout_url');
 
         $this->validateConfig();
         Log::info('Mpesa configuration initialized successfully.');
@@ -38,6 +50,11 @@ trait Mpesa
             'passkey',
             'businessShortCode',
             'baseUrl',
+            // Add new required configs if they are mandatory for all operations
+            // 'initiatorName',
+            // 'securityCredential',
+            // 'resultURL',
+            // 'queueTimeOutURL',
         ];
 
         foreach ($required as $key) {
@@ -58,9 +75,8 @@ trait Mpesa
      */
     public function lipaNaMpesaPassword(?string $timestamp = null): string
     {
-        // ✅ FIXED: Use the provided timestamp or generate a new one if not provided.
-        $timestampToUse = $timestamp ?? Carbon::rawParse('now')->format('YmdHms');
-        $password = base64_encode($this->businessShortCode . $this->passkey . $timestampToUse);
+        $timestampToUse = $timestamp ?? Carbon::rawParse('now')->format('YmdHis'); 
+        $password = base64_encode($this->businessShortCode . $this->passkey . $timestampToUse); 
         Log::info("Generated Lipa Na Mpesa password.", ['timestamp' => $timestampToUse]);
         return $password;
     }
@@ -79,8 +95,6 @@ trait Mpesa
                 CURLOPT_HTTPHEADER => ["Authorization: Basic " . $credentials],
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HEADER => false,
-                // ✅ CRITICAL: Set to true in production for security.
-                // This verifies the M-Pesa server's SSL certificate.
                 CURLOPT_SSL_VERIFYPEER => true, 
             ]);
 
@@ -124,15 +138,22 @@ trait Mpesa
         $url = $this->baseUrl . '/mpesa/stkpush/v1/processrequest';
         $phone = '254' . substr($phone, -9); // Sanitize phone number
 
-        // ✅ FIXED: Generate a single timestamp to be used for both password and payload.
-        $timestamp = Carbon::rawParse('now')->format('YmdHms');
+        $currentTime = Carbon::rawParse('now');
+        $formattedTimestamp = $currentTime->format('YmdHis'); 
+        $phpDefaultTimezone = date_default_timezone_get();
+
+        Log::info('STK Push Timestamp Debug', [
+            'Carbon::rawParse(now) object' => $currentTime->toDateTimeString(),
+            'Formatted Timestamp (YmdHis)' => $formattedTimestamp, 
+            'PHP Default Timezone' => $phpDefaultTimezone,
+            'Carbon Timezone' => $currentTime->getTimezone()->getName(),
+            'Server Time (from date command)' => exec('date +"%Y-%m-%d %H:%M:%S %Z"'), 
+        ]);
 
         $payload = [
             'BusinessShortCode' => $this->businessShortCode,
-            // ✅ FIXED: Pass the unified timestamp to the password generation function.
-            'Password' => $this->lipaNaMpesaPassword($timestamp), 
-            // ✅ FIXED: Use the unified timestamp for the payload.
-            'Timestamp' => $timestamp, 
+            'Password' => $this->lipaNaMpesaPassword($formattedTimestamp), 
+            'Timestamp' => $formattedTimestamp, 
             'TransactionType' => ($type == 'Paybill') ? 'CustomerPayBillOnline' : 'CustomerBuyGoodsOnline',
             'Amount' => $amount,
             'PartyA' => $phone,
@@ -144,20 +165,18 @@ trait Mpesa
         ];
 
         Log::info('STK Push payload prepared.', ['payload' => $payload]);
-        $curl = null; // Initialize curl
+        $curl = null; 
         try {
             $curl = curl_init();
             curl_setopt_array($curl, [
                 CURLOPT_URL => $url,
                 CURLOPT_HTTPHEADER => [
                     'Content-Type:application/json',
-                    // ✅ FIXED: Ensure space after 'Bearer' and regenerate token for each request.
                     'Authorization: Bearer ' . $this->generateAccessToken()
                 ],
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => json_encode($payload),
-                // ✅ CRITICAL: Set to true in production for security.
                 CURLOPT_SSL_VERIFYPEER => true,
             ]);
 
@@ -167,13 +186,12 @@ trait Mpesa
             }
             
             $decodedResponse = json_decode($response, true);
-            // ✅ IMPROVEMENT: Log the decoded array for cleaner log files.
             Log::info('STK Push response received.', ['response' => $decodedResponse]);
 
             return $decodedResponse;
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            throw $e; // Re-throw exception to be caught by the controller
+            throw $e; 
         } finally {
             if (isset($curl)) {
                 curl_close($curl);
@@ -185,14 +203,13 @@ trait Mpesa
     {
         Log::info('Registering Mpesa C2B URLs...', compact('confirmationURL', 'validationURL'));
 
-        $curl = null; // Initialize curl
+        $curl = null; 
         try {
             $curl = curl_init();
             curl_setopt_array($curl, [
                 CURLOPT_URL => $this->baseUrl . '/mpesa/c2b/v1/registerurl',
                 CURLOPT_HTTPHEADER => [
                     'Content-Type:application/json',
-                    // ✅ FIXED: Ensure space after 'Bearer' and regenerate token for each request.
                     'Authorization: Bearer ' . $this->generateAccessToken()
                 ],
                 CURLOPT_RETURNTRANSFER => true,
@@ -203,7 +220,6 @@ trait Mpesa
                     'ConfirmationURL' => $confirmationURL,
                     'ValidationURL' => $validationURL,
                 ]),
-                // ✅ CRITICAL: Set to true in production for security.
                 CURLOPT_SSL_VERIFYPEER => true,
             ]);
 
@@ -218,7 +234,455 @@ trait Mpesa
             return $decodedResponse;
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            throw $e; // Re-throw exception to be caught by the controller
+            throw $e; 
+        } finally {
+            if (isset($curl)) {
+                curl_close($curl);
+            }
+        }
+    }
+
+    /**
+     * Initiates a B2C (Business to Customer) payment request.
+     * @param string $amount The amount to be paid.
+     * @param string $partyB The customer's phone number in 2547xx... format.
+     * @param string $remarks A short description of the transaction.
+     * @param string $commandID The unique command identifier (e.g., 'BusinessPayment', 'PromotionPayment').
+     * @param string|null $occasion Optional: Any other relevant information.
+     * @return array The response from the M-Pesa API.
+     */
+    public function b2cPayment(string $amount, string $partyB, string $remarks, string $commandID = 'BusinessPayment', ?string $occasion = null): array
+    {
+        Log::info('Initiating B2C Payment...', compact('amount', 'partyB', 'remarks', 'commandID', 'occasion'));
+
+        $url = $this->baseUrl . '/mpesa/b2c/v3/paymentrequest';
+        $partyB = '254' . substr($partyB, -9); // Sanitize phone number
+
+        $payload = [
+            'InitiatorName' => $this->initiatorName,
+            'SecurityCredential' => $this->securityCredential,
+            'CommandID' => $commandID,
+            'Amount' => $amount,
+            'PartyA' => $this->businessShortCode, // Your shortcode
+            'PartyB' => $partyB, // Customer's phone number
+            'Remarks' => $remarks,
+            'QueueTimeOutURL' => $this->queueTimeOutURL,
+            'ResultURL' => $this->resultURL,
+            'Occasion' => $occasion,
+        ];
+
+        Log::info('B2C Payment payload prepared.', ['payload' => $payload]);
+        $curl = null;
+        try {
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $url,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type:application/json',
+                    'Authorization: Bearer ' . $this->generateAccessToken()
+                ],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+
+            $response = curl_exec($curl);
+            if ($response === false) {
+                throw new Exception('Curl error during B2C Payment: ' . curl_error($curl));
+            }
+            
+            $decodedResponse = json_decode($response, true);
+            Log::info('B2C Payment response received.', ['response' => $decodedResponse]);
+
+            return $decodedResponse;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            throw $e;
+        } finally {
+            if (isset($curl)) {
+                curl_close($curl);
+            }
+        }
+    }
+
+    /**
+     * Initiates a B2B (Business to Business) payment request.
+     * @param string $amount The amount to be paid.
+     * @param string $partyB The recipient business shortcode.
+     * @param string $accountReference A unique identifier for the transaction.
+     * @param string $remarks A short description of the transaction.
+     * @param string $commandID The unique command identifier (e.g., 'BusinessPayBill', 'BusinessBuyGoods').
+     * @param string $senderIdentifierType The type of PartyA (e.g., '4' for Till Number, '6' for Paybill).
+     * @param string $receiverIdentifierType The type of PartyB (e.g., '4' for Till Number, '6' for Paybill).
+     * @return array The response from the M-Pesa API.
+     */
+    public function b2bPayment(
+        string $amount, 
+        string $partyB, 
+        string $accountReference, 
+        string $remarks, 
+        string $commandID = 'BusinessPayBill',
+        string $senderIdentifierType = '4', // Default to Till Number
+        string $receiverIdentifierType = '4' // Default to Till Number
+    ): array
+    {
+        Log::info('Initiating B2B Payment...', compact('amount', 'partyB', 'accountReference', 'remarks', 'commandID', 'senderIdentifierType', 'receiverIdentifierType'));
+
+        $url = $this->baseUrl . '/mpesa/b2b/v1/paymentrequest';
+
+        $payload = [
+            'Initiator' => $this->initiatorName,
+            'SecurityCredential' => $this->securityCredential,
+            'CommandID' => $commandID,
+            'SenderIdentifierType' => $senderIdentifierType,
+            'RecieverIdentifierType' => $receiverIdentifierType,
+            'Amount' => $amount,
+            'PartyA' => $this->businessShortCode, // Your shortcode
+            'PartyB' => $partyB, // Recipient business shortcode
+            'AccountReference' => $accountReference,
+            'Remarks' => $remarks,
+            'QueueTimeOutURL' => $this->queueTimeOutURL,
+            'ResultURL' => $this->resultURL,
+        ];
+
+        Log::info('B2B Payment payload prepared.', ['payload' => $payload]);
+        $curl = null;
+        try {
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $url,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type:application/json',
+                    'Authorization: Bearer ' . $this->generateAccessToken()
+                ],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+
+            $response = curl_exec($curl);
+            if ($response === false) {
+                throw new Exception('Curl error during B2B Payment: ' . curl_error($curl));
+            }
+            
+            $decodedResponse = json_decode($response, true);
+            Log::info('B2B Payment response received.', ['response' => $decodedResponse]);
+
+            return $decodedResponse;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            throw $e;
+        } finally {
+            if (isset($curl)) {
+                curl_close($curl);
+            }
+        }
+    }
+
+    /**
+     * Queries the status of an STK Push transaction.
+     * @param string $checkoutRequestID The CheckoutRequestID returned by the STK Push request.
+     * @return array The response from the M-Pesa API.
+     */
+    public function STKPushQuery(string $checkoutRequestID): array
+    {
+        Log::info('Querying STK Push status...', compact('checkoutRequestID'));
+
+        $url = $this->baseUrl . '/mpesa/stkpushquery/v1/query';
+
+        $currentTime = Carbon::rawParse('now');
+        $formattedTimestamp = $currentTime->format('YmdHis'); 
+
+        $payload = [
+            'BusinessShortCode' => $this->businessShortCode,
+            'Password' => $this->lipaNaMpesaPassword($formattedTimestamp), 
+            'Timestamp' => $formattedTimestamp, 
+            'CheckoutRequestID' => $checkoutRequestID,
+        ];
+
+        Log::info('STK Push Query payload prepared.', ['payload' => $payload]);
+        $curl = null;
+        try {
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $url,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type:application/json',
+                    'Authorization: Bearer ' . $this->generateAccessToken()
+                ],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+
+            $response = curl_exec($curl);
+            if ($response === false) {
+                throw new Exception('Curl error during STK Push Query: ' . curl_error($curl));
+            }
+            
+            $decodedResponse = json_decode($response, true);
+            Log::info('STK Push Query response received.', ['response' => $decodedResponse]);
+
+            return $decodedResponse;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            throw $e;
+        } finally {
+            if (isset($curl)) {
+                curl_close($curl);
+            }
+        }
+    }
+
+    /**
+     * Initiates a Reversal request for a transaction.
+     * @param string $transactionID The M-Pesa Transaction ID of the transaction to be reversed.
+     * @param string $amount The amount to be reversed.
+     * @param string $remarks A short description of the reversal.
+     * @param string $occasion Optional: Any other relevant information.
+     * @return array The response from the M-Pesa API.
+     */
+    public function reversal(string $transactionID, string $amount, string $remarks, ?string $occasion = null): array
+    {
+        Log::info('Initiating Reversal...', compact('transactionID', 'amount', 'remarks', 'occasion'));
+
+        $url = $this->baseUrl . '/mpesa/reversal/v1/request';
+
+        $payload = [
+            'Initiator' => $this->initiatorName,
+            'SecurityCredential' => $this->securityCredential,
+            'CommandID' => 'TransactionReversal',
+            'TransactionID' => $transactionID,
+            'Amount' => $amount,
+            'ReceiverParty' => $this->businessShortCode, // Your shortcode
+            'RecieverIdentifierType' => '4', // Default to Organization Shortcode
+            'Remarks' => $remarks,
+            'QueueTimeOutURL' => $this->queueTimeOutURL,
+            'ResultURL' => $this->resultURL,
+            'Occasion' => $occasion,
+        ];
+
+        Log::info('Reversal payload prepared.', ['payload' => $payload]);
+        $curl = null;
+        try {
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $url,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type:application/json',
+                    'Authorization: Bearer ' . $this->generateAccessToken()
+                ],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+
+            $response = curl_exec($curl);
+            if ($response === false) {
+                throw new Exception('Curl error during Reversal: ' . curl_error($curl));
+            }
+            
+            $decodedResponse = json_decode($response, true);
+            Log::info('Reversal response received.', ['response' => $decodedResponse]);
+
+            return $decodedResponse;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            throw $e;
+        } finally {
+            if (isset($curl)) {
+                curl_close($curl);
+            }
+        }
+    }
+
+    /**
+     * Queries the status of a specific transaction.
+     * @param string $transactionID The M-Pesa Transaction ID to query.
+     * @param string $partyA The shortcode or MSISDN of the party initiating the transaction.
+     * @param string $identifierType The type of PartyA (e.g., '4' for Till Number, '6' for Paybill, '1' for MSISDN).
+     * @param string $remarks A short description of the query.
+     * @param string $commandID The unique command identifier (e.g., 'TransactionStatusQuery').
+     * @param string|null $occasion Optional: Any other relevant information.
+     * @return array The response from the M-Pesa API.
+     */
+    public function transactionStatus(
+        string $transactionID, 
+        string $partyA, 
+        string $identifierType = '4', // Default to Organization Shortcode
+        string $remarks = 'Transaction Status Query', 
+        string $commandID = 'TransactionStatusQuery', 
+        ?string $occasion = null
+    ): array
+    {
+        Log::info('Querying Transaction Status...', compact('transactionID', 'partyA', 'identifierType', 'remarks', 'commandID', 'occasion'));
+
+        $url = $this->baseUrl . '/mpesa/transactionstatus/v1/query';
+
+        $payload = [
+            'Initiator' => $this->initiatorName,
+            'SecurityCredential' => $this->securityCredential,
+            'CommandID' => $commandID,
+            'TransactionID' => $transactionID,
+            'PartyA' => $partyA,
+            'IdentifierType' => $identifierType,
+            'Remarks' => $remarks,
+            'QueueTimeOutURL' => $this->queueTimeOutURL,
+            'ResultURL' => $this->resultURL,
+            'Occasion' => $occasion,
+        ];
+
+        Log::info('Transaction Status Query payload prepared.', ['payload' => $payload]);
+        $curl = null;
+        try {
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $url,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type:application/json',
+                    'Authorization: Bearer ' . $this->generateAccessToken()
+                ],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+
+            $response = curl_exec($curl);
+            if ($response === false) {
+                throw new Exception('Curl error during Transaction Status Query: ' . curl_error($curl));
+            }
+            
+            $decodedResponse = json_decode($response, true);
+            Log::info('Transaction Status Query response received.', ['response' => $decodedResponse]);
+
+            return $decodedResponse;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            throw $e;
+        } finally {
+            if (isset($curl)) {
+                curl_close($curl);
+            }
+        }
+    }
+
+    /**
+     * Queries the account balance of a specific shortcode.
+     * @param string $commandID The unique command identifier (e.g., 'AccountBalance').
+     * @param string $remarks A short description of the query.
+     * @return array The response from the M-Pesa API.
+     */
+    public function accountBalance(string $commandID = 'AccountBalance', string $remarks = 'Account Balance Query'): array
+    {
+        Log::info('Querying Account Balance...', compact('commandID', 'remarks'));
+
+        $url = $this->baseUrl . '/mpesa/accountbalance/v1/query';
+
+        $payload = [
+            'Initiator' => $this->initiatorName,
+            'SecurityCredential' => $this->securityCredential,
+            'CommandID' => $commandID,
+            'PartyA' => $this->businessShortCode,
+            'IdentifierType' => '4', // Default to Organization Shortcode
+            'Remarks' => $remarks,
+            'QueueTimeOutURL' => $this->queueTimeOutURL,
+            'ResultURL' => $this->resultURL,
+        ];
+
+        Log::info('Account Balance Query payload prepared.', ['payload' => $payload]);
+        $curl = null;
+        try {
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $url,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type:application/json',
+                    'Authorization: Bearer ' . $this->generateAccessToken()
+                ],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+
+            $response = curl_exec($curl);
+            if ($response === false) {
+                throw new Exception('Curl error during Account Balance Query: ' . curl_error($curl));
+            }
+            
+            $decodedResponse = json_decode($response, true);
+            Log::info('Account Balance Query response received.', ['response' => $decodedResponse]);
+
+            return $decodedResponse;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            throw $e;
+        } finally {
+            if (isset($curl)) {
+                curl_close($curl);
+            }
+        }
+    }
+
+    /**
+     * Checks the identity of a customer.
+     * @param string $partyA The customer's phone number in 2547xx... format.
+     * @param string $remarks A short description of the request.
+     * @param string $commandID The unique command identifier (e.g., 'CheckIdentity').
+     * @return array The response from the M-Pesa API.
+     */
+    
+    public function checkIdentity(string $partyA, string $remarks = 'Check Identity', string $commandID = 'CheckIdentity'): array
+    {
+        Log::info('Checking Identity...', compact('partyA', 'remarks', 'commandID'));
+
+        $url = $this->baseUrl . '/mpesa/checkidentity/v1/processrequest';
+        $partyA = '254' . substr($partyA, -9); // Sanitize phone number
+
+        $payload = [
+            'Initiator' => $this->initiatorName,
+            'SecurityCredential' => $this->securityCredential,
+            'CommandID' => $commandID,
+            'PartyA' => $partyA,
+            'IdentifierType' => '1', // MSISDN
+            'Remarks' => $remarks,
+            'QueueTimeOutURL' => $this->queueTimeOutURL,
+            'ResultURL' => $this->resultURL,
+        ];
+
+        Log::info('Check Identity payload prepared.', ['payload' => $payload]);
+        $curl = null;
+        try {
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $url,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type:application/json',
+                    'Authorization: Bearer ' . $this->generateAccessToken()
+                ],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+
+            $response = curl_exec($curl);
+            if ($response === false) {
+                throw new Exception('Curl error during Check Identity: ' . curl_error($curl));
+            }
+            
+            $decodedResponse = json_decode($response, true);
+            Log::info('Check Identity response received.', ['response' => $decodedResponse]);
+
+            return $decodedResponse;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            throw $e;
         } finally {
             if (isset($curl)) {
                 curl_close($curl);

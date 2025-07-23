@@ -40,7 +40,7 @@ export default function RidePaymentPending({ auth, laravelVersion, phpVersion })
                 });
                 // Redirect after delay
                 setTimeout(() => {
-                    window.location.href = route('bookings.show', booking.id);
+                    window.location.href = route('car-bookings.show', booking.id);
                 }, 3000);
             }
         } catch (error) {

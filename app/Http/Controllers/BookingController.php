@@ -139,7 +139,7 @@ class BookingController extends Controller
     /**
  * Handle M-Pesa STK Push callback
  */
-    public function handleMpesaCallback(Request $request)
+    public function handleCallback(Request $request)
     {
         // Log the raw callback data for debugging
         \Log::info('M-Pesa Callback Received:', $request->all());

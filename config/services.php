@@ -43,6 +43,7 @@ return [
         'passkey' => env('MPESA_PASSKEY'),
         'business_shortcode' => env('MPESA_BUSINESS_SHORTCODE'),
         'callback_url' => env('MPESA_CALLBACK_URL'),
+        'ride_callback_url' => env('MPESA_RIDE_CALLBACK_URL'),
         'base_url' => env('MPESA_BASE_URL', 'https://api.safaricom.co.ke'),
         // New Mpesa configuration properties
         'initiator_name' => env('MPESA_INITIATOR_NAME'),

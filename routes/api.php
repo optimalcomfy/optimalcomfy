@@ -6,6 +6,7 @@ use App\Http\Controllers\PesapalController;
 use App\Http\Controllers\WithdrawalController;
 use App\Http\Controllers\MpesaStkController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CarBookingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,3 +31,5 @@ Route::post('/mpesa/result', [WithdrawalController::class, 'handleMpesaCallback'
 Route::post('/mpesa/timeout', [WithdrawalController::class, 'handleTimeout'])->name('mpesa.timeout');
 
 Route::post('/mpesa/stk/callback', [BookingController::class, 'handleCallback']);
+
+Route::post('/mpesa/ride/stk/callback', [CarBookingController::class, 'handleCallback']);

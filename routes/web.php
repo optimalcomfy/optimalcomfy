@@ -192,4 +192,12 @@ Route::get('/booking/{booking}/payment-pending', [BookingController::class, 'pay
 Route::get('/api/booking/{booking}/payment-status', [BookingController::class, 'paymentStatus'])
     ->name('booking.payment.status');
 
+
+Route::get('/ride/{booking}/payment-pending', [CarBookingController::class, 'paymentPending'])
+    ->name('ride.payment.pending');
+
+
+Route::get('/api/ride/{booking}/payment-status', [CarBookingController::class, 'paymentStatus'])
+    ->name('ride.payment.status');
+
 require __DIR__.'/auth.php';

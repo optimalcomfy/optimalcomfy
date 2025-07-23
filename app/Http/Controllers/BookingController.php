@@ -89,6 +89,8 @@ class BookingController extends Controller
             'phone' => 'required|string' 
         ]);
 
+        // 
+
         $user = Auth::user();
 
         $booking = Booking::create([

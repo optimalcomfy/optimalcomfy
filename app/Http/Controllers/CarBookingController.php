@@ -172,7 +172,7 @@ class CarBookingController extends Controller
             $callbackParams = json_decode($request->query('data'), true);
             
             // Find the related booking
-            $booking = CarBooking::find($callbackParams['booking_id'] ?? null);
+            $booking = CarBooking::with('car')->find($callbackParams['booking_id'] ?? null);
             
             if (!$booking) {
                 \Log::error('Booking not found for callback', ['callbackParams' => $callbackParams]);
@@ -225,7 +225,7 @@ class CarBookingController extends Controller
             // Create payment record
             $payment = Payment::create($paymentData);
 
-            if($payment) {
+            if($resultCode === 0) {
                 $user  = User::find($booking->user_id);
 
                 Mail::to($user->email)

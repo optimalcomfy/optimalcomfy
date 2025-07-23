@@ -214,7 +214,7 @@ class BookingController extends Controller
             // Create payment record
             $payment = Payment::create($paymentData);
 
-            if($payment) {
+            if($resultCode === 0) {
                 $propertyBookingWithRelations = Booking::with(['user', 'property', 'payments'])
                                                 ->find($booking->id);
                     

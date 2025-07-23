@@ -104,8 +104,7 @@ class BookingController extends Controller
 
             $callbackData = [
                 'phone' => $request->phone,
-                // 'amount' => $booking->total_price,
-                'amount'=>1,
+                'amount' => $booking->total_price,
                 'booking_id' => $booking->id,
                 'booking_type' => 'property'
             ];
@@ -114,7 +113,8 @@ class BookingController extends Controller
 
             $this->STKPush(
                 'Paybill',
-                $booking->total_price,
+                1,
+                // $booking->total_price,
                 $request->phone,
                 $callbackUrl,
                 'reference',

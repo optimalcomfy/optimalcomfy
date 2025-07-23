@@ -18,6 +18,10 @@ use App\Http\Controllers\MpesaStkController;
 use App\Services\MpesaStkService;
 use App\Traits\Mpesa;
 
+use App\Mail\BookingConfirmation;
+use App\Mail\CarBookingConfirmation;
+use Illuminate\Support\Facades\Mail;
+
 class BookingController extends Controller
 {
 
@@ -64,12 +68,12 @@ class BookingController extends Controller
         $query = Property::with(['bookings', 'variations']);
 
         if ($user->role_id == 2) { 
-            $query->where('user_id', $user->id);  // Simplified the relationship query
+            $query->where('user_id', $user->id);
         }
 
         return Inertia::render('Bookings/Create', [
             'users' => $users,
-            'properties' => $query->get(),  // Added ->get() to execute the query
+            'properties' => $query->get(), 
         ]);
     }
 
@@ -141,8 +145,6 @@ class BookingController extends Controller
  */
     public function handleCallback(Request $request)
     {
-        // Log the raw callback data for debugging
-        \Log::info('M-Pesa Callback Received:', $request->all());
 
         try {
             // Parse the callback data
@@ -211,11 +213,13 @@ class BookingController extends Controller
             // Create payment record
             $payment = Payment::create($paymentData);
 
-            \Log::info('Payment processed:', [
-                'booking_id' => $booking->id,
-                'status' => $payment->status,
-                'mpesa_receipt' => $payment->mpesa_receipt ?? null
-            ]);
+            if($payment) {
+                $propertyBookingWithRelations = Booking::with(['user', 'property', 'payments'])
+                                                ->find($booking->id);
+                    
+                    Mail::to($propertyBookingWithRelations->user->email)
+                    ->send(new BookingConfirmation($propertyBookingWithRelations));
+            }
 
             // Return success response to M-Pesa
             return response()->json([
@@ -224,11 +228,6 @@ class BookingController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('M-Pesa callback processing failed: ' . $e->getMessage(), [
-                'exception' => $e,
-                'callbackData' => $request->all()
-            ]);
-
             return response()->json([
                 'ResultCode' => 1,
                 'ResultDesc' => 'Error processing callback'

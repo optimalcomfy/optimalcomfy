@@ -14,12 +14,16 @@ use App\Http\Controllers\PesapalController;
 use Carbon\Carbon;
 use App\Http\Controllers\MpesaStkController;
 use App\Services\MpesaStkService;
+use App\Traits\Mpesa;
 
 class CarBookingController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+
+    use Mpesa;
+
     public function index(Request $request)
     {
         $query = CarBooking::with(['car', 'user'])->orderBy('created_at', 'desc');

@@ -74,7 +74,7 @@ const Wallet = ({ user }) => {
     };
 
     // Calculate last booking payment (most recent transaction)
-    const lastBookingPayment = recentTransactions.length > 0 ? parseFloat(recentTransactions[0].amount) : 0;
+    const lastBookingPayment = recentTransactions.length > 0 ? parseFloat(recentTransactions[0].platform_price - recentTransactions[0].platform_charges) : 0;
 
     // Calculate next payout (pendingPayouts)
     const nextPayout = pendingPayouts;
@@ -473,7 +473,7 @@ const Wallet = ({ user }) => {
                                                     color: '#27ae60',
                                                     marginBottom: '5px'
                                                 }}>
-                                                    {formatCurrency(transaction.amount)}
+                                                    {formatCurrency(transaction.platform_price - transaction.platform_charges)}
                                                 </div>
                                                 <div style={{
                                                     fontSize: '12px',

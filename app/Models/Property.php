@@ -118,6 +118,6 @@ class Property extends Model
             return 0;
         }
 
-        return round(($this->amount * $company->percentage / 100) / 100) * 100;
+        return round($this->platform_price * $company->percentage / 100);
     }
 }

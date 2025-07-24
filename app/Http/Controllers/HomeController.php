@@ -421,6 +421,8 @@ class HomeController extends Controller
     {
         $user = Auth::user();
 
+        $isAdmin = $user->role_id === 1 || $user->role_id === "1";
+
         // Calculate total revenue from property bookings (only non-external bookings)
         $propertyBookingTotal = Booking::where("status", "=", "Paid")
             ->whereNull("external_booking") // Only include non-external bookings
@@ -452,9 +454,12 @@ class HomeController extends Controller
         $recentTransactions = collect([
             // Property bookings
             ...Booking::where("status", "Paid")
-                ->whereNull("external_booking") 
-                ->whereHas("property", function ($query) use ($user) {
-                    $query->where("user_id", $user->id);
+                ->whereNull("external_booking") // Exclude external bookings
+                ->when(fn($q) => $q->whereHas("user"))
+                ->whereHas("property", function ($query) use ($user, $isAdmin) {
+                    if (!$isAdmin) {
+                        $query->where("user_id", $user->id);
+                    }
                 })
                 ->with(["property", "user"])
                 ->latest()
@@ -463,19 +468,25 @@ class HomeController extends Controller
                 ->map(function ($booking) {
                     return [
                         "type" => "property",
-                        "title" => $booking->property->property_name,
+                        "title" => $booking->property->title,
                         "amount" => $booking->total_price,
+                        "platform_price" => $booking->property->platform_price,
+                        "platform_charges" =>
+                            $booking->property->platform_charges,
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
-                        "status" => "Paid",
+                        "status" => "completed",
                     ];
                 }),
 
             // Car bookings
             ...CarBooking::where("status", "Paid")
-                ->whereNull("external_booking")
-                ->whereHas("car", function ($query) use ($user) {
-                    $query->where("user_id", $user->id);
+                ->whereNull("external_booking") // Exclude external bookings
+                ->when(fn($q) => $q->whereHas("user"))
+                ->whereHas("car", function ($query) use ($user, $isAdmin) {
+                    if (!$isAdmin) {
+                        $query->where("user_id", $user->id);
+                    }
                 })
                 ->with(["car", "user"])
                 ->latest()
@@ -487,14 +498,18 @@ class HomeController extends Controller
                         "title" =>
                             $booking->car->make . " " . $booking->car->model,
                         "amount" => $booking->total_price,
+                        "platform_price" => $booking->car->platform_price,
+                        "platform_charges" => $booking->car->platform_charges,
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
-                        "status" => "Paid",
+                        "status" => "completed",
                     ];
                 }),
         ])
             ->sortByDesc("date")
-            ->take(10);
+            ->take(10)
+            ->values()
+            ->all();
 
         // Monthly earnings data for chart (only non-external bookings)
         $monthlyEarnings = [];
@@ -504,26 +519,32 @@ class HomeController extends Controller
             $monthEnd = $month->endOfMonth()->toDateString();
 
             $propertyEarnings = Booking::where("status", "Paid")
-                ->whereNull("external_booking") 
-                ->whereHas("property", function ($query) use ($user) {
-                    $query->where("user_id", $user->id);
+                ->whereNull("external_booking") // Exclude external bookings
+                ->when(fn($q) => $q->whereHas("user"))
+                ->whereHas("property", function ($query) use ($user, $isAdmin) {
+                    if (!$isAdmin) {
+                        $query->where("user_id", $user->id);
+                    }
                 })
                 ->whereBetween("created_at", [$monthStart, $monthEnd])
                 ->sum("total_price");
 
             $carEarnings = CarBooking::where("status", "Paid")
-                ->whereNull("external_booking") 
-                ->whereHas("car", function ($query) use ($user) {
-                    $query->where("user_id", $user->id);
+                ->whereNull("external_booking") // Exclude external bookings
+                ->when(fn($q) => $q->whereHas("user"))
+                ->whereHas("car", function ($query) use ($user, $isAdmin) {
+                    if (!$isAdmin) {
+                        $query->where("user_id", $user->id);
+                    }
                 })
                 ->whereBetween("created_at", [$monthStart, $monthEnd])
                 ->sum("total_price");
 
             $monthlyEarnings[] = [
                 "month" => $month->format("M Y"),
-                "property_earnings" => $propertyEarnings,
-                "car_earnings" => $carEarnings,
-                "total" => $propertyEarnings + $carEarnings,
+                "property_earnings" => $propertyEarnings * $p,
+                "car_earnings" => $carEarnings * $p,
+                "total" => ($propertyEarnings * $p) + ($carEarnings * $p),
             ];
         }
 

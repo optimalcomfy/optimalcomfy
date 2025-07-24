@@ -117,7 +117,7 @@ class Car extends Model
             return 0;
         }
 
-        return round(($this->amount * $company->percentage / 100) / 100) * 100;  // Round to nearest hundred
+        return round($this->platform_price * $company->percentage / 100);
     }
 
     public function getAmountAttribute($value)

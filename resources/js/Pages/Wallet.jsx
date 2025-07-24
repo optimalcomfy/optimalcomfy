@@ -57,7 +57,7 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
         id: index + 1,
         date: transaction.date,
         description: `${transaction.type === 'property' ? 'Property' : 'Car'} Booking - ${transaction.title}`,
-        amount: parseFloat(transaction.amount),
+        amount: parseFloat(transaction.platform_price - transaction.platform_charges),
         status: transaction.status,
         type: 'income',
         guest: transaction.guest
@@ -69,7 +69,7 @@ export default function Wallet({ auth, laravelVersion, phpVersion }) {
         .slice(0, 2)
         .map((transaction, index) => ({
             date: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            amount: transaction.amount * 0.85, // After platform fee
+            amount: parseFloat(transaction.platform_price - transaction.platform_charges), // After platform fee
             property: transaction.description.replace('Property Booking - ', '').replace('Car Booking - ', '')
         }));
 

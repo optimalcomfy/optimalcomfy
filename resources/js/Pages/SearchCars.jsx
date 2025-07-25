@@ -19,76 +19,101 @@ import './Welcome.css'
 import ProductCar from "@/Components/ProductCar";
 
 export default function SearchCars({ auth, laravelVersion, phpVersion }) {
-
   const { flash, pagination, cars, keys } = usePage().props;
-
   const [hoveredProperty, setHoveredProperty] = useState(null);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isMobileMapVisible, setIsMobileMapVisible] = useState(false);
-  
+  const [visibleItems, setVisibleItems] = useState(8);
+  const [loading, setLoading] = useState(false);
+  const loaderRef = useRef(null);
   
   // Function to get proper icon for the car type
-
-
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: keys,
   });
   
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0];
+        if (firstEntry.isIntersecting && !loading && visibleItems < cars.length) {
+          setLoading(true);
+          // Simulate loading delay
+          setTimeout(() => {
+            setVisibleItems((prev) => prev + 8);
+            setLoading(false);
+          }, 500);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => {
+      if (loaderRef.current) {
+        observer.unobserve(loaderRef.current);
+      }
+    };
+  }, [visibleItems, cars.length, loading]);
 
   const center = useMemo(() => ({ lat: -1.2921, lng: 36.8219 }), []);
   
-    const mapOptions = useMemo(
-      () => ({
-        disableDefaultUI: true,
-        clickableIcons: false,
-        zoomControl: true,
-        gestureHandling: 'greedy',
-        styles: [
-          {
-            featureType: "poi",
-            elementType: "labels",
-            stylers: [{ visibility: "off" }]
-          },
-          {
-            featureType: "transit",
-            elementType: "labels",
-            stylers: [{ visibility: "off" }]
-          },
-          {
-            featureType: "all",
-            elementType: "geometry",
-            stylers: [{ saturation: -20 }]
-          }
-        ]
-      }),
-      []
-    );
+  const mapOptions = useMemo(
+    () => ({
+      disableDefaultUI: true,
+      clickableIcons: false,
+      zoomControl: true,
+      gestureHandling: 'greedy',
+      styles: [
+        {
+          featureType: "poi",
+          elementType: "labels",
+          stylers: [{ visibility: "off" }]
+        },
+        {
+          featureType: "transit",
+          elementType: "labels",
+          stylers: [{ visibility: "off" }]
+        },
+        {
+          featureType: "all",
+          elementType: "geometry",
+          stylers: [{ saturation: -20 }]
+        }
+      ]
+    }),
+    []
+  );
   
-    const mapContainerStyle = {
-      width: '100%',
-      height: '100%',
-    };
+  const mapContainerStyle = {
+    width: '100%',
+    height: '100%',
+  };
   
-    const formatPrice = (price) => {
-      return new Intl.NumberFormat('en-KE', {
-        style: 'currency',
-        currency: 'KES',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(price).replace('KES', 'KES ');
-    };
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price).replace('KES', 'KES ');
+  };
   
-    const handlePropertyHover = useCallback((propertyId) => {
-      setHoveredProperty(propertyId);
-    }, []);
+  const handlePropertyHover = useCallback((propertyId) => {
+    setHoveredProperty(propertyId);
+  }, []);
   
-    const handlePropertySelect = useCallback((propertyId) => {
-      setSelectedProperty(propertyId);
-    }, []);
+  const handlePropertySelect = useCallback((propertyId) => {
+    setSelectedProperty(propertyId);
+  }, []);
   
-    const toggleMobileMap = () => {
-      setIsMobileMapVisible(!isMobileMapVisible);
-    };
+  const toggleMobileMap = () => {
+    setIsMobileMapVisible(!isMobileMapVisible);
+  };
   
   return (
     <>
@@ -113,7 +138,7 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                 </div>
 
                 <div class="product-grid padding-container">
-                  {cars.map((car) => (
+                  {cars.slice(0, visibleItems).map((car) => (
                     <div 
                       key={car.id}
                       onMouseEnter={() => handlePropertyHover(car.id)}
@@ -128,6 +153,25 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Loading indicator and intersection observer target */}
+                  <div ref={loaderRef} className="w-full text-center py-4">
+                    {loading && (
+                      <div className="loading-spinner">
+                        Loading more cars...
+                      </div>
+                    )}
+                    {visibleItems < cars.length && !loading && (
+                      <div className="text-gray-500">
+                        Scroll down to load more
+                      </div>
+                    )}
+                    {visibleItems >= cars.length && cars.length > 0 && (
+                      <div className="text-gray-500">
+                        You've reached the end
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

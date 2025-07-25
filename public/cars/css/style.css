@@ -2039,7 +2039,7 @@ header.header-light .logo-2 {
 .de-bloglist-type-1 .d-date:before{
     font-family: "FontAwesome";
     font-weight: 300;
-    color: var(--primary-color);
+    ;
     content: "\f073";
     left: 0;
     position: absolute;
@@ -2084,7 +2084,7 @@ header.header-light .logo-2 {
     font-family: "FontAwesome";
     font-size: 20px;
     font-weight: 300;
-    color: var(--primary-color);
+    ;
     content: "";
     left: 0;
     position: absolute;
@@ -8772,7 +8772,7 @@ a.btn-right {
 
 .container-timeline ul li:hover::before{
     background: var(--primary-color);
-    border-color: var(--primary-color);
+    border-;
 }
 
 .container-timeline p{

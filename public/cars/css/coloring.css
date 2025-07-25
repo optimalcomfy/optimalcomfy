@@ -187,7 +187,7 @@ h5.s2,
 .social-icons i,
 a#cookit-link,
 .menu-col a i {
-    color: var(--primary-color);
+    ;
 }
 
 
@@ -377,7 +377,7 @@ a.btn-border.btn-invert,
 #slider-carousel .owl-thumb-item.active img,
 .de_form input[type="checkbox"] + label:before,
 .profile_avatar img {
-    border-color: var(--primary-color);
+    border-;
 }
 
 .de_countdown,
@@ -407,11 +407,11 @@ a.btn-border.btn-invert,
 }
 
 .container-timeline ul lifblockquote {
-    border-left-color: var(--primary-color);
+    border-left-;
 }
 
 .de_tab.tab_simple .de_nav li.active span{
-    border-bottom-color: var(--primary-color);
+    border-bottom-;
 }
 
 header #mainmenu a.menu-item span,

@@ -13013,17 +13013,12 @@ input.p-dropdown-label  {
   color: rgba(0,0,0,0.9) !important;
 }
 
-.text-primary {
-  color: var(--primary-color) !important;
-}
-
 .bg-primary {
   color: var(--primary-color-text) !important;
-  background-color: var(--primary-color) !important;
 }
 
 .bg-primary-reverse {
-  color: var(--primary-color) !important;
+
   background-color: var(--primary-color-text) !important;
 }
 
@@ -13031,9 +13026,6 @@ input.p-dropdown-label  {
   background-color: #ffffff !important;
 }
 
-.border-primary {
-  border-color: var(--primary-color) !important;
-}
 
 .text-white {
   color: #ffffff !important;
@@ -13075,45 +13067,34 @@ input.p-dropdown-label  {
   border-color: var(--surface-border) !important;
 }
 
-.focus\:text-primary:focus {
-  color: var(--primary-color) !important;
-}
-
-.hover\:text-primary:hover {
-  color: var(--primary-color) !important;
-}
-
-.active\:text-primary:active {
-  color: var(--primary-color) !important;
-}
 
 .focus\:bg-primary:focus {
   color: var(--primary-color-text) !important;
-  background-color: var(--primary-color) !important;
+  
 }
 
 .hover\:bg-primary:hover {
   color: var(--primary-color-text) !important;
-  background-color: var(--primary-color) !important;
+  
 }
 
 .active\:bg-primary:active {
   color: var(--primary-color-text) !important;
-  background-color: var(--primary-color) !important;
+  
 }
 
 .focus\:bg-primary-reverse:focus {
-  color: var(--primary-color) !important;
+
   background-color: var(--primary-color-text) !important;
 }
 
 .hover\:bg-primary-reverse:hover {
-  color: var(--primary-color) !important;
+
   background-color: var(--primary-color-text) !important;
 }
 
 .active\:bg-primary-reverse:active {
-  color: var(--primary-color) !important;
+
   background-color: var(--primary-color-text) !important;
 }
 
@@ -13130,15 +13111,15 @@ input.p-dropdown-label  {
 }
 
 .focus\:border-primary:focus {
-  border-color: var(--primary-color) !important;
+  
 }
 
 .hover\:border-primary:hover {
-  border-color: var(--primary-color) !important;
+  
 }
 
 .active\:border-primary:active {
-  border-color: var(--primary-color) !important;
+  
 }
 
 .focus\:text-white:focus {
@@ -13263,21 +13244,21 @@ input.p-dropdown-label  {
 
 @media screen and (min-width: 576px) {
   .sm\:text-primary {
-    color: var(--primary-color) !important;
+  
   }
   .sm\:bg-primary {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .sm\:bg-primary-reverse {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .sm\:bg-white {
     background-color: #ffffff !important;
   }
   .sm\:border-primary {
-    border-color: var(--primary-color) !important;
+    
   }
   .sm\:text-white {
     color: #ffffff !important;
@@ -13310,36 +13291,36 @@ input.p-dropdown-label  {
     border-color: var(--surface-border) !important;
   }
   .sm\:focus\:text-primary:focus {
-    color: var(--primary-color) !important;
+  
   }
   .sm\:hover\:text-primary:hover {
-    color: var(--primary-color) !important;
+  
   }
   .sm\:active\:text-primary:active {
-    color: var(--primary-color) !important;
+  
   }
   .sm\:focus\:bg-primary:focus {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .sm\:hover\:bg-primary:hover {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .sm\:active\:bg-primary:active {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .sm\:focus\:bg-primary-reverse:focus {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .sm\:hover\:bg-primary-reverse:hover {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .sm\:active\:bg-primary-reverse:active {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .sm\:focus\:bg-white:focus {
@@ -13352,13 +13333,13 @@ input.p-dropdown-label  {
     background-color: #ffffff !important;
   }
   .sm\:focus\:border-primary:focus {
-    border-color: var(--primary-color) !important;
+    
   }
   .sm\:hover\:border-primary:hover {
-    border-color: var(--primary-color) !important;
+    
   }
   .sm\:active\:border-primary:active {
-    border-color: var(--primary-color) !important;
+    
   }
   .sm\:focus\:text-white:focus {
     color: #ffffff !important;
@@ -13453,21 +13434,21 @@ input.p-dropdown-label  {
 }
 @media screen and (min-width: 768px) {
   .md\:text-primary {
-    color: var(--primary-color) !important;
+  
   }
   .md\:bg-primary {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .md\:bg-primary-reverse {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .md\:bg-white {
     background-color: #ffffff !important;
   }
   .md\:border-primary {
-    border-color: var(--primary-color) !important;
+    
   }
   .md\:text-white {
     color: #ffffff !important;
@@ -13500,36 +13481,36 @@ input.p-dropdown-label  {
     border-color: var(--surface-border) !important;
   }
   .md\:focus\:text-primary:focus {
-    color: var(--primary-color) !important;
+  
   }
   .md\:hover\:text-primary:hover {
-    color: var(--primary-color) !important;
+  
   }
   .md\:active\:text-primary:active {
-    color: var(--primary-color) !important;
+  
   }
   .md\:focus\:bg-primary:focus {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .md\:hover\:bg-primary:hover {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .md\:active\:bg-primary:active {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .md\:focus\:bg-primary-reverse:focus {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .md\:hover\:bg-primary-reverse:hover {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .md\:active\:bg-primary-reverse:active {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .md\:focus\:bg-white:focus {
@@ -13542,13 +13523,13 @@ input.p-dropdown-label  {
     background-color: #ffffff !important;
   }
   .md\:focus\:border-primary:focus {
-    border-color: var(--primary-color) !important;
+    
   }
   .md\:hover\:border-primary:hover {
-    border-color: var(--primary-color) !important;
+    
   }
   .md\:active\:border-primary:active {
-    border-color: var(--primary-color) !important;
+    
   }
   .md\:focus\:text-white:focus {
     color: #ffffff !important;
@@ -13643,21 +13624,21 @@ input.p-dropdown-label  {
 }
 @media screen and (min-width: 992px) {
   .lg\:text-primary {
-    color: var(--primary-color) !important;
+  
   }
   .lg\:bg-primary {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .lg\:bg-primary-reverse {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .lg\:bg-white {
     background-color: #ffffff !important;
   }
   .lg\:border-primary {
-    border-color: var(--primary-color) !important;
+    
   }
   .lg\:text-white {
     color: #ffffff !important;
@@ -13690,36 +13671,36 @@ input.p-dropdown-label  {
     border-color: var(--surface-border) !important;
   }
   .lg\:focus\:text-primary:focus {
-    color: var(--primary-color) !important;
+  
   }
   .lg\:hover\:text-primary:hover {
-    color: var(--primary-color) !important;
+  
   }
   .lg\:active\:text-primary:active {
-    color: var(--primary-color) !important;
+  
   }
   .lg\:focus\:bg-primary:focus {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .lg\:hover\:bg-primary:hover {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .lg\:active\:bg-primary:active {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .lg\:focus\:bg-primary-reverse:focus {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .lg\:hover\:bg-primary-reverse:hover {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .lg\:active\:bg-primary-reverse:active {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .lg\:focus\:bg-white:focus {
@@ -13732,13 +13713,13 @@ input.p-dropdown-label  {
     background-color: #ffffff !important;
   }
   .lg\:focus\:border-primary:focus {
-    border-color: var(--primary-color) !important;
+    
   }
   .lg\:hover\:border-primary:hover {
-    border-color: var(--primary-color) !important;
+    
   }
   .lg\:active\:border-primary:active {
-    border-color: var(--primary-color) !important;
+    
   }
   .lg\:focus\:text-white:focus {
     color: #ffffff !important;
@@ -13833,21 +13814,21 @@ input.p-dropdown-label  {
 }
 @media screen and (min-width: 1200px) {
   .xl\:text-primary {
-    color: var(--primary-color) !important;
+  
   }
   .xl\:bg-primary {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .xl\:bg-primary-reverse {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .xl\:bg-white {
     background-color: #ffffff !important;
   }
   .xl\:border-primary {
-    border-color: var(--primary-color) !important;
+    
   }
   .xl\:text-white {
     color: #ffffff !important;
@@ -13880,36 +13861,36 @@ input.p-dropdown-label  {
     border-color: var(--surface-border) !important;
   }
   .xl\:focus\:text-primary:focus {
-    color: var(--primary-color) !important;
+  
   }
   .xl\:hover\:text-primary:hover {
-    color: var(--primary-color) !important;
+  
   }
   .xl\:active\:text-primary:active {
-    color: var(--primary-color) !important;
+  
   }
   .xl\:focus\:bg-primary:focus {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .xl\:hover\:bg-primary:hover {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .xl\:active\:bg-primary:active {
     color: var(--primary-color-text) !important;
-    background-color: var(--primary-color) !important;
+    
   }
   .xl\:focus\:bg-primary-reverse:focus {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .xl\:hover\:bg-primary-reverse:hover {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .xl\:active\:bg-primary-reverse:active {
-    color: var(--primary-color) !important;
+  
     background-color: var(--primary-color-text) !important;
   }
   .xl\:focus\:bg-white:focus {
@@ -13922,13 +13903,13 @@ input.p-dropdown-label  {
     background-color: #ffffff !important;
   }
   .xl\:focus\:border-primary:focus {
-    border-color: var(--primary-color) !important;
+    
   }
   .xl\:hover\:border-primary:hover {
-    border-color: var(--primary-color) !important;
+    
   }
   .xl\:active\:border-primary:active {
-    border-color: var(--primary-color) !important;
+    
   }
   .xl\:focus\:text-white:focus {
     color: #ffffff !important;
@@ -27608,7 +27589,7 @@ body {
 
 a {
   text-decoration: none;
-  color: var(--primary-color);
+  ;
 }
 
 .layout-wrapper {
@@ -27861,7 +27842,7 @@ a {
 }
 .layout-menu ul a.active-route {
   font-weight: 700;
-  color: var(--primary-color);
+  ;
 }
 .layout-menu ul a:hover {
   background-color: var(--surface-hover);
@@ -29200,17 +29181,7 @@ pre.app-code code {
 .block-viewer .block-header .block-actions button:not(.block-action-disabled):hover {
   background-color: var(--surface-c);
 }
-.block-viewer .block-header .block-actions a.block-action-active,
-.block-viewer .block-header .block-actions button.block-action-active {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-.block-viewer .block-header .block-actions a.block-action-copy i,
-.block-viewer .block-header .block-actions button.block-action-copy i {
-  color: var(--primary-color);
-  font-size: 1.25rem;
-  margin: 0;
-}
+
 .block-viewer .block-header .block-actions a.block-action-disabled,
 .block-viewer .block-header .block-actions button.block-action-disabled {
   opacity: 0.6;

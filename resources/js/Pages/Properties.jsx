@@ -1,11 +1,9 @@
-import React, { useRef, useState, useMemo, useCallback } from "react";
+import React, { useRef, useState, useMemo, useCallback, useEffect } from "react";
 import { Link, Head, usePage } from "@inertiajs/react";
 import { LayoutProvider } from "@/Layouts/layout/context/layoutcontext.jsx";
 import { PrimeReactProvider } from "primereact/api";
 import HomeLayout from "@/Layouts/HomeLayout";
-
 import { GoogleMap, useLoadScript, MarkerF } from "@react-google-maps/api";
-
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import '../../css/main';
@@ -15,15 +13,43 @@ import './Welcome.css'
 
 export default function Properties({ auth, laravelVersion, phpVersion }) {
   const { properties, keys } = usePage().props;
-
   const [hoveredProperty, setHoveredProperty] = useState(null);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isMobileMapVisible, setIsMobileMapVisible] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(8); // Initial visible items
+  const [loading, setLoading] = useState(false);
+  const containerRef = useRef(null);
 
   // Google Maps
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: keys,
   });
+
+  // Lazy loading implementation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading && visibleCount < properties.length) {
+          setLoading(true);
+          setTimeout(() => {
+            setVisibleCount(prev => prev + 8); // Load 8 more items
+            setLoading(false);
+          }, 500);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        observer.unobserve(containerRef.current);
+      }
+    };
+  }, [visibleCount, properties.length, loading]);
 
   const center = useMemo(() => ({ lat: -1.2921, lng: 36.8219 }), []);
 
@@ -80,15 +106,19 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
     setIsMobileMapVisible(!isMobileMapVisible);
   };
 
+  // Get currently visible properties
+  const visibleProperties = useMemo(() => {
+    return properties.slice(0, visibleCount);
+  }, [properties, visibleCount]);
+
   return (
     <PrimeReactProvider>
       <LayoutProvider>
         <Head title="Stays" />
         <HomeLayout>
           <div className="properties-container p-5">
-            {/* Mobile: Stack vertically, Desktop: Side by side */}
             <div className="flex flex-col lg:flex-row">
-              {/* Properties List - Mobile: Full width, Desktop: 60% */}
+              {/* Properties List */}
               <div className="w-full lg:w-[55%]">
                 <div className="mb-6">
                   <div className="properties-header flex justify-between items-center mb-6">
@@ -97,33 +127,44 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                         Explore Properties
                       </h1>
                       <p className="properties-subtitle text-gray-600">
-                        {properties.length} properties available
+                        Showing {visibleProperties.length} of {properties.length} properties
                       </p>
                     </div>
                   </div>
 
-                  {/* Properties Slider */}
-                  <div class="product-grid padding-container">
-                      {properties.map((property) => (
-                        <div 
-                          key={property.id}
-                          onMouseEnter={() => handlePropertyHover(property.id)}
-                          onMouseLeave={() => handlePropertyHover(null)}
-                          onClick={() => handlePropertySelect(property.id)}
-                          className="interactive-element"
-                        >
-                          <div className="">
-                            <div className={`property-card ${selectedProperty === property.id ? 'selected' : ''}`}>
-                              <Product {...property} />
-                            </div>
+                  <div className="product-grid padding-container">
+                    {visibleProperties.map((property) => (
+                      <div 
+                        key={property.id}
+                        onMouseEnter={() => handlePropertyHover(property.id)}
+                        onMouseLeave={() => handlePropertyHover(null)}
+                        onClick={() => handlePropertySelect(property.id)}
+                        className="interactive-element"
+                      >
+                        <div className="">
+                          <div className={`property-card ${selectedProperty === property.id ? 'selected' : ''}`}>
+                            <Product {...property} />
                           </div>
                         </div>
-                      ))}
                       </div>
+                    ))}
+                    
+                    {/* Loading indicator and trigger element */}
+                    {loading && (
+                      <div className="loading-indicator">
+                        Loading more properties...
+                      </div>
+                    )}
+                    
+                    {/* This element triggers loading when it comes into view */}
+                    {visibleCount < properties.length && (
+                      <div ref={containerRef} className="load-more-trigger" style={{ height: '1px' }} />
+                    )}
                   </div>
+                </div>
               </div>
 
-              {/* Map Container - Mobile: Hidden by default, Desktop: 40% sticky */}
+              {/* Map Container */}
               <div className="w-full lg:w-[45%] relative">
                 {/* Mobile Toggle Button */}
                 <div className="lg:hidden bg-white border-t border-gray-200 p-4">
@@ -143,7 +184,6 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                 {isMobileMapVisible && (
                   <div className="mobile-map-overlay">
                     <div className="h-full flex flex-col">
-                      {/* Mobile Map Header */}
                       <div className="mobile-map-header">
                         <h2 className="text-lg font-semibold">Map</h2>
                         <button 
@@ -157,7 +197,6 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                         </button>
                       </div>
                       
-                      {/* Mobile Map Content */}
                       <div className="flex-1">
                         {isLoaded ? (
                           <GoogleMap

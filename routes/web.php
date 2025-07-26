@@ -106,6 +106,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('jobs', JobController::class);
     Route::resource('applications', ApplicationController::class);
 
+    Route::put('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])
+    ->name('bookings.cancel');
     Route::get('/bookings/export-data', [BookingController::class, 'exportData'])
         ->name('bookings.exportData');
     Route::resource('bookings', BookingController::class);
@@ -119,6 +121,8 @@ Route::middleware('auth')->group(function () {
         'main-cars' => 'car'
     ]);
 
+    Route::put('/car-bookings/{booking}/cancel', [CarBookingController::class, 'cancel'])
+    ->name('car-bookings.cancel');
     Route::get('/car-bookings/export-data', [CarBookingController::class, 'exportData'])
         ->name('car-bookings.exportData');
     Route::resource('car-bookings', CarBookingController::class);

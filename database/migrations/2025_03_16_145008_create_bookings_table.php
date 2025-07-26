@@ -25,6 +25,10 @@ return new class extends Migration
             $table->string('checkin_verification_code')->nullable();
             $table->string('checkout_verification_code')->nullable();
             $table->string('failed_reason')->nullable();
+            $table->timestamp('cancelled_at')->nullable();
+            $table->text('cancel_reason')->nullable();
+            $table->unsignedBigInteger('cancelled_by_id')->nullable();
+            $table->foreign('cancelled_by_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

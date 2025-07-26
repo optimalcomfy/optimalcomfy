@@ -27,6 +27,8 @@ use Carbon\Carbon;
 
 use App\Mail\CheckInVerification;
 use App\Mail\CheckOutVerification;
+use App\Mail\BookingCancelled;
+
 class BookingController extends Controller
 {
 
@@ -520,6 +522,36 @@ class BookingController extends Controller
         }
 
         return back()->with('error', 'No valid action performed.');
+    }
+
+
+
+    public function cancel(Request $request, Booking $booking)
+    {
+        $request->validate([
+            'cancel_reason' => 'required|string|min:10|max:500',
+        ]);
+
+        if ($booking->checked_in || $booking->status === 'Cancelled') {
+            return back()->with('error', 'Booking cannot be cancelled at this stage.');
+        }
+
+        $booking->update([
+            'status' => 'Cancelled',
+            'cancelled_at' => now(),
+            'cancel_reason' => $request->cancel_reason,
+            'cancelled_by_id' => auth()->id(),
+        ]);
+
+        try {
+            Mail::to($booking->user->email)->send(new BookingCancelled($booking, 'guest'));
+            
+            Mail::to($booking->property->user->email)->send(new BookingCancelled($booking, 'host'));
+        } catch (\Exception $e) {
+            \Log::error('Cancellation email error: ' . $e->getMessage());
+        }
+
+        return back()->with('success', 'Booking has been cancelled successfully.');
     }
 
     public function destroy(Booking $booking)

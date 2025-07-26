@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { FaCalendarAlt, FaMapMarkerAlt, FaEye, FaUser, FaHome, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaEye, FaUser, FaHome, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaSignInAlt, FaSignOutAlt, FaTimes } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const BookingShow = () => {
@@ -161,6 +161,52 @@ const BookingShow = () => {
 
   const bookingStatus = getBookingStatus();
 
+    const handleCancelBooking = () => {
+    Swal.fire({
+      title: 'Cancel Booking',
+      html: `
+        <p>Are you sure you want to cancel this booking?</p>
+        <p>This action cannot be undone.</p>
+        <textarea id="cancel-reason" class="swal2-textarea mt-3" placeholder="Please provide a reason for cancellation (required)" required></textarea>
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, cancel booking',
+      cancelButtonText: 'No, keep booking',
+      preConfirm: () => {
+        const reason = Swal.getPopup().querySelector('#cancel-reason').value;
+        if (!reason || reason.trim() === '') {
+          Swal.showValidationMessage('Please provide a cancellation reason');
+          return false;
+        }
+        return reason;
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        router.put(route('bookings.cancel', booking.id), {
+          cancel_reason: result.value,
+          preserveScroll: true,
+          onSuccess: () => {
+            Swal.fire(
+              'Booking Cancelled!',
+              'The booking has been cancelled successfully. Both host and guest have been notified.',
+              'success'
+            );
+          },
+          onError: () => {
+            Swal.fire(
+              'Error!',
+              'There was an error cancelling the booking. Please try again.',
+              'error'
+            );
+          }
+        });
+      }
+    });
+  };
+
   return (
     <Layout>
       <div className="max-w-7xl p-4">
@@ -205,7 +251,7 @@ const BookingShow = () => {
             </div>
             {roleId !== 3 &&
             <div className="flex space-x-2">
-              {!booking.checked_in && !booking.checked_out && (
+              {!booking.checked_in && !booking.checked_out && booking.status !== 'Cancelled' && (
                 <button
                   onClick={handleCheckIn}
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
@@ -214,7 +260,7 @@ const BookingShow = () => {
                   {booking.checkin_verification_code ? 'Verify Check In' : 'Check In'}
                 </button>
               )}
-              {booking.checked_in && !booking.checked_out && (
+              {booking.checked_in && !booking.checked_out && booking.status !== 'Cancelled' && (
                 <button
                   onClick={handleCheckOut}
                   className="flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
@@ -479,7 +525,7 @@ const BookingShow = () => {
             </div>
 
             {/* Help section */}
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="bg-white flex flex-col gap-4 rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                 Need Help?
               </h3>
@@ -489,6 +535,15 @@ const BookingShow = () => {
               <a href={`tel:${booking.user?.contact_phone}`} className="px-8 py-2 text-center justify-center flex items-center w-full bg-peachDark hover:bg-blue-700 text-white rounded-md transition duration-150">
                 Contact Support
               </a>
+
+              {!booking.checked_out && booking.status !== 'Cancelled' && (
+                  <button 
+                    onClick={handleCancelBooking}
+                    className="px-8 py-2 w-full flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-md transition duration-150"
+                  >
+                    Cancel Booking
+                  </button>
+              )}
             </div>
           </div>
         </div>

@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 
+use App\Mail\CheckInVerification;
+use App\Mail\CheckOutVerification;
 class BookingController extends Controller
 {
 
@@ -449,11 +451,75 @@ class BookingController extends Controller
         ]);
     }
 
-    public function update(UpdateBookingRequest $request, Booking $booking)
+    public function update(Request $request, Booking $booking)
     {
-        $booking->update($request->validated());
+        $validated = $request->validate([
+            'checked_in' => 'nullable',
+            'checked_out' => 'nullable',
+            'verification_code' => 'nullable|string',
+        ]);
 
-        return redirect()->route('bookings.index')->with('success', 'Booking updated successfully.');
+        // Handle check-in with verification
+        if ($request->has('checked_in')) {
+            if ($booking->checked_in) {
+                return back()->with('error', 'This booking is already checked in.');
+            }
+
+            // Generate and send verification code if not already set
+            if (!$booking->checkin_verification_code) {
+                $booking->checkin_verification_code = Booking::generateVerificationCode();
+                $booking->save();
+                
+                Mail::to($booking->user->email)->send(new CheckInVerification($booking));
+                
+                return back()->with('success', 'Verification code sent to your email. Please enter it to complete check-in.');
+            }
+
+            // Verify the code
+            if ($request->verification_code !== $booking->checkin_verification_code) {
+                return back()->with('error', 'Invalid verification code.');
+            }
+
+            $booking->checked_in = now();
+            $booking->checkin_verification_code = null; // Clear the code after use
+            $booking->save();
+
+            return back()->with('success', 'Successfully checked in!');
+        }
+
+        // Handle check-out with verification
+        if ($request->has('checked_out')) {
+            if ($booking->checked_out) {
+                return back()->with('error', 'This booking is already checked out.');
+            }
+
+            if (!$booking->checked_in) {
+                return back()->with('error', 'Cannot check out before checking in.');
+            }
+
+            // Generate and send verification code if not already set
+            if (!$booking->checkout_verification_code) {
+                $booking->checkout_verification_code = Booking::generateVerificationCode();
+                $booking->save();
+                
+                Mail::to($booking->user->email)->send(new CheckOutVerification($booking));
+                
+                return back()->with('success', 'Verification code sent to your email. Please enter it to complete check-out.');
+            }
+
+            // Verify the code
+            if ($request->verification_code !== $booking->checkout_verification_code) {
+                return back()->with('error', 'Invalid verification code.');
+            }
+
+            $booking->checked_out = now();
+            $booking->checkout_verification_code = null; // Clear the code after use
+            $booking->save();
+
+            return back()->with('success', 'Successfully checked out!');
+        }
+
+        return back()->with('error', 'No valid action performed.');
     }
 
     public function destroy(Booking $booking)

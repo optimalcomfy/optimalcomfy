@@ -1,103 +1,158 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { FaCar, FaCalendarAlt, FaMapMarkerAlt, FaUser, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaCarSide, FaGasPump, FaCogs, FaTachometerAlt, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaEye, FaUser, FaCar, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const CarBookingShow = () => {
   const { carBooking: booking, auth } = usePage().props;
   const roleId = parseInt(auth.user?.role_id);
+  
   // Calculate number of days
   const startDate = new Date(booking.start_date);
   const endDate = new Date(booking.end_date);
   const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
 
-  // Car features mapping (would need actual feature data)
-  const featureIcons = {
-    'AC': <FaCarSide className="text-blue-500" />,
-    'Automatic': <FaCogs className="text-purple-500" />,
-    'Manual': <FaCogs className="text-green-500" />,
-    '4WD': <FaCar className="text-red-500" />,
-    'GPS': <FaMapMarkerAlt className="text-yellow-500" />,
-    'Bluetooth': <FaTachometerAlt className="text-indigo-500" />,
-    'Petrol': <FaGasPump className="text-orange-500" />,
-    'Diesel': <FaGasPump className="text-gray-500" />,
-  };
-
   const handleCheckIn = () => {
-    const toMysqlDatetime = () => {
-      const date = new Date();
-      return date.toISOString().slice(0, 19).replace('T', ' '); // "YYYY-MM-DD HH:MM:SS"
-    };
-
-    Swal.fire({
-      title: 'Confirm Check-In',
-      text: 'Are you sure you want to check in this car rental?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, check in'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        router.put(route('car-bookings.update', booking.id), {
-          checked_in: toMysqlDatetime(),
-          preserveScroll: true,
-          onSuccess: () => {
-            Swal.fire(
-              'Checked In!',
-              'Car rental has been successfully checked in.',
-              'success'
-            );
-          },
-          onError: () => {
-            Swal.fire(
-              'Error!',
-              'There was an error checking in the car rental.',
-              'error'
-            );
+    if (booking.checkin_verification_code) {
+      // Show verification modal if code was already sent
+      Swal.fire({
+        title: 'Enter Verification Code',
+        html: `
+          <p>We sent a verification code to ${booking.user.email}</p>
+          <input type="text" id="verification-code" class="swal2-input" placeholder="6-digit code">
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Verify',
+        preConfirm: () => {
+          const code = Swal.getPopup().querySelector('#verification-code').value;
+          if (!code || code.length !== 6) {
+            Swal.showValidationMessage('Please enter a valid 6-digit code');
+            return false;
           }
-        });
-      }
-    });
+          return code;
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.put(route('car-bookings.update', { car_booking: booking.id }), {
+            checked_in: new Date().toISOString().slice(0, 19).replace('T', ' '),
+            id: booking.id,
+            verification_code: result.value,
+            preserveScroll: true,
+            onSuccess: () => {
+              Swal.fire('Success!', 'Car check-in verified successfully!', 'success');
+            },
+            onError: () => {
+              Swal.fire('Error!', 'Invalid verification code', 'error');
+            }
+          });
+        }
+      });
+    } else {
+      // Initiate check-in process
+      Swal.fire({
+        title: 'Confirm Car Check-In',
+        text: 'Are you sure you want to check in this car rental? A verification code will be sent to the guest\'s email.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, send verification'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.put(route('car-bookings.update', { car_booking: booking.id }), {
+            checked_in: new Date().toISOString().slice(0, 19).replace('T', ' '),
+            id: booking.id,
+            preserveScroll: true,
+            onSuccess: () => {
+              Swal.fire(
+                'Verification Sent!',
+                'A verification code has been sent to the guest\'s email.',
+                'success'
+              );
+            },
+            onError: () => {
+              Swal.fire(
+                'Error!',
+                'There was an error initiating car check-in.',
+                'error'
+              );
+            }
+          });
+        }
+      });
+    }
   };
 
   const handleCheckOut = () => {
-    const toMysqlDatetime = () => {
-      const date = new Date();
-      return date.toISOString().slice(0, 19).replace('T', ' '); // "YYYY-MM-DD HH:MM:SS"
-    };
-
-    Swal.fire({
-      title: 'Confirm Check-Out',
-      text: 'Are you sure you want to check out this car rental?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, check out'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        router.put(route('car-bookings.update', booking.id), {
-          checked_out: toMysqlDatetime(),
-          preserveScroll: true,
-          onSuccess: () => {
-            Swal.fire(
-              'Checked Out!',
-              'Car rental has been successfully checked out.',
-              'success'
-            );
-          },
-          onError: () => {
-            Swal.fire(
-              'Error!',
-              'There was an error checking out the car rental.',
-              'error'
-            );
+    if (booking.checkout_verification_code) {
+      // Show verification modal if code was already sent
+      Swal.fire({
+        title: 'Enter Verification Code',
+        html: `
+          <p>We sent a verification code to ${booking.user.email}</p>
+          <input type="text" id="verification-code" class="swal2-input" placeholder="6-digit code">
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Verify',
+        preConfirm: () => {
+          const code = Swal.getPopup().querySelector('#verification-code').value;
+          if (!code || code.length !== 6) {
+            Swal.showValidationMessage('Please enter a valid 6-digit code');
+            return false;
           }
-        });
-      }
-    });
+          return code;
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.put(route('car-bookings.update', { car_booking: booking.id }), {
+            checked_out: new Date().toISOString().slice(0, 19).replace('T', ' '),
+            id: booking.id,
+            verification_code: result.value,
+            preserveScroll: true,
+            onSuccess: () => {
+              Swal.fire('Success!', 'Car check-out verified successfully!', 'success');
+            },
+            onError: () => {
+              Swal.fire('Error!', 'Invalid verification code', 'error');
+            }
+          });
+        }
+      });
+    } else {
+      // Initiate check-out process
+      Swal.fire({
+        title: 'Confirm Car Check-Out',
+        text: 'Are you sure you want to check out this car rental? A verification code will be sent to the guest\'s email.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, send verification'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.put(route('car-bookings.update', { car_booking: booking.id }), {
+            checked_out: new Date().toISOString().slice(0, 19).replace('T', ' '),
+            id: booking.id,
+            preserveScroll: true,
+            onSuccess: () => {
+              Swal.fire(
+                'Verification Sent!',
+                'A verification code has been sent to the guest\'s email.',
+                'success'
+              );
+            },
+            onError: () => {
+              Swal.fire(
+                'Error!',
+                'There was an error initiating car check-out.',
+                'error'
+              );
+            }
+          });
+        }
+      });
+    }
   };
 
   const getBookingStatus = () => {
@@ -116,9 +171,9 @@ const CarBookingShow = () => {
           {roleId !== 4 &&
           <Link
             href={route('car-bookings.index')}
-            className="flex items-center text-blue-600 hover:text-blue-800 mr-4"
+            className="flex items-center text-peachDark mr-4"
           >
-            <FaArrowLeft className="mr-2" /> Back to Bookings
+            <FaArrowLeft className="mr-2" /> Back to Car Bookings
           </Link>}
           <h1 className="text-3xl font-bold text-gray-800">Car Rental Details</h1>
         </div>
@@ -140,9 +195,14 @@ const CarBookingShow = () => {
               </div>
               <div className="ml-3">
                 <p className="text-sm">
-                  <span className="font-medium">{booking.car.brand} {booking.car.model} ({booking.car.license_plate})</span> - 
+                  <span className="font-medium">{booking.car.name}</span> - 
                   Status: <span className="font-bold capitalize">{bookingStatus}</span>
                 </p>
+                {(booking.checkin_verification_code || booking.checkout_verification_code) && (
+                  <p className="text-xs mt-1 text-yellow-700">
+                    <i>Verification pending - code sent to guest's email</i>
+                  </p>
+                )}
               </div>
             </div>
             {roleId !== 3 &&
@@ -152,7 +212,8 @@ const CarBookingShow = () => {
                   onClick={handleCheckIn}
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                 >
-                  <FaSignInAlt className="mr-2" /> Check In
+                  <FaSignInAlt className="mr-2" /> 
+                  {booking.checkin_verification_code ? 'Verify Check In' : 'Check In'}
                 </button>
               )}
               {booking.checked_in && !booking.checked_out && (
@@ -160,7 +221,8 @@ const CarBookingShow = () => {
                   onClick={handleCheckOut}
                   className="flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
                 >
-                  <FaSignOutAlt className="mr-2" /> Check Out
+                  <FaSignOutAlt className="mr-2" /> 
+                  {booking.checkout_verification_code ? 'Verify Check Out' : 'Check Out'}
                 </button>
               )}
             </div>}
@@ -173,48 +235,28 @@ const CarBookingShow = () => {
             {/* Car card */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="md:flex">
-                <div className="md:flex-shrink-0 md:w-1/3 bg-gray-100 flex items-center justify-center">
-                  {booking.car.initial_gallery.length > 0 ? (
-                    <img 
-                      className="h-48 w-full object-cover md:h-full" 
-                      src={`/storage/${booking.car.initial_gallery[0].image}`} 
-                      alt={`${booking.car.brand} ${booking.car.model}`}
-                    />
-                  ) : (
-                    <FaCar className="h-32 w-32 text-gray-400" />
-                  )}
+                <div className="md:flex-shrink-0 md:w-1/3">
+                  <img 
+                    className="h-48 w-full object-cover md:h-full" 
+                    src={booking.car.images?.[0]?.image || '/images/default-car.jpg'} 
+                    alt={booking.car.name}
+                  />
                 </div>
                 <div className="p-6 md:w-2/3">
-                  <div className="uppercase tracking-wide text-sm text-indigo-600 font-semibold">
-                    {booking.car.category?.name || 'SUV'}
+                  <div className="uppercase tracking-wide text-sm text-peachDark font-semibold">
+                    {booking.car.type}
                   </div>
                   <h2 className="mt-1 text-xl font-semibold text-gray-900">
-                    {booking.car.brand} {booking.car.model} ({booking.car.year})
+                    {booking.car.name}
                   </h2>
-                  
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <div className="flex items-center text-gray-600">
-                      <FaTachometerAlt className="mr-1" />
-                      <span>{booking?.car?.mileage?.toLocaleString()} km</span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <FaGasPump className="mr-1" />
-                      <span className="capitalize">{booking.car.fuel_type}</span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <FaUser className="mr-1" />
-                      <span>{booking.car.seats} seats</span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <FaCar className="mr-1" />
-                      <span className="capitalize">{booking.car.exterior_color}</span>
-                    </div>
+                  <div className="mt-2 flex items-center text-gray-600">
+                    <FaMapMarkerAlt className="mr-1" />
+                    <span>{booking.car.location}</span>
                   </div>
-
                   <div className="mt-4 grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-500">Pick-up Date</p>
-                      <p className="font-medium">{startDate.toLocaleDateString('en-US', { 
+                      <p className="text-sm text-gray-500">Pickup Date</p>
+                      <p className="font-medium">{new Date(booking.start_date).toLocaleDateString('en-US', { 
                         weekday: 'short', 
                         year: 'numeric', 
                         month: 'short', 
@@ -222,62 +264,93 @@ const CarBookingShow = () => {
                       })}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Drop-off Date</p>
-                      <p className="font-medium">{endDate.toLocaleDateString('en-US', { 
+                      <p className="text-sm text-gray-500">Dropoff Date</p>
+                      <p className="font-medium">{new Date(booking.end_date).toLocaleDateString('en-US', { 
                         weekday: 'short', 
                         year: 'numeric', 
                         month: 'short', 
                         day: 'numeric' 
                       })}</p>
                     </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Pickup Location</p>
+                      <p className="font-medium">{booking.pickup_location}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Dropoff Location</p>
+                      <p className="font-medium">{booking.dropoff_location}</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Location details */}
+            {/* Guest details */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
-                <FaMapMarkerAlt className="inline mr-2" /> Pickup & Drop-off Locations
+                <FaUser className="inline mr-2" /> Guest Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-gray-500">Pickup Location</p>
-                  <p className="font-medium">{booking.pickup_location}</p>
-                  <p className="text-sm text-gray-600 mt-1">{booking.car.location_address}</p>
+                <div>
+                  <p className="text-sm text-gray-500">Full Name</p>
+                  <p className="font-medium">{booking.user.name}</p>
                 </div>
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <p className="text-sm text-gray-500">Drop-off Location</p>
-                  <p className="font-medium">{booking.dropoff_location}</p>
-                  <p className="text-sm text-gray-600 mt-1">Same as pickup location</p>
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium">{booking.user.email}</p>
                 </div>
+                <div>
+                  <p className="text-sm text-gray-500">Phone</p>
+                  <p className="font-medium">{booking.user.phone}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Address</p>
+                  <p className="font-medium">{booking.user.address}, {booking.user.city}, {booking.user.country}</p>
+                </div>
+                <Link href={route('users.show', booking.user?.id)}>
+                  <p className="text-lg font-bold text-gray-500 flex items-center gap-2"> <FaEye /> View user kyc</p>
+                </Link>
               </div>
             </div>
 
-            {/* Special requests */}
-            {booking.special_requests && (
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
-                  Special Requests
-                </h3>
-                <p className="text-gray-700">{booking.special_requests}</p>
-              </div>
-            )}
-
-            {/* Car features */}
+            {/* Car details */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
-                Car Features
+                <FaCar className="inline mr-2" /> Car Information
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {booking.car.car_features.map((feature, index) => (
-                  <div key={index} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
-                    <div className="text-lg">
-                      <i className={`${feature?.feature?.icon} w-5 text-black`}></i>
-                    </div>
-                    <span className="text-sm font-medium">Feature {feature.feature?.name}</span>
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Make</p>
+                  <p className="font-medium">{booking.car.make}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Model</p>
+                  <p className="font-medium">{booking.car.model}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Year</p>
+                  <p className="font-medium">{booking.car.year}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">License Plate</p>
+                  <p className="font-medium">{booking.car.license_plate}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Color</p>
+                  <p className="font-medium">{booking.car.color}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Seats</p>
+                  <p className="font-medium">{booking.car.seats}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Transmission</p>
+                  <p className="font-medium">{booking.car.transmission}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Fuel Type</p>
+                  <p className="font-medium">{booking.car.fuel_type}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -286,7 +359,7 @@ const CarBookingShow = () => {
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
-                <FaMoneyBillWave className="inline mr-2" /> Rental Summary
+                <FaMoneyBillWave className="inline mr-2" /> Payment Summary
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
@@ -307,7 +380,7 @@ const CarBookingShow = () => {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm text-blue-700">
+                    <p className="text-sm text-peachDark">
                       Payment Status: <span className={`font-bold ${booking.status === 'Paid' ? 'text-green-600' : 'text-yellow-600'}`}>
                         {booking.status}
                       </span>
@@ -317,31 +390,10 @@ const CarBookingShow = () => {
               </div>
             </div>
 
-            {/* Host details */}
+            {/* Booking timeline */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
-                <FaUser className="inline mr-2" /> Host Information
-              </h3>
-              <div className="space-y-2">
-                <div>
-                  <p className="text-sm text-gray-500">Host Name</p>
-                  <p className="font-medium">{booking.car.user.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Contact Phone</p>
-                  <p className="font-medium">{booking.car.user.phone}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="font-medium">{booking.car.user.email}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Rental timeline */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
-                <FaCalendarAlt className="inline mr-2" /> Rental Timeline
+                <FaCalendarAlt className="inline mr-2" /> Booking Timeline
               </h3>
               <div className="flow-root">
                 <ul className="-mb-8">
@@ -410,12 +462,12 @@ const CarBookingShow = () => {
             {/* Help section */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
-                Need Assistance?
+                Need Help?
               </h3>
               <p className="text-sm text-gray-600 mb-3">
-                Contact us if you need help with your rental or have any questions.
+                If you have any questions about your car rental, please contact our customer support.
               </p>
-              <a href={`tel:${booking.user?.contact_phone}`} className="px-8 py-2 text-center justify-center flex items-center w-full bg-peachDark hover:bg-blue-700 text-white rounded-md transition duration-150">
+              <a href={`tel:${booking.user?.phone}`} className="px-8 py-2 text-center justify-center flex items-center w-full bg-peachDark hover:bg-blue-700 text-white rounded-md transition duration-150">
                 Contact Support
               </a>
             </div>

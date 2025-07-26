@@ -23,6 +23,9 @@ use Illuminate\Support\Facades\Mail;
 
 use Illuminate\Http\JsonResponse;
 
+use App\Mail\CarCheckInVerification;
+use App\Mail\CarCheckOutVerification;
+
 class CarBookingController extends Controller
 {
     /**
@@ -428,16 +431,81 @@ class CarBookingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateCarBookingRequest $request, CarBooking $carBooking)
-    {
-        $carBooking->update($request->validated());
 
-        return redirect()->route('car-bookings.index')->with('success', 'Car booking updated successfully.');
+    public function update(Request $request)
+    {
+
+        $input = $request->all();
+
+        $booking = CarBooking::find($input['id']);
+
+        $validated = $request->validate([
+            'checked_in' => 'nullable',
+            'checked_out' => 'nullable',
+            'verification_code' => 'nullable|string',
+        ]);
+
+        if ($request->has('checked_in')) {
+            if ($booking->checked_in) {
+                return back()->with('error', 'This car booking is already checked in.');
+            }
+
+            if (!$booking->checkin_verification_code) {
+                $booking->checkin_verification_code = CarBooking::generateVerificationCode();
+                $booking->save();
+                
+                Mail::to($booking->user->email)->send(new CarCheckInVerification($booking));
+                
+                return back()->with('success', 'Verification code sent to your email. Please enter it to complete check-in.');
+            }
+
+            if ($request->verification_code !== $booking->checkin_verification_code) {
+                return back()->with('error', 'Invalid verification code.');
+            }
+
+            $booking->checked_in = now();
+            $booking->checkin_verification_code = null;
+            $booking->save();
+
+            return back()->with('success', 'Successfully checked in!');
+        }
+
+        if ($request->has('checked_out')) {
+            if ($booking->checked_out) {
+                return back()->with('error', 'This car booking is already checked out.');
+            }
+
+            if (!$booking->checked_in) {
+                return back()->with('error', 'Cannot check out before checking in.');
+            }
+
+            if (!$booking->checkout_verification_code) {
+                $booking->checkout_verification_code = CarBooking::generateVerificationCode();
+                $booking->save();
+                
+                Mail::to($booking->user->email)->send(new CarCheckOutVerification($booking));
+                
+                return back()->with('success', 'Verification code sent to your email. Please enter it to complete check-out.');
+            }
+
+            if ($request->verification_code !== $booking->checkout_verification_code) {
+                return back()->with('error', 'Invalid verification code.');
+            }
+
+            $booking->checked_out = now();
+            $booking->checkout_verification_code = null; 
+            $booking->save();
+
+            return back()->with('success', 'Successfully checked out!');
+        }
+
+        return back()->with('error', 'No valid action performed.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
+    
     public function destroy(CarBooking $carBooking)
     {
         $carBooking->delete();

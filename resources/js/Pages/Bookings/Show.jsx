@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import { FaCalendarAlt, FaMapMarkerAlt, FaEye, FaUser, FaHome, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
@@ -6,86 +6,151 @@ import Swal from 'sweetalert2';
 
 const BookingShow = () => {
   const { booking, auth } = usePage().props;
-   const roleId = parseInt(auth.user?.role_id);
+  const roleId = parseInt(auth.user?.role_id);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+
   // Calculate number of nights
   const checkIn = new Date(booking.check_in_date);
   const checkOut = new Date(booking.check_out_date);
   const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
 
   const handleCheckIn = () => {
-    const toMysqlDatetime = () => {
-      const date = new Date();
-      return date.toISOString().slice(0, 19).replace('T', ' '); // "YYYY-MM-DD HH:MM:SS"
-    };
-
-    Swal.fire({
-      title: 'Confirm Check-In',
-      text: 'Are you sure you want to check in this guest?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, check in'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        router.put(route('bookings.update', booking.id), {
-          checked_in: toMysqlDatetime(), // Call the function here
-          preserveScroll: true,
-          onSuccess: () => {
-            Swal.fire(
-              'Checked In!',
-              'Guest has been successfully checked in.',
-              'success'
-            );
-          },
-          onError: () => {
-            Swal.fire(
-              'Error!',
-              'There was an error checking in the guest.',
-              'error'
-            );
+    if (booking.checkin_verification_code) {
+      // Show verification modal if code was already sent
+      Swal.fire({
+        title: 'Enter Verification Code',
+        html: `
+          <p>We sent a verification code to ${booking.user.email}</p>
+          <input type="text" id="verification-code" class="swal2-input" placeholder="6-digit code">
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Verify',
+        preConfirm: () => {
+          const code = Swal.getPopup().querySelector('#verification-code').value;
+          if (!code || code.length !== 6) {
+            Swal.showValidationMessage('Please enter a valid 6-digit code');
+            return false;
           }
-        });
-      }
-    });
+          return code;
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.put(route('bookings.update', booking.id), {
+            checked_in: new Date().toISOString().slice(0, 19).replace('T', ' '),
+            verification_code: result.value,
+            preserveScroll: true,
+            onSuccess: () => {
+              Swal.fire('Success!', 'Check-in verified successfully!', 'success');
+            },
+            onError: () => {
+              Swal.fire('Error!', 'Invalid verification code', 'error');
+            }
+          });
+        }
+      });
+    } else {
+      // Initiate check-in process
+      Swal.fire({
+        title: 'Confirm Check-In',
+        text: 'Are you sure you want to check in this guest? A verification code will be sent to their email.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, send verification'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.put(route('bookings.update', booking.id), {
+            checked_in: new Date().toISOString().slice(0, 19).replace('T', ' '),
+            preserveScroll: true,
+            onSuccess: () => {
+              Swal.fire(
+                'Verification Sent!',
+                'A verification code has been sent to the guest\'s email.',
+                'success'
+              );
+            },
+            onError: () => {
+              Swal.fire(
+                'Error!',
+                'There was an error initiating check-in.',
+                'error'
+              );
+            }
+          });
+        }
+      });
+    }
   };
 
   const handleCheckOut = () => {
-    const toMysqlDatetime = () => {
-      const date = new Date();
-      return date.toISOString().slice(0, 19).replace('T', ' '); // "YYYY-MM-DD HH:MM:SS"
-    };
-
-    Swal.fire({
-      title: 'Confirm Check-Out',
-      text: 'Are you sure you want to check out this guest?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, check out'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        router.put(route('bookings.update', booking.id), {
-          checked_out: toMysqlDatetime(), // Call the function here
-          preserveScroll: true,
-          onSuccess: () => {
-            Swal.fire(
-              'Check Out!',
-              'Guest has been successfully checked out.',
-              'success'
-            );
-          },
-          onError: () => {
-            Swal.fire(
-              'Error!',
-              'There was an error checking out the guest.',
-              'error'
-            );
+    if (booking.checkout_verification_code) {
+      // Show verification modal if code was already sent
+      Swal.fire({
+        title: 'Enter Verification Code',
+        html: `
+          <p>We sent a verification code to ${booking.user.email}</p>
+          <input type="text" id="verification-code" class="swal2-input" placeholder="6-digit code">
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Verify',
+        preConfirm: () => {
+          const code = Swal.getPopup().querySelector('#verification-code').value;
+          if (!code || code.length !== 6) {
+            Swal.showValidationMessage('Please enter a valid 6-digit code');
+            return false;
           }
-        });
-      }
-    });
+          return code;
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.put(route('bookings.update', booking.id), {
+            checked_out: new Date().toISOString().slice(0, 19).replace('T', ' '),
+            verification_code: result.value,
+            preserveScroll: true,
+            onSuccess: () => {
+              Swal.fire('Success!', 'Check-out verified successfully!', 'success');
+            },
+            onError: () => {
+              Swal.fire('Error!', 'Invalid verification code', 'error');
+            }
+          });
+        }
+      });
+    } else {
+      // Initiate check-out process
+      Swal.fire({
+        title: 'Confirm Check-Out',
+        text: 'Are you sure you want to check out this guest? A verification code will be sent to their email.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, send verification'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.put(route('bookings.update', booking.id), {
+            checked_out: new Date().toISOString().slice(0, 19).replace('T', ' '),
+            preserveScroll: true,
+            onSuccess: () => {
+              Swal.fire(
+                'Verification Sent!',
+                'A verification code has been sent to the guest\'s email.',
+                'success'
+              );
+            },
+            onError: () => {
+              Swal.fire(
+                'Error!',
+                'There was an error initiating check-out.',
+                'error'
+              );
+            }
+          });
+        }
+      });
+    }
   };
 
   const getBookingStatus = () => {
@@ -131,6 +196,11 @@ const BookingShow = () => {
                   <span className="font-medium">{booking.property.property_name}</span> - 
                   Status: <span className="font-bold capitalize">{bookingStatus}</span>
                 </p>
+                {(booking.checkin_verification_code || booking.checkout_verification_code) && (
+                  <p className="text-xs mt-1 text-yellow-700">
+                    <i>Verification pending - code sent to guest's email</i>
+                  </p>
+                )}
               </div>
             </div>
             {roleId !== 3 &&
@@ -140,7 +210,8 @@ const BookingShow = () => {
                   onClick={handleCheckIn}
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                 >
-                  <FaSignInAlt className="mr-2" /> Check In
+                  <FaSignInAlt className="mr-2" /> 
+                  {booking.checkin_verification_code ? 'Verify Check In' : 'Check In'}
                 </button>
               )}
               {booking.checked_in && !booking.checked_out && (
@@ -148,7 +219,8 @@ const BookingShow = () => {
                   onClick={handleCheckOut}
                   className="flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
                 >
-                  <FaSignOutAlt className="mr-2" /> Check Out
+                  <FaSignOutAlt className="mr-2" /> 
+                  {booking.checkout_verification_code ? 'Verify Check Out' : 'Check Out'}
                 </button>
               )}
             </div>}

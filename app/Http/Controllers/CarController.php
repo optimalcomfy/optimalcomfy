@@ -14,6 +14,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 
+use Illuminate\Http\JsonResponse;
+use Carbon\Carbon;
+
 class CarController extends Controller
 {
     /**
@@ -43,6 +46,107 @@ class CarController extends Controller
             'pagination' => $cars,
             'flash' => session('flash'),
         ]);
+    }
+
+
+    public function exportData(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+
+        $query = Car::with(['user', 'category', 'bookings']);
+
+        // Date filtering
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        
+        if (!$startDate || !$endDate) {
+            $startDate = Carbon::now()->startOfMonth()->toDateString();
+            $endDate = Carbon::now()->endOfMonth()->toDateString();
+        }
+
+        try {
+            $validStartDate = Carbon::parse($startDate)->startOfDay();
+            $validEndDate = Carbon::parse($endDate)->endOfDay();
+
+            if ($validStartDate->lte($validEndDate)) {
+                $query->whereBetween('created_at', [$validStartDate, $validEndDate]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid date format provided.'], 400);
+        }
+
+        // Search functionality
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%$search%")
+                ->orWhere('brand', 'LIKE', "%$search%")
+                ->orWhere('model', 'LIKE', "%$search%")
+                ->orWhere('license_plate', 'LIKE', "%$search%")
+                ->orWhere('year', 'LIKE', "%$search%")
+                ->orWhere('price_per_day', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('category', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                });
+            });
+        }
+
+        // Availability filter
+        if ($isAvailable = $request->query('is_available')) {
+            $query->where('is_available', $isAvailable);
+        }
+
+        // Category filter
+        if ($category = $request->query('category_id')) {
+            $query->where('car_category_id', $category);
+        }
+
+        // Price range filter
+        if ($minPrice = $request->query('min_price')) {
+            $query->where('price_per_day', '>=', $minPrice);
+        }
+        if ($maxPrice = $request->query('max_price')) {
+            $query->where('price_per_day', '<=', $maxPrice);
+        }
+
+        // Role-based filtering
+        if ($user->role_id == 2) { // Property manager/owner
+            $query->whereHas('user', function($q) use ($user) {
+                $q->where('company_id', $user->company_id);
+            });
+        } elseif ($user->role_id == 3) { // Regular user
+            $query->where('user_id', $user->id);
+        }
+
+        $cars = $query->orderBy('created_at', 'desc')->get();
+
+        $exportData = $cars->map(function ($car) {
+            return [
+                'id' => $car->id,
+                'name' => $car->name,
+                'brand' => $car->brand,
+                'model' => $car->model,
+                'year' => $car->year,
+                'license_plate' => $car->license_plate,
+                'category' => optional($car->category)->name,
+                'price_per_day' => 'KES ' . number_format($car->amount, 2),
+                'platform_price' => 'KES ' . number_format($car->platform_price, 2),
+                'platform_charges' => 'KES ' . number_format($car->platform_charges, 2),
+                'owner' => optional($car->user)->name,
+                'fuel_type' => $car->fuel_type,
+                'transmission' => $car->transmission,
+                'mileage' => $car->mileage,
+                'seats' => $car->seats,
+                'location' => $car->location_address,
+                'is_available' => $car->is_available ? 'Yes' : 'No',
+                'total_bookings' => $car->bookings->count(),
+                'created_at' => $car->created_at->format('M d, Y H:i'),
+            ];
+        });
+
+        return response()->json($exportData);
     }
 
     private function getCoordinatesFromLocation($location)

@@ -2,14 +2,37 @@ import React, { useState } from 'react';
 import { usePage, Link, router, useForm } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import Swal from 'sweetalert2';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, FileText, FileSpreadsheet, Calendar, Loader2 } from 'lucide-react';
+import { jsPDF } from "jspdf";
+import "jspdf-autotable"; 
+import * as XLSX from 'xlsx';
+import { DateRange } from 'react-date-range';
+import 'react-date-range/dist/styles.css';
+import 'react-date-range/dist/theme/default.css';
+import { format, startOfMonth, endOfMonth, isValid } from 'date-fns';
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const CarsIndex = () => {
   const { cars, pagination, flash, auth } = usePage().props;
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [excelLoading, setExcelLoading] = useState(false);
   const roleId = parseInt(auth.user?.role_id);
+
+  // Date range state
+  const getInitialDateRange = () => {
+    const now = new Date();
+    return { range: [{ startDate: startOfMonth(now), endDate: endOfMonth(now), key: 'selection' }], active: false };
+  };
+
+  const initialDateInfo = getInitialDateRange();
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [dateRange, setDateRange] = useState(initialDateInfo.range);
+  const [dateFilterActive, setDateFilterActive] = useState(initialDateInfo.active);
 
   const {
     delete: destroy,
@@ -19,10 +42,244 @@ const CarsIndex = () => {
     setSearchTerm(e.target.value);
     setLoading(true);
 
-    router.get(route('main-cars.index'), { search: e.target.value }, {
+    router.get(route('main-cars.index'), { 
+      search: e.target.value,
+      ...getDateParams()
+    }, {
       preserveState: true,
       onFinish: () => setLoading(false),
     });
+  };
+
+  const getDateParams = () => {
+    if (!dateFilterActive) return {};
+    return {
+      start_date: format(dateRange[0].startDate, 'yyyy-MM-dd'),
+      end_date: format(dateRange[0].endDate, 'yyyy-MM-dd')
+    };
+  };
+
+  const applyDateFilter = () => {
+    setLoading(true);
+    setDateFilterActive(true);
+    setDatePickerOpen(false);
+    
+    router.get(route('main-cars.index'), {
+      search: searchTerm,
+      ...getDateParams()
+    }, {
+      preserveState: true,
+      onFinish: () => setLoading(false),
+    });
+  };
+
+  const clearDateFilter = () => {
+    setDateFilterActive(false);
+    setLoading(true);
+    
+    router.get(route('main-cars.index'), {
+      search: searchTerm
+    }, {
+      preserveState: true,
+      onFinish: () => setLoading(false),
+    });
+  };
+
+  const getCurrentFilters = (includeDates = dateFilterActive) => {
+    const filters = { search: searchTerm };
+    if (includeDates) {
+        const start = dateRange[0].startDate;
+        const end = dateRange[0].endDate;
+        if (start && end && isValid(start) && isValid(end)) {
+            filters.start_date = format(start, 'yyyy-MM-dd');
+            filters.end_date = format(end, 'yyyy-MM-dd');
+        }
+    }
+    return filters;
+  };
+
+  const generatePDF = async () => {
+    setPdfLoading(true);
+
+    const exportFilters = getCurrentFilters(dateFilterActive);
+
+    try {
+      const response = await axios.get(route('main-cars.exportData'), {
+          params: exportFilters 
+      });
+
+      const allData = response.data; 
+
+      if (!Array.isArray(allData)) {
+         throw new Error("Invalid data received from server.");
+      }
+
+      if (allData.length === 0) {
+        toast.error("No cars found matching the selected criteria for the PDF export.", { duration: 4000, position: 'top-center' });
+        setPdfLoading(false);
+        return;
+      }
+
+      const logoImg = new Image();
+      logoImg.src = '/image/logo/logo.png'; 
+
+      logoImg.onload = () => {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const today = new Date().toLocaleDateString('en-GB', {
+          year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        let dateRangeText = "Date Range: Current Month"; 
+        if (exportFilters.start_date && exportFilters.end_date) {
+            try {
+                 dateRangeText = `Date Range: ${format(new Date(exportFilters.start_date + 'T00:00:00'), 'MMM dd, yyyy')} - ${format(new Date(exportFilters.end_date + 'T00:00:00'), 'MMM dd, yyyy')}`;
+            } catch (e) { dateRangeText = "Date Range: Specified"; }
+        }
+
+        doc.addImage(logoImg, 'PNG', 10, 10, 50, 20);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text("Cars Report", pageWidth / 2, 35, { align: 'center' });
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(dateRangeText, pageWidth / 2, 43, { align: 'center' }); 
+        doc.text(`Generated on: ${today}`, pageWidth / 2, 50, { align: 'center' });
+
+        const columns = roleId === 1 
+          ? ["#", "Name", "License Plate", "Brand", "Model", "Year", "Host Price", "Customer Price", "Platform Charges", "Created At"]
+          : ["#", "Name", "License Plate", "Brand", "Model", "Year", "Host Price", "Created At"];
+
+        const rows = allData.map((data, index) => {
+          const baseRow = [
+            index + 1,
+            data.name || 'N/A',
+            data.license_plate || 'N/A',
+            data.brand || 'N/A',
+            data.model || 'N/A',
+            data.year || 'N/A',
+            `${data.price_per_day}`,
+          ];
+
+          if (roleId === 1) {
+            baseRow.push(
+              `${data.platform_price}`,
+              `${data.platform_charges}`,
+              data.created_at ? format(new Date(data.created_at), 'MMM dd, yyyy') : 'N/A'
+            );
+          } else {
+            baseRow.push(
+              data.created_at ? format(new Date(data.created_at), 'MMM dd, yyyy') : 'N/A'
+            );
+          }
+
+          return baseRow;
+        });
+
+        doc.autoTable({
+          head: [columns],
+          body: rows,
+          startY: 58, 
+          margin: { top: 58, bottom: 20 },
+          styles: { fontSize: 9, cellPadding: 2 },
+          headStyles: { fillColor: [241, 104, 36], textColor: 255, halign: 'center' },
+          didDrawPage: function (data) {
+            const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+            doc.setFontSize(10);
+            doc.text("Page " + doc.internal.getNumberOfPages(), data.settings.margin.left, pageHeight - 10);
+          }
+        });
+
+        const datePart = exportFilters.start_date ? `${exportFilters.start_date}_to_${exportFilters.end_date}` : 'current_month';
+        doc.save(`cars_report_${datePart}.pdf`);
+      };
+
+      logoImg.onerror = () => {
+        toast.error("Error loading logo for PDF. PDF generation aborted.", { duration: 4000, position: 'top-center' });
+      };
+
+    } catch (error) {
+        let message = "An error occurred while generating the PDF.";
+        if (error.response) {
+            message = `Error ${error.response.status}: ${error.response.data?.error || 'Could not fetch report data.'}`;
+        } else if (error.request) {
+             message = "No response from server. Please check network connection.";
+        } else if (error.message) {
+            message = error.message;
+        }
+        toast.error(message, { duration: 4000, position: 'top-center' });
+    } finally {
+         setPdfLoading(false);
+    }
+  };
+
+  const generateExcel = async () => {
+    setExcelLoading(true);
+    const exportFilters = getCurrentFilters(dateFilterActive);
+
+    try {
+        const response = await axios.get(route('main-cars.exportData'), {
+            params: exportFilters
+        });
+
+        const allData = response.data;
+        if (!Array.isArray(allData)) {
+            throw new Error("Invalid data received from server.");
+        }
+
+        if (allData.length === 0) {
+            toast.error("No cars found matching the selected criteria for the Excel export.", { duration: 4000, position: 'top-center' });
+            return;
+        }
+
+        const ws = XLSX.utils.json_to_sheet(allData.map((data, index) => {
+          const baseData = {
+            "#": index + 1,
+            "Name": data.name || 'N/A',
+            "License Plate": data.license_plate || 'N/A',
+            "Brand": data.brand || 'N/A',
+            "Model": data.model || 'N/A',
+            "Year": data.year || 'N/A',
+            "Host Price": `${data.price_per_day}`,
+          };
+
+          if (roleId === 1) {
+            baseData["Customer Price"] = `${data.platform_price}`;
+            baseData["Platform Charges"] = `${data.platform_charges}`;
+          }
+
+          baseData["Created At"] = data.created_at ? new Date(data.created_at).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          }) : 'N/A';
+
+          return baseData;
+        }));        
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Cars');
+
+        const datePart = exportFilters.start_date ? `${exportFilters.start_date}_to_${exportFilters.end_date}` : 'current_month';
+        XLSX.writeFile(wb, `cars_report_${datePart}.xlsx`);
+
+    } catch (error) {
+        let message = "An error occurred while generating the Excel.";
+        if (error.response) {
+            message = `Error ${error.response.status}: ${error.response.data?.error || 'Could not fetch report data.'}`;
+        } else if (error.request) {
+            message = "No response from server. Please check network connection.";
+        } else if (error.message) {
+            message = error.message;
+        }
+        toast.error(message, { duration: 4000, position: 'top-center' });
+    } finally {
+        setExcelLoading(false);
+    }
   };
 
   const handleDelete = (carId) => {
@@ -50,8 +307,10 @@ const CarsIndex = () => {
 
   return (
     <Layout>
+      <ToastContainer position="top-right" autoClose={3000} />
+
       <div className="w-full">
-        {/* Header Section */}
+        {/* Mobile Filters Toggle */}
         <div className="lg:hidden mb-4">
           <button 
             onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
@@ -78,34 +337,133 @@ const CarsIndex = () => {
             <h1 className="text-2xl font-semibold text-gray-900 w-full sm:w-auto my-auto">
               Rides List
             </h1>
-            <div className="w-full sm:w-auto">
+            
+            <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">
               <Link 
                 href={route('main-cars.create')} 
                 className="inline-flex items-center px-4 py-2 bg-peachDark text-white rounded-md hover:bg-peachDarker transition-colors"
               >
                 Add New Ride
               </Link>
+              
+              <button
+                onClick={generatePDF}
+                disabled={pagination.data?.length === 0}
+                className="flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
+              >
+                  {pdfLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 my-auto animate-spin" />
+                  ) : (
+                    <FileText className="w-4 h-4 mr-2 my-auto" />
+                  )}
+                  <span className='my-auto'>
+                    {pdfLoading ? 'Generating...' : 'PDF (All)'}
+                  </span>
+              </button>
+              
+              <button
+                onClick={generateExcel}
+                disabled={pagination.data?.length === 0}
+                className="inline-flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
+              >
+                  {excelLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 my-auto animate-spin" />
+                  ) : (
+                    <FileSpreadsheet className="w-4 h-4 mr-2 my-auto" />
+                  )}
+                  <span className='my-auto'>
+                    {excelLoading ? 'Generating...' : 'Excel (All)'}
+                  </span>
+              </button>
             </div>
           </div>
 
-          {/* Search Input */}
-          <div className="mt-4">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-peach"
-              placeholder="Search rides..."
-            />
-            {loading && <p className="text-sm text-gray-500 mt-2">Searching...</p>}
+          {/* Search and Date Range Controls */}
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Search rides..."
+              />
+              {loading && <p className="text-sm text-gray-500 mt-2">Searching...</p>}
+            </div>
+            
+            <div className="relative">
+              <button 
+                onClick={() => setDatePickerOpen(!datePickerOpen)}
+                className="w-full flex items-center justify-between px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50"
+              >
+                <span>
+                  {dateFilterActive 
+                    ? `${format(dateRange[0].startDate, 'MMM dd, yyyy')} - ${format(dateRange[0].endDate, 'MMM dd, yyyy')}`
+                    : 'Date Range Filter'
+                  }
+                </span>
+                <Calendar className="w-5 h-5 text-gray-500" />
+              </button>
+              
+              {dateFilterActive && (
+                <button
+                  onClick={clearDateFilter}
+                  className="absolute right-10 top-2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+              
+              {datePickerOpen && (
+                <div className="absolute right-0 mt-2 z-10 bg-white rounded-lg shadow-lg border border-gray-200 p-4">
+                  <DateRange
+                    editableDateInputs={true}
+                    onChange={item => setDateRange([item.selection])}
+                    moveRangeOnFirstSelection={false}
+                    ranges={dateRange}
+                    rangeColors={['#3b82f6']}
+                  />
+                  <div className="flex justify-end mt-2 space-x-2">
+                    <button
+                      onClick={() => setDatePickerOpen(false)}
+                      className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={applyDateFilter}
+                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-
+      
         {/* Flash Message */}
         {flash?.success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-900">
             <strong className="font-semibold">Success: </strong>
             {flash.success}
+          </div>
+        )}
+
+        {/* Date Filter Indicator */}
+        {dateFilterActive && (
+          <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 flex items-center justify-between">
+            <span>
+              <strong className="font-semibold">Date Filter: </strong>
+              {format(dateRange[0].startDate, 'MMMM dd, yyyy')} to {format(dateRange[0].endDate, 'MMMM dd, yyyy')}
+            </span>
+            <button 
+              onClick={clearDateFilter}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         )}
 
@@ -137,11 +495,11 @@ const CarsIndex = () => {
                     <td className="px-6 py-4 whitespace-wrap">{car.brand}</td>
                     <td className="px-6 py-4 whitespace-wrap">{car.model}</td>
                     <td className="px-6 py-4 whitespace-wrap">{car.year}</td>
-                    <td className="px-6 py-4 whitespace-wrap">{car.amount}</td>
+                    <td className="px-6 py-4 whitespace-wrap">KES {new Intl.NumberFormat('en-KE').format(car.amount)}</td>
                     {roleId === 1 &&
                     <>
-                    <td className="px-6 py-4 whitespace-wrap">KES {car.platform_price}</td>
-                    <td className="px-6 py-4 whitespace-wrap">KES {car.platform_charges}</td>
+                    <td className="px-6 py-4 whitespace-wrap">KES {new Intl.NumberFormat('en-KE').format(car.platform_price)}</td>
+                    <td className="px-6 py-4 whitespace-wrap">KES {new Intl.NumberFormat('en-KE').format(car.platform_charges)}</td>
                     </>}
                     <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
@@ -169,7 +527,7 @@ const CarsIndex = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-4">No rides found.</td>
+                  <td colSpan={roleId === 1 ? 9 : 7} className="text-center py-4">No rides found.</td>
                 </tr>
               )}
             </tbody>

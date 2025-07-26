@@ -114,6 +114,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('foods', FoodController::class);
     Route::resource('foodOrders', FoodOrderController::class);
 
+    Route::get('/main-cars/export-data', [CarController::class, 'exportData'])->name('main-cars.exportData');
     Route::resource('main-cars', CarController::class)->parameters([
         'main-cars' => 'car'
     ]);

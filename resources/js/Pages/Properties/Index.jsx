@@ -52,7 +52,6 @@ const IndexProperties = () => {
   };
 
   const getDateParams = () => {
-    if (!dateFilterActive) return {};
     return {
       start_date: format(dateRange[0].startDate, 'yyyy-MM-dd'),
       end_date: format(dateRange[0].endDate, 'yyyy-MM-dd')
@@ -299,6 +298,28 @@ const IndexProperties = () => {
     });
   };
 
+  const getPaginatedUrl = (url) => {
+    if (!url) return null;
+    
+    const urlObj = new URL(url);
+    const params = new URLSearchParams(urlObj.search);
+    
+    // Add search term if it exists
+    if (searchTerm) {
+      params.set('search', searchTerm);
+    }
+    
+    // Add date filters if they're active
+    if (dateFilterActive) {
+      params.set('start_date', format(dateRange[0].startDate, 'yyyy-MM-dd'));
+      params.set('end_date', format(dateRange[0].endDate, 'yyyy-MM-dd'));
+    }
+    
+    // Reconstruct the URL with all parameters
+    urlObj.search = params.toString();
+    return urlObj.toString();
+  };
+
   return (
     <Layout>
       <ToastContainer position="top-right" autoClose={3000} />
@@ -529,7 +550,7 @@ const IndexProperties = () => {
               {/* Previous Page Link */}
               {pagination.prev_page_url ? (
                 <Link
-                  href={pagination.prev_page_url}
+                  href={getPaginatedUrl(pagination.prev_page_url)}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
                   preserveState
                 >
@@ -546,7 +567,7 @@ const IndexProperties = () => {
                 <React.Fragment key={index}>
                   {link.url ? (
                     <Link
-                      href={link.url}
+                      href={getPaginatedUrl(link.url)}
                       className={`px-4 py-2 rounded-lg ${
                         link.active
                           ? 'bg-blue-600 text-white'
@@ -573,7 +594,7 @@ const IndexProperties = () => {
               {/* Next Page Link */}
               {pagination.next_page_url ? (
                 <Link
-                  href={pagination.next_page_url}
+                  href={getPaginatedUrl(pagination.next_page_url)}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
                   preserveState
                 >

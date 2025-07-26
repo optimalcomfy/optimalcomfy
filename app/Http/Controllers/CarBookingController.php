@@ -53,6 +53,25 @@ class CarBookingController extends Controller
             });
         }
 
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        
+        if (!$startDate || !$endDate) {
+            $startDate = Carbon::now()->startOfMonth()->toDateString();
+            $endDate = Carbon::now()->endOfMonth()->toDateString();
+        }
+
+        try {
+            $validStartDate = Carbon::parse($startDate)->startOfDay();
+            $validEndDate = Carbon::parse($endDate)->endOfDay();
+
+            if ($validStartDate->lte($validEndDate)) {
+                $query->whereBetween('created_at', [$validStartDate, $validEndDate]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid date format provided.'], 400);
+        }
+
         $carBookings = $query->paginate(10);
 
         return Inertia::render('CarBookings/Index', [

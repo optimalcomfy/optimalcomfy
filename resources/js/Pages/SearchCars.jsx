@@ -315,8 +315,6 @@ export default function SearchCars({ auth, laravelVersion, phpVersion }) {
               </div>
             </div>
           </div>
-  
-
           </HomeLayout>
         </LayoutProvider>
       </PrimeReactProvider>

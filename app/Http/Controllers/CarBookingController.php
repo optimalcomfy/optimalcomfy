@@ -21,6 +21,8 @@ use App\Mail\BookingConfirmation;
 use App\Mail\CarBookingConfirmation;
 use Illuminate\Support\Facades\Mail;
 
+use Illuminate\Http\JsonResponse;
+
 class CarBookingController extends Controller
 {
     /**
@@ -58,6 +60,87 @@ class CarBookingController extends Controller
             'pagination' => $carBookings,
             'flash' => session('flash'),
         ]);
+    }
+
+    public function exportData(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+
+        $query = CarBooking::with(['user', 'car']);
+
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        
+        if (!$startDate || !$endDate) {
+            $startDate = Carbon::now()->startOfMonth()->toDateString();
+            $endDate = Carbon::now()->endOfMonth()->toDateString();
+        }
+
+        try {
+            $validStartDate = Carbon::parse($startDate)->startOfDay();
+            $validEndDate = Carbon::parse($endDate)->endOfDay();
+
+            if ($validStartDate->lte($validEndDate)) {
+                $query->whereBetween('created_at', [$validStartDate, $validEndDate]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid date format provided.'], 400);
+        }
+
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                    ->orWhere('status', 'LIKE', "%$search%")
+                    ->orWhere('external_booking', 'LIKE', "%$search%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%$search%");
+                    })
+                    ->orWhereHas('car', function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%$search%")
+                            ->orWhere('license_plate', 'LIKE', "%$search%");
+                    });
+            });
+        }
+
+
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($user->role_id == 2) {
+            $query->whereHas('car', function ($q) use ($user) {
+                $q->where('company_id', $user->company_id);
+            });
+        } elseif ($user->role_id == 3) {
+            $query->where('user_id', $user->id);
+        }
+
+        $carBookings = $query->orderBy('created_at', 'desc')->get();
+
+        $exportData = $carBookings->map(function ($booking) {
+            $startDate = Carbon::parse($booking->start_date);
+            $endDate = Carbon::parse($booking->end_date);
+            $days = $endDate->diffInDays($startDate);
+            $totalPrice = optional($booking->car)->platform_price * $days;
+
+            return [
+                'number' => $booking->number,
+                'guest_name' => optional($booking->user)->name,
+                'car_name' => optional($booking->car)->name,
+                'license_plate' => optional($booking->car)->license_plate,
+                'start_date' => $booking->start_date,
+                'end_date' => $booking->end_date,
+                'days' => $days,
+                'total_price' => 'KES ' . number_format($totalPrice, 2),
+                'pickup_location' => $booking->pickup_location,
+                'dropoff_location' => $booking->dropoff_location,
+                'status' => $booking->status,
+                'external_booking' => $booking->external_booking ? 'Yes' : 'No',
+                'created_at' => $booking->created_at->toDateTimeString(),
+            ];
+        });
+
+        return response()->json($exportData);
     }
 
     /**

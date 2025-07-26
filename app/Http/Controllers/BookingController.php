@@ -22,6 +22,9 @@ use App\Mail\BookingConfirmation;
 use App\Mail\CarBookingConfirmation;
 use Illuminate\Support\Facades\Mail;
 
+use Illuminate\Http\JsonResponse;
+use Carbon\Carbon;
+
 class BookingController extends Controller
 {
 
@@ -58,6 +61,87 @@ class BookingController extends Controller
             'pagination' => $bookings,
             'flash' => session('flash'),
         ]);
+    }
+
+
+    public function exportData(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+
+        $query = Booking::with(['user', 'property']);
+
+        // Date filtering
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        
+        if (!$startDate || !$endDate) {
+            $startDate = Carbon::now()->startOfMonth()->toDateString();
+            $endDate = Carbon::now()->endOfMonth()->toDateString();
+        }
+
+        try {
+            $validStartDate = Carbon::parse($startDate)->startOfDay();
+            $validEndDate = Carbon::parse($endDate)->endOfDay();
+
+            if ($validStartDate->lte($validEndDate)) {
+                $query->whereBetween('created_at', [$validStartDate, $validEndDate]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid date format provided.'], 400);
+        }
+
+        // Search functionality
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhere('status', 'LIKE', "%$search%")
+                ->orWhere('external_booking', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('property', function ($q) use ($search) {
+                    $q->where('property_name', 'LIKE', "%$search%");
+                });
+            });
+        }
+
+        // Status filter
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
+        // Role-based filtering
+        if ($user->role_id == 2) { // Property manager/owner
+            $query->whereHas('property', function ($q) use ($user) {
+                $q->where('company_id', $user->company_id);
+            });
+        } elseif ($user->role_id == 3) { // Regular user
+            $query->where('user_id', $user->id);
+        }
+
+        $bookings = $query->orderBy('created_at', 'desc')->get();
+
+        $exportData = $bookings->map(function ($booking) {
+            $checkIn = Carbon::parse($booking->check_in_date);
+            $checkOut = Carbon::parse($booking->check_out_date);
+            $nights = $checkOut->diffInDays($checkIn);
+            $totalPrice = optional($booking->property)->platform_price * $nights;
+
+            return [
+                'number' => $booking->number,
+                'guest_name' => optional($booking->user)->name,
+                'property_name' => optional($booking->property)->property_name,
+                'check_in_date' => $booking->check_in_date,
+                'check_out_date' => $booking->check_out_date,
+                'nights' => $nights,
+                'total_price' => 'KES ' . number_format($totalPrice, 2),
+                'status' => $booking->status,
+                'external_booking' => $booking->external_booking ? 'Yes' : 'No',
+                'created_at' => $booking->created_at->toDateTimeString(),
+            ];
+        });
+
+        return response()->json($exportData);
     }
 
     public function create()

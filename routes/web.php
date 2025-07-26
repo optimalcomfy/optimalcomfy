@@ -129,6 +129,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/car-media/by-car/{carId}', [CarMediaController::class, 'getByCar']);
 
     Route::resource('foodOrderItems', FoodOrderItemController::class);
+    Route::get('/payments/export-data', [PaymentController::class, 'exportData'])->name('payments.exportData');
     Route::resource('payments', PaymentController::class);
     Route::resource('reviews', ReviewController::class);
     Route::resource('properties', PropertyController::class);

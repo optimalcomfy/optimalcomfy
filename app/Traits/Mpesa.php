@@ -23,7 +23,6 @@ trait Mpesa
 
     public function __construct()
     {
-        Log::info('Initializing Mpesa configuration...');
         $this->consumerKey = config('services.mpesa.consumer_key');
         $this->consumerSecret = config('services.mpesa.consumer_secret');
         $this->passkey = config('services.mpesa.passkey');
@@ -38,12 +37,10 @@ trait Mpesa
         $this->queueTimeOutURL = config('services.mpesa.queue_timeout_url');
 
         $this->validateConfig();
-        Log::info('Mpesa configuration initialized successfully.');
     }
 
     protected function validateConfig(): void
     {
-        Log::info('Validating Mpesa configuration...');
         $required = [
             'consumerKey',
             'consumerSecret',
@@ -59,11 +56,9 @@ trait Mpesa
 
         foreach ($required as $key) {
             if (empty($this->$key)) {
-                Log::error("MPesa configuration error: {$key} is not configured.");
                 throw new Exception("MPesa configuration error: {$key} is not configured.");
             }
         }
-        Log::info('Mpesa configuration validation passed.');
     }
 
     /**
@@ -77,13 +72,11 @@ trait Mpesa
     {
         $timestampToUse = $timestamp ?? Carbon::rawParse('now')->format('YmdHis'); 
         $password = base64_encode($this->businessShortCode . $this->passkey . $timestampToUse); 
-        Log::info("Generated Lipa Na Mpesa password.", ['timestamp' => $timestampToUse]);
         return $password;
     }
 
     public function generateAccessToken(): string
     {
-        Log::info('Generating Mpesa access token...');
         $credentials = base64_encode($this->consumerKey . ":" . $this->consumerSecret);
         $url = $this->baseUrl . "/oauth/v1/generate?grant_type=client_credentials";
 
@@ -105,14 +98,11 @@ trait Mpesa
 
             $data = json_decode($response);
             if (!isset($data->access_token)) {
-                Log::error('Access token not found in M-Pesa response.', ['response' => $response]);
                 throw new Exception('Failed to get access token from M-Pesa.');
             }
 
-            Log::info('Access token generated successfully.');
             return $data->access_token;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             throw $e; // Re-throw exception to be caught by the controller
         } finally {
             if ($curl) {
@@ -133,22 +123,12 @@ trait Mpesa
      */
     public function STKPush(string $type, string $amount, string $phone, string $callback, string $reference, string $narrative): array
     {
-        Log::info('Initiating STK Push...', compact('type', 'amount', 'phone', 'callback', 'reference', 'narrative'));
-
         $url = $this->baseUrl . '/mpesa/stkpush/v1/processrequest';
         $phone = '254' . substr($phone, -9); // Sanitize phone number
 
         $currentTime = Carbon::rawParse('now');
         $formattedTimestamp = $currentTime->format('YmdHis'); 
         $phpDefaultTimezone = date_default_timezone_get();
-
-        Log::info('STK Push Timestamp Debug', [
-            'Carbon::rawParse(now) object' => $currentTime->toDateTimeString(),
-            'Formatted Timestamp (YmdHis)' => $formattedTimestamp, 
-            'PHP Default Timezone' => $phpDefaultTimezone,
-            'Carbon Timezone' => $currentTime->getTimezone()->getName(),
-            'Server Time (from date command)' => exec('date +"%Y-%m-%d %H:%M:%S %Z"'), 
-        ]);
 
         $payload = [
             'BusinessShortCode' => $this->businessShortCode,
@@ -164,7 +144,6 @@ trait Mpesa
             'TransactionDesc' => $narrative,
         ];
 
-        Log::info('STK Push payload prepared.', ['payload' => $payload]);
         $curl = null; 
         try {
             $curl = curl_init();
@@ -186,11 +165,9 @@ trait Mpesa
             }
             
             $decodedResponse = json_decode($response, true);
-            Log::info('STK Push response received.', ['response' => $decodedResponse]);
 
             return $decodedResponse;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             throw $e; 
         } finally {
             if (isset($curl)) {
@@ -201,8 +178,6 @@ trait Mpesa
 
     public function mpesaRegisterUrls(string $confirmationURL, string $validationURL): array
     {
-        Log::info('Registering Mpesa C2B URLs...', compact('confirmationURL', 'validationURL'));
-
         $curl = null; 
         try {
             $curl = curl_init();
@@ -229,11 +204,9 @@ trait Mpesa
             }
             
             $decodedResponse = json_decode($response, true);
-            Log::info('Mpesa URL registration response received.', ['response' => $decodedResponse]);
-            
+
             return $decodedResponse;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             throw $e; 
         } finally {
             if (isset($curl)) {
@@ -253,7 +226,6 @@ trait Mpesa
      */
     public function b2cPayment(string $amount, string $partyB, string $remarks, string $commandID = 'BusinessPayment', ?string $occasion = null): array
     {
-        Log::info('Initiating B2C Payment...', compact('amount', 'partyB', 'remarks', 'commandID', 'occasion'));
 
         $url = $this->baseUrl . '/mpesa/b2c/v3/paymentrequest';
         $partyB = '254' . substr($partyB, -9); // Sanitize phone number
@@ -271,7 +243,6 @@ trait Mpesa
             'Occasion' => $occasion,
         ];
 
-        Log::info('B2C Payment payload prepared.', ['payload' => $payload]);
         $curl = null;
         try {
             $curl = curl_init();
@@ -293,11 +264,9 @@ trait Mpesa
             }
             
             $decodedResponse = json_decode($response, true);
-            Log::info('B2C Payment response received.', ['response' => $decodedResponse]);
 
             return $decodedResponse;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             throw $e;
         } finally {
             if (isset($curl)) {
@@ -327,8 +296,6 @@ trait Mpesa
         string $receiverIdentifierType = '4' // Default to Till Number
     ): array
     {
-        Log::info('Initiating B2B Payment...', compact('amount', 'partyB', 'accountReference', 'remarks', 'commandID', 'senderIdentifierType', 'receiverIdentifierType'));
-
         $url = $this->baseUrl . '/mpesa/b2b/v1/paymentrequest';
 
         $payload = [
@@ -345,8 +312,6 @@ trait Mpesa
             'QueueTimeOutURL' => $this->queueTimeOutURL,
             'ResultURL' => $this->resultURL,
         ];
-
-        Log::info('B2B Payment payload prepared.', ['payload' => $payload]);
         $curl = null;
         try {
             $curl = curl_init();
@@ -368,11 +333,9 @@ trait Mpesa
             }
             
             $decodedResponse = json_decode($response, true);
-            Log::info('B2B Payment response received.', ['response' => $decodedResponse]);
 
             return $decodedResponse;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             throw $e;
         } finally {
             if (isset($curl)) {
@@ -388,7 +351,6 @@ trait Mpesa
      */
     public function STKPushQuery(string $checkoutRequestID): array
     {
-        Log::info('Querying STK Push status...', compact('checkoutRequestID'));
 
         $url = $this->baseUrl . '/mpesa/stkpushquery/v1/query';
 
@@ -402,7 +364,6 @@ trait Mpesa
             'CheckoutRequestID' => $checkoutRequestID,
         ];
 
-        Log::info('STK Push Query payload prepared.', ['payload' => $payload]);
         $curl = null;
         try {
             $curl = curl_init();
@@ -424,11 +385,9 @@ trait Mpesa
             }
             
             $decodedResponse = json_decode($response, true);
-            Log::info('STK Push Query response received.', ['response' => $decodedResponse]);
 
             return $decodedResponse;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             throw $e;
         } finally {
             if (isset($curl)) {
@@ -447,8 +406,6 @@ trait Mpesa
      */
     public function reversal(string $transactionID, string $amount, string $remarks, ?string $occasion = null): array
     {
-        Log::info('Initiating Reversal...', compact('transactionID', 'amount', 'remarks', 'occasion'));
-
         $url = $this->baseUrl . '/mpesa/reversal/v1/request';
 
         $payload = [
@@ -465,7 +422,6 @@ trait Mpesa
             'Occasion' => $occasion,
         ];
 
-        Log::info('Reversal payload prepared.', ['payload' => $payload]);
         $curl = null;
         try {
             $curl = curl_init();
@@ -487,11 +443,9 @@ trait Mpesa
             }
             
             $decodedResponse = json_decode($response, true);
-            Log::info('Reversal response received.', ['response' => $decodedResponse]);
 
             return $decodedResponse;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             throw $e;
         } finally {
             if (isset($curl)) {
@@ -519,8 +473,6 @@ trait Mpesa
         ?string $occasion = null
     ): array
     {
-        Log::info('Querying Transaction Status...', compact('transactionID', 'partyA', 'identifierType', 'remarks', 'commandID', 'occasion'));
-
         $url = $this->baseUrl . '/mpesa/transactionstatus/v1/query';
 
         $payload = [
@@ -536,7 +488,6 @@ trait Mpesa
             'Occasion' => $occasion,
         ];
 
-        Log::info('Transaction Status Query payload prepared.', ['payload' => $payload]);
         $curl = null;
         try {
             $curl = curl_init();
@@ -558,11 +509,9 @@ trait Mpesa
             }
             
             $decodedResponse = json_decode($response, true);
-            Log::info('Transaction Status Query response received.', ['response' => $decodedResponse]);
 
             return $decodedResponse;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             throw $e;
         } finally {
             if (isset($curl)) {
@@ -579,7 +528,6 @@ trait Mpesa
      */
     public function accountBalance(string $commandID = 'AccountBalance', string $remarks = 'Account Balance Query'): array
     {
-        Log::info('Querying Account Balance...', compact('commandID', 'remarks'));
 
         $url = $this->baseUrl . '/mpesa/accountbalance/v1/query';
 
@@ -594,7 +542,6 @@ trait Mpesa
             'ResultURL' => $this->resultURL,
         ];
 
-        Log::info('Account Balance Query payload prepared.', ['payload' => $payload]);
         $curl = null;
         try {
             $curl = curl_init();
@@ -616,11 +563,9 @@ trait Mpesa
             }
             
             $decodedResponse = json_decode($response, true);
-            Log::info('Account Balance Query response received.', ['response' => $decodedResponse]);
 
             return $decodedResponse;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             throw $e;
         } finally {
             if (isset($curl)) {
@@ -639,8 +584,6 @@ trait Mpesa
     
     public function checkIdentity(string $partyA, string $remarks = 'Check Identity', string $commandID = 'CheckIdentity'): array
     {
-        Log::info('Checking Identity...', compact('partyA', 'remarks', 'commandID'));
-
         $url = $this->baseUrl . '/mpesa/checkidentity/v1/processrequest';
         $partyA = '254' . substr($partyA, -9); // Sanitize phone number
 
@@ -655,7 +598,6 @@ trait Mpesa
             'ResultURL' => $this->resultURL,
         ];
 
-        Log::info('Check Identity payload prepared.', ['payload' => $payload]);
         $curl = null;
         try {
             $curl = curl_init();
@@ -677,11 +619,9 @@ trait Mpesa
             }
             
             $decodedResponse = json_decode($response, true);
-            Log::info('Check Identity response received.', ['response' => $decodedResponse]);
 
             return $decodedResponse;
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
             throw $e;
         } finally {
             if (isset($curl)) {

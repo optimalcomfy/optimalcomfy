@@ -106,8 +106,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('jobs', JobController::class);
     Route::resource('applications', ApplicationController::class);
 
-    Route::put('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])
-    ->name('bookings.cancel');
+    Route::put('/stay-bookings-cancel', [BookingController::class, 'cancel'])
+    ->name('stay-bookings.cancel');
+
     Route::get('/bookings/export-data', [BookingController::class, 'exportData'])
         ->name('bookings.exportData');
     Route::resource('bookings', BookingController::class);

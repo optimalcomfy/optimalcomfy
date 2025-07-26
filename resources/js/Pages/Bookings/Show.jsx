@@ -5,7 +5,7 @@ import { FaCalendarAlt, FaMapMarkerAlt, FaEye, FaUser, FaHome, FaMoneyBillWave, 
 import Swal from 'sweetalert2';
 
 const BookingShow = () => {
-  const { booking, auth } = usePage().props;
+  const { booking, auth, errors } = usePage().props;
   const roleId = parseInt(auth.user?.role_id);
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -185,8 +185,9 @@ const BookingShow = () => {
       }
     }).then((result) => {
       if (result.isConfirmed) {
-        router.put(route('bookings.cancel', booking.id), {
+        router.put(route('stay-bookings.cancel', booking.id), {
           cancel_reason: result.value,
+          id:booking.id,
           preserveScroll: true,
           onSuccess: () => {
             Swal.fire(
@@ -535,6 +536,24 @@ const BookingShow = () => {
               <a href={`tel:${booking.user?.contact_phone}`} className="px-8 py-2 text-center justify-center flex items-center w-full bg-peachDark hover:bg-blue-700 text-white rounded-md transition duration-150">
                 Contact Support
               </a>
+
+              {errors.cancel_reason &&
+              <div className="mt-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md flex items-start">
+                <svg 
+                  className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                  />
+                </svg>
+                <span>{errors.cancel_reason}</span>
+              </div>}
 
               {!booking.checked_out && booking.status !== 'Cancelled' && (
                   <button 

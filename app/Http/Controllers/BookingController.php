@@ -526,8 +526,12 @@ class BookingController extends Controller
 
 
 
-    public function cancel(Request $request, Booking $booking)
+    public function cancel(Request $request)
     {
+        $input = $request->all();
+
+        $booking = Booking::find($input['id']);
+
         $request->validate([
             'cancel_reason' => 'required|string|min:10|max:500',
         ]);
@@ -542,6 +546,9 @@ class BookingController extends Controller
             'cancel_reason' => $request->cancel_reason,
             'cancelled_by_id' => auth()->id(),
         ]);
+
+        $booking->check_in_date = Carbon::parse($booking->check_in_date);
+        $booking->check_out_date = Carbon::parse($booking->check_out_date);
 
         try {
             Mail::to($booking->user->email)->send(new BookingCancelled($booking, 'guest'));

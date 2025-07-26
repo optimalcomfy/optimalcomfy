@@ -187,13 +187,6 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <div class="logo">
-                @if($recipientType === 'guest')
-                    Booking Cancelled
-                @else
-                    Booking Cancellation Notice
-                @endif
-            </div>
             <div class="header-subtitle">
                 @if($recipientType === 'guest')
                     Your Booking Has Been Cancelled
@@ -213,7 +206,7 @@
             </h2>
 
             <div class="details-box">
-                <p><strong>Car:</strong> {{ $booking->car->name }}</p>
+                <p><strong>Stay:</strong> {{ $booking->property->property_name }}</p>
                 <p><strong>Dates:</strong> {{ $booking->check_in_date->format('M j, Y') }} to {{ $booking->check_out_date->format('M j, Y') }}</p>
                 <p><strong>Reason:</strong> {{ $booking->cancel_reason }}</p>
             </div>

@@ -23,7 +23,10 @@ class CarBooking extends Model
         'checked_in',
         'checked_out',
         'number',
-        'external_booking'
+        'external_booking',
+        'checkin_verification_code',
+        'checkout_verification_code',
+        'failed_reason'
     ];
 
     protected static function boot()

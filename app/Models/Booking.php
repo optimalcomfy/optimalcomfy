@@ -22,7 +22,10 @@ class Booking extends Model
         'checked_out',
         'number',
         'variation_id',
-        'external_booking'
+        'external_booking',
+        'checkin_verification_code',
+        'checkout_verification_code',
+        'failed_reason'
     ];
 
     protected static function boot()

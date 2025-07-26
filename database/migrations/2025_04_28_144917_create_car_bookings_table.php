@@ -25,6 +25,9 @@ return new class extends Migration
             $table->string('dropoff_location')->nullable();
             $table->string('status')->nullable();
             $table->text('special_requests')->nullable();
+            $table->string('checkin_verification_code')->nullable();
+            $table->string('checkout_verification_code')->nullable();
+            $table->string('failed_reason')->nullable();
             $table->timestamps();
         });
     }

@@ -22,6 +22,9 @@ return new class extends Migration
             $table->timestamp('checked_out')->nullable();
             $table->decimal('total_price', 10, 2);
             $table->string('status')->nullable();
+            $table->string('checkin_verification_code')->nullable();
+            $table->string('checkout_verification_code')->nullable();
+            $table->string('failed_reason')->nullable();
             $table->timestamps();
         });
     }

@@ -132,6 +132,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/payments/export-data', [PaymentController::class, 'exportData'])->name('payments.exportData');
     Route::resource('payments', PaymentController::class);
     Route::resource('reviews', ReviewController::class);
+    Route::get('/properties/export-data', [PropertyController::class, 'exportData'])->name('properties.exportData');
     Route::resource('properties', PropertyController::class);
     Route::resource('services', ServiceController::class);
     Route::resource('serviceBookings', ServiceBookingController::class);

@@ -30,6 +30,7 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .custom-arrow:hover {
@@ -51,21 +52,17 @@
   padding: 0 8px;
 }
 
-
 /* Prevent centering behavior */
 .slick-track {
   display: flex !important;
   justify-content: flex-start !important;
   align-items: stretch;
-
-    position: relative;
-    top: 0;
-    left: 0;
-    margin-left: 0;
-    margin-right: auto;
+  position: relative;
+  top: 0;
+  left: 0;
+  margin-left: 0;
+  margin-right: auto;
 }
-
-
 
 /* Prevent centering from individual slides */
 .slick-slide {
@@ -80,38 +77,131 @@
   text-align: left !important;
 }
 
+/* Small County Grid Layouts */
+.small-county-grid {
+  margin-bottom: 2rem;
+}
 
-/* Mobile Layout Styles */
+.small-county-grid h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.properties-grid {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+}
+
+/* Grid layouts based on item count */
+.properties-grid.items-1 {
+  grid-template-columns: 1fr;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.properties-grid.items-2 {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 600px;
+}
+
+.properties-grid.items-3 {
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 900px;
+}
+
+.grid-property-item {
+  width: 100%;
+}
+
+/* Responsive behavior for small grids */
+@media (max-width: 768px) {
+  .properties-grid.items-2,
+  .properties-grid.items-3 {
+    grid-template-columns: 1fr;
+    max-width: none;
+  }
+  
+  .properties-grid.items-1 {
+    max-width: none;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .properties-grid.items-3 {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 600px;
+  }
+}
+
+/* Hide arrows for very small sliders */
+.no-arrows .slider-arrows {
+  display: none;
+}
+
+/* Enhanced slider settings for small counts */
+.small-slider .slick-track {
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.small-slider .slick-slide {
+  width: auto !important;
+  margin: 0 8px;
+}
+
+/* Mobile Mixed Layout Styles */
 .mobile-layout {
   padding: 1rem;
 }
 
-.mobile-grid-container {
-  margin-bottom: 2rem;
+.mobile-mixed-container {
+  width: 100%;
 }
 
-.mobile-county-title {
-  font-size: 1.5rem;
+.mobile-main-title {
+  font-size: 1.75rem;
   font-weight: bold;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: #333;
+  text-align: center;
 }
 
-.mobile-properties-grid {
+.mobile-mixed-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .mobile-property-item {
   width: 100%;
+  position: relative;
+}
+
+.property-location-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 2;
+  backdrop-filter: blur(4px);
 }
 
 /* Responsive adjustments for larger mobile screens */
 @media (min-width: 480px) and (max-width: 768px) {
-  .mobile-properties-grid {
+  .mobile-mixed-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
+  }
+  
+  .mobile-main-title {
+    font-size: 1.5rem;
   }
 }
 
@@ -127,50 +217,54 @@
   }
 }
 
-/* Infinite Scroll Loader */
-.infinite-scroll-loader {
-  width: 100%;
+/* Loading States */
+.loading-more-counties,
+.loading-more-properties {
   display: flex;
   justify-content: center;
-  padding: 20px 0;
+  align-items: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+.property-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #666;
+}
+
+.load-more-trigger {
+  width: 100%;
+  height: 20px;
   margin: 20px 0;
 }
 
-.loading-spinner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.loading-spinner .spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-radius: 50%;
-  border-top-color: #3498db;
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-spinner p {
+.end-of-content {
+  text-align: center;
+  padding: 2rem;
   color: #666;
-  font-size: 14px;
+  font-style: italic;
+  border-top: 1px solid #eee;
+  margin-top: 2rem;
 }
 
-/* Mobile Layout */
-
-/* Responsive adjustments */
-@media (max-width: 480px) {
-  .mobile-properties-grid {
-    grid-template-columns: 1fr;
-  }
+/* Fallback section styling */
+.county-container[data-county="Other Areas"] {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  margin-bottom: 2rem;
 }
 
+.county-container[data-county="Other Areas"] .slider-header h2 {
+  color: #6c757d;
+}
 
+/* Image Gallery Styles */
 .view-all-images {
   position: absolute;
   bottom: 20px;
@@ -201,7 +295,6 @@
   position: relative;
 }
 
-
 .image-group-m {
   position: relative;
 }
@@ -215,7 +308,6 @@
   position: relative;
 }
 
-
 /* For the single image case */
 .rounded-lg.overflow-hidden.mt-4 .view-all-images {
   bottom: 15px;
@@ -228,8 +320,6 @@
   width: 14px;
   height: 14px;
 }
-
-
 
 /* Popup Gallery Styles */
 .popup-gallery .p-dialog-mask {
@@ -310,8 +400,6 @@
   border: 2px solid white;
 }
 
-
-
 /* Infinite scroll container */
 .infinite-scroll-container {
   scroll-behavior: smooth;
@@ -390,15 +478,115 @@
   100% { transform: rotate(360deg); }
 }
 
-.end-of-content {
-  text-align: center;
-  padding: 20px;
-  color: #666;
-  font-style: italic;
-}
-
 /* Mobile skeletons */
 .mobile-property-item .product-skeleton {
   margin: 0;
   width: 100%;
+}
+
+/* Infinite Scroll Loader */
+.infinite-scroll-loader {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  margin: 20px 0;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.loading-spinner .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #3498db;
+  animation: spin 1s ease-in-out infinite;
+}
+
+.loading-spinner p {
+  color: #666;
+  font-size: 14px;
+}
+
+/* Responsive Mobile Adjustments */
+@media (max-width: 480px) {
+  .mobile-mixed-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .mobile-main-title {
+    font-size: 1.4rem;
+  }
+  
+  .property-location-tag {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+}
+
+/* Desktop small screens */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .slider-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .small-county-grid h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Large desktop screens */
+@media (min-width: 1440px) {
+  .properties-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .custom-arrow img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Focus styles for accessibility */
+.custom-arrow:focus {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+}
+
+.view-all-images:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions */
+.county-container {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.mobile-property-item {
+  transition: transform 0.2s ease-in-out;
+}
+
+.mobile-property-item:hover {
+  transform: translateY(-2px);
+}
+
+/* Print styles */
+@media print {
+  .slider-arrows,
+  .custom-arrow,
+  .loading-more-counties,
+  .loading-more-properties {
+    display: none !important;
+  }
 }

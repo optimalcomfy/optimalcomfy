@@ -22,6 +22,9 @@ const SLIDES_TO_ADD_ON_SCROLL = 2;
 const INITIAL_PROPERTIES_PER_SLIDE = 6;
 const PROPERTIES_TO_ADD_ON_SWIPE = 6;
 const LOAD_AHEAD_BUFFER = 2;
+const MIN_ITEMS_FOR_SLIDER = 4; // Minimum items to show as slider
+const FALLBACK_SECTION_NAME = "Other Areas";
+const MOBILE_PROPERTIES_PER_BATCH = 8;
 
 function NextArrow({ onClick, disabled }) {
   return (
@@ -75,8 +78,9 @@ function extractLocationInfo(location) {
   }
 }
 
-function groupPropertiesByLocation(properties) {
+function groupPropertiesWithMinimum(properties) {
   const grouped = {};
+  const smallGroups = [];
   
   properties.forEach(property => {
     const county = extractLocationInfo(property.location);
@@ -88,7 +92,104 @@ function groupPropertiesByLocation(properties) {
     grouped[county].push(property);
   });
   
-  return grouped;
+  // Separate counties with enough items vs those with few items
+  const finalGrouped = {};
+  
+  Object.entries(grouped).forEach(([county, items]) => {
+    if (items.length >= MIN_ITEMS_FOR_SLIDER) {
+      finalGrouped[county] = items;
+    } else {
+      // Add to small groups for combining
+      smallGroups.push(...items.map(item => ({ ...item, originalCounty: county })));
+    }
+  });
+  
+  // If we have small groups, create a combined section
+  if (smallGroups.length > 0) {
+    finalGrouped[FALLBACK_SECTION_NAME] = smallGroups;
+  }
+  
+  return finalGrouped;
+}
+
+function sortCountiesByPriority(groupedProperties, userLocation) {
+  const counties = Object.keys(groupedProperties);
+  
+  return counties.sort((a, b) => {
+    const aCount = groupedProperties[a].length;
+    const bCount = groupedProperties[b].length;
+    
+    // Priority 1: User's location (if available)
+    if (userLocation) {
+      const aIsUserLocation = a.toLowerCase().includes(userLocation.toLowerCase());
+      const bIsUserLocation = b.toLowerCase().includes(userLocation.toLowerCase());
+      
+      if (aIsUserLocation && !bIsUserLocation) return -1;
+      if (!aIsUserLocation && bIsUserLocation) return 1;
+    }
+    
+    // Priority 2: Counties with more properties come first
+    if (aCount !== bCount) {
+      return bCount - aCount;
+    }
+    
+    // Priority 3: Alphabetical
+    return a.localeCompare(b);
+  });
+}
+
+function getDynamicSliderSettings(itemCount, baseSettings) {
+  if (itemCount <= 2) {
+    return {
+      ...baseSettings,
+      slidesToShow: Math.min(itemCount, 2),
+      slidesToScroll: 1,
+      arrows: false,
+      responsive: [
+        {
+          breakpoint: 768,
+          settings: {
+            slidesToShow: 1,
+            slidesToScroll: 1,
+          },
+        },
+      ],
+    };
+  } else if (itemCount <= 4) {
+    return {
+      ...baseSettings,
+      slidesToShow: Math.min(itemCount, 4),
+      slidesToScroll: 2,
+      responsive: [
+        {
+          breakpoint: 1024,
+          settings: {
+            slidesToShow: Math.min(itemCount, 3),
+            slidesToScroll: 1,
+          },
+        },
+        {
+          breakpoint: 768,
+          settings: {
+            slidesToShow: Math.min(itemCount, 2),
+            slidesToScroll: 1,
+          },
+        },
+      ],
+    };
+  }
+  
+  return baseSettings;
+}
+
+// Shuffle array function for mobile mixed display
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 export default function Welcome() {
@@ -97,6 +198,7 @@ export default function Welcome() {
   const [currentSlides, setCurrentSlides] = useState({});
   const [userLocation, setUserLocation] = useState(null);
   const [groupedProperties, setGroupedProperties] = useState({});
+  const [mixedProperties, setMixedProperties] = useState([]); // For mobile mixed display
   const [isMobile, setIsMobile] = useState(false);
   const [visibleCounties, setVisibleCounties] = useState([]);
   const containerRef = useRef(null);
@@ -123,22 +225,29 @@ export default function Welcome() {
       property?.location && typeof property.location === 'string'
     );
     
-    const grouped = groupPropertiesByLocation(validProperties);
+    // For desktop: group with minimum threshold
+    const grouped = groupPropertiesWithMinimum(validProperties);
     setGroupedProperties(grouped);
+    
+    // For mobile: create mixed array with location info
+    const mixed = shuffleArray(validProperties.map(property => ({
+      ...property,
+      displayLocation: extractLocationInfo(property.location)
+    })));
+    setMixedProperties(mixed);
     
     const initialSlides = {};
     const initialLoadedProperties = {};
     
     Object.keys(grouped).forEach(county => {
       initialSlides[county] = 0;
-      // Load initial batch of properties for each county
       initialLoadedProperties[county] = grouped[county].slice(0, INITIAL_PROPERTIES_PER_SLIDE);
     });
     
     setCurrentSlides(initialSlides);
     setLoadedProperties(initialLoadedProperties);
     
-    // Initially show first 2 counties
+    // Initially show first 2 counties for desktop
     const counties = Object.keys(grouped);
     setVisibleCounties(counties.slice(0, INITIAL_SLIDES_COUNT));
   }, [initialProperties]);
@@ -175,7 +284,7 @@ export default function Welcome() {
     }
   }, []);
 
-  // Load more properties function
+  // Load more properties function for desktop sliders
   const loadMoreProperties = useCallback((county, currentLoaded) => {
     setLoadingMore(prev => ({ ...prev, [county]: true }));
     
@@ -194,9 +303,9 @@ export default function Welcome() {
     }, 300);
   }, [groupedProperties]);
 
-  // Intersection Observer for lazy loading more county slides
+  // Intersection Observer for lazy loading more county slides (desktop)
   useEffect(() => {
-    if (!containerRef.current || visibleCounties.length >= Object.keys(groupedProperties).length) return;
+    if (isMobile || !containerRef.current || visibleCounties.length >= Object.keys(groupedProperties).length) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -228,7 +337,7 @@ export default function Welcome() {
         observer.unobserve(lastCountyElement);
       }
     };
-  }, [groupedProperties, visibleCounties, loadingMore]);
+  }, [groupedProperties, visibleCounties, loadingMore, isMobile]);
 
   // Intersection Observer for lazy loading images
   useEffect(() => {
@@ -253,7 +362,7 @@ export default function Welcome() {
     return () => {
       lazyImages.forEach(img => imageObserver.unobserve(img));
     };
-  }, [visibleCounties, loadedProperties]);
+  }, [visibleCounties, loadedProperties, mixedProperties]);
 
   // Handle slider change
   const handleSliderAfterChange = useCallback((county, currentSlide) => {
@@ -323,64 +432,156 @@ export default function Welcome() {
     ],
   }), []);
 
-  // Sort counties to prioritize user's location
+  // Sort counties to prioritize user's location and property count
   const sortedCounties = useMemo(() => {
-    const counties = Object.keys(groupedProperties);
-    if (!userLocation) return counties;
-    
-    const userCounty = counties.find(county => 
-      county.toLowerCase().includes(userLocation.toLowerCase())
-    );
-    
-    if (userCounty) {
-      return [userCounty, ...counties.filter(county => county !== userCounty)];
-    }
-    
-    return counties;
+    return sortCountiesByPriority(groupedProperties, userLocation);
   }, [groupedProperties, userLocation]);
 
-  // Mobile Grid Component
-  const MobileGrid = React.memo(({ properties, county }) => {
-    const [visibleProperties, setVisibleProperties] = useState(properties.slice(0, INITIAL_PROPERTIES_PER_SLIDE));
-    const containerRef = useRef(null);
+  // Mobile Mixed Grid Component
+  const MobileMixedGrid = React.memo(() => {
+    const [visibleProperties, setVisibleProperties] = useState(
+      mixedProperties.slice(0, MOBILE_PROPERTIES_PER_BATCH)
+    );
+    const loadMoreRef = useRef(null);
 
     useEffect(() => {
-      if (!containerRef.current || visibleProperties.length >= properties.length) return;
+      if (!loadMoreRef.current || visibleProperties.length >= mixedProperties.length) return;
 
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
             setVisibleProperties(prev => {
               const nextIndex = prev.length;
-              return [...prev, ...properties.slice(nextIndex, nextIndex + PROPERTIES_TO_ADD_ON_SWIPE)];
+              const nextBatch = mixedProperties.slice(
+                nextIndex, 
+                nextIndex + MOBILE_PROPERTIES_PER_BATCH
+              );
+              return [...prev, ...nextBatch];
             });
           }
         },
         { threshold: 0.1 }
       );
 
-      observer.observe(containerRef.current);
+      observer.observe(loadMoreRef.current);
       return () => observer.disconnect();
-    }, [properties, visibleProperties]);
+    }, [visibleProperties.length]);
 
     return (
-      <div className="mobile-grid-container county-container" data-county={county}>
-        <h2 className="mobile-county-title">Stays in {county}</h2>
-        <div className="mobile-properties-grid">
-          {visibleProperties.map((data, index) => (
-            <div key={`${county}-${index}`} className="mobile-property-item">
+      <div className="mobile-mixed-container">
+        <h2 className="mobile-main-title">Available Stays</h2>
+        <div className="mobile-mixed-grid">
+          {visibleProperties.map((property, index) => (
+            <div key={`mixed-${index}`} className="mobile-property-item">
               <React.Suspense fallback={<div className="property-loading">Loading...</div>}>
-                <LazyProduct {...data} loadedImages={loadedImages} />
+                <LazyProduct {...property} loadedImages={loadedImages} />
               </React.Suspense>
+              <div className="property-location-tag">
+               {property.displayLocation}
+              </div>
             </div>
           ))}
         </div>
-        {visibleProperties.length < properties.length && (
-          <div ref={containerRef} className="load-more-trigger" style={{ height: '20px' }} />
+        {visibleProperties.length < mixedProperties.length && (
+          <div ref={loadMoreRef} className="load-more-trigger" style={{ height: '20px' }} />
+        )}
+        {visibleProperties.length >= mixedProperties.length && mixedProperties.length > 0 && (
+          <div className="end-of-content">
+            You've seen all available properties
+          </div>
         )}
       </div>
     );
   });
+
+  // Render county section (desktop)
+  const renderCountySection = useCallback((county, properties) => {
+    const itemCount = properties.length;
+    
+    // Use grid layout for very small counts
+    if (itemCount <= 3) {
+      return (
+        <div key={county} className="small-county-grid padding-container p-5 county-container" data-county={county}>
+          <h2>Stays in {county}</h2>
+          <div className={`properties-grid items-${itemCount}`}>
+            {properties.map((data, idx) => (
+              <div key={`${county}-${idx}`} className="grid-property-item">
+                <React.Suspense fallback={<div className="property-loading">Loading...</div>}>
+                  <LazyProduct {...data} loadedImages={loadedImages} />
+                </React.Suspense>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    
+    // Use slider for larger counts
+    const currentSlide = currentSlides[county] || 0;
+    const loadedCount = loadedProperties[county]?.length || 0;
+    const totalCount = properties.length;
+    const slidesToShow = window.innerWidth <= 1024 ? (window.innerWidth <= 768 ? 2 : 4) : 6;
+
+    if (!sliderRefs.current[county]) {
+      sliderRefs.current[county] = React.createRef();
+    }
+
+    const dynamicSettings = getDynamicSliderSettings(itemCount, {
+      ...sliderSettings,
+      afterChange: (current) => handleSliderAfterChange(county, current),
+    });
+
+    // Calculate if next button should be disabled
+    const isNextDisabled = (loadedCount >= totalCount) && 
+                         (currentSlide >= loadedCount - slidesToShow);
+    
+    const isPrevDisabled = currentSlide === 0;
+    const shouldHideArrows = itemCount <= 2;
+
+    return (
+      <div 
+        key={county} 
+        className={`product-slider-container padding-container p-5 county-container ${shouldHideArrows ? 'no-arrows' : ''}`}
+        data-county={county}
+      >
+        <div className="slider-header">
+          <h2>
+            {county === FALLBACK_SECTION_NAME ? '✨ ' : ' '}
+            Stays in {county}
+          </h2>
+          {!shouldHideArrows && (
+            <div className="slider-arrows">
+              <PrevArrow
+                onClick={() => handlePrevClick(county)}
+                disabled={isPrevDisabled}
+              />
+              <NextArrow
+                onClick={() => handleNextClick(county)}
+                disabled={isNextDisabled}
+              />
+            </div>
+          )}
+        </div>
+
+        {loadedCount > 0 && (
+          <Slider ref={sliderRefs.current[county]} {...dynamicSettings}>
+            {loadedProperties[county].map((data, index) => (
+              <div key={`${county}-${index}`}>
+                <React.Suspense fallback={<div className="property-loading">Loading...</div>}>
+                  <LazyProduct {...data} loadedImages={loadedImages} />
+                </React.Suspense>
+              </div>
+            ))}
+            {loadingMore[county] && (
+              <div className="loading-more-properties">
+                Loading more properties...
+              </div>
+            )}
+          </Slider>
+        )}
+      </div>
+    );
+  }, [currentSlides, loadedProperties, loadingMore, groupedProperties, loadedImages, sliderSettings, handleSliderAfterChange, handleNextClick, handlePrevClick]);
 
   if (!initialProperties || initialProperties.length === 0) {
     return (
@@ -405,79 +606,17 @@ export default function Welcome() {
           <div ref={containerRef} className="properties-container">
             {isMobile ? (
               <div className="mobile-layout">
-                {sortedCounties.slice(0, visibleCounties.length).map((county) => (
-                  <MobileGrid 
-                    key={county} 
-                    properties={groupedProperties[county]} 
-                    county={county} 
-                  />
-                ))}
+                <MobileMixedGrid />
+              </div>
+            ) : (
+              <>
+                {sortedCounties.slice(0, visibleCounties.length).map((county) => 
+                  renderCountySection(county, groupedProperties[county])
+                )}
                 {loadingMore.counties && (
                   <div className="loading-more-counties">Loading more locations...</div>
                 )}
-              </div>
-            ) : (
-              sortedCounties.slice(0, visibleCounties.length).map((county) => {
-                const countyProperties = groupedProperties[county];
-                const currentSlide = currentSlides[county] || 0;
-                const loadedCount = loadedProperties[county]?.length || 0;
-                const totalCount = countyProperties?.length || 0;
-                const slidesToShow = window.innerWidth <= 1024 ? (window.innerWidth <= 768 ? 2 : 4) : 6;
-
-                if (!sliderRefs.current[county]) {
-                  sliderRefs.current[county] = React.createRef();
-                }
-
-                const countySliderSettings = {
-                  ...sliderSettings,
-                  afterChange: (current) => handleSliderAfterChange(county, current),
-                };
-
-                // Calculate if next button should be disabled
-                const isNextDisabled = (loadedCount >= totalCount) && 
-                                     (currentSlide >= loadedCount - slidesToShow);
-                
-                const isPrevDisabled = currentSlide === 0;
-
-                return (
-                  <div 
-                    key={county} 
-                    className="product-slider-container padding-container p-5 county-container" 
-                    data-county={county}
-                  >
-                    <div className="slider-header">
-                      <h2>Stays in {county}</h2>
-                      <div className="slider-arrows">
-                        <PrevArrow
-                          onClick={() => handlePrevClick(county)}
-                          disabled={isPrevDisabled}
-                        />
-                        <NextArrow
-                          onClick={() => handleNextClick(county)}
-                          disabled={isNextDisabled}
-                        />
-                      </div>
-                    </div>
-
-                    {loadedCount > 0 && (
-                      <Slider ref={sliderRefs.current[county]} {...countySliderSettings}>
-                        {loadedProperties[county].map((data, index) => (
-                          <div key={`${county}-${index}`}>
-                            <React.Suspense fallback={<div className="property-loading">Loading...</div>}>
-                              <LazyProduct {...data} loadedImages={loadedImages} />
-                            </React.Suspense>
-                          </div>
-                        ))}
-                        {loadingMore[county] && (
-                          <div className="loading-more-properties">
-                            Loading more properties...
-                          </div>
-                        )}
-                      </Slider>
-                    )}
-                  </div>
-                );
-              })
+              </>
             )}
           </div>
         </HomeLayout>

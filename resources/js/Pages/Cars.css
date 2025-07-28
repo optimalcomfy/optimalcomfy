@@ -1,41 +1,213 @@
-/* Mobile Layout Styles for Cars */
+.product-slider-container {
+  position: relative;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.slider-header h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.slider-arrows {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Custom Arrow Styles */
+.custom-arrow {
+  width: 40px;
+  height: 40px;
+  background-color: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.custom-arrow:hover {
+  background-color: #e0e0e0;
+}
+
+.slick-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Space between slides */
+.slick-list {
+  margin: 0 -8px;
+}
+
+.slick-slide > div {
+  padding: 0 8px;
+}
+
+/* Prevent centering behavior */
+.slick-track {
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: stretch;
+  position: relative;
+  top: 0;
+  left: 0;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* Prevent centering from individual slides */
+.slick-slide {
+  display: flex !important;
+  justify-content: flex-start !important;
+  float: none !important;
+  height: auto;
+}
+
+/* Remove extra center-alignment from carousel wrapper */
+.slick-slider {
+  text-align: left !important;
+}
+
+/* Small County Grid Layouts */
+.small-county-grid {
+  margin-bottom: 2rem;
+}
+
+.small-county-grid h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.cars-grid {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+}
+
+/* Grid layouts based on item count */
+.cars-grid.items-1 {
+  grid-template-columns: 1fr;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.cars-grid.items-2 {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 600px;
+}
+
+.cars-grid.items-3 {
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 900px;
+}
+
+.grid-car-item {
+  width: 100%;
+}
+
+/* Responsive behavior for small grids */
+@media (max-width: 768px) {
+  .cars-grid.items-2,
+  .cars-grid.items-3 {
+    grid-template-columns: 1fr;
+    max-width: none;
+  }
+  
+  .cars-grid.items-1 {
+    max-width: none;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .cars-grid.items-3 {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 600px;
+  }
+}
+
+/* Hide arrows for very small sliders */
+.no-arrows .slider-arrows {
+  display: none;
+}
+
+/* Enhanced slider settings for small counts */
+.small-slider .slick-track {
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.small-slider .slick-slide {
+  width: auto !important;
+  margin: 0 8px;
+}
+
+/* Mobile Mixed Layout Styles */
 .mobile-layout {
   padding: 1rem;
 }
 
-.mobile-grid-container {
-  margin-bottom: 2rem;
+.mobile-mixed-container {
+  width: 100%;
 }
 
-.mobile-location-title {
-  font-size: 1.5rem;
+.mobile-main-title {
+  font-size: 1.75rem;
   font-weight: bold;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: #333;
+  text-align: center;
 }
 
-.mobile-cars-grid {
+.mobile-mixed-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .mobile-car-item {
   width: 100%;
+  position: relative;
+}
+
+.car-location-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 2;
+  backdrop-filter: blur(4px);
 }
 
 /* Responsive adjustments for larger mobile screens */
 @media (min-width: 480px) and (max-width: 768px) {
-  .mobile-cars-grid {
+  .mobile-mixed-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
+  
+  .mobile-main-title {
+    font-size: 1.5rem;
+  }
 }
 
-/* Ensure the ProductCar component works well in mobile grid */
+/* Ensure the Product component works well in mobile grid */
 @media (max-width: 768px) {
-  .mobile-car-item .car-card,
-  .mobile-car-item .product-car {
+  .mobile-car-item .product-card {
     width: 100% !important;
     margin: 0 !important;
   }
@@ -43,32 +215,378 @@
   .mobile-layout .padding-container {
     padding: 0.5rem !important;
   }
-  
-  /* Adjust car card spacing and layout for mobile */
-  .mobile-car-item {
-    display: block;
-    width: 100%;
+}
+
+/* Loading States */
+.loading-more-counties,
+.loading-more-cars {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+.car-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #666;
+}
+
+.load-more-trigger {
+  width: 100%;
+  height: 20px;
+  margin: 20px 0;
+}
+
+.end-of-content {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+  border-top: 1px solid #eee;
+  margin-top: 2rem;
+}
+
+/* Fallback section styling */
+.county-container[data-county="Other Areas"] {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.county-container[data-county="Other Areas"] .slider-header h2 {
+  color: #6c757d;
+}
+
+/* Image Gallery Styles */
+.view-all-images {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.view-all-images:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.view-all-images svg {
+  width: 16px;
+  height: 16px;
+}
+
+.img__container--hero, .single-image-container {
+  position: relative;
+}
+
+.image-group-m {
+  position: relative;
+}
+
+.img__container.main-image {
+  position: relative;
+}
+
+.img__container--hero, 
+.rounded-lg.overflow-hidden.mt-4 {
+  position: relative;
+}
+
+/* For the single image case */
+.rounded-lg.overflow-hidden.mt-4 .view-all-images {
+  bottom: 15px;
+  right: 15px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.rounded-lg.overflow-hidden.mt-4 .view-all-images svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Popup Gallery Styles */
+.popup-gallery .p-dialog-mask {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+.popup-gallery .p-dialog {
+  width: 80%;
+  background: transparent;
+  box-shadow: none;
+}
+
+.gallery-container {
+  position: relative;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.gallery-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.gallery-main-image {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-main-image img {
+  height: 60vh;
+  width: 100%;
+  object-fit: cover;
+}
+
+.gallery-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 20px;
+}
+
+.gallery-nav {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 2rem;
+}
+
+.gallery-thumbnails {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 0;
+}
+
+.gallery-thumbnails img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.gallery-thumbnails img.active {
+  opacity: 1;
+  border: 2px solid white;
+}
+
+/* Infinite scroll container */
+.infinite-scroll-container {
+  scroll-behavior: smooth;
+}
+
+/* Loading skeletons */
+.product-skeleton {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 0 10px;
+}
+
+.skeleton-image {
+  height: 180px;
+  background: #f0f0f0;
+  margin-bottom: 12px;
+}
+
+.skeleton-content {
+  padding: 12px;
+}
+
+.skeleton-line {
+  height: 12px;
+  background: #f0f0f0;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+.skeleton-line.short {
+  width: 70%;
+}
+
+.skeleton-line.shorter {
+  width: 50%;
+}
+
+/* Animation for skeletons */
+.animate-pulse {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
   }
-  
-  /* Make sure car images are responsive */
-  .mobile-car-item img {
-    width: 100%;
-    height: auto;
+  50% {
+    opacity: 0.5;
   }
 }
 
-/* Additional mobile optimizations for car listings */
+/* Loading indicator */
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #666;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mobile skeletons */
+.mobile-car-item .product-skeleton {
+  margin: 0;
+  width: 100%;
+}
+
+/* Infinite Scroll Loader */
+.infinite-scroll-loader {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  margin: 20px 0;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.loading-spinner .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #3498db;
+  animation: spin 1s ease-in-out infinite;
+}
+
+.loading-spinner p {
+  color: #666;
+  font-size: 14px;
+}
+
+/* Responsive Mobile Adjustments */
 @media (max-width: 480px) {
-  .mobile-location-title {
-    font-size: 1.25rem;
-    margin-bottom: 0.75rem;
+  .mobile-mixed-grid {
+    grid-template-columns: 1fr;
   }
   
-  .mobile-cars-grid {
-    gap: 0.75rem;
+  .mobile-main-title {
+    font-size: 1.4rem;
   }
   
-  .mobile-grid-container {
-    margin-bottom: 1.5rem;
+  .car-location-tag {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+}
+
+/* Desktop small screens */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .slider-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .small-county-grid h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Large desktop screens */
+@media (min-width: 1440px) {
+  .cars-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .custom-arrow img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Focus styles for accessibility */
+.custom-arrow:focus {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+}
+
+.view-all-images:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions */
+.county-container {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.mobile-car-item {
+  transition: transform 0.2s ease-in-out;
+}
+
+.mobile-car-item:hover {
+  transform: translateY(-2px);
+}
+
+/* Print styles */
+@media print {
+  .slider-arrows,
+  .custom-arrow,
+  .loading-more-counties,
+  .loading-more-cars {
+    display: none !important;
   }
 }

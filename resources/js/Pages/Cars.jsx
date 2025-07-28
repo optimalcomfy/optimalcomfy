@@ -20,6 +20,9 @@ const SLIDES_TO_ADD_ON_SCROLL = 2;
 const INITIAL_CARS_PER_SLIDE = 6;
 const CARS_TO_ADD_ON_SWIPE = 6;
 const LOAD_AHEAD_BUFFER = 2;
+const MIN_ITEMS_FOR_SLIDER = 4; // Minimum items to show as slider
+const FALLBACK_SECTION_NAME = "Other Areas";
+const MOBILE_CARS_PER_BATCH = 8;
 
 function NextArrow({ onClick, disabled }) {
   return (
@@ -67,12 +70,12 @@ function extractLocationInfo(locationAddress) {
   return cleanLocation;
 }
 
-// Group cars by location using location_address field
-function groupCarsByLocation(cars) {
+// Group cars by location with minimum threshold
+function groupCarsWithMinimum(cars) {
   const grouped = {};
+  const smallGroups = [];
   
   cars.forEach(car => {
-    // Use location_address field from the car data
     const location = car.location_address ? extractLocationInfo(car.location_address) : 'All Locations';
     
     if (!grouped[location]) {
@@ -82,7 +85,108 @@ function groupCarsByLocation(cars) {
     grouped[location].push(car);
   });
   
-  return grouped;
+  // Separate locations with enough items vs those with few items
+  const finalGrouped = {};
+  
+  Object.entries(grouped).forEach(([location, items]) => {
+    if (items.length >= MIN_ITEMS_FOR_SLIDER) {
+      finalGrouped[location] = items;
+    } else {
+      // Add to small groups for combining
+      smallGroups.push(...items.map(item => ({ ...item, originalLocation: location })));
+    }
+  });
+  
+  // If we have small groups, create a combined section
+  if (smallGroups.length > 0) {
+    finalGrouped[FALLBACK_SECTION_NAME] = smallGroups;
+  }
+  
+  return finalGrouped;
+}
+
+// Sort locations by priority
+function sortLocationsByPriority(groupedCars, userLocation) {
+  const locations = Object.keys(groupedCars);
+  
+  return locations.sort((a, b) => {
+    const aCount = groupedCars[a].length;
+    const bCount = groupedCars[b].length;
+    
+    // Priority 1: User's location (if available)
+    if (userLocation) {
+      const aIsUserLocation = a.toLowerCase().includes(userLocation.toLowerCase()) ||
+                             userLocation.toLowerCase().includes(a.toLowerCase());
+      const bIsUserLocation = b.toLowerCase().includes(userLocation.toLowerCase()) ||
+                             userLocation.toLowerCase().includes(b.toLowerCase());
+      
+      if (aIsUserLocation && !bIsUserLocation) return -1;
+      if (!aIsUserLocation && bIsUserLocation) return 1;
+    }
+    
+    // Priority 2: Locations with more cars come first
+    if (aCount !== bCount) {
+      return bCount - aCount;
+    }
+    
+    // Priority 3: Alphabetical
+    return a.localeCompare(b);
+  });
+}
+
+// Dynamic slider settings based on item count
+function getDynamicSliderSettings(itemCount, baseSettings) {
+  if (itemCount <= 2) {
+    return {
+      ...baseSettings,
+      slidesToShow: Math.min(itemCount, 2),
+      slidesToScroll: 1,
+      arrows: false,
+      responsive: [
+        {
+          breakpoint: 768,
+          settings: {
+            slidesToShow: 1,
+            slidesToScroll: 1,
+          },
+        },
+      ],
+    };
+  } else if (itemCount <= 4) {
+    return {
+      ...baseSettings,
+      slidesToShow: Math.min(itemCount, 4),
+      slidesToScroll: 2,
+      responsive: [
+        {
+          breakpoint: 1024,
+          settings: {
+            slidesToShow: Math.min(itemCount, 3),
+            slidesToScroll: 1,
+          },
+        },
+        {
+          breakpoint: 768,
+          settings: {
+            slidesToShow: Math.min(itemCount, 2),
+            slidesToScroll: 1,
+          },
+        },
+      ],
+    };
+  }
+  
+  return baseSettings;
+}
+
+// Shuffle array function for mobile mixed display
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 export default function Welcome({ auth, laravelVersion, phpVersion }) {
@@ -91,6 +195,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
     const [currentSlides, setCurrentSlides] = useState({});
     const [userLocation, setUserLocation] = useState(null);
     const [groupedCars, setGroupedCars] = useState({});
+    const [mixedCars, setMixedCars] = useState([]); // For mobile mixed display
     const [isMobile, setIsMobile] = useState(false);
     const [visibleLocations, setVisibleLocations] = useState([]);
     const containerRef = useRef(null);
@@ -125,8 +230,16 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
     // Initialize cars and lazy loading
     useEffect(() => {
         if (cars && cars.length > 0) {
-            const grouped = groupCarsByLocation(cars);
+            // For desktop: group with minimum threshold
+            const grouped = groupCarsWithMinimum(cars);
             setGroupedCars(grouped);
+            
+            // For mobile: create mixed array with location info
+            const mixed = shuffleArray(cars.map(car => ({
+                ...car,
+                displayLocation: car.location_address ? extractLocationInfo(car.location_address) : 'All Locations'
+            })));
+            setMixedCars(mixed);
             
             const initialSlides = {};
             const initialLoadedCars = {};
@@ -177,9 +290,9 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         }
     }, []);
 
-    // Intersection Observer for lazy loading more location slides
+    // Intersection Observer for lazy loading more location slides (desktop)
     useEffect(() => {
-        if (!containerRef.current || visibleLocations.length >= Object.keys(groupedCars).length) return;
+        if (isMobile || !containerRef.current || visibleLocations.length >= Object.keys(groupedCars).length) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -211,7 +324,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 observer.unobserve(lastLocationElement);
             }
         };
-    }, [groupedCars, visibleLocations, loadingMore]);
+    }, [groupedCars, visibleLocations, loadingMore, isMobile]);
 
     // Intersection Observer for lazy loading images
     useEffect(() => {
@@ -236,7 +349,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         return () => {
             lazyImages.forEach(img => imageObserver.unobserve(img));
         };
-    }, [visibleLocations, loadedCars]);
+    }, [visibleLocations, loadedCars, mixedCars]);
 
     // Load more cars when scrolling right in a slider
     const loadMoreCars = useCallback((location, currentLoaded) => {
@@ -324,63 +437,150 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         ],
     }), []);
 
-    // Sort locations to prioritize user's location
+    // Sort locations to prioritize user's location and car count
     const sortedLocations = useMemo(() => {
-        const locations = Object.keys(groupedCars);
-        if (!userLocation) return locations;
-        
-        const matchingLocation = locations.find(location => 
-            location.toLowerCase().includes(userLocation.toLowerCase()) ||
-            userLocation.toLowerCase().includes(location.toLowerCase())
-        );
-        
-        if (matchingLocation) {
-            return [matchingLocation, ...locations.filter(location => location !== matchingLocation)];
-        }
-        
-        return locations;
+        return sortLocationsByPriority(groupedCars, userLocation);
     }, [groupedCars, userLocation]);
 
-    // Mobile Grid Component
-    const MobileCarGrid = React.memo(({ cars, location }) => {
-        const [visibleCars, setVisibleCars] = useState(cars.slice(0, INITIAL_CARS_PER_SLIDE));
-        const containerRef = useRef(null);
+    // Mobile Mixed Grid Component
+    const MobileMixedGrid = React.memo(() => {
+        const [visibleCars, setVisibleCars] = useState(
+            mixedCars.slice(0, MOBILE_CARS_PER_BATCH)
+        );
+        const loadMoreRef = useRef(null);
 
         useEffect(() => {
-            if (!containerRef.current || visibleCars.length >= cars.length) return;
+            if (!loadMoreRef.current || visibleCars.length >= mixedCars.length) return;
 
             const observer = new IntersectionObserver(
                 ([entry]) => {
                     if (entry.isIntersecting) {
                         setVisibleCars(prev => {
                             const nextIndex = prev.length;
-                            return [...prev, ...cars.slice(nextIndex, nextIndex + CARS_TO_ADD_ON_SWIPE)];
+                            const nextBatch = mixedCars.slice(
+                                nextIndex, 
+                                nextIndex + MOBILE_CARS_PER_BATCH
+                            );
+                            return [...prev, ...nextBatch];
                         });
                     }
                 },
                 { threshold: 0.1 }
             );
 
-            observer.observe(containerRef.current);
+            observer.observe(loadMoreRef.current);
             return () => observer.disconnect();
-        }, [cars, visibleCars]);
+        }, [visibleCars.length]);
 
         return (
-            <div className="mobile-grid-container location-container" data-location={location}>
-                <h2 className="mobile-location-title">Rides in {location}</h2>
-                <div className="mobile-cars-grid">
+            <div className="mobile-mixed-container">
+                <h2 className="mobile-main-title">Available Rides</h2>
+                <div className="mobile-mixed-grid">
                     {visibleCars.map((car, index) => (
-                        <div key={car.id || index} className="mobile-car-item">
+                        <div key={car.id || `mixed-${index}`} className="mobile-car-item">
                             <ProductCar {...car} loadedImages={loadedImages} />
+                            <div className="car-location-tag">
+                                 {car.displayLocation}
+                            </div>
                         </div>
                     ))}
                 </div>
-                {visibleCars.length < cars.length && (
-                    <div ref={containerRef} className="load-more-trigger" style={{ height: '20px' }} />
+                {visibleCars.length < mixedCars.length && (
+                    <div ref={loadMoreRef} className="load-more-trigger" style={{ height: '20px' }} />
+                )}
+                {visibleCars.length >= mixedCars.length && mixedCars.length > 0 && (
+                    <div className="end-of-content">
+                        You've seen all available rides
+                    </div>
                 )}
             </div>
         );
     });
+
+    // Render location section (desktop)
+    const renderLocationSection = useCallback((location, cars) => {
+        const itemCount = cars.length;
+        
+        // Use grid layout for very small counts
+        if (itemCount <= 3) {
+            return (
+                <div key={location} className="small-location-grid padding-container p-5 location-container" data-location={location}>
+                    <h2>Rides in {location}</h2>
+                    <div className={`cars-grid items-${itemCount}`}>
+                        {cars.map((car, idx) => (
+                            <div key={car.id || `${location}-${idx}`} className="grid-car-item">
+                                <ProductCar {...car} loadedImages={loadedImages} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+        
+        // Use slider for larger counts
+        const currentSlide = currentSlides[location] || 0;
+        const loadedCount = loadedCars[location]?.length || 0;
+        const totalCount = cars.length;
+        const slidesToShow = window.innerWidth <= 1024 ? (window.innerWidth <= 768 ? 2 : 4) : 6;
+
+        if (!sliderRefs.current[location]) {
+            sliderRefs.current[location] = React.createRef();
+        }
+
+        const dynamicSettings = getDynamicSliderSettings(itemCount, {
+            ...sliderSettings,
+            afterChange: (current) => handleSliderAfterChange(location, current),
+        });
+
+        // Calculate if next button should be disabled
+        const isNextDisabled = (loadedCount >= totalCount) && 
+                             (currentSlide >= loadedCount - slidesToShow);
+        
+        const isPrevDisabled = currentSlide === 0;
+        const shouldHideArrows = itemCount <= 2;
+
+        return (
+            <div 
+                key={location} 
+                className={`car-slider-container padding-container p-5 location-container ${shouldHideArrows ? 'no-arrows' : ''}`}
+                data-location={location}
+            >
+                <div className="slider-header">
+                    <h2>
+                        {location === FALLBACK_SECTION_NAME ? '✨ ' : ' '}
+                        Rides in {location}
+                    </h2>
+                    {!shouldHideArrows && (
+                        <div className="slider-arrows">
+                            <PrevArrow
+                                onClick={() => handlePrevClick(location)}
+                                disabled={isPrevDisabled}
+                            />
+                            <NextArrow
+                                onClick={() => handleNextClick(location)}
+                                disabled={isNextDisabled}
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {loadedCount > 0 && (
+                    <Slider ref={sliderRefs.current[location]} {...dynamicSettings}>
+                        {loadedCars[location].map((car, index) => (
+                            <div key={car.id || `${location}-${index}`}>
+                                <ProductCar {...car} loadedImages={loadedImages} />
+                            </div>
+                        ))}
+                        {loadingMore[location] && (
+                            <div className="loading-more-cars">
+                                Loading more cars...
+                            </div>
+                        )}
+                    </Slider>
+                )}
+            </div>
+        );
+    }, [currentSlides, loadedCars, loadingMore, groupedCars, loadedImages, sliderSettings, handleSliderAfterChange, handleNextClick, handlePrevClick]);
 
     if (!cars || cars.length === 0) {
         return (
@@ -405,77 +605,17 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     <div ref={containerRef} className="cars-container">
                         {isMobile ? (
                             <div className="mobile-layout">
-                                {sortedLocations.slice(0, visibleLocations.length).map((location) => (
-                                    <MobileCarGrid 
-                                        key={location} 
-                                        cars={groupedCars[location]} 
-                                        location={location} 
-                                    />
-                                ))}
+                                <MobileMixedGrid />
+                            </div>
+                        ) : (
+                            <>
+                                {sortedLocations.slice(0, visibleLocations.length).map((location) => 
+                                    renderLocationSection(location, groupedCars[location])
+                                )}
                                 {loadingMore.locations && (
                                     <div className="loading-more-locations">Loading more locations...</div>
                                 )}
-                            </div>
-                        ) : (
-                            sortedLocations.slice(0, visibleLocations.length).map((location) => {
-                                const locationCars = groupedCars[location];
-                                const currentSlide = currentSlides[location] || 0;
-                                const loadedCount = loadedCars[location]?.length || 0;
-                                const totalCount = locationCars?.length || 0;
-                                const slidesToShow = window.innerWidth <= 1024 ? (window.innerWidth <= 768 ? 2 : 4) : 6;
-
-                                if (!sliderRefs.current[location]) {
-                                    sliderRefs.current[location] = React.createRef();
-                                }
-
-                                const locationSliderSettings = {
-                                    ...sliderSettings,
-                                    afterChange: (current) => handleSliderAfterChange(location, current),
-                                };
-
-                                // Calculate if next button should be disabled
-                                const isNextDisabled = (loadedCount >= totalCount) && 
-                                                     (currentSlide >= loadedCount - slidesToShow);
-                                
-                                const isPrevDisabled = currentSlide === 0;
-
-                                return (
-                                    <div 
-                                        key={location} 
-                                        className="car-slider-container padding-container p-5 location-container" 
-                                        data-location={location}
-                                    >
-                                        <div className="slider-header">
-                                            <h2>Rides in {location}</h2>
-                                            <div className="slider-arrows">
-                                                <PrevArrow
-                                                    onClick={() => handlePrevClick(location)}
-                                                    disabled={isPrevDisabled}
-                                                />
-                                                <NextArrow
-                                                    onClick={() => handleNextClick(location)}
-                                                    disabled={isNextDisabled}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {loadedCount > 0 && (
-                                            <Slider ref={sliderRefs.current[location]} {...locationSliderSettings}>
-                                                {loadedCars[location].map((car, index) => (
-                                                    <div key={car.id || index}>
-                                                        <ProductCar {...car} loadedImages={loadedImages} />
-                                                    </div>
-                                                ))}
-                                                {loadingMore[location] && (
-                                                    <div className="loading-more-cars">
-                                                        Loading more cars...
-                                                    </div>
-                                                )}
-                                            </Slider>
-                                        )}
-                                    </div>
-                                );
-                            })
+                            </>
                         )}
                     </div>
                 </HomeLayout>

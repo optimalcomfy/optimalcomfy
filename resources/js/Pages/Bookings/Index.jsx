@@ -24,6 +24,17 @@ const BookingsIndex = () => {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [excelLoading, setExcelLoading] = useState(false);
 
+  const url = usePage().url;
+  const searchParams = new URLSearchParams(new URL(url, window.location.origin).search);
+  const status = searchParams.get('status');
+
+  const statusHeader = status 
+  ? status.replace(/_/g, ' ')
+         .split(' ')
+         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+         .join(' ')
+  : 'All';
+
   // Date range state
   const getInitialDateRange = () => {
     const now = new Date();
@@ -45,6 +56,7 @@ const BookingsIndex = () => {
 
     router.get(route('bookings.index'), { 
       search: e.target.value,
+      status: status ? status : null,
       ...getDateParams()
     }, {
       preserveState: true,
@@ -66,6 +78,7 @@ const BookingsIndex = () => {
     
     router.get(route('bookings.index'), {
       search: searchTerm,
+      status: status ? status : null,
       ...getDateParams()
     }, {
       preserveState: true,
@@ -78,7 +91,8 @@ const BookingsIndex = () => {
     setLoading(true);
     
     router.get(route('bookings.index'), {
-      search: searchTerm
+      search: searchTerm,
+      status: status ? status : null
     }, {
       preserveState: true,
       onFinish: () => setLoading(false),
@@ -86,7 +100,7 @@ const BookingsIndex = () => {
   };
 
   const getCurrentFilters = (includeDates = dateFilterActive) => {
-    const filters = { search: searchTerm };
+    const filters = { search: searchTerm, status: status ? status : null};
     if (includeDates) {
         const start = dateRange[0].startDate;
         const end = dateRange[0].endDate;
@@ -140,7 +154,7 @@ const BookingsIndex = () => {
         doc.addImage(logoImg, 'PNG', 10, 10, 50, 20);
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.text("Bookings Report", pageWidth / 2, 35, { align: 'center' });
+        doc.text(`${statusHeader} Bookings Report`, pageWidth / 2, 35, { align: 'center' });
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
@@ -256,7 +270,7 @@ const BookingsIndex = () => {
         XLSX.utils.book_append_sheet(wb, ws, 'Bookings');
 
         const datePart = exportFilters.start_date ? `${exportFilters.start_date}_to_${exportFilters.end_date}` : 'current_month';
-        XLSX.writeFile(wb, `bookings_report_${datePart}.xlsx`);
+        XLSX.writeFile(wb, `${statusHeader}_bookings_report_${datePart}.xlsx`);
 
     } catch (error) {
         let message = "An error occurred while generating the Excel.";
@@ -311,6 +325,9 @@ const BookingsIndex = () => {
     if (searchTerm) {
       params.set('search', searchTerm);
     }
+
+    if (status) {
+    params.set('status', status)}
     
     // Add date filters if they're active
     if (dateFilterActive) {
@@ -352,8 +369,8 @@ const BookingsIndex = () => {
           lg:block bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4
         `}>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h1 className="text-2xl font-semibold text-gray-900 w-full sm:w-auto my-auto">
-              Bookings
+            <h1 className="text-2xl capitalize font-semibold text-gray-900 w-full sm:w-auto my-auto">
+              { statusHeader } Bookings
             </h1>
             
             <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">

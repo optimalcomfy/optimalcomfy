@@ -48,6 +48,22 @@ class CarBookingController extends Controller
             $query->where('user_id', '=', $user->id);
         }
 
+        if ($request->has('status')) {
+            $status = $request->input('status');
+
+            $query->where(function ($q) use ($status) {
+                if ($status === 'checked_out') {
+                    $q->whereNotNull('checked_out');
+                } elseif ($status === 'checked_in') {
+                    $q->whereNull('checked_out')->whereNotNull('checked_in');
+                } elseif ($status === 'upcoming_stay') {
+                    $q->where('status', 'paid')->whereNull('checked_in');
+                } else {
+                    $q->where('status', $status);
+                }
+            });
+        }
+
         if ($request->has('search')) {
             $search = $request->input('search');
             $query->whereHas('user', function ($q) use ($search) {
@@ -107,6 +123,30 @@ class CarBookingController extends Controller
             }
         } catch (\Exception $e) {
             return response()->json(['error' => 'Invalid date format provided.'], 400);
+        }
+
+        if ($request->has('status')) {
+            $status = $request->input('status');
+
+            $query->where(function($q) use ($status) {
+                switch ($status) {
+                    case 'checked_out':
+                        $q->whereNotNull('checked_out');  
+                        break;
+                    case 'checked_in':
+                        $q->whereNotNull('checked_in')   
+                        ->whereNull('checked_out');   
+                        break;
+                    case 'upcoming_stay':
+                        $q->where('status', 'paid')
+                        ->whereNull('checked_in');  
+                        break;
+                    default:
+                        $q->where('status', $status)
+                        ->whereNull('checked_in')  
+                        ->whereNull('checked_out');
+                }
+            });
         }
 
         if ($search = $request->query('search')) {

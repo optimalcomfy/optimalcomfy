@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
 use Illuminate\Support\Str;
 
 class Booking extends Model
@@ -31,6 +30,8 @@ class Booking extends Model
         'cancelled_by_id'
     ];
 
+    protected $appends = ['stay_status'];
+
     protected static function boot()
     {
         parent::boot();
@@ -38,6 +39,23 @@ class Booking extends Model
         static::creating(function ($booking) {
             $booking->number = self::generateUniqueNumber();
         });
+    }
+
+    public function getStayStatusAttribute()
+    {
+        if ($this->checked_out) {
+            return 'checked_out';
+        }
+        
+        if ($this->checked_in) {
+            return 'checked_in';
+        }
+        
+        if ($this->status === 'paid' && !$this->checked_in) {
+            return 'upcoming_stay';
+        }
+        
+        return $this->status;
     }
 
     public static function generateUniqueNumber()
@@ -48,7 +66,6 @@ class Booking extends Model
 
         return $number;
     }
-
 
     public static function generateVerificationCode()
     {
@@ -70,4 +87,3 @@ class Booking extends Model
         return $this->hasMany(Payment::class);
     }
 }
-

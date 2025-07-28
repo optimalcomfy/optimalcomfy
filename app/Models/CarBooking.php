@@ -32,6 +32,9 @@ class CarBooking extends Model
         'cancelled_by_id'
     ];
 
+    // Add this to automatically include the accessor in JSON/array outputs
+    protected $appends = ['ride_status'];
+
     protected static function boot()
     {
         parent::boot();
@@ -39,6 +42,24 @@ class CarBooking extends Model
         static::creating(function ($carBooking) {
             $carBooking->number = self::generateUniqueNumber();
         });
+    }
+
+    // Accessor for stay_status
+    public function getRideStatusAttribute()
+    {
+        if ($this->checked_out) {
+            return 'checked_out';
+        }
+        
+        if ($this->checked_in) {
+            return 'checked_in';
+        }
+
+        if ($this->status === 'paid' && !$this->checked_in) {
+            return 'upcoming_stay';
+        }
+        
+        return $this->status;
     }
 
     public static function generateUniqueNumber()

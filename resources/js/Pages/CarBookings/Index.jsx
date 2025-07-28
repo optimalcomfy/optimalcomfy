@@ -24,6 +24,17 @@ const CarBookingsIndex = () => {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [excelLoading, setExcelLoading] = useState(false);
 
+  const url = usePage().url;
+  const searchParams = new URLSearchParams(new URL(url, window.location.origin).search);
+  const status = searchParams.get('status');
+
+  const statusHeader = status 
+  ? status.replace(/_/g, ' ')
+         .split(' ')
+         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+         .join(' ')
+  : 'All';
+
   // Date range state
   const getInitialDateRange = () => {
     const now = new Date();
@@ -140,7 +151,7 @@ const CarBookingsIndex = () => {
         doc.addImage(logoImg, 'PNG', 10, 10, 50, 20);
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.text("Car Bookings Report", pageWidth / 2, 35, { align: 'center' });
+        doc.text(`${statusHeader} Car Bookings Report`, pageWidth / 2, 35, { align: 'center' });
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
@@ -260,7 +271,7 @@ const CarBookingsIndex = () => {
         XLSX.utils.book_append_sheet(wb, ws, 'Car Bookings');
 
         const datePart = exportFilters.start_date ? `${exportFilters.start_date}_to_${exportFilters.end_date}` : 'current_month';
-        XLSX.writeFile(wb, `car_bookings_report_${datePart}.xlsx`);
+        XLSX.writeFile(wb, `${statusHeader}_car_bookings_report_${datePart}.xlsx`);
 
     } catch (error) {
         let message = "An error occurred while generating the Excel.";
@@ -315,6 +326,9 @@ const CarBookingsIndex = () => {
     if (searchTerm) {
       params.set('search', searchTerm);
     }
+
+    if (status) {
+    params.set('status', status)}
     
     // Add date filters if they're active
     if (dateFilterActive) {
@@ -357,7 +371,7 @@ const CarBookingsIndex = () => {
         `}>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <h1 className="text-2xl font-semibold text-gray-900 w-full sm:w-auto my-auto">
-              Ride Bookings
+              {statusHeader} Ride Bookings
             </h1>
             
             <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">

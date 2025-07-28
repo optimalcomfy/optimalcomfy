@@ -21,7 +21,13 @@ const AppMenu = () => {
             label: 'Stays Management',
             items: [
                 { label: 'Stays', icon: 'pi pi-fw pi-building', to: route('properties.index'), roles: [1, 2] },
-                { label: 'Stays Bookings', icon: 'pi pi-fw pi-calendar', to: route('bookings.index'), roles: [1, 2,3] }
+                { label: 'Stays Bookings', icon: 'pi pi-fw pi-calendar', to: route('bookings.index'), roles: [1, 2,3] },
+                { label: 'Failed reservation', icon: 'pi pi-fw pi-calendar', to: route('bookings.index', {status: 'failed'}), roles: [1, 2,3] },
+                { label: 'Pending pay reservation', icon: 'pi pi-fw pi-calendar', to: route('bookings.index', {status: 'pending'}), roles: [1, 2,3] },
+                { label: 'Cancelled reservation', icon: 'pi pi-fw pi-calendar', to: route('bookings.index', {status: 'Cancelled'}), roles: [1, 2,3] },
+                { label: 'Upcoming stays', icon: 'pi pi-fw pi-calendar', to: route('bookings.index', {status: 'upcoming_stay'}), roles: [1, 2,3] },
+                { label: 'Current stays', icon: 'pi pi-fw pi-calendar', to: route('bookings.index', {status: 'checked_in'}), roles: [1, 2,3] },
+                { label: 'Checked out', icon: 'pi pi-fw pi-calendar', to: route('bookings.index', {status: 'checked_out'}), roles: [1, 2,3] }
             ]
         },
         {
@@ -36,8 +42,7 @@ const AppMenu = () => {
             label: 'Payments & Reviews',
             items: [
                 { label: 'Payments', icon: 'pi pi-fw pi-credit-card', to: route('payments.index'), roles: [1] },
-                { label: 'Ristay wallet', icon: 'pi pi-fw pi-credit-card', to: route('wallet'), roles: [2] },
-                // { label: 'Reviews', icon: 'pi pi-fw pi-star', to: route('reviews.index'), roles: [1, 2, 3] },
+                { label: 'Ristay wallet', icon: 'pi pi-fw pi-credit-card', to: route('wallet'), roles: [2] }
             ]
         },
         {

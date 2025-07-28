@@ -28,6 +28,7 @@ use Carbon\Carbon;
 use App\Mail\CheckInVerification;
 use App\Mail\CheckOutVerification;
 use App\Mail\BookingCancelled;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class BookingController extends Controller
 {
@@ -40,25 +41,47 @@ class BookingController extends Controller
 
         $query = Booking::with('user', 'property');
 
+        // Role-based filtering
         if ($user->role_id == 2) {
+            // Host - filter bookings for their properties
             $query->whereHas('property', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
         } elseif ($user->role_id == 3) {
-            $query->where('user_id', '=', $user->id);
+            // Guest - filter only their own bookings
+            $query->where('user_id', $user->id);
         }
 
+        // Status filtering via translated logic for stay_status
+        if ($request->has('status')) {
+            $status = $request->input('status');
+
+            $query->where(function ($q) use ($status) {
+                if ($status === 'checked_out') {
+                    $q->whereNotNull('checked_out');
+                } elseif ($status === 'checked_in') {
+                    $q->whereNull('checked_out')->whereNotNull('checked_in');
+                } elseif ($status === 'upcoming_stay') {
+                    $q->where('status', 'paid')->whereNull('checked_in');
+                } else {
+                    $q->where('status', $status);
+                }
+            });
+        }
+
+        // Search by user name or email
         if ($request->has('search')) {
             $search = $request->input('search');
             $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%$search%")
-                  ->orWhere('email', 'LIKE', "%$search%");
+                ->orWhere('email', 'LIKE', "%$search%");
             });
         }
 
+        // Date filtering
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
-        
+
         if (!$startDate || !$endDate) {
             $startDate = Carbon::now()->startOfMonth()->toDateString();
             $endDate = Carbon::now()->endOfMonth()->toDateString();
@@ -75,8 +98,10 @@ class BookingController extends Controller
             return response()->json(['error' => 'Invalid date format provided.'], 400);
         }
 
+        // Sort by newest
         $query->orderBy('created_at', 'desc');
 
+        // Paginate results
         $bookings = $query->paginate(10);
 
         return Inertia::render('Bookings/Index', [
@@ -91,11 +116,12 @@ class BookingController extends Controller
     {
         $user = Auth::user();
 
-        $query = Booking::with(['user', 'property']);
+        $query = Booking::with(['user', 'property']); // Removed 'stay_status' from with()
 
         // Date filtering
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
+
         
         if (!$startDate || !$endDate) {
             $startDate = Carbon::now()->startOfMonth()->toDateString();
@@ -111,6 +137,31 @@ class BookingController extends Controller
             }
         } catch (\Exception $e) {
             return response()->json(['error' => 'Invalid date format provided.'], 400);
+        }
+
+        // Stay status filtering - matches the accessor logic
+        if ($request->has('status')) {
+            $status = $request->input('status');
+            
+            $query->where(function($q) use ($status) {
+                switch ($status) {
+                    case 'checked_out':
+                        $q->whereNotNull('checked_out');  
+                        break;
+                    case 'checked_in':
+                        $q->whereNotNull('checked_in')   
+                        ->whereNull('checked_out');   
+                        break;
+                    case 'upcoming_stay':
+                        $q->where('status', 'paid')
+                        ->whereNull('checked_in');  
+                        break;
+                    default:
+                        $q->where('status', $status)
+                        ->whereNull('checked_in')  
+                        ->whereNull('checked_out');
+                }
+            });
         }
 
         // Search functionality
@@ -126,11 +177,6 @@ class BookingController extends Controller
                     $q->where('property_name', 'LIKE', "%$search%");
                 });
             });
-        }
-
-        // Status filter
-        if ($status = $request->query('status')) {
-            $query->where('status', $status);
         }
 
         // Role-based filtering
@@ -159,6 +205,7 @@ class BookingController extends Controller
                 'nights' => $nights,
                 'total_price' => 'KES ' . number_format($totalPrice, 2),
                 'status' => $booking->status,
+                'stay_status' => $booking->stay_status, // Now this will use the accessor
                 'external_booking' => $booking->external_booking ? 'Yes' : 'No',
                 'created_at' => $booking->created_at->toDateTimeString(),
             ];

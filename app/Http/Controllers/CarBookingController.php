@@ -20,6 +20,7 @@ use App\Traits\Mpesa;
 use App\Mail\BookingConfirmation;
 use App\Mail\CarBookingConfirmation;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\CancelledCarBooking;
 
 use Illuminate\Http\JsonResponse;
 
@@ -203,6 +204,42 @@ class CarBookingController extends Controller
         });
 
         return response()->json($exportData);
+    }
+
+    public function cancel(Request $request)
+    {
+        $input = $request->all();
+
+        $booking = CarBooking::find($input['id']);
+
+        $request->validate([
+            'cancel_reason' => 'required|string|min:10|max:500',
+        ]);
+
+        if ($booking->checked_in || $booking->status === 'Cancelled') {
+            return back()->with('error', 'Booking cannot be cancelled at this stage.');
+        }
+
+        $booking->update([
+            'status' => 'Cancelled',
+            'cancelled_at' => now(),
+            'cancel_reason' => $request->cancel_reason,
+            'cancelled_by_id' => auth()->id(),
+        ]);
+
+        $booking->start_date = Carbon::parse($booking->start_date);
+        $booking->end_date = Carbon::parse($booking->end_date);
+        $booking->cancelled_at = Carbon::parse($booking->cancelled_at);
+
+        try {
+            Mail::to($booking->user->email)->send(new CancelledCarBooking($booking, 'guest'));
+            
+            Mail::to($booking->property->user->email)->send(new CancelledCarBooking($booking, 'host'));
+        } catch (\Exception $e) {
+            \Log::error('Cancellation email error: ' . $e->getMessage());
+        }
+
+        return back()->with('success', 'Booking has been cancelled successfully.');
     }
 
     /**

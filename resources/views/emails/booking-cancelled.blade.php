@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Cancellation</title>
+    <title>Car Booking Cancellation</title>
     <style>
         * {
             margin: 0;
@@ -42,7 +42,7 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #fa6223 0%, #ee5a52 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             padding: 40px 30px;
             text-align: center;
             position: relative;
@@ -96,8 +96,8 @@
             line-height: 1.4;
         }
 
-        .property-name {
-            background: linear-gradient(135deg, #fa6223, #ee5a52);
+        .vehicle-name {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -117,7 +117,7 @@
 
         .details-box strong {
             display: inline-block;
-            min-width: 130px;
+            min-width: 160px;
             color: #111827;
         }
 
@@ -138,14 +138,14 @@
 
         .cta-button {
             display: inline-block;
-            background: linear-gradient(135deg, #fa6223 0%, #ee5a52 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             color: white;
             padding: 15px 30px;
             text-decoration: none;
             border-radius: 12px;
             font-weight: 600;
             font-size: 1.1em;
-            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
             transition: all 0.3s ease;
             border: none;
             cursor: pointer;
@@ -153,7 +153,7 @@
 
         .cta-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 35px rgba(79, 70, 229, 0.4);
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
         }
 
         .footer {
@@ -178,7 +178,7 @@
 
         .team-name {
             font-weight: 700;
-            color: #fa6223;
+            color: #3b82f6;
             font-size: 1.2em;
             margin-top: 10px;
         }
@@ -189,9 +189,9 @@
         <div class="header">
             <div class="header-subtitle">
                 @if($recipientType === 'guest')
-                    Your Booking Has Been Cancelled
+                    Your Car Booking Has Been Cancelled
                 @else
-                    A booking for your property has been cancelled
+                    Car Booking Cancellation Notification
                 @endif
             </div>
         </div>
@@ -199,39 +199,40 @@
         <div class="content">
             <h2 class="welcome-text">
                 @if($recipientType === 'guest')
-                    We're sorry to inform you that your booking has been cancelled.
+                    We're sorry to see your booking was cancelled
                 @else
-                    A guest has cancelled a booking for your property.
+                    A car booking has been cancelled
                 @endif
             </h2>
 
             <div class="details-box">
-                <p><strong>Stay:</strong> {{ $booking->property->property_name }}</p>
-                <p><strong>Dates:</strong> {{ $booking->check_in_date->format('M j, Y') }} to {{ $booking->check_out_date->format('M j, Y') }}</p>
-                <p><strong>Reason:</strong> {{ $booking->cancel_reason }}</p>
+                <p><strong>Booking Reference:</strong> #{{ $booking->number }}</p>
+                <p><strong>Vehicle:</strong> {{ $booking->car->make }} {{ $booking->car->model }}</p>
+                <p><strong>Pickup Date:</strong> {{ $booking->start_date->format('M j, Y H:i') }}</p>
+                <p><strong>Dropoff Date:</strong> {{ $booking->end_date->format('M j, Y H:i') }}</p>
+                <p><strong>Pickup Location:</strong> {{ $booking->pickup_location }}</p>
+                <p><strong>Dropoff Location:</strong> {{ $booking->dropoff_location }}</p>
+                <p><strong>Cancellation Reason:</strong> {{ $booking->cancel_reason }}</p>
+                <p><strong>Cancelled On:</strong> {{ $booking->cancelled_at->format('M j, Y H:i') }}</p>
+                <p><strong>Cancelled By:</strong> {{ $booking->cancelled_by_id === $booking->user_id ? 'You' : 'Admin' }}</p>
             </div>
 
             <div class="instructions">
                 @if($recipientType === 'guest')
-                    If you have any questions or believe this was done in error, please contact our support team.
+                    If you need assistance or would like to book a different vehicle, please don't hesitate to contact us.
+                    You may be eligible for a refund depending on our cancellation policy.
                 @else
-                    Please update your availability calendar accordingly.
+                    This booking has been cancelled. Please update your vehicle's availability if needed.
                 @endif
-            </div>
-
-            <div class="cta-section">
-                <a href="{{ route('bookings.show', $booking->id) }}" class="cta-button">
-                    View Booking Details
-                </a>
             </div>
         </div>
 
         <div class="footer">
             <p class="footer-message">
-                We're committed to giving you the best experience.
+                We're committed to providing excellent service
             </p>
             <div class="signature">
-                <p>Warm regards,</p>
+                <p>Best regards,</p>
                 <p class="team-name">{{ config('app.name') }} Team</p>
             </div>
         </div>

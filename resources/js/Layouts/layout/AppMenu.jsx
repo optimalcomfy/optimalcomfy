@@ -34,8 +34,14 @@ const AppMenu = () => {
             label: 'Ride hire Management',
             items: [
                 { label: 'Rides', icon: 'pi pi-fw pi-car', to: route('main-cars.index'), roles: [1, 2] },
+                { label: 'Ride Categories', icon: 'pi pi-fw pi-tags', to: route('car-categories.index'), roles: [1] },
                 { label: 'Ride Bookings', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index'), roles: [1, 2, 3] },
-                { label: 'Ride Categories', icon: 'pi pi-fw pi-tags', to: route('car-categories.index'), roles: [1] }               
+                { label: 'Failed reservation', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'failed'}), roles: [1, 2,3] },
+                { label: 'Pending pay reservation', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'pending'}), roles: [1, 2,3] },
+                { label: 'Cancelled reservation', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'Cancelled'}), roles: [1, 2,3] },
+                { label: 'Upcoming rides', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'upcoming_stay'}), roles: [1, 2,3] },
+                { label: 'Current rides', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'checked_in'}), roles: [1, 2,3] },
+                { label: 'Checked out', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'checked_out'}), roles: [1, 2,3] }              
             ]
         },
         {

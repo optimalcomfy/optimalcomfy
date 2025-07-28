@@ -29,6 +29,9 @@ class CarBooking extends Model
         'failed_reason',
         'cancelled_at',
         'cancel_reason',
+        'refund_approval',
+        'non_refund_reason',
+        'refund_amount',
         'cancelled_by_id'
     ];
 

@@ -27,6 +27,9 @@ return new class extends Migration
             $table->string('failed_reason')->nullable();
             $table->timestamp('cancelled_at')->nullable();
             $table->text('cancel_reason')->nullable();
+            $table->string('refund_approval')->nullable();
+            $table->text('non_refund_reason')->nullable();
+            $table->double('refund_amount')->nullable();
             $table->unsignedBigInteger('cancelled_by_id')->nullable();
             $table->foreign('cancelled_by_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();

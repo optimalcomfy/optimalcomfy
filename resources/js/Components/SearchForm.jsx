@@ -2,9 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { router, Link, usePage } from '@inertiajs/react';
 import { Search, Loader2, X, MapPin, Calendar } from 'lucide-react';
 import { toast } from 'react-toastify';
+import ReactDOM from 'react-dom/client';
 import Swal from 'sweetalert2';
+import { DateRange } from 'react-date-range';
+import { addDays, format } from 'date-fns';
 import './SearchForms.css';
 import 'react-toastify/dist/ReactToastify.css';
+import 'react-date-range/dist/styles.css'; // main style file
+import 'react-date-range/dist/theme/default.css'; // theme css file
 
 const DesktopSearchBar = ({ 
   formData, 
@@ -43,7 +48,7 @@ const DesktopSearchBar = ({
         <input
           type="text"
           name="checkIn"
-          value={formData.checkIn ? new Date(formData.checkIn).toLocaleDateString() : ''}
+          value={formData.checkIn ? format(new Date(formData.checkIn), 'MMM d, yyyy') : ''}
           onClick={() => handleDateClick('checkIn')}
           placeholder="Select date"
           className="inputType formForm cursor-pointer"
@@ -56,7 +61,7 @@ const DesktopSearchBar = ({
         <input
           type="text"
           name="checkOut"
-          value={formData.checkOut ? new Date(formData.checkOut).toLocaleDateString() : ''}
+          value={formData.checkOut ? format(new Date(formData.checkOut), 'MMM d, yyyy') : ''}
           onClick={() => handleDateClick('checkOut')}
           placeholder="Select date"
           className="inputType formForm cursor-pointer"
@@ -143,7 +148,7 @@ const MobileSearchModal = ({
                 <input
                   type="text"
                   name="checkIn"
-                  value={formData.checkIn ? new Date(formData.checkIn).toLocaleDateString() : ''}
+                  value={formData.checkIn ? format(new Date(formData.checkIn), 'MMM d, yyyy') : ''}
                   onClick={() => handleDateClick('checkIn')}
                   placeholder="Select date"
                   className="rounded-md w-full cursor-pointer"
@@ -161,7 +166,7 @@ const MobileSearchModal = ({
                 <input
                   type="text"
                   name="checkOut"
-                  value={formData.checkOut ? new Date(formData.checkOut).toLocaleDateString() : ''}
+                  value={formData.checkOut ? format(new Date(formData.checkOut), 'MMM d, yyyy') : ''}
                   onClick={() => handleDateClick('checkOut')}
                   placeholder="Select date"
                   className="rounded-md w-full cursor-pointer"
@@ -405,205 +410,99 @@ export default function RideForm() {
     });
   };
 
-  const generateCalendarDays = (year, month, selectedCheckIn, selectedCheckOut, minDate) => {
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-    
-    let html = '';
-    
-    // Empty cells for days before the first day of the month
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      html += '<div style="width: 14.28%; height: 44px;"></div>';
-    }
-    
-    // Days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const currentDate = new Date(year, month, day);
-      const dateStr = currentDate.toISOString().split('T')[0];
-      const isToday = dateStr === new Date().toISOString().split('T')[0];
-      const isSelected = dateStr === selectedCheckIn || dateStr === selectedCheckOut;
-      const isInRange = selectedCheckIn && selectedCheckOut && dateStr > selectedCheckIn && dateStr < selectedCheckOut;
-      const isDisabled = currentDate < minDate;
-      
-      let dayClass = 'calendar-day';
-      let dayStyle = `
-        width: 14.28%; 
-        height: 44px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        cursor: pointer; 
-        border-radius: 50%; 
-        font-size: 14px; 
-        font-weight: 400;
-        transition: all 0.2s ease;
-        position: relative;
-      `;
-      
-      if (isDisabled) {
-        dayStyle += 'color: #DDDDDD; cursor: not-allowed;';
-      } else if (isSelected) {
-        dayStyle += 'background-color: #FF385C; color: white; font-weight: 600;';
-      } else if (isInRange) {
-        dayStyle += 'background-color: rgba(255, 56, 92, 0.1); color: #FF385C;';
-      } else if (isToday) {
-        dayStyle += 'border: 2px solid #FF385C; color: #FF385C; font-weight: 600;';
-      } else {
-        dayStyle += 'color: #222222;';
-      }
-      
-      html += `
-        <div 
-          class="${dayClass}" 
-          data-date="${dateStr}" 
-          style="${dayStyle}"
-          ${isDisabled ? '' : `onmouseover="this.style.backgroundColor='rgba(255, 56, 92, 0.1)'" onmouseout="this.style.backgroundColor='${isSelected ? '#FF385C' : (isInRange ? 'rgba(255, 56, 92, 0.1)' : 'transparent')}'; this.style.color='${isSelected ? 'white' : (isInRange ? '#FF385C' : '#222222')}'""`}
-        >
-          ${day}
-        </div>
-      `;
-    }
-    
-    return html;
-  };
-
   const handleDateClick = async (dateType) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-    
-    let displayMonth = currentMonth;
-    let displayYear = currentYear;
-    
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    const generateCalendarHTML = (month, year) => {
-      const minDate = dateType === 'checkOut' && formData.checkIn ? new Date(formData.checkIn) : today;
-      
-      return `
-        <div id="airbnb-calendar" style="font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 0 8px;">
-            <button id="prev-month" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 50%; transition: background-color 0.2s;">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M10 12L6 8L10 4" stroke="#222222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <h3 style="font-size: 18px; font-weight: 600; color: #222222; margin: 0;">${monthNames[month]} ${year}</h3>
-            <button id="next-month" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 50%; transition: background-color 0.2s;">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M6 4L10 8L6 12" stroke="#222222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-          
-          <div style="display: flex; margin-bottom: 8px;">
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Su</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Mo</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Tu</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">We</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Th</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Fr</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Sa</div>
-          </div>
-          
-          <div id="calendar-grid" style="display: flex; flex-wrap: wrap;">
-            ${generateCalendarDays(year, month, formData.checkIn, formData.checkOut, minDate)}
-          </div>
-        </div>
-      `;
+    // Prepare initial range
+    const initialRange = {
+      startDate: formData.checkIn ? new Date(formData.checkIn) : today,
+      endDate: formData.checkOut ? new Date(formData.checkOut) : addDays(today, 1),
+      key: 'selection'
     };
 
-    const { value: selectedDate } = await Swal.fire({
-      title: dateType === 'checkIn' ? 'When will you check in?' : 'When will you check out?',
-      html: generateCalendarHTML(displayMonth, displayYear),
+    // Create a container for the DateRange component
+    const container = document.createElement('div');
+    container.style.width = '100%';
+    container.style.padding = '10px 0';
+    
+    // Create a wrapper for the DateRange to control its size
+    const wrapper = document.createElement('div');
+    wrapper.style.width = '100%';
+    wrapper.style.maxWidth = '600px';
+    wrapper.style.margin = '0 auto';
+    
+    container.appendChild(wrapper);
+
+    const { value: result } = await Swal.fire({
+      title: dateType === 'checkIn' ? 'Select Check-in Date' : 'Select Check-out Date',
+      html: container,
       showCancelButton: true,
-      showConfirmButton: false,
+      confirmButtonText: 'Confirm',
       cancelButtonText: 'Cancel',
-      cancelButtonColor: '#6b7280',
-      width: '420px',
+      width: 'auto',
       customClass: {
-        popup: 'airbnb-calendar-popup'
+        popup: 'airbnb-calendar-popup',
+        container: 'swal2-container-date-range'
       },
       didOpen: () => {
-        const updateCalendar = () => {
-          document.getElementById('calendar-grid').innerHTML = 
-            generateCalendarDays(displayYear, displayMonth, formData.checkIn, formData.checkOut, 
-              dateType === 'checkOut' && formData.checkIn ? new Date(formData.checkIn) : today);
-        };
-
-        document.getElementById('prev-month').addEventListener('click', () => {
-          if (displayMonth === 0) {
-            displayMonth = 11;
-            displayYear--;
-          } else {
-            displayMonth--;
-          }
-          
-          // Don't allow going to months before current month
-          if (displayYear < currentYear || (displayYear === currentYear && displayMonth < currentMonth)) {
-            displayMonth = currentMonth;
-            displayYear = currentYear;
-            return;
-          }
-          
-          document.querySelector('#airbnb-calendar h3').textContent = `${monthNames[displayMonth]} ${displayYear}`;
-          updateCalendar();
-        });
-
-        document.getElementById('next-month').addEventListener('click', () => {
-          if (displayMonth === 11) {
-            displayMonth = 0;
-            displayYear++;
-          } else {
-            displayMonth++;
-          }
-          document.querySelector('#airbnb-calendar h3').textContent = `${monthNames[displayMonth]} ${displayYear}`;
-          updateCalendar();
-        });
-
-        document.addEventListener('click', (e) => {
-          if (e.target.classList.contains('calendar-day') && e.target.dataset.date) {
-            const selectedDateStr = e.target.dataset.date;
-            const selectedDateObj = new Date(selectedDateStr);
-            
-            // Validate date
-            if (selectedDateObj < today) return;
-            if (dateType === 'checkOut' && formData.checkIn && selectedDateObj <= new Date(formData.checkIn)) return;
-            
-            Swal.close();
-            setTimeout(() => {
-              setFormData(prev => ({ ...prev, [dateType]: selectedDateStr }));
-              
-              const formattedDate = selectedDateObj.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              });
-              
-              const dateLabel = dateType === 'checkIn' ? 'Check-in' : 'Checkout';
-              
-              Swal.fire({
-                icon: 'success',
-                title: `${dateLabel} Date Selected`,
-                text: formattedDate,
-                timer: 2000,
-                showConfirmButton: false,
-                confirmButtonColor: '#FF385C'
-              });
-            }, 100);
-          }
-        });
+        // Render the DateRange component
+        const root = ReactDOM.createRoot(wrapper);
+        root.render(
+          <div className="custom-date-range">
+            <DateRange
+              editableDateInputs={true}
+              onChange={item => {
+                initialRange.startDate = item.selection.startDate;
+                initialRange.endDate = item.selection.endDate;
+              }}
+              moveRangeOnFirstSelection={false}
+              ranges={[initialRange]}
+              minDate={today}
+              rangeColors={['#f7855e']}
+              months={1}
+              direction="horizontal"
+              preventSnapRefocus={true}
+              calendarFocus="backwards"
+              className="custom-date-range"
+            />
+          </div>
+        );
+      },
+      willClose: () => {
+        // Clean up the React root when the modal closes
+        if (wrapper._reactRoot) {
+          wrapper._reactRoot.unmount();
+          wrapper._reactRoot = null;
+        }
       }
     });
+
+    if (result) {
+      const { startDate, endDate } = initialRange;
+      
+      if (dateType === 'checkIn') {
+        setFormData(prev => ({
+          ...prev,
+          checkIn: format(startDate, 'yyyy-MM-dd'),
+          checkOut: format(endDate, 'yyyy-MM-dd')
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          checkOut: format(endDate, 'yyyy-MM-dd')
+        }));
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Dates Selected',
+        text: `${format(startDate, 'MMM d, yyyy')} to ${format(endDate, 'MMM d, yyyy')}`,
+        timer: 2000,
+        showConfirmButton: false,
+        confirmButtonColor: '#FF385C'
+      });
+    }
   };
 
   const handleSubmit = async () => {
@@ -652,12 +551,12 @@ export default function RideForm() {
             <div style="display: flex; justify-content: space-between;">
               <div style="flex: 1; margin-right: 12px;">
                 <div style="font-size: 12px; color: #717171; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px;">Check-in</div>
-                <div style="font-weight: 600; color: #222222; font-size: 16px;">${new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                <div style="font-weight: 600; color: #222222; font-size: 16px;">${format(new Date(checkIn), 'MMM d, yyyy')}</div>
               </div>
               
               <div style="flex: 1; margin-left: 12px;">
                 <div style="font-size: 12px; color: #717171; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px;">Check-out</div>
-                <div style="font-weight: 600; color: #222222; font-size: 16px;">${new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                <div style="font-weight: 600; color: #222222; font-size: 16px;">${format(new Date(checkOut), 'MMM d, yyyy')}</div>
               </div>
             </div>
             
@@ -800,8 +699,50 @@ export default function RideForm() {
           color: #222222 !important;
         }
         
-        #prev-month:hover, #next-month:hover {
-          background-color: #F7F7F7 !important;
+        .swal2-container-date-range {
+          z-index: 99999 !important;
+        }
+        
+        .rdrDefinedRangesWrapper {
+          display: none;
+        }
+        
+        .rdrDateDisplayWrapper {
+          background-color: #f7855e;
+        }
+        
+        .rdrDateDisplayItem input {
+          color: white;
+        }
+        
+        .rdrDayToday .rdrDayNumber span:after {
+          background-color: #FF385C;
+        }
+        
+        .rdrDayHovered {
+          border-color: #FF385C;
+        }
+        
+        .rdrDayActive {
+          background-color: #FF385C;
+        }
+        
+        .rdrInRange {
+          background-color: rgba(255, 56, 92, 0.1);
+        }
+
+        .rdrDateDisplayItemActive input {
+            color: #7d888d !important;
+        }
+
+        .rdrDateDisplayItem input {
+            cursor: pointer;
+            height: 2.5em;
+            line-height: 2.5em;
+            border: 0px;
+            background: transparent;
+            width: 100%;
+            color: #849095 !important;
         }
       `}</style>
       
@@ -827,4 +768,4 @@ export default function RideForm() {
       )}
     </>
   );
-}
+};

@@ -1,15 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { router, Link, usePage } from '@inertiajs/react';
-import { Search, Loader2, X, MapPin, Calendar } from 'lucide-react';
+import { Search, Loader2, X, MapPin, Calendar, Clock } from 'lucide-react';
 import { toast } from 'react-toastify';
+import ReactDOM from 'react-dom/client';
 import Swal from 'sweetalert2';
+import { DateRange } from 'react-date-range';
+import { addDays, format, differenceInDays } from 'date-fns';
 import './SearchForms.css';
 import 'react-toastify/dist/ReactToastify.css';
+import 'react-date-range/dist/styles.css'; // main style file
+import 'react-date-range/dist/theme/default.css'; // theme css file
 
 const DesktopSearchBar = ({ 
   formData, 
   handleLocationClick,
   handleDateClick,
+  handleTimeClick,
   handleSubmit
 }) => (
   <div className="search-container desktop-search">
@@ -43,9 +49,22 @@ const DesktopSearchBar = ({
         <input
           type="text"
           name="checkIn"
-          value={formData.checkIn ? new Date(formData.checkIn).toLocaleDateString() : ''}
+          value={formData.checkIn ? format(new Date(formData.checkIn), 'MMM d, yyyy') : ''}
           onClick={() => handleDateClick('checkIn')}
           placeholder="Select date"
+          className="inputType formForm cursor-pointer"
+          readOnly
+        />
+      </div>
+
+      <div className="check-out relative">
+        <p className="field-label absolute text-xs">Pick-up Time</p>
+        <input
+          type="text"
+          name="pickupTime"
+          value={formData.pickupTime || ''}
+          onClick={() => handleTimeClick('pickupTime')}
+          placeholder="Select time"
           className="inputType formForm cursor-pointer"
           readOnly
         />
@@ -56,7 +75,7 @@ const DesktopSearchBar = ({
         <input
           type="text"
           name="checkOut"
-          value={formData.checkOut ? new Date(formData.checkOut).toLocaleDateString() : ''}
+          value={formData.checkOut ? format(new Date(formData.checkOut), 'MMM d, yyyy') : ''}
           onClick={() => handleDateClick('checkOut')}
           placeholder="Select date"
           className="inputType formForm cursor-pointer"
@@ -80,6 +99,7 @@ const MobileSearchModal = ({
   formData,
   handleLocationClick,
   handleDateClick,
+  handleTimeClick,
   handleSubmit
 }) => {
   const { url } = usePage();
@@ -92,24 +112,24 @@ const MobileSearchModal = ({
         <div className="modal-header flex justify-between my-2 border-b border-gray-200">
           <Link 
             href={route('home')} 
-            className={`modal-title px-4 py-2 text-lg font-medium ${route().current('home') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
+            className={`modal-title px-4 py-2 text-lg font-medium ${(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking' || isWhich === '/privacy-policy' || isWhich === '/host-calendar-policy' || isWhich === '/terms-and-conditions') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
           >
             Search stays
           </Link>
           <Link 
             href={route('all-cars')} 
-            className={`modal-title px-4 py-2 text-lg font-medium ${(isWhich === '/all-cars' || isWhich === '/search-cars' || isWhich === '/rent-now' || isWhich === '/car-booking') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
+            className={`modal-title px-4 py-2 text-lg font-medium ${route().current('all-cars') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
           >
             Search Rides
           </Link>
         </div>
 
         <div className="modal-body">
-          <div className="mobile-search-fields flex flex-col gap-4">
+          <div className="mobile-search-fields flex flex-col gap-2">
             <div className="mobile-field-group">
-              <label className="mobile-field-label flex items-center gap-2">
-                <MapPin size={20} className="text-gray-600" />
-                <span className="font-medium">Pick-up Location</span>
+              <label className="mobile-field-label">
+                <MapPin size={20} />
+                <span>Pick-up Location</span>
               </label>
               <div className="mobile-field-input relative">
                 <input
@@ -118,7 +138,7 @@ const MobileSearchModal = ({
                   value={formData.location}
                   onClick={handleLocationClick}
                   placeholder="Enter city or airport"
-                  className="rounded-md w-full border border-gray-300 p-2 cursor-pointer"
+                  className="rounded-md w-full cursor-pointer"
                   readOnly
                 />
                 {formData.location && (
@@ -135,48 +155,65 @@ const MobileSearchModal = ({
             </div>
 
             <div className="mobile-field-group">
-              <label className="mobile-field-label flex items-center gap-2">
-                <Calendar size={20} className="text-gray-600" />
-                <span className="font-medium">Pick-up Date</span>
+              <label className="mobile-field-label">
+                <Calendar size={20} />
+                <span>Pick-up Date</span>
               </label>
               <div className="mobile-field-input">
                 <input
                   type="text"
                   name="checkIn"
-                  value={formData.checkIn ? new Date(formData.checkIn).toLocaleDateString() : ''}
+                  value={formData.checkIn ? format(new Date(formData.checkIn), 'MMM d, yyyy') : ''}
                   onClick={() => handleDateClick('checkIn')}
                   placeholder="Select date"
-                  className="rounded-md w-full border border-gray-300 p-2 cursor-pointer"
+                  className="rounded-md w-full cursor-pointer"
                   readOnly
                 />
               </div>
             </div>
 
             <div className="mobile-field-group">
-              <label className="mobile-field-label flex items-center gap-2">
-                <Calendar size={20} className="text-gray-600" />
-                <span className="font-medium">Drop-off Date</span>
+              <label className="mobile-field-label">
+                <Clock size={20} />
+                <span>Pick-up Time</span>
+              </label>
+              <div className="mobile-field-input">
+                <input
+                  type="text"
+                  name="pickupTime"
+                  value={formData.pickupTime || ''}
+                  onClick={() => handleTimeClick('pickupTime')}
+                  placeholder="Select time"
+                  className="rounded-md w-full cursor-pointer"
+                  readOnly
+                />
+              </div>
+            </div>
+
+            <div className="mobile-field-group">
+              <label className="mobile-field-label">
+                <Calendar size={20} />
+                <span>Drop-off Date</span>
               </label>
               <div className="mobile-field-input">
                 <input
                   type="text"
                   name="checkOut"
-                  value={formData.checkOut ? new Date(formData.checkOut).toLocaleDateString() : ''}
+                  value={formData.checkOut ? format(new Date(formData.checkOut), 'MMM d, yyyy') : ''}
                   onClick={() => handleDateClick('checkOut')}
                   placeholder="Select date"
-                  className="rounded-md w-full border border-gray-300 p-2 cursor-pointer"
+                  className="rounded-md w-full cursor-pointer"
                   readOnly
                 />
               </div>
             </div>
           </div>
-          <div className="modal-footer mt-6">
+          <div className="modal-footer flex justify-end my-2 gap-8">
             <button 
-              className="submit-search-btn w-full flex justify-center items-center gap-2 bg-[#0d3c46] hover:bg-[#0a2f38] text-white px-4 py-3 rounded-md font-medium transition-colors" 
+              className="submit-search-btn w-full flex items-center justify-center gap-2 bg-[#0d3c46] text-white px-4 py-1 rounded-md" 
               onClick={handleSubmit}
             >
-              <Search size={18} className="mr-1" />
-              Search Rides
+              Search Rides <Search className="" size={16} />
             </button>
           </div>
         </div>
@@ -190,7 +227,9 @@ export default function RideForm() {
     location: '',
     checkIn: '',
     checkOut: '',
-    guests: '',
+    pickupTime: '08:00 AM',
+    dropoffTime: '08:00 PM',
+    carType: '',
   });
 
   const [locationSuggestions, setLocationSuggestions] = useState([]);
@@ -244,7 +283,7 @@ export default function RideForm() {
     const { value: result } = await Swal.fire({
       title: 'Where do you need a ride?',
       html: `
-        <div id="airbnb-location-search" style="text-align: left;">
+        <div id="car-location-search" style="text-align: left;">
           <div style="position: relative; margin-bottom: 20px;">
             <input 
               id="location-search-input" 
@@ -288,22 +327,13 @@ export default function RideForm() {
                   <div style="color: #717171; font-size: 14px;">Jomo Kenyatta International Airport</div>
                 </div>
               </div>
-              <div class="suggestion-item" data-location="Westlands, Nairobi" style="display: flex; align-items: center; padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: background-color 0.2s ease;">
+              <div class="suggestion-item" data-location="Mombasa Airport, Kenya" style="display: flex; align-items: center; padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: background-color 0.2s ease;">
                 <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 16px;">
-                  <span style="color: white; font-size: 18px;">🏪</span>
+                  <span style="color: white; font-size: 18px;">🏝️</span>
                 </div>
                 <div>
-                  <div style="font-weight: 600; color: #222222; font-size: 16px;">Westlands</div>
-                  <div style="color: #717171; font-size: 14px;">Shopping & Business District</div>
-                </div>
-              </div>
-              <div class="suggestion-item" data-location="Karen, Nairobi" style="display: flex; align-items: center; padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: background-color 0.2s ease;">
-                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 16px;">
-                  <span style="color: white; font-size: 18px;">🌳</span>
-                </div>
-                <div>
-                  <div style="font-weight: 600; color: #222222; font-size: 16px;">Karen</div>
-                  <div style="color: #717171; font-size: 14px;">Upscale Residential Area</div>
+                  <div style="font-weight: 600; color: #222222; font-size: 16px;">Mombasa Airport</div>
+                  <div style="color: #717171; font-size: 14px;">Moi International Airport</div>
                 </div>
               </div>
             </div>
@@ -337,7 +367,7 @@ export default function RideForm() {
       cancelButtonColor: '#6b7280',
       width: '500px',
       customClass: {
-        popup: 'airbnb-location-popup'
+        popup: 'car-location-popup'
       },
       didOpen: () => {
         const input = document.getElementById('location-search-input');
@@ -357,7 +387,7 @@ export default function RideForm() {
               setFormData(prev => ({ ...prev, location }));
               Swal.fire({
                 icon: 'success',
-                title: 'Pickup Location Selected',
+                title: 'Location Selected',
                 text: location,
                 timer: 1500,
                 showConfirmButton: false,
@@ -384,8 +414,8 @@ export default function RideForm() {
                 if (suggestions.length > 0) {
                   resultsList.innerHTML = suggestions.map(location => `
                     <div class="suggestion-item" data-location="${location}" style="display: flex; align-items: center; padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: background-color 0.2s ease;">
-                      <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 16px;">
-                        <span style="color: white; font-size: 18px;">🚗</span>
+                      <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 16px;">
+                        <span style="color: #666; font-size: 18px;">🚗</span>
                       </div>
                       <div>
                         <div style="font-weight: 600; color: #222222; font-size: 16px;">${location}</div>
@@ -395,7 +425,7 @@ export default function RideForm() {
                   `).join('');
                   searchResults.style.display = 'block';
                 } else {
-                  resultsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #717171;">No locations found</div>';
+                  resultsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #717171;">No results found</div>';
                   searchResults.style.display = 'block';
                 }
               } catch (error) {
@@ -415,215 +445,169 @@ export default function RideForm() {
     });
   };
 
-  const generateCalendarDays = (year, month, selectedPickup, selectedDropoff, minDate) => {
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-    
-    let html = '';
-    
-    // Empty cells for days before the first day of the month
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      html += '<div style="width: 14.28%; height: 44px;"></div>';
-    }
-    
-    // Days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const currentDate = new Date(year, month, day);
-      const dateStr = currentDate.toISOString().split('T')[0];
-      const isToday = dateStr === new Date().toISOString().split('T')[0];
-      const isSelected = dateStr === selectedPickup || dateStr === selectedDropoff;
-      const isInRange = selectedPickup && selectedDropoff && dateStr > selectedPickup && dateStr < selectedDropoff;
-      const isDisabled = currentDate < minDate;
-      
-      let dayClass = 'calendar-day';
-      let dayStyle = `
-        width: 14.28%; 
-        height: 44px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        cursor: pointer; 
-        border-radius: 50%; 
-        font-size: 14px; 
-        font-weight: 400;
-        transition: all 0.2s ease;
-        position: relative;
-      `;
-      
-      if (isDisabled) {
-        dayStyle += 'color: #DDDDDD; cursor: not-allowed;';
-      } else if (isSelected) {
-        dayStyle += 'background-color: #0d3c46; color: white; font-weight: 600;';
-      } else if (isInRange) {
-        dayStyle += 'background-color: rgba(13, 60, 70, 0.1); color: #0d3c46;';
-      } else if (isToday) {
-        dayStyle += 'border: 2px solid #0d3c46; color: #0d3c46; font-weight: 600;';
-      } else {
-        dayStyle += 'color: #222222;';
-      }
-      
-      html += `
-        <div 
-          class="${dayClass}" 
-          data-date="${dateStr}" 
-          style="${dayStyle}"
-          ${isDisabled ? '' : `onmouseover="this.style.backgroundColor='rgba(13, 60, 70, 0.1)'" onmouseout="this.style.backgroundColor='${isSelected ? '#0d3c46' : (isInRange ? 'rgba(13, 60, 70, 0.1)' : 'transparent')}'; this.style.color='${isSelected ? 'white' : (isInRange ? '#0d3c46' : '#222222')}'""`}
-        >
-          ${day}
-        </div>
-      `;
-    }
-    
-    return html;
-  };
-
   const handleDateClick = async (dateType) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-    
-    let displayMonth = currentMonth;
-    let displayYear = currentYear;
-    
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    
-    const generateCalendarHTML = (month, year) => {
-      const minDate = dateType === 'checkOut' && formData.checkIn ? new Date(formData.checkIn) : today;
-      
-      return `
-        <div id="airbnb-calendar" style="font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 0 8px;">
-            <button id="prev-month" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 50%; transition: background-color 0.2s;">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M10 12L6 8L10 4" stroke="#222222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <h3 style="font-size: 18px; font-weight: 600; color: #222222; margin: 0;">${monthNames[month]} ${year}</h3>
-            <button id="next-month" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 50%; transition: background-color 0.2s;">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M6 4L10 8L6 12" stroke="#222222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-          
-          <div style="display: flex; margin-bottom: 8px;">
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Su</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Mo</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Tu</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">We</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Th</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Fr</div>
-            <div style="width: 14.28%; text-align: center; font-size: 12px; font-weight: 600; color: #717171; padding: 8px 0;">Sa</div>
-          </div>
-          
-          <div id="calendar-grid" style="display: flex; flex-wrap: wrap;">
-            ${generateCalendarDays(year, month, formData.checkIn, formData.checkOut, minDate)}
-          </div>
-        </div>
-      `;
+    // Prepare initial range
+    const initialRange = {
+      startDate: formData.checkIn ? new Date(formData.checkIn) : today,
+      endDate: formData.checkOut ? new Date(formData.checkOut) : addDays(today, 1),
+      key: 'selection'
     };
 
-    const { value: selectedDate } = await Swal.fire({
-      title: dateType === 'checkIn' ? 'When do you need the car?' : 'When will you return it?',
-      html: generateCalendarHTML(displayMonth, displayYear),
+    // Create a container for the DateRange component
+    const container = document.createElement('div');
+    container.style.width = '100%';
+    container.style.padding = '10px 0';
+    
+    // Create a wrapper for the DateRange to control its size
+    const wrapper = document.createElement('div');
+    wrapper.style.width = '100%';
+    wrapper.style.maxWidth = '600px';
+    wrapper.style.margin = '0 auto';
+    
+    container.appendChild(wrapper);
+
+    const { value: result } = await Swal.fire({
+      title: dateType === 'checkIn' ? 'Select Pick-up Date' : 'Select Drop-off Date',
+      html: container,
+      showCancelButton: true,
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
+      width: 'auto',
+      customClass: {
+        popup: 'car-calendar-popup',
+        container: 'swal2-container-date-range'
+      },
+      didOpen: () => {
+        // Render the DateRange component
+        const root = ReactDOM.createRoot(wrapper);
+        root.render(
+          <div className="custom-date-range">
+            <DateRange
+              editableDateInputs={true}
+              onChange={item => {
+                initialRange.startDate = item.selection.startDate;
+                initialRange.endDate = item.selection.endDate;
+              }}
+              moveRangeOnFirstSelection={false}
+              ranges={[initialRange]}
+              minDate={today}
+              rangeColors={['#0d3c46']}
+              months={1}
+              direction="horizontal"
+              preventSnapRefocus={true}
+              calendarFocus="backwards"
+              className="custom-date-range"
+            />
+          </div>
+        );
+      },
+      willClose: () => {
+        // Clean up the React root when the modal closes
+        if (wrapper._reactRoot) {
+          wrapper._reactRoot.unmount();
+          wrapper._reactRoot = null;
+        }
+      }
+    });
+
+    if (result) {
+      const { startDate, endDate } = initialRange;
+      
+      if (dateType === 'checkIn') {
+        setFormData(prev => ({
+          ...prev,
+          checkIn: format(startDate, 'yyyy-MM-dd'),
+          checkOut: format(endDate, 'yyyy-MM-dd')
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          checkOut: format(endDate, 'yyyy-MM-dd')
+        }));
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Date Selected',
+        text: `${format(startDate, 'MMM d, yyyy')}`,
+        timer: 2000,
+        showConfirmButton: false,
+        confirmButtonColor: '#0d3c46'
+      });
+    }
+  };
+
+  const handleTimeClick = async (timeType) => {
+    const timeOptions = [
+      '12:00 AM', '01:00 AM', '02:00 AM', '03:00 AM', '04:00 AM', '05:00 AM',
+      '06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM',
+      '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
+      '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM'
+    ];
+
+    const { value: selectedTime } = await Swal.fire({
+      title: timeType === 'pickupTime' ? 'Select Pick-up Time' : 'Select Drop-off Time',
+      html: `
+        <div style="max-height: 300px; overflow-y: auto; margin-top: 16px;">
+          ${timeOptions.map(time => `
+            <div 
+              class="time-option ${formData[timeType] === time ? 'selected' : ''}" 
+              data-time="${time}"
+              style="
+                padding: 12px 16px;
+                margin-bottom: 8px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background-color 0.2s;
+                ${formData[timeType] === time ? 'background-color: #0d3c46; color: white;' : 'background-color: #F7F7F7; color: #222222;'}
+              "
+            >
+              ${time}
+            </div>
+          `).join('')}
+        </div>
+      `,
       showCancelButton: true,
       showConfirmButton: false,
       cancelButtonText: 'Cancel',
       cancelButtonColor: '#6b7280',
-      width: '420px',
+      width: '300px',
       customClass: {
-        popup: 'airbnb-calendar-popup'
+        popup: 'car-time-popup'
       },
       didOpen: () => {
-        const updateCalendar = () => {
-          document.getElementById('calendar-grid').innerHTML = 
-            generateCalendarDays(displayYear, displayMonth, formData.checkIn, formData.checkOut, 
-              dateType === 'checkOut' && formData.checkIn ? new Date(formData.checkIn) : today);
-        };
-
-        document.getElementById('prev-month').addEventListener('click', () => {
-          if (displayMonth === 0) {
-            displayMonth = 11;
-            displayYear--;
-          } else {
-            displayMonth--;
-          }
-          
-          // Don't allow going to months before current month
-          if (displayYear < currentYear || (displayYear === currentYear && displayMonth < currentMonth)) {
-            displayMonth = currentMonth;
-            displayYear = currentYear;
-            return;
-          }
-          
-          document.querySelector('#airbnb-calendar h3').textContent = `${monthNames[displayMonth]} ${displayYear}`;
-          updateCalendar();
-        });
-
-        document.getElementById('next-month').addEventListener('click', () => {
-          if (displayMonth === 11) {
-            displayMonth = 0;
-            displayYear++;
-          } else {
-            displayMonth++;
-          }
-          document.querySelector('#airbnb-calendar h3').textContent = `${monthNames[displayMonth]} ${displayYear}`;
-          updateCalendar();
-        });
-
-        document.addEventListener('click', (e) => {
-          if (e.target.classList.contains('calendar-day') && e.target.dataset.date) {
-            const selectedDateStr = e.target.dataset.date;
-            const selectedDateObj = new Date(selectedDateStr);
-            
-            // Validate date
-            if (selectedDateObj < today) return;
-            if (dateType === 'checkOut' && formData.checkIn && selectedDateObj <= new Date(formData.checkIn)) return;
-            
+        document.querySelectorAll('.time-option').forEach(option => {
+          option.addEventListener('click', function() {
+            const selectedTime = this.getAttribute('data-time');
             Swal.close();
             setTimeout(() => {
-              setFormData(prev => ({ ...prev, [dateType]: selectedDateStr }));
-              
-              const formattedDate = selectedDateObj.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              });
-              
-              const dateLabel = dateType === 'checkIn' ? 'Pick-up' : 'Drop-off';
-              
+              setFormData(prev => ({ ...prev, [timeType]: selectedTime }));
               Swal.fire({
                 icon: 'success',
-                title: `${dateLabel} Date Selected`,
-                text: formattedDate,
-                timer: 2000,
+                title: 'Time Selected',
+                text: selectedTime,
+                timer: 1500,
                 showConfirmButton: false,
                 confirmButtonColor: '#0d3c46'
               });
             }, 100);
-          }
+          });
         });
       }
     });
   };
 
   const handleSubmit = async () => {
-    const { location, checkIn, checkOut, guests } = formData;
+    const { location, checkIn, checkOut, pickupTime } = formData;
 
     if (!location) {
       Swal.fire({
         icon: 'warning',
-        title: 'Missing Pickup Location',
-        text: 'Please select where you want to pick up your ride.',
+        title: 'Missing Location',
+        text: 'Please select a pickup location to search for cars.',
         confirmButtonColor: '#0d3c46',
         confirmButtonText: 'Select Location'
       }).then(() => {
@@ -636,12 +620,29 @@ export default function RideForm() {
       Swal.fire({
         icon: 'warning',
         title: 'Missing Dates',
-        text: 'Please select both pickup and drop-off dates.',
+        text: 'Please select both pick-up and drop-off dates.',
         confirmButtonColor: '#0d3c46',
         confirmButtonText: 'Select Dates'
       });
       return;
     }
+
+    if (!pickupTime) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Missing Time',
+        text: 'Please select a pick-up time.',
+        confirmButtonColor: '#0d3c46',
+        confirmButtonText: 'Select Time'
+      });
+      return;
+    }
+
+    // Calculate rental duration
+    const startDate = new Date(`${checkIn} ${pickupTime}`);
+    const endDate = new Date(`${checkOut} ${formData.dropoffTime || '08:00 PM'}`);
+    const durationHours = Math.ceil((endDate - startDate) / (1000 * 60 * 60));
+    const durationDays = Math.ceil(durationHours / 24);
 
     // Show search confirmation with car rental style
     const result = await Swal.fire({
@@ -659,35 +660,37 @@ export default function RideForm() {
               </div>
             </div>
             
-            <div style="display: flex; justify-content: space-between;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
               <div style="flex: 1; margin-right: 12px;">
                 <div style="font-size: 12px; color: #717171; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px;">Pick-up</div>
-                <div style="font-weight: 600; color: #222222; font-size: 16px;">${new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                <div style="font-weight: 600; color: #222222; font-size: 16px;">${format(new Date(checkIn), 'MMM d, yyyy')}</div>
+                <div style="color: #717171; font-size: 14px;">${pickupTime}</div>
               </div>
               
               <div style="flex: 1; margin-left: 12px;">
                 <div style="font-size: 12px; color: #717171; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px;">Drop-off</div>
-                <div style="font-weight: 600; color: #222222; font-size: 16px;">${new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                <div style="font-weight: 600; color: #222222; font-size: 16px;">${format(new Date(checkOut), 'MMM d, yyyy')}</div>
+                <div style="color: #717171; font-size: 14px;">${formData.dropoffTime || '08:00 PM'}</div>
               </div>
             </div>
             
-            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #EBEBEB;">
+            <div style="padding-top: 16px; border-top: 1px solid #EBEBEB;">
               <div style="font-size: 12px; color: #717171; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px;">Rental Duration</div>
-              <div style="font-weight: 600; color: #222222; font-size: 16px;">${Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} days</div>
+              <div style="font-weight: 600; color: #222222; font-size: 16px;">${durationDays} days (${durationHours} hours)</div>
             </div>
           </div>
         </div>
       `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Search rides',
+      confirmButtonText: 'Search cars',
       cancelButtonText: 'Edit details',
       confirmButtonColor: '#0d3c46',
       cancelButtonColor: '#6b7280',
       customClass: {
-        popup: 'airbnb-confirm-popup',
-        confirmButton: 'airbnb-confirm-btn',
-        cancelButton: 'airbnb-cancel-btn'
+        popup: 'car-confirm-popup',
+        confirmButton: 'car-confirm-btn',
+        cancelButton: 'car-cancel-btn'
       }
     });
 
@@ -700,7 +703,7 @@ export default function RideForm() {
               <div style="width: 80px; height: 80px; border: 4px solid #f3f3f3; border-top: 4px solid #0d3c46; border-radius: 50%; animation: spin 1s linear infinite;"></div>
               <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px;">🚗</div>
             </div>
-            <h3 style="font-size: 24px; font-weight: 600; color: #222222; margin: 0 0 12px 0;">Searching for rides</h3>
+            <h3 style="font-size: 24px; font-weight: 600; color: #222222; margin: 0 0 12px 0;">Searching for cars</h3>
             <p style="font-size: 16px; color: #717171; margin: 0;">Finding the perfect vehicle in ${location}...</p>
           </div>
           
@@ -717,7 +720,7 @@ export default function RideForm() {
         showCancelButton: false,
         background: '#ffffff',
         customClass: {
-          popup: 'airbnb-loading-popup'
+          popup: 'car-loading-popup'
         }
       });
 
@@ -728,8 +731,9 @@ export default function RideForm() {
           location,
           checkIn,
           checkOut,
-          guests,
-          searchMode: 'rides',
+          pickupTime,
+          dropoffTime: formData.dropoffTime || '08:00 PM',
+          searchMode: 'cars',
         });
         
         setTimeout(() => {
@@ -740,15 +744,19 @@ export default function RideForm() {
         Swal.fire({
           icon: 'error',
           title: 'Something went wrong',
-          text: 'We couldn\'t search for rides right now. Please try again.',
+          text: 'We couldn\'t search for cars right now. Please try again.',
           confirmButtonColor: '#0d3c46',
           confirmButtonText: 'Try again',
           customClass: {
-            popup: 'airbnb-error-popup'
+            popup: 'car-error-popup'
           }
         });
       }
     }
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
   };
 
   const closeModal = () => setIsModalOpen(false);
@@ -756,32 +764,37 @@ export default function RideForm() {
   return (
     <>
       <style jsx global>{`
-        .airbnb-location-popup .swal2-popup {
+        .car-location-popup .swal2-popup {
           border-radius: 16px !important;
           font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
         }
         
-        .airbnb-calendar-popup .swal2-popup {
+        .car-calendar-popup .swal2-popup {
           border-radius: 16px !important;
           font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
         }
         
-        .airbnb-confirm-popup .swal2-popup {
+        .car-time-popup .swal2-popup {
           border-radius: 16px !important;
           font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
         }
         
-        .airbnb-loading-popup .swal2-popup {
+        .car-confirm-popup .swal2-popup {
           border-radius: 16px !important;
           font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
         }
         
-        .airbnb-error-popup .swal2-popup {
+        .car-loading-popup .swal2-popup {
           border-radius: 16px !important;
           font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
         }
         
-        .airbnb-confirm-btn {
+        .car-error-popup .swal2-popup {
+          border-radius: 16px !important;
+          font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
+        }
+        
+        .car-confirm-btn {
           background-color: #0d3c46 !important;
           border: none !important;
           border-radius: 8px !important;
@@ -790,7 +803,7 @@ export default function RideForm() {
           font-size: 16px !important;
         }
         
-        .airbnb-cancel-btn {
+        .car-cancel-btn {
           background-color: transparent !important;
           border: 1px solid #DDDDDD !important;
           border-radius: 8px !important;
@@ -806,9 +819,52 @@ export default function RideForm() {
           color: #222222 !important;
         }
         
-        #prev-month:hover, #next-month:hover {
-          background-color: #F7F7F7 !important;
+        .swal2-container-date-range {
+          z-index: 99999 !important;
         }
+        
+        .rdrDefinedRangesWrapper {
+          display: none;
+        }
+        
+        .rdrDateDisplayWrapper {
+          background-color: #f7855e;
+        }
+        
+        .rdrDateDisplayItem input {
+          color: white;
+        }
+        
+        .rdrDayToday .rdrDayNumber span:after {
+          background-color: #0d3c46;
+        }
+        
+        .rdrDayHovered {
+          border-color: #0d3c46;
+        }
+        
+        .rdrDayActive {
+          background-color: #0d3c46;
+        }
+        
+        .rdrInRange {
+          background-color: rgba(13, 60, 70, 0.1);
+        }
+
+        .rdrDateDisplayItemActive input {
+            color: #7d888d !important;
+        }
+
+        .rdrDateDisplayItem input {
+            cursor: pointer;
+            height: 2.5em;
+            line-height: 2.5em;
+            border: 0px;
+            background: transparent;
+            width: 100%;
+            color: #849095 !important;
+        }
+
       `}</style>
       
       {!isMobile ? (
@@ -816,6 +872,7 @@ export default function RideForm() {
           formData={formData}
           handleLocationClick={handleLocationClick}
           handleDateClick={handleDateClick}
+          handleTimeClick={handleTimeClick}
           handleSubmit={handleSubmit}
         />
       ) : (
@@ -827,10 +884,11 @@ export default function RideForm() {
             formData={formData}
             handleLocationClick={handleLocationClick}
             handleDateClick={handleDateClick}
+            handleTimeClick={handleTimeClick}
             handleSubmit={handleSubmit}
           />
         </>
       )}
     </>
   );
-}
+};

@@ -12,31 +12,31 @@ class BookingConfirmation extends Mailable
     use Queueable, SerializesModels;
 
     public $booking;
-    public $recipientType;
 
-    public function __construct(Booking $booking, string $recipientType = 'customer')
+    /**
+     * Create a new message instance.
+     *
+     * @param Booking $booking
+     */
+    public function __construct(Booking $booking)
     {
         $this->booking = $booking;
-        $this->recipientType = $recipientType;
     }
 
+    /**
+     * Build the message.
+     *
+     * @return $this
+     */
     public function build()
     {
-        return $this->subject($this->getSubject())
-                   ->view('emails.booking_confirmation')
-                   ->with([
-                       'booking' => $this->booking,
-                       'user' => $this->booking->user,
-                       'property' => $this->booking->property,
-                       'payment' => $this->booking->payments->first(),
-                       'recipientType' => $this->recipientType
-                   ]);
-    }
-
-    protected function getSubject(): string
-    {
-        return $this->recipientType === 'customer'
-            ? 'Booking Confirmed - ' . $this->booking->property->property_name
-            : 'New Booking - ' . $this->booking->property->property_name;
+        return $this->subject('Booking Confirmed - ' . $this->booking->property->name)
+                    ->view('emails.booking_confirmation')
+                    ->with([
+                        'booking' => $this->booking,
+                        'user' => $this->booking->user,
+                        'property' => $this->booking->property,
+                        'payment' => $this->booking->payments->first()
+                    ]);
     }
 }

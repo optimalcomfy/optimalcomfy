@@ -308,8 +308,7 @@ class BookingController extends Controller
 
             $callbackData = [
                 'phone' => $request->phone,
-                // 'amount' => $booking->total_price,
-                 'amount' => 1,
+                'amount' => $booking->total_price,
                 'booking_id' => $booking->id,
                 'booking_type' => 'property'
             ];
@@ -345,25 +344,25 @@ class BookingController extends Controller
  */
     public function handleCallback(Request $request)
     {
+
         try {
-            // Parse callback data
+            // Parse the callback data
             $callbackData = $request->json()->all();
             
-            // Extract transaction details
+            // Extract the transaction details from callback
             $resultCode = $callbackData['Body']['stkCallback']['ResultCode'] ?? null;
             $resultDesc = $callbackData['Body']['stkCallback']['ResultDesc'] ?? null;
             $merchantRequestID = $callbackData['Body']['stkCallback']['MerchantRequestID'] ?? null;
             $checkoutRequestID = $callbackData['Body']['stkCallback']['CheckoutRequestID'] ?? null;
             
-            // Get additional callback parameters
+            // Get the additional data passed in the callback URL
             $callbackParams = json_decode($request->query('data'), true);
             
-            // Find the booking with all necessary relationships
-            $booking = Booking::with(['user', 'property.user', 'payments'])
-                            ->find($callbackParams['booking_id'] ?? null);
+            // Find the related booking
+            $booking = Booking::find($callbackParams['booking_id'] ?? null);
             
             if (!$booking) {
-                \Log::error('Booking not found', ['booking_id' => $callbackParams['booking_id'] ?? null]);
+                \Log::error('Booking not found for callback', ['callbackParams' => $callbackParams]);
                 return response()->json(['message' => 'Booking not found'], 404);
             }
 
@@ -381,10 +380,11 @@ class BookingController extends Controller
                 'failure_reason' => $resultCode !== 0 ? $resultDesc : null,
             ];
 
-            // Process successful payment
+            // If payment was successful
             if ($resultCode === 0) {
                 $callbackMetadata = $callbackData['Body']['stkCallback']['CallbackMetadata']['Item'] ?? [];
                 
+                // Extract M-Pesa receipt details from callback metadata
                 foreach ($callbackMetadata as $item) {
                     switch ($item['Name']) {
                         case 'MpesaReceiptNumber':
@@ -402,54 +402,35 @@ class BookingController extends Controller
                     }
                 }
 
+                // Update booking status
                 $booking->update(['status' => 'paid']);
-                
-                // Send confirmation emails
-                $this->sendConfirmationEmails($booking);
             } else {
+                // Payment failed
                 $booking->update(['status' => 'failed']);
-                \Log::error('Payment failed', [
-                    'booking_id' => $booking->id,
-                    'error' => $resultDesc
-                ]);
             }
 
             // Create payment record
-            Payment::create($paymentData);
+            $payment = Payment::create($paymentData);
 
+            if($resultCode === 0) {
+                $propertyBookingWithRelations = Booking::with(['user', 'property', 'payments'])
+                                                ->find($booking->id);
+                    
+                    Mail::to($propertyBookingWithRelations->user->email)
+                    ->send(new BookingConfirmation($propertyBookingWithRelations));
+            }
+
+            // Return success response to M-Pesa
             return response()->json([
                 'ResultCode' => 0,
                 'ResultDesc' => 'Callback processed successfully'
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Callback processing error: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
             return response()->json([
                 'ResultCode' => 1,
                 'ResultDesc' => 'Error processing callback'
             ], 500);
-        }
-    }
-
-    protected function sendConfirmationEmails(Booking $booking)
-    {
-        try {
-            // Send to customer
-            Mail::to($booking->user->email)
-                ->send(new BookingConfirmation($booking, 'customer'));
-            
-            // Send to host if property has owner
-            if ($booking->property->user) {
-                Mail::to($booking->property->user->email)
-                    ->send(new BookingConfirmation($booking, 'host'));
-            }
-            
-        } catch (\Exception $e) {
-            \Log::error('Email sending failed: ' . $e->getMessage(), [
-                'booking_id' => $booking->id
-            ]);
         }
     }
 

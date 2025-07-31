@@ -30,19 +30,11 @@ use App\Mail\CheckInVerification;
 use App\Mail\CheckOutVerification;
 use App\Mail\BookingCancelled;
 use Illuminate\Pagination\LengthAwarePaginator;
-use App\Services\MpesaService;
 
 class BookingController extends Controller
 {
 
     use Mpesa;
-
-    protected $mpesaService;
-
-    public function __construct(MpesaService $mpesaService = null)
-    {
-        $this->mpesaService = $mpesaService;
-    }
 
     public function index(Request $request)
     {

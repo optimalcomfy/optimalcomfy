@@ -569,7 +569,7 @@ export default function RideForm() {
       `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Search properties',
+      confirmButtonText: 'Search stays',
       cancelButtonText: 'Edit details',
       confirmButtonColor: '#FF385C',
       cancelButtonColor: '#6b7280',

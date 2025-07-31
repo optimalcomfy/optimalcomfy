@@ -683,7 +683,7 @@ export default function RideForm() {
       `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Search cars',
+      confirmButtonText: 'Search rides',
       cancelButtonText: 'Edit details',
       confirmButtonColor: '#0d3c46',
       cancelButtonColor: '#6b7280',

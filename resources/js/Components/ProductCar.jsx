@@ -66,20 +66,12 @@ const ProductCar = (props) => {
       {/* Product Details */}
       <Link
         href={route('rent-now', { car_id: id })} // Changed from car_id to id for consistency
-        className="grid grid-cols-[minmax(0,1fr),max-content] gap-[2px_8px] mt-3 text-[.9375rem] leading-[19px]">
-        <div className="font-bold line-clamp-2">
+        className="grid grid-cols-[minmax(0,1fr),max-content] gap-[2px_8px] mt-3 text-[.9375rem] leading-[19px] px-2">
+        <div className="font-bold">
           {carDisplayName}
         </div>
 
-        {/* Optional star rating - you can add this if you have rating data */}
-        {/* 
-        <div className="flex items-center gap-x-1">
-          <img src={starIcon} alt="Star" className="w-4 h-4" />
-          {starRate}
-        </div>
-        */}
-
-        <div className="text-[#717171] col-span-2">{locationDisplay}</div>
+        <div className="text-[#717171] col-span-2 line-clamp-1">{locationDisplay}</div>
         <div className="text-[#717171] col-span-2">{yearDisplay}</div>
         <div className="mt-[6px] col-span-2">
           <span className="font-semibold">KES {platform_price}</span> per day

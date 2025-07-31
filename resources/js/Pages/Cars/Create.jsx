@@ -1,46 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { useForm, usePage, Link } from '@inertiajs/react';
+import { useForm, usePage, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
+import { Plus, MapPin, ChevronRight, ChevronLeft, Car, Check } from 'lucide-react';
 import Select from 'react-select';
-import { Plus, Logs, MapPin, Star as StarIcon } from 'lucide-react';
 
-const CreateCar = () => {
-  const { categories, features, company } = usePage().props;
+const RideCreateWizard = ({ errors, features, categories }) => {
+  const { company } = usePage().props;
+  const [step, setStep] = useState(1);
+  const [selectedFeatures, setSelectedFeatures] = useState([]);
+  const [images, setImages] = useState([]);
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { data, setData, post, errors, processing } = useForm({
-    car_category_id: '',
-    name: '',
-    license_plate: '',
-    brand: '',
-    model: '',
-    year: '',
-    mileage: '',
-    body_type: '',
-    seats: '',
-    doors: '',
-    luggage_capacity: '',
-    fuel_type: '',
-    engine_capacity: '',
-    transmission: '',
-    drive_type: '',
-    fuel_economy: '',
-    exterior_color: '',
-    interior_color: '',
-    host_earnings: '',
-    price_per_day: '',
-    description: '',
-    is_available: true,
-    location_address: '',
-    latitude: '',
-    longitude: '',
+  // Main form data
+  const { data, setData } = useForm({
+    car_category_id: "",
+    name: "",
+    license_plate: "",
+    brand: "",
+    model: "",
+    year: "",
+    mileage: "",
+    body_type: "",
+    seats: "",
+    doors: "",
+    luggage_capacity: "",
+    fuel_type: "",
+    engine_capacity: "",
+    transmission: "",
+    drive_type: "",
+    fuel_economy: "",
+    exterior_color: "",
+    interior_color: "",
+    host_earnings: "",
+    price_per_day: "",
+    description: "",
+    is_available: 1,
+    location_address: "",
+    latitude: "",
+    longitude: "",
     features: [],
+    images: []
   });
 
-  const [locationAddressSuggestions, setlocationAddressSuggestions] = useState([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [step, setStep] = useState(1);
-
-  // Calculate prices whenever host_earnings changes
+  // Calculate pricing
   useEffect(() => {
     if (data.host_earnings && company.percentage) {
       const earnings = parseFloat(data.host_earnings);
@@ -52,235 +55,517 @@ const CreateCar = () => {
     }
   }, [data.host_earnings, company.percentage]);
 
-  const categoryOptions = categories.map(category => ({
-    value: category.id, label: category.name
-  }));
-
-  const nextStep = () => setStep((prev) => prev + 1);
-  const prevStep = () => setStep((prev) => prev - 1);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    post(route('main-cars.store'));
-  };
-
+  // Location suggestions
   useEffect(() => {
-    const fetchlocationAddressSuggestions = async () => {
+    const fetchLocationSuggestions = async () => {
       if (data.location_address.length < 3) {
-        setlocationAddressSuggestions([]);
+        setLocationSuggestions([]);
         return;
       }
 
-      setIsLoadingSuggestions(true);
       try {
         const response = await fetch(`/locations?query=${encodeURIComponent(data.location_address)}`);
         if (!response.ok) throw new Error('Failed to fetch suggestions');
         const result = await response.json();
-        setlocationAddressSuggestions(result);
+        setLocationSuggestions(result);
       } catch (error) {
-        console.error('Error fetching location address suggestions:', error);
-        setlocationAddressSuggestions([]);
-      } finally {
-        setIsLoadingSuggestions(false);
+        console.error('Error fetching location suggestions:', error);
+        setLocationSuggestions([]);
       }
     };
 
     const timeoutId = setTimeout(() => {
-      if (data.location_address) {
-        fetchlocationAddressSuggestions();
-      } else {
-        setlocationAddressSuggestions([]);
-      }
+      if (data.location_address) fetchLocationSuggestions();
     }, 300);
 
     return () => clearTimeout(timeoutId);
   }, [data.location_address]);
 
-  const handleLocation_addressSelect = (suggestion) => {
+  const handleLocationSelect = (suggestion) => {
     setData('location_address', suggestion);
-    setlocationAddressSuggestions([]);
+    setLocationSuggestions([]);
   };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Prepare all data
+      const formData = new FormData();
+      
+      // Add basic ride data
+      Object.keys(data).forEach(key => {
+        if (key !== 'images') {
+          formData.append(key, data[key]);
+        }
+      });
+
+      // Add features
+      formData.append('features', JSON.stringify(selectedFeatures));
+
+      // Add images
+      images.forEach((image, index) => {
+        formData.append(`images[${index}]`, image);
+      });
+
+      // Submit all data at once
+      await router.post(route('main-cars.store'), formData, {
+        forceFormData: true,
+        onSuccess: () => {
+          // Redirect happens from backend
+        }
+      });
+
+    } catch (error) {
+      console.error('Error submitting ride:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle file upload for gallery
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setImages([...images, ...files]);
+  };
+
+  // Handle feature selection
+  const toggleFeature = (featureId) => {
+    setSelectedFeatures(prev => 
+      prev.includes(featureId) 
+        ? prev.filter(id => id !== featureId) 
+        : [...prev, featureId]
+    );
+  };
+
+  // Category options for select
+  const categoryOptions = categories.map(category => ({
+    value: category.id,
+    label: category.name
+  }));
+
+  // Body type options
+  const bodyTypes = [
+    "Sedan", "SUV", "Hatchback", "Coupe", "Convertible",
+    "Wagon", "Minivan", "Pickup Truck", "Sports Car", "Luxury"
+  ];
+
+  // Fuel type options
+  const fuelTypes = ["Petrol", "Diesel", "Electric", "Hybrid", "CNG"];
+
+  // Transmission options
+  const transmissionTypes = ["Automatic", "Manual", "CVT", "Dual-Clutch"];
+
+  // Drive type options
+  const driveTypes = ["FWD", "RWD", "AWD", "4WD"];
 
   return (
     <Layout>
-      <div className="max-w-2xl bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-2xl font-semibold mb-4">Create New Ride</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="max-w-4xl bg-white p-6 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold mb-6">Create Ride Listing</h1>
+        
+        {/* Progress Steps */}
+        <div className="flex mb-8">
+          {[1, 2, 3, 4].map((stepNumber) => (
+            <div 
+              key={stepNumber}
+              className={`flex-1 border-b-2 pb-2 text-center ${step >= stepNumber ? 'border-blue-500 text-blue-500' : 'border-gray-300'}`}
+            >
+              {['Basic Info', 'Specs', 'Features', 'Gallery'][stepNumber - 1]}
+            </div>
+          ))}
+        </div>
 
-          {/* Step 1: Basic Info */}
-          {step === 1 && (
-            <>
-              <div>
-                <label className="block text-sm font-medium">Ride Category</label>
-                <Select
-                  options={categoryOptions}
-                  value={categoryOptions.find(option => option.value === data.car_category_id)}
-                  onChange={(selected) => setData('car_category_id', selected?.value || '')}
-                  placeholder="Select category"
-                />
-                {errors.car_category_id && <p className="text-red-500 text-sm">{errors.car_category_id}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Ride Name</label>
-                <input type="text" className="w-full border rounded-md px-3 py-2"
-                  value={data.name}
-                  onChange={e => setData('name', e.target.value)}
-                  placeholder="Ride Name"
-                />
-                {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium">License plate</label>
-                <input type="text" className="w-full border rounded-md px-3 py-2"
-                  value={data.license_plate}
-                  onChange={e => setData('license_plate', e.target.value)}
-                  placeholder="License plate"
-                />
-                {errors.license_plate && <p className="text-red-500 text-sm">{errors.license_plate}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Brand</label>
-                <input type="text" className="w-full border rounded-md px-3 py-2"
-                  value={data.brand}
-                  onChange={e => setData('brand', e.target.value)}
-                  placeholder="Brand"
-                />
-                {errors.brand && <p className="text-red-500 text-sm">{errors.brand}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Model</label>
-                <input type="text" className="w-full border rounded-md px-3 py-2"
-                  value={data.model}
-                  onChange={e => setData('model', e.target.value)}
-                  placeholder="Model"
-                />
-                {errors.model && <p className="text-red-500 text-sm">{errors.model}</p>}
-              </div>
-              <div className="flex justify-end">
-                <button type="button" onClick={nextStep} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                  Next
-                </button>
-              </div>
-            </>
-          )}
+        {/* Step 1: Basic Information */}
+        {step === 1 && (
+          <form className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Ride Category*</label>
+                  <Select
+                    options={categoryOptions}
+                    value={categoryOptions.find(option => option.value === data.car_category_id)}
+                    onChange={(selected) => setData('car_category_id', selected?.value || '')}
+                    className="basic-single"
+                    classNamePrefix="select"
+                    placeholder="Select category"
+                  />
+                  {errors.car_category_id && <p className="text-red-500 text-sm">{errors.car_category_id}</p>}
+                </div>
 
-          {/* Step 2: Specs */}
-          {step === 2 && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  ['Year', 'year', 'number'],
-                  ['Mileage', 'mileage', 'number'],
-                  ['Body Type', 'body_type', 'text'],
-                  ['Seats', 'seats', 'number'],
-                  ['Doors', 'doors', 'number'],
-                  ['Luggage Capacity', 'luggage_capacity', 'number'],
-                  ['Fuel Type', 'fuel_type', 'text'],
-                  ['Engine Capacity', 'engine_capacity', 'number'],
-                  ['Transmission', 'transmission', 'text'],
-                  ['Drive Type', 'drive_type', 'text'],
-                  ['Fuel Economy', 'fuel_economy', 'text'],
-                  ['Exterior Color', 'exterior_color', 'text'],
-                  ['Interior Color', 'interior_color', 'text'],
-                ].map(([label, key, type]) => (
-                  <div className="min-w-full" key={key}>
-                    <label className="block text-sm font-medium">{label}</label>
-                    <input
-                      type={type}
-                      className="w-full border rounded-md px-3 py-2"
-                      value={data[key]}
-                      onChange={e => setData(key, e.target.value)}
-                      placeholder={label}
-                    />
-                    {errors[key] && <p className="text-red-500 text-sm">{errors[key]}</p>}
-                  </div>
-                ))}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Ride Name*</label>
+                  <input
+                    type="text"
+                    value={data.name}
+                    onChange={(e) => setData("name", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+                </div>
 
-                {/* Pricing Section */}
-                <div className="md:col-span-2 bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-800 mb-3">Pricing Details</h3>
-                  
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Desired Earnings (KES)</label>
+                <div>
+                  <label className="block text-sm font-medium mb-1">License Plate*</label>
+                  <input
+                    type="text"
+                    value={data.license_plate}
+                    onChange={(e) => setData("license_plate", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.license_plate && <p className="text-red-500 text-sm">{errors.license_plate}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Brand*</label>
+                  <input
+                    type="text"
+                    value={data.brand}
+                    onChange={(e) => setData("brand", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.brand && <p className="text-red-500 text-sm">{errors.brand}</p>}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Model*</label>
+                  <input
+                    type="text"
+                    value={data.model}
+                    onChange={(e) => setData("model", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.model && <p className="text-red-500 text-sm">{errors.model}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Year*</label>
+                  <input
+                    type="number"
+                    min="1900"
+                    max={new Date().getFullYear() + 1}
+                    value={data.year}
+                    onChange={(e) => setData("year", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.year && <p className="text-red-500 text-sm">{errors.year}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Mileage (km)*</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={data.mileage}
+                    onChange={(e) => setData("mileage", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.mileage && <p className="text-red-500 text-sm">{errors.mileage}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Body Type*</label>
+                  <select
+                    value={data.body_type}
+                    onChange={(e) => setData("body_type", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  >
+                    <option value="">Select body type</option>
+                    {bodyTypes.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                  {errors.body_type && <p className="text-red-500 text-sm">{errors.body_type}</p>}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 flex items-center"
+                disabled={!data.car_category_id || !data.name || !data.license_plate || !data.brand || !data.model || !data.year || !data.mileage || !data.body_type}
+              >
+                Next: Specifications <ChevronRight className="ml-2" />
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Step 2: Specifications */}
+        {step === 2 && (
+          <div>
+            <h2 className="text-xl font-semibold mb-6">Ride Specifications</h2>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Seats*</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={data.seats}
+                    onChange={(e) => setData("seats", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.seats && <p className="text-red-500 text-sm">{errors.seats}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Doors*</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={data.doors}
+                    onChange={(e) => setData("doors", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.doors && <p className="text-red-500 text-sm">{errors.doors}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Luggage Capacity (bags)*</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={data.luggage_capacity}
+                    onChange={(e) => setData("luggage_capacity", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.luggage_capacity && <p className="text-red-500 text-sm">{errors.luggage_capacity}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Fuel Type*</label>
+                  <select
+                    value={data.fuel_type}
+                    onChange={(e) => setData("fuel_type", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  >
+                    <option value="">Select fuel type</option>
+                    {fuelTypes.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                  {errors.fuel_type && <p className="text-red-500 text-sm">{errors.fuel_type}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Engine Capacity (cc)*</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={data.engine_capacity}
+                    onChange={(e) => setData("engine_capacity", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.engine_capacity && <p className="text-red-500 text-sm">{errors.engine_capacity}</p>}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Transmission*</label>
+                  <select
+                    value={data.transmission}
+                    onChange={(e) => setData("transmission", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  >
+                    <option value="">Select transmission</option>
+                    {transmissionTypes.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                  {errors.transmission && <p className="text-red-500 text-sm">{errors.transmission}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Drive Type*</label>
+                  <select
+                    value={data.drive_type}
+                    onChange={(e) => setData("drive_type", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  >
+                    <option value="">Select drive type</option>
+                    {driveTypes.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                  {errors.drive_type && <p className="text-red-500 text-sm">{errors.drive_type}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Fuel Economy (km/l)*</label>
+                  <input
+                    type="text"
+                    value={data.fuel_economy}
+                    onChange={(e) => setData("fuel_economy", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                    placeholder="e.g. 12-15"
+                  />
+                  {errors.fuel_economy && <p className="text-red-500 text-sm">{errors.fuel_economy}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Exterior Color*</label>
+                  <input
+                    type="text"
+                    value={data.exterior_color}
+                    onChange={(e) => setData("exterior_color", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.exterior_color && <p className="text-red-500 text-sm">{errors.exterior_color}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Interior Color*</label>
+                  <input
+                    type="text"
+                    value={data.interior_color}
+                    onChange={(e) => setData("interior_color", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.interior_color && <p className="text-red-500 text-sm">{errors.interior_color}</p>}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-4">Pricing Details</h3>
+              
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Your Desired Earnings (KES)*</label>
                     <input
                       type="number"
+                      min="0"
+                      step="0.01"
                       value={data.host_earnings}
                       onChange={(e) => setData("host_earnings", e.target.value)}
-                      className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter your desired earnings per day"
+                      className="w-full border px-4 py-2 rounded-lg"
+                      required
                     />
-                    {errors.host_earnings && <p className="text-red-500 text-sm mt-1">{errors.host_earnings}</p>}
+                    {errors.host_earnings && <p className="text-red-500 text-sm">{errors.host_earnings}</p>}
                   </div>
-
-                  <div className="bg-white p-3 rounded-md border border-gray-200 mb-4">
-                    <div className="flex justify-between text-sm font-medium text-gray-800">
-                      <span>You'll receive:</span>
-                      <span className="text-green-600">KES {data.host_earnings || '0.00'}</span>
-                    </div>
-                  </div>
-
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer Price (KES)</label>
+                    <label className="block text-sm font-medium mb-1">Customer Price (KES)</label>
                     <input
                       type="number"
                       value={data.price_per_day}
                       readOnly
-                      className="w-full border border-gray-300 bg-gray-100 px-4 py-2 rounded-lg cursor-not-allowed"
+                      className="w-full border bg-gray-100 px-4 py-2 rounded-lg"
                     />
-                    <p className="text-xs text-gray-500 mt-1">This is the price customers will pay per day after platform fees</p>
-                    {errors.price_per_day && <p className="text-red-500 text-sm mt-1">{errors.price_per_day}</p>}
+                    <p className="text-xs text-gray-500 mt-1">Includes platform fee of {company.percentage}%</p>
+                    {errors.price_per_day && <p className="text-red-500 text-sm">{errors.price_per_day}</p>}
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium">Description</label>
-                  <textarea
-                    className="w-full border rounded-md px-3 py-2"
-                    value={data.description}
-                    onChange={e => setData('description', e.target.value)}
-                    placeholder="Enter description"
-                    rows="4"
-                  />
-                  {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+            <div className="mt-4">
+              <label className="block text-sm font-medium mb-1">Description*</label>
+              <textarea
+                value={data.description}
+                onChange={(e) => setData("description", e.target.value)}
+                className="w-full border px-4 py-2 rounded-lg"
+                rows="4"
+                required
+              />
+              {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+            </div>
+
+            <div className="flex justify-between mt-8">
+              <button
+                onClick={() => setStep(1)}
+                className="bg-gray-200 text-gray-800 py-2 px-6 rounded-lg hover:bg-gray-300 flex items-center"
+              >
+                <ChevronLeft className="mr-2" /> Back
+              </button>
+              <button
+                onClick={() => setStep(3)}
+                className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 flex items-center"
+                disabled={!data.seats || !data.doors || !data.luggage_capacity || !data.fuel_type || 
+                          !data.engine_capacity || !data.transmission || !data.drive_type || 
+                          !data.fuel_economy || !data.exterior_color || !data.interior_color ||
+                          !data.host_earnings || !data.description}
+              >
+                Next: Features <ChevronRight className="ml-2" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Features */}
+        {step === 3 && (
+          <div>
+            <h2 className="text-xl font-semibold mb-6">Select Features</h2>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {features.map((feature) => (
+                <div key={feature.id} className="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                  <label className="flex items-center gap-2 cursor-pointer w-full">
+                    <input
+                      type="checkbox"
+                      checked={selectedFeatures.includes(feature.id)}
+                      onChange={() => toggleFeature(feature.id)}
+                      className="h-5 rounded border-gray-400 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span>{feature.name}</span>
+                  </label>
                 </div>
-              </div>
-              <div className="flex justify-between mt-4">
-                <button type="button" onClick={prevStep} className="bg-gray-300 px-4 py-2 rounded">Previous</button>
-                <button type="button" onClick={nextStep} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Next</button>
-              </div>
-            </>
-          )}
+              ))}
+            </div>
 
-          {/* Step 3: Location & Availability */}
-          {step === 3 && (
-            <>
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-4">Location</h3>
+              
               <div className="relative">
                 <label className="block text-sm mb-2">
                   <div className="flex text-left gap-4 items-center">
                     <MapPin className="w-4 h-4 mr-1" />
-                    <span>Location address</span>
+                    <span>Location address*</span>
                   </div>
                 </label>
                 <input
                   type="text"
                   className="w-full p-2 rounded border border-gray-300"
-                  placeholder="Search for a location_address..."
+                  placeholder="Search for a location..."
                   value={data.location_address}
                   onChange={(e) => setData("location_address", e.target.value)}
+                  required
                 />
-                {isLoadingSuggestions && (
-                  <div className="absolute right-3 top-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-500"></div>
-                  </div>
-                )}
-                {locationAddressSuggestions.length > 0 && (
+                {locationSuggestions.length > 0 && (
                   <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
                     <ul className="max-h-60 overflow-auto py-1">
-                      {locationAddressSuggestions.map((suggestion, index) => (
+                      {locationSuggestions.map((suggestion, index) => (
                         <li
                           key={index}
                           className="px-3 py-2 text-sm hover:bg-gray-200 cursor-pointer"
-                          onClick={() => handleLocation_addressSelect(suggestion)}
+                          onClick={() => handleLocationSelect(suggestion)}
                         >
                           {suggestion}
                         </li>
@@ -290,34 +575,119 @@ const CreateCar = () => {
                 )}
                 {errors.location_address && <p className="text-red-500 text-sm">{errors.location_address}</p>}
               </div>
-              <div className="mt-4">
-                <label className="flex items-center space-x-2 text-sm font-medium">
-                  <input
-                    type="checkbox"
-                    checked={data.is_available}
-                    onChange={e => setData('is_available', e.target.checked)}
-                  />
-                  <span>Available for Rent</span>
-                </label>
-              </div>
-              <div className="flex justify-between mt-4">
-                <button type="button" onClick={prevStep} className="bg-gray-300 px-4 py-2 rounded">Previous</button>
-                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" disabled={processing}>
-                  {processing ? 'Submitting...' : 'Submit'}
-                </button>
-              </div>
-            </>
-          )}
-        </form>
+            </div>
 
-        <div className="mt-6 text-center">
-          <Link href={route('main-cars.index')} className="text-blue-600 hover:text-blue-800">
-            Back to Rides List
-          </Link>
-        </div>
+            <div className="mt-4">
+              <label className="flex items-center space-x-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={data.is_available}
+                  onChange={e => setData('is_available', e.target.checked ? 1 : 0)}
+                  className="h-5 rounded border-gray-400 text-blue-600 focus:ring-blue-500"
+                />
+                <span>Available for Rent</span>
+              </label>
+            </div>
+
+            <div className="flex justify-between mt-8">
+              <button
+                onClick={() => setStep(2)}
+                className="bg-gray-200 text-gray-800 py-2 px-6 rounded-lg hover:bg-gray-300 flex items-center"
+              >
+                <ChevronLeft className="mr-2" /> Back
+              </button>
+              <button
+                onClick={() => setStep(4)}
+                className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 flex items-center"
+              >
+                Next: Gallery <ChevronRight className="ml-2" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Gallery */}
+        {step === 4 && (
+          <div>
+            <h2 className="text-xl font-semibold mb-6">Ride Images</h2>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2">Upload Images (Minimum 3)*</label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                <div className="space-y-1 text-center">
+                  <div className="flex text-sm text-gray-600">
+                    <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                      <span>Upload files</span>
+                      <input
+                        type="file"
+                        onChange={handleFileChange}
+                        className="sr-only"
+                        multiple
+                        accept="image/*"
+                      />
+                    </label>
+                    <p className="pl-1">or drag and drop</p>
+                  </div>
+                  <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                </div>
+              </div>
+            </div>
+
+            {images.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-medium mb-2">Selected Images ({images.length})</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {images.map((image, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={URL.createObjectURL(image)}
+                        alt={`Preview ${index}`}
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                      <button
+                        onClick={() => setImages(images.filter((_, i) => i !== index))}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between mt-8">
+              <button
+                onClick={() => setStep(3)}
+                className="bg-gray-200 text-gray-800 py-2 px-6 rounded-lg hover:bg-gray-300 flex items-center"
+              >
+                <ChevronLeft className="mr-2" /> Back
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="bg-green-600 text-white py-2 px-6 rounded-lg hover:bg-green-700 flex items-center"
+                disabled={isLoading || images.length < 3}
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Creating Ride...
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2" /> Create Ride
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
 };
 
-export default CreateCar;
+export default RideCreateWizard;

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePropertyAmenityRequest;
 use App\Http\Requests\UpdatePropertyAmenityRequest;
 use App\Models\PropertyAmenity;
+use App\Models\Property;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -54,10 +55,13 @@ class PropertyAmenityController extends Controller
 
         $propertyAmenity = PropertyAmenity::create($validatedData);
 
+        $property = Property::with('bookings', 'initialGallery', 'propertyAmenities.amenity', 'propertyFeatures', 'PropertyServices', 'user', 'variations')->find($propertyAmenity->property_id);
+
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'amenity' => $propertyAmenity
+                'amenity' => $propertyAmenity,
+                'property'=> $property
             ]);
         }
 

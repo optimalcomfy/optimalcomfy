@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CarController extends Controller
 {
@@ -208,40 +209,99 @@ class CarController extends Controller
      * Store a newly created resource in storage.
      */
     
-    public function store(StoreCarRequest $request)
+    public function store(Request $request)
     {
-        $validated = $request->validated();
+        DB::beginTransaction();
 
-        // Handling the image file upload if provided
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('cars', 'public');
-        }
+        try {
+            // Validate basic fields
+            $validated = $request->validate([
+                'car_category_id' => 'required|exists:car_categories,id',
+                'name' => 'required|string|max:255',
+                'license_plate' => 'required|string|max:20|unique:cars,license_plate',
+                'brand' => 'required|string|max:255',
+                'model' => 'required|string|max:255',
+                'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
+                'mileage' => 'required|integer|min:0',
+                'body_type' => 'required|string|max:255',
+                'seats' => 'required|integer|min:1',
+                'doors' => 'required|integer|min:1',
+                'luggage_capacity' => 'required|integer|min:1',
+                'fuel_type' => 'required|string|max:255',
+                'engine_capacity' => 'required|integer|min:0',
+                'transmission' => 'required|string|max:255',
+                'drive_type' => 'required|string|max:255',
+                'fuel_economy' => 'required|string|max:255',
+                'exterior_color' => 'required|string|max:255',
+                'interior_color' => 'required|string|max:255',
+                'host_earnings' => 'required|numeric|min:0',
+                'price_per_day' => 'required|numeric|min:0',
+                'description' => 'required|string',
+                'is_available' => 'nullable',
+                'location_address' => 'required|string',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
+            ]);
 
-        if (!empty($validated['location_address'])) {
-            $coordinates = $this->getCoordinatesFromLocation($validated['location_address']);
-            if ($coordinates) {
-                $validated['latitude'] = $coordinates['latitude'];
-                $validated['longitude'] = $coordinates['longitude'];
+            // Handle location coordinates
+            if (!empty($validated['location_address'])) {
+                $coordinates = $this->getCoordinatesFromLocation($validated['location_address']);
+                if ($coordinates) {
+                    $validated['latitude'] = $coordinates['latitude'];
+                    $validated['longitude'] = $coordinates['longitude'];
+                }
             }
+
+            // Set user and company info
+            $validated['user_id'] = auth()->id();
+            $company = Company::first();
+            $validated['amount'] = $validated['host_earnings']; // What host will earn
+
+            // Create the car record
+            $car = Car::create($validated);
+
+            // Handle features if provided
+            if ($request->has('features')) {
+                $features = json_decode($request->input('features'), true);
+                
+                if (is_array($features) && !empty($features)) {
+                    // First delete existing features for this car
+                    CarFeature::where('car_id', $car->id)->delete();
+                    
+                    // Create new feature associations
+                    foreach ($features as $featureId) {
+                        CarFeature::create([
+                            'car_id' => $car->id,
+                            'feature_id' => $featureId
+                        ]);
+                    }
+                }
+            }
+
+            // Handle image uploads
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('car-gallery', 'public');
+                    $car->media()->create([
+                        'image' => $path,
+                        'is_featured' => false // You can implement logic to set featured image
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('main-cars.show', $car->id)
+                ->with('success', 'Ride created successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Ride creation failed: " . $e->getMessage());
+            
+            return back()->withInput()
+                ->withErrors(['error' => 'Failed to create ride. Please try again. ' . $e->getMessage()]);
         }
-
-        $user = Auth::user();
-
-        $validated['user_id'] = $user->id;
-
-        $company = Company::first();
-        $base = $validated['price_per_day'];
-        $charges = $base * $company->percentage / 100;
-        $total = $validated['price_per_day'] - $charges;
-
-        $validated['amount'] = $total;
-
-        // Create the car record in the database
-        Car::create($validated);
-
-        return redirect()->route('main-cars.index')->with('success', 'Car item created successfully.');
     }
-
     /**
      * Display the specified resource.
      */

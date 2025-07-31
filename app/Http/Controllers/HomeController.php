@@ -425,7 +425,7 @@ class HomeController extends Controller
             "averageCarBookingValue" =>
                 $carsCount > 0 ? $carBookingTotal / max($carsCount, 1) : 0,
             "totalBookingsCount" =>
-                Booking::whereNull("external_booking") 
+                Booking::whereNull("external_booking")
                     ->when(fn($q) => $q->whereHas("user"))
                     ->whereHas(
                         "property",

@@ -1,134 +1,78 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Booking Confirmation</title>
+    <title>{{ $recipientType === 'customer' ? 'Booking Confirmation' : 'New Booking Notification' }}</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .booking-details {
-            background-color: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .section-title {
-            color: #007bff;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 5px;
-            margin-bottom: 15px;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid #f8f9fa;
-        }
-        .info-label {
-            font-weight: bold;
-            color: #495057;
-        }
-        .amount {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #28a745;
-        }
-        .status {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            color: white;
-            font-size: 0.9em;
-        }
-        .status.paid {
-            background-color: #28a745;
-        }
-        .status.pending {
-            background-color: #ffc107;
-            color: #212529;
-        }
-        .footer {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #6c757d;
-        }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .booking-details { background-color: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .section-title { color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-bottom: 15px; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #f8f9fa; }
+        .info-label { font-weight: bold; color: #495057; }
+        .amount { font-size: 1.2em; font-weight: bold; color: #28a745; }
+        .status { display: inline-block; padding: 4px 12px; border-radius: 20px; color: white; }
+        .status.completed { background-color: #28a745; }
+        .status.paid { background-color: #28a745; }
+        .status.failed { background-color: #dc3545; }
+        .footer { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 0.9em; text-align: center; }
+        .host-notes { background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 5px solid #ffc107; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Booking Confirmation</h1>
-        <p>Thank you for your booking! We're excited to confirm your property reservation.</p>
+        <h1>{{ $recipientType === 'customer' ? 'Booking Confirmation' : 'New Booking Notification' }}</h1>
+        <p>
+            @if($recipientType === 'customer')
+            Thank you for booking with us! Your reservation is confirmed.
+            @else
+            You have a new booking for your property.
+            @endif
+        </p>
     </div>
 
     <div class="booking-details">
         <h2 class="section-title">Booking Details</h2>
-    
-
         <div class="info-row">
-            <span class="info-label">Booking Number:</span>
+            <span class="info-label">Reference:</span>
             <span>{{ $booking->number }}</span>
         </div>
-        
         <div class="info-row">
             <span class="info-label">Property:</span>
-            <span>{{ $booking->property->name }}</span>
+            <span>{{ $booking->property->property_name }}</span>
         </div>
-        
+        @if($booking->property->apartment_name)
         <div class="info-row">
-            <span class="info-label">Check-in Date:</span>
-            <span>{{ \Carbon\Carbon::parse($booking->check_in_date)->format('l, F j, Y') }}</span>
-        </div>
-        
-        <div class="info-row">
-            <span class="info-label">Check-out Date:</span>
-            <span>{{ \Carbon\Carbon::parse($booking->check_out_date)->format('l, F j, Y') }}</span>
-        </div>
-        
-        <div class="info-row">
-            <span class="info-label">Duration:</span>
-            <span>{{ \Carbon\Carbon::parse($booking->check_in_date)->diffInDays($booking->check_out_date) }} nights</span>
-        </div>
-        
-        @if($booking->property->address)
-        <div class="info-row">
-            <span class="info-label">Property Address:</span>
-            <span>{{ $booking->property->address }}</span>
+            <span class="info-label">Apartment:</span>
+            <span>{{ $booking->property->apartment_name }}</span>
         </div>
         @endif
+        <div class="info-row">
+            <span class="info-label">Check-in:</span>
+            <span>{{ $booking->check_in_date->format('l, F j, Y') }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Check-out:</span>
+            <span>{{ $booking->check_out_date->format('l, F j, Y') }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Nights:</span>
+            <span>{{ $booking->check_in_date->diffInDays($booking->check_out_date) }}</span>
+        </div>
     </div>
 
+    @if($recipientType === 'host')
     <div class="booking-details">
         <h2 class="section-title">Guest Information</h2>
-        
         <div class="info-row">
-            <span class="info-label">Primary Guest:</span>
+            <span class="info-label">Name:</span>
             <span>{{ $booking->user->name }}</span>
         </div>
-        
         <div class="info-row">
             <span class="info-label">Email:</span>
             <span>{{ $booking->user->email }}</span>
         </div>
-        
         @if($booking->user->phone)
         <div class="info-row">
             <span class="info-label">Phone:</span>
@@ -136,87 +80,68 @@
         </div>
         @endif
     </div>
+    @endif
 
     <div class="booking-details">
-        <h2 class="section-title">Payment Summary</h2>
-        
+        <h2 class="section-title">Payment Information</h2>
         <div class="info-row">
-            <span class="info-label">Total Amount:</span>
-            <span class="amount">{{ number_format($booking->total_price, 2) }}</span>
+            <span class="info-label">Amount:</span>
+            <span class="amount">KSh {{ number_format($booking->total_price, 2) }}</span>
         </div>
-        
-        @if($payment)
         <div class="info-row">
-            <span class="info-label">Payment Method:</span>
-            <span>{{ ucfirst($payment->method) }}</span>
+            <span class="info-label">Status:</span>
+            <span class="status {{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
         </div>
-        
+        @if($payment && $payment->mpesa_receipt)
         <div class="info-row">
-            <span class="info-label">Payment Status:</span>
-            <span class="status {{ strtolower($booking->status) }}">{{ $booking->status }}</span>
+            <span class="info-label">MPesa Receipt:</span>
+            <span>{{ $payment->mpesa_receipt }}</span>
+        </div>
+        @endif
+        @if($recipientType === 'host')
+        <div class="info-row">
+            <span class="info-label">Your Earnings:</span>
+            <span class="amount">KSh {{ number_format($booking->total_price * 0.85, 2) }}</span>
         </div>
         @endif
     </div>
 
-    <div class="booking-details">
-        <h2 class="section-title">Check-in Instructions</h2>
-        
-        <p><strong>Arrival:</strong> Please arrive after {{ $booking->property->check_in_time ?? '3:00 PM' }} on your check-in date</p>
-        
-        @if($booking->property->key_instructions)
-        <p><strong>Key Collection:</strong> {{ $booking->property->key_instructions }}</p>
-        @endif
-        
-        @if($booking->property->manager_phone)
-        <p><strong>Property Manager Contact:</strong> {{ $booking->property->manager_phone }}</p>
-        @endif
-    </div>
-
-    <div class="booking-details">
-        <h2 class="section-title">Important Policies</h2>
-        
-        <h4>Cancellation Policy:</h4>
+    @if($recipientType === 'host')
+    <div class="host-notes">
+        <h3>Host Reminders</h3>
         <ul>
-            <li>Cancellations must be made at least 48 hours before check-in</li>
-            <li>Full refund available for cancellations made 7 days in advance</li>
-            <li>Partial refund (50%) for cancellations made 48-72 hours before check-in</li>
-        </ul>
-
-        <h4>House Rules:</h4>
-        <ul>
-            <li>Check-in: After {{ $booking->property->check_in_time ?? '3:00 PM' }}</li>
-            <li>Check-out: Before {{ $booking->property->check_out_time ?? '11:00 AM' }}</li>
-            <li>No smoking inside the property</li>
-            @if($booking->property->max_guests)
-            <li>Maximum occupancy: {{ $booking->property->max_guests }} guests</li>
+            <li>Ensure property is clean and ready before check-in</li>
+            <li>Confirm key handover arrangements</li>
+            @if($booking->property->cleaner)
+            <li>Cleaner service required</li>
             @endif
-            <li>Quiet hours: 10:00 PM - 8:00 AM</li>
+            @if($booking->property->cook)
+            <li>Cook service required</li>
+            @endif
         </ul>
     </div>
-
+    @else
     <div class="booking-details">
-        <h2 class="section-title">Contact Information</h2>
-        
-        @if($booking->property->manager_name || $booking->property->manager_phone)
-        <p><strong>Property Manager:</strong><br>
-        {{ $booking->property->manager_name ?? 'Property Manager' }}<br>
-        {{ $booking->property->manager_phone }}<br>
-        {{ $booking->property->manager_email }}
-        </p>
+        <h2 class="section-title">Access Information</h2>
+        @if($booking->property->key_location)
+        <div class="info-row">
+            <span class="info-label">Key Location:</span>
+            <span>{{ $booking->property->key_location }}</span>
+        </div>
         @endif
-
-        <p><strong>Customer Support:</strong><br>
-        Phone: 254734567834<br>
-        Email: info@ristay.co.ke<br>
-        </p>
+        @if($booking->property->emergency_contact)
+        <div class="info-row">
+            <span class="info-label">Emergency Contact:</span>
+            <span>{{ $booking->property->emergency_contact }}</span>
+        </div>
+        @endif
     </div>
+    @endif
 
     <div class="footer">
-        <p>We're excited to host you at {{ $booking->property->name }}! If you have any questions or special requests, please don't hesitate to contact us.</p>
-        
-        <p><strong>Booking Date:</strong> {{ $booking->created_at->format('F j, Y g:i A') }}</p>
-        
-        <p><em>This is an automated confirmation email. For assistance, please use the contact information provided above.</em></p>
+        <p>For assistance, contact our support team:</p>
+        <p>Email: support@example.com | Phone: +254 700 000000</p>
+        <p><em>This is an automated message. Please don't reply directly.</em></p>
     </div>
 </body>
 </html>

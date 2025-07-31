@@ -425,25 +425,32 @@ class BookingController extends Controller
         }
     }
 
-    protected function sendConfirmationEmails(Booking $booking)
-    {
-        try {
-            // Send to customer
-            Mail::to($booking->user->email)
-                ->send(new BookingConfirmation($booking, 'customer'));
-            
-            // Send to host if property has owner
-            if ($booking->property->user) {
-                Mail::to($booking->property->user->email)
-                    ->send(new BookingConfirmation($booking, 'host'));
+        protected function sendConfirmationEmails(Booking $booking)
+        {
+            try {
+                if (is_string($booking->check_in_date)) {
+                    $booking->check_in_date = \Carbon\Carbon::parse($booking->check_in_date);
+                }
+                if (is_string($booking->check_out_date)) {
+                    $booking->check_out_date = \Carbon\Carbon::parse($booking->check_out_date);
+                }
+
+                Mail::to($booking->user->email)
+                    ->send(new BookingConfirmation($booking, 'customer'));
+                
+                // Send to host
+                if ($booking->property->user) {
+                    Mail::to($booking->property->user->email)
+                        ->send(new BookingConfirmation($booking, 'host'));
+                }
+                
+            } catch (\Exception $e) {
+                \Log::error('Email sending failed: ' . $e->getMessage(), [
+                    'booking_id' => $booking->id,
+                    'error' => $e
+                ]);
             }
-            
-        } catch (\Exception $e) {
-            \Log::error('Email sending failed: ' . $e->getMessage(), [
-                'booking_id' => $booking->id
-            ]);
         }
-    }
 
 
 

@@ -50,15 +50,15 @@
         @endif
         <div class="info-row">
             <span class="info-label">Check-in:</span>
-            <span>{{ $booking->check_in_date->format('l, F j, Y') }}</span>
+            <span>{{ \Carbon\Carbon::parse($booking->check_in_date)->format('l, F j, Y') }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Check-out:</span>
-            <span>{{ $booking->check_out_date->format('l, F j, Y') }}</span>
+            <span>{{ \Carbon\Carbon::parse($booking->check_out_date)->format('l, F j, Y') }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Nights:</span>
-            <span>{{ $booking->check_in_date->diffInDays($booking->check_out_date) }}</span>
+            <span>{{ \Carbon\Carbon::parse($booking->check_in_date)->diffInDays(\Carbon\Carbon::parse($booking->check_out_date)) }}</span>
         </div>
     </div>
 

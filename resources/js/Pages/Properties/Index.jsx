@@ -430,12 +430,13 @@ const IndexProperties = () => {
               )}
               
               {datePickerOpen && (
-                <div className="absolute right-0 mt-2 z-10 bg-white rounded-lg shadow-lg border border-gray-200 p-4">
+                <div className="absolute mt-2 z-10 bg-white rounded-lg shadow-lg border border-gray-200 p-4">
                   <DateRange
                     editableDateInputs={true}
                     onChange={item => setDateRange([item.selection])}
                     moveRangeOnFirstSelection={false}
                     ranges={dateRange}
+                    months={1}
                     rangeColors={['#3b82f6']}
                   />
                   <div className="flex justify-end mt-2 space-x-2">

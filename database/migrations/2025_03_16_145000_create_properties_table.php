@@ -27,9 +27,9 @@ return new class extends Migration
             $table->text('key_location')->nullable();
             $table->decimal('price_per_night', 10, 2);
             $table->double('amount')->nullable();
-            $table->integer('max_guests')->default(0);
-            $table->integer('max_adults')->default(0);
-            $table->integer('max_children')->default(0);
+            $table->integer('max_guests')->nullable();
+            $table->integer('max_adults')->nullable();
+            $table->integer('max_children')->nullable();
             $table->enum('status', ['available', 'booked', 'maintenance'])->default('available');
             $table->longText('location')->nullable();
             $table->decimal('latitude', 10, 7)->nullable();

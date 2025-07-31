@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PropertyController extends Controller
 {
@@ -186,8 +187,11 @@ class PropertyController extends Controller
     {
         $company = Company::first();
 
+        $amenities = \App\Models\Amenity::all();
+        
         return Inertia::render('Properties/Create', [
-            'company' => $company
+            'company' => $company,
+            'amenities' => $amenities
         ]);
     }
 
@@ -215,27 +219,81 @@ class PropertyController extends Controller
          return null;
      }
     
-    public function store(StorePropertyRequest $request)
+    public function store(Request $request)
     {
-        $validatedData = $request->validated();
+        DB::beginTransaction();
 
-        if (!empty($validatedData['location'])) {
-            $coordinates = $this->getCoordinatesFromLocation($validatedData['location']);
-            if ($coordinates) {
-                $validatedData['latitude'] = $coordinates['latitude'];
-                $validatedData['longitude'] = $coordinates['longitude'];
+        try {
+            // 1. Create basic property
+            $validatedData = $request->all();
+            
+            // Get coordinates if location provided
+            if (!empty($validatedData['location'])) {
+                $coordinates = $this->getCoordinatesFromLocation($validatedData['location']);
+                if ($coordinates) {
+                    $validatedData['latitude'] = $coordinates['latitude'];
+                    $validatedData['longitude'] = $coordinates['longitude'];
+                }
             }
+
+            $validatedData['user_id'] = auth()->id();
+            $property = Property::create($validatedData);
+
+            // 2. Save amenities if provided - handle both string and array input
+            if ($request->has('amenities')) {
+                $property->propertyAmenities()->delete();
+
+                $amenities = $request->input('amenities');
+                if (is_string($amenities)) {
+                    $amenities = json_decode($amenities, true);
+                }
+                
+                if (is_array($amenities)) {
+                    $amenitiesData = array_map(function($amenityId) {
+                        return ['amenity_id' => $amenityId];
+                    }, $amenities);
+                    
+                    $property->propertyAmenities()->createMany($amenitiesData);
+                }
+            }
+
+            if ($request->has('variations')) {
+                $variations = $request->input('variations');
+                if (is_string($variations)) {
+                    $variations = json_decode($variations, true);
+                }
+                
+                if (!collect($variations)->contains('type', 'Standard')) {
+                    array_unshift($variations, [
+                        'type' => 'Standard',
+                        'price' => $property->price_per_night,
+                        'rooms' => $property->total_rooms
+                    ]);
+                }
+                
+                $property->variations()->createMany($variations);
+            }
+
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('property-gallery', 'public');
+                    $property->initialGallery()->create(['image' => $path]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('properties.show', $property->id)
+                ->with('success', 'Property created successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Property creation failed: " . $e->getMessage());
+            
+            return back()->withInput()
+                ->withErrors(['error' => 'Failed to create property. Please try again.']);
         }
-
-        $user = Auth::user();
-
-        $validatedData['user_id'] = $user->id;
-    
-        Property::create($validatedData);
-    
-        return redirect()->route('properties.index')->with('success', 'Property added successfully.');
     }
-
 
     /**
      * Display the specified resource.

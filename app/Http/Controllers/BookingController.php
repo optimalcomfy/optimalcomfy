@@ -21,6 +21,7 @@ use App\Traits\Mpesa;
 use App\Mail\BookingConfirmation;
 use App\Mail\CarBookingConfirmation;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\RefundNotification;
 
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
@@ -29,11 +30,19 @@ use App\Mail\CheckInVerification;
 use App\Mail\CheckOutVerification;
 use App\Mail\BookingCancelled;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Services\MpesaService;
 
 class BookingController extends Controller
 {
 
     use Mpesa;
+
+    protected $mpesaService;
+
+    public function __construct(MpesaService $mpesaService = null)
+    {
+        $this->mpesaService = $mpesaService;
+    }
 
     public function index(Request $request)
     {
@@ -229,6 +238,41 @@ class BookingController extends Controller
             'users' => $users,
             'properties' => $query->get(), 
         ]);
+    }
+
+
+    public function handleRefund(Request $request, Booking $booking)
+    {
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'reason' => 'required_if:action,reject|max:255',
+            'refund_amount' => 'required_if:action,approve|numeric|min:0|max:'.$booking->total_price,
+        ]);
+
+        if ($request->action === 'approve') {
+            $booking->update([
+                'refund_approval' => 'approved',
+                'refund_amount' => $request->refund_amount,
+                'non_refund_reason' => null,
+            ]);
+            
+            Mail::to('amosbillykipchumba@gmail.com')
+            ->send(new RefundNotification($booking, 'approved'));
+
+            return redirect()->back()->with('success', 'Refund approved successfully.');
+        } else {
+            $booking->update([
+                'refund_approval' => 'rejected',
+                'non_refund_reason' => $request->reason,
+                'refund_amount' => 0,
+            ]);
+
+            Mail::to('amosbillykipchumba@gmail.com')
+            ->send(new RefundNotification($booking, 'rejected', $request->reason));
+            
+            return redirect()->back()->with('success', 'Refund rejected successfully.');
+        }
     }
 
 

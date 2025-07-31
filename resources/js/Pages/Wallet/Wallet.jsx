@@ -5,7 +5,7 @@ import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, Arrow
 import Swal from "sweetalert2";
 
 const Wallet = ({ user }) => {
-    const { flash, availableBalance, recentTransactions, monthlyEarnings, pendingPayouts, totalEarnings } = usePage().props;
+    const { flash, availableBalance, recentTransactions, pendingPayouts, totalEarnings } = usePage().props;
     const [balanceVisible, setBalanceVisible] = useState(true);
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -84,106 +84,38 @@ const Wallet = ({ user }) => {
 
     return (
         <Layout>
-            <div className="max-w-full bg-white pb-8 shadow-md rounded-lg overflow-hidden">
-                <div className='' style={{
-                    minHeight: '100vh',
-                    padding: '0px 20px',
-                    fontFamily: 'system-ui, -apple-system, sans-serif'
-                }}>
-                    <div style={{
-                        maxWidth: '1200px',
-                        margin: '0 auto'
-                    }}>
-                        <h1 style={{
-                            color: 'white',
-                            fontSize: '28px',
-                            fontWeight: '700',
-                            marginBottom: '30px',
-                            textAlign: 'left'
-                        }}>
+            <div className="wallet-container">
+                <div className='wallet-content'>
+                    <div className='wallet-inner'>
+                        <h1 className="wallet-title">
                             Host Wallet
                         </h1>
 
                         {/* Balance Cards */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                            gap: '20px',
-                            marginBottom: '30px'
-                        }}>
+                        <div className="balance-cards-grid">
                             {/* Current Balance Card */}
-                            <div style={{
-                                background: 'linear-gradient(135deg, #f17466, #7466f1)',
-                                borderRadius: '20px',
-                                padding: '30px',
-                                color: 'white',
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-                                position: 'relative',
-                                overflow: 'hidden'
-                            }}>
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '-50px',
-                                    right: '-50px',
-                                    width: '100px',
-                                    height: '100px',
-                                    background: 'rgba(255,255,255,0.1)',
-                                    borderRadius: '50%'
-                                }}></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                            <div className="balance-card current-balance">
+                                <div className="balance-card-header">
                                     <CreditCard size={32} />
                                     <button 
                                         onClick={toggleBalanceVisibility}
-                                        style={{
-                                            background: 'rgba(255,255,255,0.2)',
-                                            border: 'none',
-                                            borderRadius: '50%',
-                                            width: '40px',
-                                            height: '40px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            color: 'white'
-                                        }}
+                                        className="balance-visibility-toggle"
                                     >
                                         {balanceVisible ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
                                 </div>
-                                <h3 style={{ fontSize: '16px', fontWeight: '500', marginBottom: '10px', opacity: 0.9 }}>
+                                <h3 className="balance-card-label">
                                     Current Balance
                                 </h3>
-                                <div style={{ fontSize: '36px', fontWeight: '700', marginBottom: '10px' }}>
+                                <div className="balance-amount">
                                     {formatCurrency(currentBalance)}
                                 </div>
-                                <div style={{ fontSize: '14px', opacity: 0.8, marginBottom: '20px' }}>
+                                <div className="balance-subtext">
                                     Available for withdrawal
                                 </div>
                                 <button
                                     onClick={handleWithdraw}
-                                    style={{
-                                        background: 'rgba(255,255,255,0.2)',
-                                        border: '2px solid rgba(255,255,255,0.3)',
-                                        borderRadius: '12px',
-                                        padding: '12px 20px',
-                                        color: 'white',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        transition: 'all 0.3s ease',
-                                        backdropFilter: 'blur(10px)'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.target.style.background = 'rgba(255,255,255,0.3)';
-                                        e.target.style.transform = 'translateY(-2px)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.target.style.background = 'rgba(255,255,255,0.2)';
-                                        e.target.style.transform = 'translateY(0)';
-                                    }}
+                                    className="withdraw-button"
                                 >
                                     <ArrowDownToLine size={16} />
                                     Withdraw Funds
@@ -191,32 +123,17 @@ const Wallet = ({ user }) => {
                             </div>
 
                             {/* Ledger Balance Card */}
-                            <div className='bg-peach' style={{
-                                borderRadius: '20px',
-                                padding: '30px',
-                                color: 'white',
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-                                position: 'relative',
-                                overflow: 'hidden'
-                            }}>
-                                <div className='bg-peachDark' style={{
-                                    position: 'absolute',
-                                    top: '-50px',
-                                    right: '-50px',
-                                    width: '100px',
-                                    height: '100px',
-                                    borderRadius: '50%'
-                                }}></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                            <div className="balance-card ledger-balance">
+                                <div className="balance-card-header">
                                     <TrendingUp size={32} />
                                 </div>
-                                <h3 style={{ fontSize: '16px', fontWeight: '500', marginBottom: '10px', opacity: 0.9 }}>
+                                <h3 className="balance-card-label text-white">
                                     Total Ledger Balance
                                 </h3>
-                                <div style={{ fontSize: '36px', fontWeight: '700', marginBottom: '10px' }}>
+                                <div className="balance-amount">
                                     {formatCurrency(totalEarnings)}
                                 </div>
-                                <div style={{ fontSize: '14px', opacity: 0.8 }}>
+                                <div className="balance-subtext">
                                     Including pending payments
                                 </div>
                             </div>
@@ -224,59 +141,23 @@ const Wallet = ({ user }) => {
 
                         {/* Withdrawal Modal */}
                         {showWithdrawModal && (
-                            <div style={{
-                                position: 'fixed',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                backgroundColor: 'rgba(0,0,0,0.5)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                zIndex: 1000
-                            }}>
-                                <div style={{
-                                    backgroundColor: 'white',
-                                    borderRadius: '20px',
-                                    padding: '30px',
-                                    width: '90%',
-                                    maxWidth: '400px',
-                                    boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-                                }}>
-                                    <h2 style={{
-                                        fontSize: '24px',
-                                        fontWeight: '700',
-                                        color: '#2c3e50',
-                                        marginBottom: '20px',
-                                        textAlign: 'center'
-                                    }}>
+                            <div className="modal-overlay">
+                                <div className="withdraw-modal">
+                                    <h2 className="modal-title">
                                         Withdraw Funds
                                     </h2>
                                     
-                                    <div style={{
-                                        backgroundColor: '#f8f9fa',
-                                        borderRadius: '12px',
-                                        padding: '15px',
-                                        marginBottom: '20px',
-                                        textAlign: 'center'
-                                    }}>
-                                        <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '5px' }}>
+                                    <div className="balance-display">
+                                        <div className="balance-label">
                                             Available Balance
                                         </div>
-                                        <div style={{ fontSize: '20px', fontWeight: '700', color: '#27ae60' }}>
+                                        <div className="balance-amount-modal">
                                             {formatCurrency(currentBalance)}
                                         </div>
                                     </div>
 
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <label style={{
-                                            display: 'block',
-                                            fontSize: '14px',
-                                            fontWeight: '600',
-                                            color: '#2c3e50',
-                                            marginBottom: '8px'
-                                        }}>
+                                    <div className="input-group">
+                                        <label className="input-label">
                                             Withdrawal Amount
                                         </label>
                                         <input
@@ -284,75 +165,21 @@ const Wallet = ({ user }) => {
                                             value={withdrawAmount}
                                             onChange={(e) => setWithdrawAmount(e.target.value)}
                                             placeholder="Enter amount"
-                                            style={{
-                                                width: '100%',
-                                                padding: '15px',
-                                                border: '2px solid #ecf0f1',
-                                                borderRadius: '12px',
-                                                fontSize: '16px',
-                                                outline: 'none',
-                                                transition: 'border-color 0.3s ease'
-                                            }}
-                                            onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                                            onBlur={(e) => e.target.style.borderColor = '#ecf0f1'}
+                                            className="amount-input"
                                         />
                                     </div>
 
-                                    <div style={{
-                                        display: 'flex',
-                                        gap: '15px'
-                                    }}>
+                                    <div className="modal-buttons">
                                         <button
                                             onClick={() => setShowWithdrawModal(false)}
-                                            style={{
-                                                flex: 1,
-                                                padding: '15px',
-                                                border: '2px solid #ecf0f1',
-                                                borderRadius: '12px',
-                                                backgroundColor: 'white',
-                                                color: '#7f8c8d',
-                                                fontSize: '16px',
-                                                fontWeight: '600',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.3s ease'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.target.style.backgroundColor = '#f8f9fa';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.target.style.backgroundColor = 'white';
-                                            }}
+                                            className="cancel-button"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={processWithdrawal}
                                             disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > currentBalance}
-                                            style={{
-                                                flex: 1,
-                                                padding: '15px',
-                                                border: 'none',
-                                                borderRadius: '12px',
-                                                background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                                                color: 'white',
-                                                fontSize: '16px',
-                                                fontWeight: '600',
-                                                cursor: withdrawAmount && parseFloat(withdrawAmount) > 0 && parseFloat(withdrawAmount) <= currentBalance ? 'pointer' : 'not-allowed',
-                                                opacity: withdrawAmount && parseFloat(withdrawAmount) > 0 && parseFloat(withdrawAmount) <= currentBalance ? 1 : 0.5,
-                                                transition: 'all 0.3s ease'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                if (!e.target.disabled) {
-                                                    e.target.style.transform = 'translateY(-2px)';
-                                                    e.target.style.boxShadow = '0 5px 15px rgba(102, 126, 234, 0.4)';
-                                                }
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                if (!e.target.disabled) {
-                                                    e.target.style.transform = 'translateY(0)';
-                                                    e.target.style.boxShadow = 'none';
-                                                }
-                                            }}
+                                            className="confirm-button"
                                         >
                                             Withdraw
                                         </button>
@@ -362,103 +189,52 @@ const Wallet = ({ user }) => {
                         )}
 
                         {/* Stats Cards */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: '20px',
-                            marginBottom: '30px'
-                        }}>
-                            <div style={{
-                                backgroundColor: 'white',
-                                borderRadius: '15px',
-                                padding: '25px',
-                                boxShadow: '0 5px 20px rgba(0,0,0,0.1)',
-                                textAlign: 'center'
-                            }}>
-                                <DollarSign style={{ color: '#27ae60', marginBottom: '10px' }} size={32} />
-                                <div style={{ fontSize: '24px', fontWeight: '700', color: '#2c3e50', marginBottom: '5px' }}>
+                        <div className="stats-grid">
+                            <div className="stat-card">
+                                <DollarSign className="stat-icon" style={{ color: '#27ae60' }} size={32} />
+                                <div className="stat-amount">
                                     {formatCurrency(lastBookingPayment)}
                                 </div>
-                                <div style={{ fontSize: '14px', color: '#7f8c8d' }}>
+                                <div className="stat-label">
                                     Last Booking Payment
                                 </div>
                             </div>
 
-                            <div style={{
-                                backgroundColor: 'white',
-                                borderRadius: '15px',
-                                padding: '25px',
-                                boxShadow: '0 5px 20px rgba(0,0,0,0.1)',
-                                textAlign: 'center'
-                            }}>
-                                <Calendar style={{ color: '#3498db', marginBottom: '10px' }} size={32} />
-                                <div style={{ fontSize: '24px', fontWeight: '700', color: '#2c3e50', marginBottom: '5px' }}>
+                            <div className="stat-card">
+                                <Calendar className="stat-icon" style={{ color: '#3498db' }} size={32} />
+                                <div className="stat-amount">
                                     {formatCurrency(nextPayout)}
                                 </div>
-                                <div style={{ fontSize: '14px', color: '#7f8c8d' }}>
+                                <div className="stat-label">
                                     Next Payout
                                 </div>
                             </div>
 
-                            <div style={{
-                                backgroundColor: 'white',
-                                borderRadius: '15px',
-                                padding: '25px',
-                                boxShadow: '0 5px 20px rgba(0,0,0,0.1)',
-                                textAlign: 'center'
-                            }}>
-                                <Clock style={{ color: '#e67e22', marginBottom: '10px' }} size={32} />
-                                <div style={{ fontSize: '24px', fontWeight: '700', color: '#2c3e50', marginBottom: '5px' }}>
+                            <div className="stat-card">
+                                <Clock className="stat-icon" style={{ color: '#e67e22' }} size={32} />
+                                <div className="stat-amount">
                                     {formatCurrency(pendingAmount)}
                                 </div>
-                                <div style={{ fontSize: '14px', color: '#7f8c8d' }}>
+                                <div className="stat-label">
                                     Pending Amount
                                 </div>
                             </div>
                         </div>
 
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '2fr 1fr',
-                            gap: '20px'
-                        }}>
+                        <div className="transactions-container">
                             {/* Recent Transactions */}
-                            <div style={{
-                                backgroundColor: 'white',
-                                borderRadius: '20px',
-                                padding: '30px',
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-                            }}>
-                                <h2 style={{
-                                    fontSize: '20px',
-                                    fontWeight: '700',
-                                    color: '#2c3e50',
-                                    marginBottom: '25px'
-                                }}>
+                            <div className="transactions-section">
+                                <h2 className="section-title">
                                     Recent Transactions
                                 </h2>
-                                <div>
+                                <div className="transactions-list">
                                     {recentTransactions.length > 0 && recentTransactions?.map((transaction, index) => (
-                                        <div key={index} style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            padding: '15px 0',
-                                            borderBottom: '1px solid #ecf0f1'
-                                        }}>
-                                            <div>
-                                                <div style={{
-                                                    fontSize: '16px',
-                                                    fontWeight: '600',
-                                                    color: '#2c3e50',
-                                                    marginBottom: '5px'
-                                                }}>
+                                        <div key={index} className="transaction-item">
+                                            <div className="transaction-details">
+                                                <div className="transaction-title">
                                                     {transaction.title} - {transaction.guest}
                                                 </div>
-                                                <div style={{
-                                                    fontSize: '14px',
-                                                    color: '#7f8c8d'
-                                                }}>
+                                                <div className="transaction-date">
                                                     {new Date(transaction.date).toLocaleDateString('en-US', { 
                                                         month: 'short', 
                                                         day: 'numeric',
@@ -466,73 +242,13 @@ const Wallet = ({ user }) => {
                                                     })}
                                                 </div>
                                             </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <div style={{
-                                                    fontSize: '16px',
-                                                    fontWeight: '700',
-                                                    color: '#27ae60',
-                                                    marginBottom: '5px'
-                                                }}>
+                                            <div className="transaction-amount">
+                                                <div className="amount-value">
                                                     {formatCurrency(transaction.platform_price - transaction.platform_charges)}
                                                 </div>
-                                                <div style={{
-                                                    fontSize: '12px',
-                                                    padding: '4px 8px',
-                                                    borderRadius: '20px',
-                                                    backgroundColor: transaction.status === 'Paid' ? '#d5f4e6' : '#fff3cd',
-                                                    color: transaction.status === 'Paid' ? '#155724' : '#856404'
-                                                }}>
+                                                <div className={`status-badge ${transaction.status === 'Paid' ? 'paid' : 'pending'}`}>
                                                     {transaction.status}
                                                 </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Upcoming Payouts */}
-                            <div style={{
-                                backgroundColor: 'white',
-                                borderRadius: '20px',
-                                padding: '30px',
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-                            }}>
-                                <h2 style={{
-                                    fontSize: '20px',
-                                    fontWeight: '700',
-                                    color: '#2c3e50',
-                                    marginBottom: '25px'
-                                }}>
-                                    Monthly Earnings
-                                </h2>
-                                <div>
-                                    {monthlyEarnings.filter(month => month.total > 0).map((month, index) => (
-                                        <div key={index} style={{
-                                            padding: '20px',
-                                            backgroundColor: '#f8f9fa',
-                                            borderRadius: '15px',
-                                            marginBottom: '15px'
-                                        }}>
-                                            <div style={{
-                                                fontSize: '18px',
-                                                fontWeight: '700',
-                                                color: '#27ae60',
-                                                marginBottom: '5px'
-                                            }}>
-                                                {formatCurrency(month.total)}
-                                            </div>
-                                            <div style={{
-                                                fontSize: '14px',
-                                                color: '#2c3e50',
-                                                marginBottom: '5px'
-                                            }}>
-                                                {month.month}
-                                            </div>
-                                            <div style={{
-                                                fontSize: '12px',
-                                                color: '#7f8c8d'
-                                            }}>
-                                                Property: {formatCurrency(month.property_earnings)} | Cars: {formatCurrency(month.car_earnings)}
                                             </div>
                                         </div>
                                     ))}
@@ -541,6 +257,408 @@ const Wallet = ({ user }) => {
                         </div>
                     </div>
                 </div>
+
+                {/* Mobile-specific elements */}
+                <style jsx>{`
+                    .wallet-container {
+                        width: 100%;
+                        background: white;
+                        padding-bottom: 2rem;
+                        padding-top: 2rem;
+                        border-radius: 20px;
+                    }
+                    
+                    .wallet-content {
+                        min-height: 100vh;
+                        padding: 0 1rem;
+                        font-family: 'system-ui, -apple-system, sans-serif';
+                    }
+                    
+                    .wallet-inner {
+                        max-width: 1200px;
+                        margin: 0 auto;
+                    }
+                    
+                    .wallet-title {
+                        color: #2c3e50;
+                        font-size: 1.75rem;
+                        font-weight: 700;
+                        margin-bottom: 1.5rem;
+                        text-align: left;
+                        padding-top: 1rem;
+                    }
+                    
+                    /* Balance Cards */
+                    .balance-cards-grid {
+                        display: grid;
+                        grid-template-columns: 1fr;
+                        gap: 1rem;
+                        margin-bottom: 1.5rem;
+                    }
+                    
+                    .balance-card {
+                        border-radius: 1.25rem;
+                        padding: 1.5rem;
+                        color: white;
+                        box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.2);
+                        position: relative;
+                        overflow: hidden;
+                    }
+                    
+                    .current-balance {
+                        background: linear-gradient(135deg, #d45522, #d45522);
+                    }
+                    
+                    .ledger-balance {
+                        background: linear-gradient(135deg, #0d3c46, #0d3c46);
+                    }
+                    
+                    .balance-card-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        margin-bottom: 1rem;
+                    }
+                    
+                    .balance-visibility-toggle {
+                        background: rgba(255,255,255,0.2);
+                        border: none;
+                        border-radius: 50%;
+                        width: 2.5rem;
+                        height: 2.5rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        color: white;
+                    }
+                    
+                    .balance-card-label {
+                        font-size: 1rem;
+                        font-weight: 500;
+                        margin-bottom: 0.625rem;
+                        opacity: 0.9;
+                    }
+                    
+                    .balance-amount {
+                        font-size: 2rem;
+                        font-weight: 700;
+                        margin-bottom: 0.625rem;
+                    }
+                    
+                    .balance-subtext {
+                        font-size: 0.875rem;
+                        opacity: 0.8;
+                        margin-bottom: 1rem;
+                    }
+                    
+                    .withdraw-button {
+                        background: rgba(255,255,255,0.2);
+                        border: 2px solid rgba(255,255,255,0.3);
+                        border-radius: 0.75rem;
+                        padding: 0.75rem 1.25rem;
+                        color: white;
+                        font-size: 0.875rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        transition: all 0.3s ease;
+                        backdrop-filter: blur(10px);
+                        width: 100%;
+                        justify-content: center;
+                    }
+                    
+                    .withdraw-button:hover {
+                        background: rgba(255,255,255,0.3);
+                        transform: translateY(-2px);
+                    }
+                    
+                    /* Modal Styles */
+                    .modal-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background-color: rgba(0,0,0,0.5);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 1000;
+                        padding: 1rem;
+                    }
+                    
+                    .withdraw-modal {
+                        background-color: white;
+                        border-radius: 1.25rem;
+                        padding: 1.5rem;
+                        width: 100%;
+                        max-width: 25rem;
+                        box-shadow: 0 1.25rem 3.75rem rgba(0,0,0,0.3);
+                    }
+                    
+                    .modal-title {
+                        font-size: 1.5rem;
+                        font-weight: 700;
+                        color: #2c3e50;
+                        margin-bottom: 1.25rem;
+                        text-align: center;
+                    }
+                    
+                    .balance-display {
+                        background-color: #f8f9fa;
+                        border-radius: 0.75rem;
+                        padding: 1rem;
+                        margin-bottom: 1.25rem;
+                        text-align: center;
+                    }
+                    
+                    .balance-label {
+                        font-size: 0.875rem;
+                        color: #7f8c8d;
+                        margin-bottom: 0.3125rem;
+                    }
+                    
+                    .balance-amount-modal {
+                        font-size: 1.25rem;
+                        font-weight: 700;
+                        color: #27ae60;
+                    }
+                    
+                    .input-group {
+                        margin-bottom: 1.25rem;
+                    }
+                    
+                    .input-label {
+                        display: block;
+                        font-size: 0.875rem;
+                        font-weight: 600;
+                        color: #2c3e50;
+                        margin-bottom: 0.5rem;
+                    }
+                    
+                    .amount-input {
+                        width: 100%;
+                        padding: 0.9375rem;
+                        border: 2px solid #ecf0f1;
+                        border-radius: 0.75rem;
+                        font-size: 1rem;
+                        outline: none;
+                        transition: border-color 0.3s ease;
+                    }
+                    
+                    .amount-input:focus {
+                        border-color: #667eea;
+                    }
+                    
+                    .modal-buttons {
+                        display: flex;
+                        gap: 0.9375rem;
+                    }
+                    
+                    .cancel-button {
+                        flex: 1;
+                        padding: 0.9375rem;
+                        border: 2px solid #ecf0f1;
+                        border-radius: 0.75rem;
+                        background-color: white;
+                        color: #7f8c8d;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .cancel-button:hover {
+                        background-color: #f8f9fa;
+                    }
+                    
+                    .confirm-button {
+                        flex: 1;
+                        padding: 0.9375rem;
+                        border: none;
+                        border-radius: 0.75rem;
+                        background: linear-gradient(135deg, #667eea, #764ba2);
+                        color: white;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .confirm-button:disabled {
+                        opacity: 0.5;
+                        cursor: not-allowed;
+                    }
+                    
+                    .confirm-button:not(:disabled):hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 0.3125rem 0.9375rem rgba(102, 126, 234, 0.4);
+                    }
+                    
+                    /* Stats Cards */
+                    .stats-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+                        gap: 1rem;
+                        margin-bottom: 1.5rem;
+                    }
+                    
+                    .stat-card {
+                        background-color: white;
+                        border-radius: 0.9375rem;
+                        padding: 1.25rem;
+                        box-shadow: 0 0.3125rem 1.25rem rgba(0,0,0,0.1);
+                        text-align: center;
+                    }
+                    
+                    .stat-icon {
+                        margin-bottom: 0.625rem;
+                    }
+                    
+                    .stat-amount {
+                        font-size: 1.25rem;
+                        font-weight: 700;
+                        color: #2c3e50;
+                        margin-bottom: 0.3125rem;
+                    }
+                    
+                    .stat-label {
+                        font-size: 0.875rem;
+                        color: #7f8c8d;
+                    }
+                    
+                    /* Transactions Section */
+                    .transactions-container {
+                        display: grid;
+                        grid-template-columns: 1fr;
+                        gap: 1rem;
+                    }
+                    
+                    .transactions-section {
+                        background-color: white;
+                        border-radius: 1.25rem;
+                        padding: 1.5rem;
+                        box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.1);
+                    }
+                    
+                    .section-title {
+                        font-size: 1.25rem;
+                        font-weight: 700;
+                        color: #2c3e50;
+                        margin-bottom: 1.25rem;
+                    }
+                    
+                    .transactions-list {
+                        max-height: 30rem;
+                        overflow-y: auto;
+                    }
+                    
+                    .transaction-item {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 0.9375rem 0;
+                        border-bottom: 1px solid #ecf0f1;
+                    }
+                    
+                    .transaction-details {
+                        flex: 1;
+                        margin-right: 1rem;
+                    }
+                    
+                    .transaction-title {
+                        font-size: 1rem;
+                        font-weight: 600;
+                        color: #2c3e50;
+                        margin-bottom: 0.3125rem;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                    
+                    .transaction-date {
+                        font-size: 0.875rem;
+                        color: #7f8c8d;
+                    }
+                    
+                    .transaction-amount {
+                        text-align: right;
+                        min-width: 7rem;
+                    }
+                    
+                    .amount-value {
+                        font-size: 1rem;
+                        font-weight: 700;
+                        color: #27ae60;
+                        margin-bottom: 0.3125rem;
+                    }
+                    
+                    .status-badge {
+                        font-size: 0.75rem;
+                        padding: 0.25rem 0.5rem;
+                        border-radius: 1rem;
+                        display: inline-block;
+                    }
+                    
+                    .paid {
+                        background-color: #d5f4e6;
+                        color: #155724;
+                    }
+                    
+                    .pending {
+                        background-color: #fff3cd;
+                        color: #856404;
+                    }
+                    
+                    /* Responsive Styles */
+                    @media (min-width: 640px) {
+                        .balance-cards-grid {
+                            grid-template-columns: repeat(2, 1fr);
+                        }
+                        
+                        .wallet-title {
+                            font-size: 1.75rem;
+                        }
+                        
+                        .balance-amount {
+                            font-size: 2.25rem;
+                        }
+                    }
+                    
+                    @media (min-width: 768px) {
+                        .wallet-content {
+                            padding: 0 1.25rem;
+                        }
+                        
+                        .balance-cards-grid {
+                            gap: 1.25rem;
+                            margin-bottom: 2rem;
+                        }
+                        
+                        .stats-grid {
+                            gap: 1.25rem;
+                            margin-bottom: 2rem;
+                        }
+                        
+                        .transactions-container {
+                            grid-template-columns: 2fr 1fr;
+                            gap: 1.25rem;
+                        }
+                    }
+                    
+                    @media (min-width: 1024px) {
+                        .wallet-content {
+                            padding: 0 1.5rem;
+                        }
+                        
+                        .balance-amount {
+                            font-size: 2.5rem;
+                        }
+                    }
+                `}</style>
             </div>
         </Layout>
     );

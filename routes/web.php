@@ -106,6 +106,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('jobs', JobController::class);
     Route::resource('applications', ApplicationController::class);
 
+    Route::post('/bookings/{booking}/handle-refund', [BookingController::class, 'handleRefund'])
+    ->name('bookings.handle-refund');
+    
     Route::put('/stay-bookings-cancel', [BookingController::class, 'cancel'])
     ->name('stay-bookings.cancel');
 

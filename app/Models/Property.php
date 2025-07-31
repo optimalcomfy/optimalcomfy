@@ -63,6 +63,7 @@ class Property extends Model
     {
         return $this->hasMany(Booking::class)->where('status', 'Paid');
     }
+    
 
     public function variations()
     {

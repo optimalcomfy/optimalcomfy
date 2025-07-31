@@ -12,6 +12,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import "../../css/main";
 import "./Welcome.css";
+import ProductSkeleton from "@/Components/ProductSkeleton";
 
 // Lazy-loaded Product component
 const LazyProduct = React.lazy(() => import("@/Components/Product"));
@@ -473,7 +474,7 @@ export default function Welcome() {
         <div className="mobile-mixed-grid">
           {visibleProperties.map((property, index) => (
             <div key={`mixed-${index}`} className="mobile-property-item">
-              <React.Suspense fallback={<div className="property-loading">Loading...</div>}>
+              <React.Suspense fallback={<ProductSkeleton />}>
                 <LazyProduct {...property} loadedImages={loadedImages} />
               </React.Suspense>
               <div className="property-location-tag">
@@ -506,7 +507,7 @@ export default function Welcome() {
           <div className={`properties-grid items-${itemCount}`}>
             {properties.map((data, idx) => (
               <div key={`${county}-${idx}`} className="grid-property-item">
-                <React.Suspense fallback={<div className="property-loading">Loading...</div>}>
+                <React.Suspense fallback={<ProductSkeleton />}>
                   <LazyProduct {...data} loadedImages={loadedImages} />
                 </React.Suspense>
               </div>
@@ -567,7 +568,7 @@ export default function Welcome() {
           <Slider ref={sliderRefs.current[county]} {...dynamicSettings}>
             {loadedProperties[county].map((data, index) => (
               <div key={`${county}-${index}`}>
-                <React.Suspense fallback={<div className="property-loading">Loading...</div>}>
+                <React.Suspense fallback={<ProductSkeleton />}>
                   <LazyProduct {...data} loadedImages={loadedImages} />
                 </React.Suspense>
               </div>

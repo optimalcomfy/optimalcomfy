@@ -79,8 +79,12 @@ const Product = (props) => {
 // Optional: Add PropTypes
 Product.propTypes = {
   property_name: PropTypes.string.isRequired,
-  initial_gallery: PropTypes.arrayOf(PropTypes.string).isRequired,
-  country: PropTypes.string.isRequired,
+  initial_gallery: PropTypes.arrayOf(
+  PropTypes.shape({
+      image: PropTypes.string.isRequired,
+    })
+  ),
+  country: PropTypes.string,
   starRate: PropTypes.number,
   location: PropTypes.string,
   dayRange: PropTypes.string,

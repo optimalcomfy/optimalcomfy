@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import { Link, Head, router, usePage, useForm } from "@inertiajs/react";
 import { LayoutProvider } from "@/Layouts/layout/context/layoutcontext.jsx";
 import { PrimeReactProvider } from "primereact/api";
@@ -11,8 +11,11 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import "../../css/main";
 import "./Welcome.css";
-import ProductCar from "@/Components/ProductCar";
+import ProductSkeleton from "@/Components/ProductSkeleton";
 import './Cars.css'
+
+// Lazy-loaded ProductCar component
+const LazyProductCar = React.lazy(() => import("@/Components/ProductCar"));
 
 // Configuration constants
 const INITIAL_SLIDES_COUNT = 2;
@@ -478,9 +481,11 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 <div className="mobile-mixed-grid">
                     {visibleCars.map((car, index) => (
                         <div key={car.id || `mixed-${index}`} className="mobile-car-item">
-                            <ProductCar {...car} loadedImages={loadedImages} />
+                            <Suspense fallback={<ProductSkeleton />}>
+                                <LazyProductCar {...car} loadedImages={loadedImages} />
+                            </Suspense>
                             <div className="car-location-tag">
-                                 {car.displayLocation}
+                                {car.displayLocation}
                             </div>
                         </div>
                     ))}
@@ -509,7 +514,9 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     <div className={`cars-grid items-${itemCount}`}>
                         {cars.map((car, idx) => (
                             <div key={car.id || `${location}-${idx}`} className="grid-car-item">
-                                <ProductCar {...car} loadedImages={loadedImages} />
+                                <Suspense fallback={<ProductSkeleton />}>
+                                    <LazyProductCar {...car} loadedImages={loadedImages} />
+                                </Suspense>
                             </div>
                         ))}
                     </div>
@@ -568,7 +575,9 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     <Slider ref={sliderRefs.current[location]} {...dynamicSettings}>
                         {loadedCars[location].map((car, index) => (
                             <div key={car.id || `${location}-${index}`}>
-                                <ProductCar {...car} loadedImages={loadedImages} />
+                                <Suspense fallback={<ProductSkeleton />}>
+                                    <LazyProductCar {...car} loadedImages={loadedImages} />
+                                </Suspense>
                             </div>
                         ))}
                         {loadingMore[location] && (

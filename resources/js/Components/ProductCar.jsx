@@ -86,7 +86,7 @@ ProductCar.propTypes = {
   name: PropTypes.string.isRequired,
   brand: PropTypes.string.isRequired,
   model: PropTypes.string.isRequired,
-  year: PropTypes.string.isRequired,
+  year: PropTypes.string,
   initial_gallery: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number,

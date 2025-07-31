@@ -49,7 +49,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                   {property?.initial_gallery?.length > 1 ? (
                     // Multiple images layout
                     property?.initial_gallery[0]?.image && (
-                      <div className="hero-images">
+                      <div className="hero-images hidden lg:flex">
                         <div className="img__container--hero">
                           <img 
                             src={`/storage/${property?.initial_gallery[0]?.image}`} 

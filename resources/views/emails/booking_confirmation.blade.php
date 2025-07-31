@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $recipientType === 'customer' ? 'Ristay Booking Confirmation' : 'New Booking Notification' }}</title>
+    <title>{{ $recipientType === 'customer' ? 'New Booking Notification' : 'New Booking Notification' }}</title>
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
@@ -22,10 +22,10 @@
 </head>
 <body>
     <div class="header">
-        <h1>{{ $recipientType === 'customer' ? 'Booking Confirmation' : 'New Booking Notification' }}</h1>
+        <h1>{{ $recipientType === 'customer' ? 'New Booking Notification' : 'New Booking Notification' }}</h1>
         <p>
             @if($recipientType === 'customer')
-            Your reservation is confirmed. Thank you for booking with us!
+             You have made a new booking with Ristay.
             @else
             You have a new booking for your property.
             @endif

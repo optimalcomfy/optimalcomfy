@@ -106,33 +106,39 @@
         
         <div class="info-row">
             <span class="info-label">Booking number:</span>
-            <span>{{ $booking->number }}</span>
+            <span>{{ $booking->number ?? 'N/A' }}</span>
         </div>
         
         <div class="info-row">
             <span class="info-label">Car:</span>
-            <span>{{ $booking->car->name ?? $booking->car->make . ' ' . $booking->car->model }}</span>
+            <span>{{ $booking->car->name ?? ($booking->car->make . ' ' . $booking->car->model) ?? 'N/A' }}</span>
         </div>
         
         <div class="info-row">
             <span class="info-label">Start Date:</span>
-            <span>{{ \Carbon\Carbon::parse($booking->start_date)->format('l, F j, Y g:i A') }}</span>
+            <span>{{ $booking->start_date ? \Carbon\Carbon::parse($booking->start_date)->format('l, F j, Y g:i A') : 'Not specified' }}</span>
         </div>
         
         <div class="info-row">
             <span class="info-label">End Date:</span>
-            <span>{{ \Carbon\Carbon::parse($booking->end_date)->format('l, F j, Y g:i A') }}</span>
+            <span>{{ $booking->end_date ? \Carbon\Carbon::parse($booking->end_date)->format('l, F j, Y g:i A') : 'Not specified' }}</span>
         </div>
         
         <div class="info-row">
             <span class="info-label">Duration:</span>
-            <span>{{ \Carbon\Carbon::parse($booking->start_date)->diffInDays($booking->end_date) }} days</span>
+            <span>
+                @if($booking->start_date && $booking->end_date)
+                    {{ \Carbon\Carbon::parse($booking->start_date)->diffInDays($booking->end_date) }} days
+                @else
+                    N/A
+                @endif
+            </span>
         </div>
         
-        @if($recipientType === 'customer')
+        @if($recipientType === 'customer' && $booking->car->user)
             <div class="info-row">
                 <span class="info-label">Host Name:</span>
-                <span>{{ $booking->car->user->name }}</span>
+                <span>{{ $booking->car->user->name ?? 'N/A' }}</span>
             </div>
         @endif
     </div>
@@ -142,7 +148,7 @@
         <div class="booking-details">
             <h2 class="section-title">Pickup Instructions</h2>
             
-            <p><strong>Pickup Location:</strong> {{ $booking->pickup_location }}</p>
+            <p><strong>Pickup Location:</strong> {{ $booking->pickup_location ?? 'To be confirmed' }}</p>
             <p><strong>Required Documents:</strong></p>
             <ul>
                 <li>Valid driver's license</li>
@@ -150,9 +156,11 @@
                 <li>Credit/Debit card for security deposit</li>
             </ul>
             
+            @if(Route::has('bookings.show'))
             <a href="{{ route('bookings.show', $booking->id) }}" class="btn">
                 View Your Booking Details
             </a>
+            @endif
         </div>
     @else
         <!-- HOST-SPECIFIC CONTENT -->
@@ -161,31 +169,33 @@
             
             <div class="info-row">
                 <span class="info-label">Name:</span>
-                <span>{{ $booking->user->name }}</span>
+                <span>{{ $booking->user->name ?? 'N/A' }}</span>
             </div>
             
             <div class="info-row">
                 <span class="info-label">Email:</span>
-                <span>{{ $booking->user->email }}</span>
+                <span>{{ $booking->user->email ?? 'N/A' }}</span>
             </div>
             
-            @if($booking->user->phone)
+            @if($booking->user->phone ?? false)
             <div class="info-row">
                 <span class="info-label">Phone:</span>
                 <span>{{ $booking->user->phone }}</span>
             </div>
             @endif
             
-            @if($booking->special_requests)
+            @if($booking->special_requests ?? false)
             <div class="info-row">
                 <span class="info-label">Special Requests:</span>
                 <span>{{ $booking->special_requests }}</span>
             </div>
             @endif
             
+            @if(Route::has('host.bookings.show'))
             <a href="{{ route('host.bookings.show', $booking->id) }}" class="btn btn-host">
                 Manage This Booking
             </a>
+            @endif
         </div>
     @endif
 
@@ -194,18 +204,18 @@
         
         <div class="info-row">
             <span class="info-label">Total Amount:</span>
-            <span class="amount">KSh {{ number_format($booking->total_price, 2) }}</span>
+            <span class="amount">KSh {{ number_format($booking->total_price ?? 0, 2) }}</span>
         </div>
         
         <div class="info-row">
             <span class="info-label">Booking Status:</span>
-            <span class="status {{ strtolower($booking->status) }}">{{ ucfirst($booking->status) }}</span>
+            <span class="status {{ strtolower($booking->status ?? 'pending') }}">{{ ucfirst($booking->status ?? 'Pending') }}</span>
         </div>
         
         @if($recipientType === 'host')
         <div class="info-row">
             <span class="info-label">Your Earnings:</span>
-            <span class="amount">KSh {{ number_format($booking->host_earnings, 2) }}</span>
+            <span class="amount">KSh {{ number_format($booking->host_earnings ?? 0, 2) }}</span>
         </div>
         @endif
     </div>
@@ -223,7 +233,7 @@
 
     <div class="footer">
         @if($recipientType === 'customer')
-            <p>We hope you enjoy your trip with {{ $booking->car->name ?? $booking->car->make . ' ' . $booking->car->model }}!</p>
+            <p>We hope you enjoy your trip with {{ $booking->car->name ?? ($booking->car->make . ' ' . $booking->car->model) ?? 'your vehicle' }}!</p>
             <p>Need help? Contact our support team at support@example.com or call +254 700 000000</p>
         @else
             <p>Please prepare the vehicle for pickup at the scheduled time.</p>

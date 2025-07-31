@@ -313,7 +313,8 @@ class CarBookingController extends Controller
 
             $this->STKPush(
                 'Paybill',
-                $booking->total_price,
+                1,
+                // $booking->total_price,
                 $request->phone,
                 $callbackUrl,
                 'reference',
@@ -354,7 +355,7 @@ class CarBookingController extends Controller
             $callbackParams = json_decode($request->query('data'), true);
             
             // Find the related booking
-            $booking = CarBooking::with('car')->find($callbackParams['booking_id'] ?? null);
+            $booking = CarBooking::with('car.user')->find($callbackParams['booking_id'] ?? null);
             
             if (!$booking) {
                 \Log::error('Booking not found for callback', ['callbackParams' => $callbackParams]);
@@ -411,7 +412,10 @@ class CarBookingController extends Controller
                 $user  = User::find($booking->user_id);
 
                 Mail::to($user->email)
-                ->send(new CarBookingConfirmation($booking, $user));
+                ->send(new CarBookingConfirmation($booking, 'customer'));
+
+                Mail::to($booking->user->email)
+                ->send(new CarBookingConfirmation($booking, 'host'));
             }
 
             // Return success response to M-Pesa

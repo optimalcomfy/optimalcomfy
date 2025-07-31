@@ -309,8 +309,7 @@ class BookingController extends Controller
 
             $this->STKPush(
                 'Paybill',
-                1,
-                // $booking->total_price,
+                $booking->total_price,
                 $request->phone,
                 $callbackUrl,
                 'reference',

@@ -142,7 +142,7 @@
 
     <div class="footer">
         <p>For assistance, contact our support team:</p>
-        <p>Email: support@example.com | Phone: +254 700 000000</p>
+        <p>Email: support@ristay.co.ke | Phone: +254 769 88 00 88</p>
         <p><em>This is an automated message. Please don't reply directly.</em></p>
     </div>
 </body>

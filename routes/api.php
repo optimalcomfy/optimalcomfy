@@ -48,3 +48,14 @@ Route::prefix('refund')->group(function () {
         return response()->json(['message' => 'Timeout callback received'], 200);
     })->name('api.refund.timeout');
 });
+
+
+Route::prefix('car-refund')->group(function () {
+    Route::post('/callback', [CarRefundController::class, 'handleRefundCallback'])
+         ->name('api.car-refund.callback');
+    
+    Route::post('/timeout', function (Request $request) {
+        \Log::channel('car_refunds')->info('Car Refund Timeout Callback:', $request->all());
+        return response()->json(['message' => 'Timeout callback received'], 200);
+    })->name('api.car-refund.timeout');
+});

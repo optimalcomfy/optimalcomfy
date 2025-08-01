@@ -43,6 +43,8 @@ use App\Http\Controllers\WithdrawalController;
 use App\Http\Controllers\VariationController;
 use App\Http\Controllers\MpesaStkController;
 use App\Http\Controllers\RefundController;
+use App\Http\Controllers\CarRefundController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -109,6 +111,9 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/bookings/{booking}/handle-refund', [RefundController::class, 'handleRefund'])
     ->name('bookings.handle-refund');
+
+    Route::post('/car-bookings/{car_booking}/refund', [CarRefundController::class, 'handleRefund'])
+    ->name('car-bookings.handle-refund');
     
     Route::put('/stay-bookings-cancel', [BookingController::class, 'cancel'])
     ->name('stay-bookings.cancel');

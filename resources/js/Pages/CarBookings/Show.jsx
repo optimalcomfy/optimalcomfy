@@ -211,6 +211,379 @@ const CarBookingShow = () => {
     });
   };
 
+
+
+  const handleRefund = () => {
+    Swal.fire({
+      title: 'Process Refund Request',
+      html: `
+        <div style="text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <!-- Action Selection Card -->
+          <div style="
+            background: #f8fafc; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          ">
+            <h4 style="
+              margin: 0 0 16px 0; 
+              color: #334155; 
+              font-size: 16px; 
+              font-weight: 600;
+              display: flex;
+              align-items: center;
+            ">
+              <i class="fas fa-tasks" style="color: #6366f1; margin-right: 8px; font-size: 14px;"></i>
+              Select Action
+            </h4>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <label style="
+                display: flex; 
+                align-items: center; 
+                padding: 12px 16px; 
+                background: white; 
+                border: 2px solid #10b981; 
+                border-radius: 8px; 
+                cursor: pointer;
+                transition: all 0.2s ease;
+                font-weight: 500;
+                color: #065f46;
+              " for="approveRefund">
+                <input 
+                  type="radio" 
+                  id="approveRefund" 
+                  name="refundAction" 
+                  value="approve" 
+                  checked 
+                  style="
+                    margin-right: 12px; 
+                    transform: scale(1.2);
+                    accent-color: #10b981;
+                  "
+                >
+                <i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>
+                Approve Refund
+              </label>
+              
+              <label style="
+                display: flex; 
+                align-items: center; 
+                padding: 12px 16px; 
+                background: white; 
+                border: 2px solid #e5e7eb; 
+                border-radius: 8px; 
+                cursor: pointer;
+                transition: all 0.2s ease;
+                font-weight: 500;
+                color: #6b7280;
+              " for="rejectRefund">
+                <input 
+                  type="radio" 
+                  id="rejectRefund" 
+                  name="refundAction" 
+                  value="reject" 
+                  style="
+                    margin-right: 12px; 
+                    transform: scale(1.2);
+                    accent-color: #ef4444;
+                  "
+                >
+                <i class="fas fa-times-circle" style="color: #ef4444; margin-right: 8px;"></i>
+                Reject Refund
+              </label>
+            </div>
+          </div>
+          
+          <!-- Refund Amount Section -->
+          <div id="refundAmountGroup" style="
+            background: white; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          ">
+            <h4 style="
+              margin: 0 0 16px 0; 
+              color: #334155; 
+              font-size: 16px; 
+              font-weight: 600;
+              display: flex;
+              align-items: center;
+            ">
+              Refund Amount
+            </h4>
+            
+            <div style="position: relative;">
+              <input 
+                type="number" 
+                id="refundAmount" 
+                style="
+                  width: 100%; 
+                  padding: 12px 12px 12px 28px; 
+                  border: 2px solid #e5e7eb; 
+                  border-radius: 8px; 
+                  font-size: 16px;
+                  font-weight: 600;
+                  color: #374151;
+                  background: #f9fafb;
+                  transition: all 0.2s ease;
+                  box-sizing: border-box;
+                " 
+                min="0" 
+                max="${booking.car.platform_price * days}" 
+                value="${booking.car.platform_price * days}"
+                step="0.01"
+                placeholder="0.00"
+              >
+            </div>
+            
+            <div style="
+              margin-top: 8px; 
+              font-size: 13px; 
+              color: #6b7280;
+              display: flex;
+              align-items: center;
+            ">
+              <i class="fas fa-info-circle" style="margin-right: 6px; color: #3b82f6;"></i>
+              Maximum refundable amount: KES ${booking.car.platform_price * days}
+            </div>
+          </div>
+          
+          <!-- Rejection Reason Section -->
+          <div id="rejectReasonGroup" style="
+            background: white; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: none;
+          ">
+            <h4 style="
+              margin: 0 0 16px 0; 
+              color: #334155; 
+              font-size: 16px; 
+              font-weight: 600;
+              display: flex;
+              align-items: center;
+            ">
+              <i class="fas fa-comment-alt" style="color: #ef4444; margin-right: 8px; font-size: 14px;"></i>
+              Reason for Rejection
+            </h4>
+            
+            <textarea 
+              id="rejectReason" 
+              rows="4"
+              placeholder="Please provide a detailed reason for rejecting this refund request..."
+              style="
+                width: 100%; 
+                padding: 12px; 
+                border: 2px solid #e5e7eb; 
+                border-radius: 8px; 
+                font-size: 14px;
+                font-family: inherit;
+                color: #374151;
+                background: #f9fafb;
+                resize: vertical;
+                min-height: 100px;
+                transition: all 0.2s ease;
+                box-sizing: border-box;
+              "
+            ></textarea>
+            
+            <div style="
+              margin-top: 8px; 
+              font-size: 13px; 
+              color: #6b7280;
+              display: flex;
+              align-items: center;
+            ">
+              <i class="fas fa-exclamation-triangle" style="margin-right: 6px; color: #f59e0b;"></i>
+              This reason will be sent to the customer
+            </div>
+          </div>
+        </div>
+      `,
+      width: 520,
+      showCancelButton: true,
+      confirmButtonText: '<i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Submit Request',
+      cancelButtonText: '<i class="fas fa-times" style="margin-right: 8px;"></i>Cancel',
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#6b7280',
+      customClass: {
+        popup: 'professional-refund-modal',
+        confirmButton: 'professional-confirm-btn',
+        cancelButton: 'professional-cancel-btn'
+      },
+      buttonsStyling: false,
+      preConfirm: () => {
+        const action = document.querySelector('input[name="refundAction"]:checked').value;
+        const amount = document.getElementById('refundAmount')?.value;
+        const reason = document.getElementById('rejectReason')?.value;
+        
+        if (action === 'reject' && !reason?.trim()) {
+          Swal.showValidationMessage(
+            '<i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>Please provide a reason for rejection'
+          );
+          return false;
+        }
+        
+        if (action === 'approve' && (!amount || parseFloat(amount) <= 0 || parseFloat(amount) > parseFloat(booking.car.platform_price * days))) {
+          Swal.showValidationMessage(
+            '<i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>Please enter a valid refund amount'
+          );
+          return false;
+        }
+        
+        return { action, amount, reason };
+      },
+      didOpen: () => {
+        // Add custom CSS
+        const style = document.createElement('style');
+        style.textContent = `
+          .professional-refund-modal {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          }
+          
+          .professional-confirm-btn, .professional-cancel-btn {
+            padding: 12px 24px !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-size: 14px !important;
+            transition: all 0.2s ease !important;
+            border: none !important;
+            cursor: pointer !important;
+          }
+          
+          .professional-confirm-btn {
+            background: #3b82f6 !important;
+            color: white !important;
+          }
+          
+          .professional-confirm-btn:hover {
+            background: #2563eb !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+          }
+          
+          .professional-cancel-btn {
+            background: #6b7280 !important;
+            color: white !important;
+          }
+          
+          .professional-cancel-btn:hover {
+            background: #4b5563 !important;
+            transform: translateY(-1px) !important;
+          }
+          
+          input[type="number"]:focus, textarea:focus {
+            outline: none !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+          }
+          
+          label:has(input[type="radio"]:checked) {
+            border-color: #10b981 !important;
+            background: #ecfdf5 !important;
+            color: #065f46 !important;
+          }
+          
+          label:has(input[name="refundAction"][value="reject"]:checked) {
+            border-color: #ef4444 !important;
+            background: #fef2f2 !important;
+            color: #991b1b !important;
+          }
+        `;
+        document.head.appendChild(style);
+        
+        const refundActionRadios = document.querySelectorAll('input[name="refundAction"]');
+        const refundAmountGroup = document.getElementById('refundAmountGroup');
+        const rejectReasonGroup = document.getElementById('rejectReasonGroup');
+        
+        refundActionRadios.forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            if (e.target.value === 'approve') {
+              refundAmountGroup.style.display = 'block';
+              rejectReasonGroup.style.display = 'none';
+            } else {
+              refundAmountGroup.style.display = 'none';
+              rejectReasonGroup.style.display = 'block';
+            }
+          });
+        });
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const { action, amount, reason } = result.value;
+        
+        // Show loading state
+        Swal.fire({
+          title: 'Processing...',
+          html: '<i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #3b82f6;"></i><br><br>Please wait while we process your request.',
+          showConfirmButton: false,
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+        });
+        
+        router.post(route('car-bookings.handle-refund', booking.id), {
+          action,
+          refund_amount: action === 'approve' ? amount : 0,
+          reason: action === 'reject' ? reason : '',
+        }, {
+          preserveScroll: true,
+          onSuccess: () => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success!',
+              html: `
+                <div style="text-align: center; color: #374151;">
+                  <i class="fas fa-check-circle" style="color: #10b981; font-size: 48px; margin-bottom: 16px;"></i>
+                  <p style="font-size: 16px; margin: 0;">
+                    Refund request has been <strong>${action === 'approve' ? 'approved' : 'rejected'}</strong>
+                  </p>
+                  ${action === 'approve' ? `<p style="color: #6b7280; margin: 8px 0 0 0;">Amount: KES ${amount}</p>` : ''}
+                </div>
+              `,
+              confirmButtonText: 'Continue',
+              confirmButtonColor: '#10b981',
+              customClass: {
+                confirmButton: 'professional-success-btn'
+              },
+              buttonsStyling: false
+            });
+          },
+          onError: (errors) => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error!',
+              html: `
+                <div style="text-align: center; color: #374151;">
+                  <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 48px; margin-bottom: 16px;"></i>
+                  <p style="font-size: 16px; margin: 0;">
+                    There was an error processing the refund request
+                  </p>
+                  <p style="color: #6b7280; margin: 8px 0 0 0; font-size: 14px;">
+                    Please try again or contact support if the issue persists
+                  </p>
+                </div>
+              `,
+              confirmButtonText: 'Try Again',
+              confirmButtonColor: '#ef4444',
+              customClass: {
+                confirmButton: 'professional-error-btn'
+              },
+              buttonsStyling: false
+            });
+          }
+        });
+      }
+    });
+  };
+
   return (
     <Layout>
       <div className="max-w-7xl p-4">
@@ -537,14 +910,50 @@ const CarBookingShow = () => {
                 <span>{errors.cancel_reason}</span>
               </div>}
 
-              {!booking.checked_out && booking.status !== 'Cancelled' && (
+              {booking.status === 'Cancelled' &&
+              <div className="bg-white flex flex-col gap-4 rounded-xl shadow-md p-6">
+                <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
+                  {booking.refund_approval ? 'Refund Status' : 'This booking has been cancelled'}
+                </h3>
+                
+                {booking.cancel_reason && (
+                  <p className="text-sm text-gray-600 mb-3">
+                    {booking.cancel_reason}
+                  </p>
+                )}
+
+                {!booking.checked_out && booking.status !== 'Cancelled' && (
+                    <button 
+                      onClick={handleCancelBooking}
+                      className="px-8 py-2 w-full flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-md transition duration-150"
+                    >
+                      Cancel Booking
+                    </button>
+                )}
+                
+                {booking.refund_approval === 'approved' ? (
+                  <div className="bg-green-50 text-green-800 p-3 rounded-md">
+                    <p className="font-medium">Refund Approved</p>
+                    <p>Amount: KES {booking.refund_amount}</p>
+                    <p className="text-sm mt-1">
+                      Status: {booking.refund_status === 'completed' ? 
+                        'Completed' : 'Processing - Please allow 1-3 business days'}
+                    </p>
+                  </div>
+                ) : booking.refund_approval === 'rejected' ? (
+                  <div className="bg-red-50 text-red-800 p-3 rounded-md">
+                    <p className="font-medium">Refund Rejected</p>
+                    <p>Reason: {booking.non_refund_reason}</p>
+                  </div>
+                ) : (
                   <button 
-                    onClick={handleCancelBooking}
-                    className="px-8 py-2 w-full flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-md transition duration-150"
+                    onClick={handleRefund}
+                    className="px-8 py-2 w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-150"
                   >
-                    Cancel Booking
+                    Process Refund
                   </button>
-              )}
+                )}
+              </div>}
             </div>
           </div>
         </div>

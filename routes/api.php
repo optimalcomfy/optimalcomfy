@@ -7,6 +7,7 @@ use App\Http\Controllers\WithdrawalController;
 use App\Http\Controllers\MpesaStkController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CarBookingController;
+use App\Http\Controllers\RefundController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,3 +34,17 @@ Route::post('/mpesa/timeout', [WithdrawalController::class, 'handleTimeout'])->n
 Route::post('/mpesa/stk/callback', [BookingController::class, 'handleCallback']);
 
 Route::post('/mpesa/ride/stk/callback', [CarBookingController::class, 'handleCallback']);
+
+
+ Route::post('/callback', [RefundController::class, 'handleRefundCallback'])
+         ->name('api.refund.callback');
+    
+Route::prefix('refund')->group(function () {
+    Route::post('/callback', [RefundController::class, 'handleRefundCallback'])
+         ->name('api.refund.callback');
+    
+    Route::post('/timeout', function (Request $request) {
+        \Log::channel('refunds')->info('Refund Timeout Callback:', $request->all());
+        return response()->json(['message' => 'Timeout callback received'], 200);
+    })->name('api.refund.timeout');
+});

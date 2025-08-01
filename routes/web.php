@@ -42,6 +42,7 @@ use App\Http\Controllers\PesapalController;
 use App\Http\Controllers\WithdrawalController;
 use App\Http\Controllers\VariationController;
 use App\Http\Controllers\MpesaStkController;
+use App\Http\Controllers\RefundController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -106,7 +107,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('jobs', JobController::class);
     Route::resource('applications', ApplicationController::class);
 
-    Route::post('/bookings/{booking}/handle-refund', [BookingController::class, 'handleRefund'])
+    Route::post('/bookings/{booking}/handle-refund', [RefundController::class, 'handleRefund'])
     ->name('bookings.handle-refund');
     
     Route::put('/stay-bookings-cancel', [BookingController::class, 'cancel'])

@@ -82,34 +82,31 @@ class CarRefundController extends Controller
     public function handleRefundCallback(Request $request)
     {
         try {
-            \Log::info('MPesa Refund Callback Received', [
+            \Log::info('MPesa Refund Callback Initiated', [
                 'raw_request' => $request->all(),
                 'headers' => $request->headers->all()
             ]);
 
-            // Extract reference from different possible locations
-            $reference = $request->input('reference') 
-                    ?? $request->json('reference')
-                    ?? $request->json('Result.ReferenceData.ReferenceItem.Value');
-
+            // Get the reference - now expecting just the numeric booking ID
+            $reference = $request->input('reference');
+            
             if (empty($reference)) {
-                \Log::error('Missing reference in callback', ['request' => $request->all()]);
+                \Log::error('Missing reference in callback');
                 return response()->json(['message' => 'Reference parameter is required'], 400);
             }
 
-            // Ensure reference is a string and clean it
-            $reference = (string)$reference;
-            $bookingId = preg_replace('/[^0-9]/', '', $reference); // Extract only numbers
-
-            if (empty($bookingId)) {
-                \Log::error('Invalid reference format - no numeric ID found', [
-                    'original_reference' => $reference,
-                    'processed_reference' => $bookingId
+            // Convert reference to integer (should be just the booking ID)
+            $bookingId = (int)$reference;
+            
+            if ($bookingId <= 0) {
+                \Log::error('Invalid booking ID in reference', [
+                    'reference' => $reference,
+                    'converted_id' => $bookingId
                 ]);
-                return response()->json(['message' => 'Invalid reference format'], 400);
+                return response()->json(['message' => 'Invalid booking ID'], 400);
             }
 
-            // Find the booking with additional validation
+            // Find the booking
             $booking = CarBooking::with(['user', 'vehicle'])
                 ->where('id', $bookingId)
                 ->whereNotNull('refund_reference')
@@ -119,36 +116,55 @@ class CarRefundController extends Controller
                 \Log::error('Booking not found or not eligible for refund', [
                     'booking_id' => $bookingId,
                     'reference_used' => $reference,
-                    'existing_refund_references' => CarBooking::whereNotNull('refund_reference')
+                    'existing_refunds' => CarBooking::whereNotNull('refund_reference')
                         ->orderBy('id', 'desc')
                         ->limit(5)
-                        ->pluck('refund_reference', 'id')
+                        ->pluck('id', 'refund_reference')
                 ]);
                 return response()->json(['message' => 'Booking not found or not eligible for refund'], 404);
             }
 
             // Process the refund result
             $result = $request->json('Result') ?? $request->all();
+            
+            if (empty($result)) {
+                \Log::error('Missing result data in callback');
+                return response()->json(['message' => 'Result data is required'], 400);
+            }
+
             $resultCode = $result['ResultCode'] ?? null;
             $resultDesc = $result['ResultDesc'] ?? 'No description provided';
 
+            // Update booking based on result
             if ($resultCode == 0 || $resultCode == '0') {
                 $updateData = [
                     'refund_status' => 'completed',
                     'refund_completed_at' => now(),
                     'transaction_receipt' => $result['TransactionID'] ?? null
                 ];
-                \Log::info('Refund completed successfully', $updateData);
+                
+                $booking->update($updateData);
+                
+                \Log::info('Refund successfully processed', [
+                    'booking_id' => $bookingId,
+                    'transaction_id' => $updateData['transaction_receipt'],
+                    'amount_refunded' => $booking->refund_amount
+                ]);
             } else {
                 $updateData = [
                     'refund_status' => 'failed',
                     'refund_failed_reason' => $resultDesc,
                     'transaction_receipt' => $result['TransactionID'] ?? null
                 ];
-                \Log::error('Refund failed', $updateData);
+                
+                $booking->update($updateData);
+                
+                \Log::error('Refund processing failed', [
+                    'booking_id' => $bookingId,
+                    'result_code' => $resultCode,
+                    'failure_reason' => $resultDesc
+                ]);
             }
-
-            $booking->update($updateData);
 
             return response()->json([
                 'message' => 'Callback processed successfully',
@@ -157,11 +173,12 @@ class CarRefundController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::critical('Refund callback processing failed', [
+            \Log::critical('Unhandled exception in refund callback', [
                 'error' => $e->getMessage(),
                 'stack_trace' => $e->getTraceAsString(),
-                'request' => $request->all()
+                'request_data' => $request->all()
             ]);
+
             return response()->json([
                 'message' => 'An internal server error occurred',
                 'error_reference' => 'REF_' . uniqid()

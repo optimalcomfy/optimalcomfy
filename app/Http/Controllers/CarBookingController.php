@@ -6,6 +6,7 @@ use App\Http\Requests\StoreCarBookingRequest;
 use App\Http\Requests\UpdateCarBookingRequest;
 use App\Models\CarBooking;
 use App\Models\Car;
+use App\Models\User;
 use App\Models\Payment;
 use Inertia\Inertia;
 use Illuminate\Http\Request;

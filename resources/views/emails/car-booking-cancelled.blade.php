@@ -134,10 +134,6 @@
                                     <div class="detail-label">Cancelled On:</div>
                                     <div class="detail-value">{{ $booking->cancelled_at->format('M j, Y H:i') }}</div>
                                 </div>
-                                <div class="detail-row">
-                                    <div class="detail-label">Cancelled By:</div>
-                                    <div class="detail-value">{{ $booking->cancelled_by_id === $booking->user_id ? 'You' : 'Admin' }}</div>
-                                </div>
                             </div>
                         </td>
                     </tr>

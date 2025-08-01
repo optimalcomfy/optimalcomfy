@@ -24,11 +24,16 @@ class CarRefundNotification extends Mailable
 
     public function build()
     {
-        $subject = $this->status === 'approved' 
-            ? 'Your Car Rental Refund Has Been Approved' 
-            : 'Your Car Rental Refund Request Has Been Rejected';
+        $subject = $this->status === 'approved'
+            ? 'Your Car Rental Refund Has Been Approved - Ristay'
+            : 'Car Rental Refund Request Update - Ristay';
 
         return $this->subject($subject)
-            ->markdown('emails.car-refund-notification');
+                    ->view('emails.car-refund-notification')
+                    ->with([
+                        'booking' => $this->booking,
+                        'status' => $this->status,
+                        'reason' => $this->reason
+                    ]);
     }
 }

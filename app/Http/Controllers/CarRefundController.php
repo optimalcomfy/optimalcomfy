@@ -33,7 +33,7 @@ class CarRefundController extends Controller
                 // Process the refund via M-Pesa
                 $phone = $carBooking->user->phone;
                 $amount = $request->refund_amount;
-                $reference = 'CAR_' . $carBooking->id . '_' . now()->timestamp;
+                $reference = (string)$carBooking->id; // Simplified reference
                 
                 $response = $this->mpesaRefundService->processRefund(
                     $phone,
@@ -88,74 +88,41 @@ class CarRefundController extends Controller
     public function handleRefundCallback(Request $request)
     {
         try {
-            // 1. Log raw incoming request for debugging
-            \Log::info('MPesa Refund Callback Initiated', [
-                'raw_request' => $request->all(),
+            // Log incoming request
+            \Log::info('MPesa Refund Callback Received', [
+                'request_data' => $request->all(),
                 'headers' => $request->headers->all()
             ]);
 
-            // 2. Validate and extract reference
-            $reference = $request->input('reference');
-            if (empty($reference)) {
-                \Log::error('Missing reference in callback');
-                return response()->json(['message' => 'Reference parameter is required'], 400);
-            }
-
-            // 3. Parse booking ID from reference with multiple fallbacks
-            $bookingId = null;
+            // Get reference (which is now just the booking ID)
+            $bookingId = $request->input('reference');
             
-            // Primary pattern: CAR_<id>_<timestamp>
-            if (preg_match('/^CAR_(\d+)_/', $reference, $matches)) {
-                $bookingId = (int)$matches[1];
+            if (empty($bookingId)) {
+                \Log::error('Missing booking ID in callback');
+                return response()->json(['message' => 'Booking ID is required'], 400);
             }
 
-            // Secondary pattern: Extract first numeric segment
-            elseif (preg_match('/(\d+)/', $reference, $matches)) {
-                $bookingId = (int)$matches[1];
-            }
-
-            if (!$bookingId) {
-                \Log::error('Failed to extract booking ID from reference', [
-                    'reference' => $reference,
-                    'attempted_patterns' => ['CAR_<id>_', 'any numeric sequence']
-                ]);
-                return response()->json(['message' => 'Invalid reference format'], 400);
-            }
-
-            // 4. Find the booking with additional debug info
+            // Find the booking
             $booking = CarBooking::with(['user', 'vehicle'])
                 ->where('id', $bookingId)
                 ->first();
 
             if (!$booking) {
-                $existingIds = CarBooking::orderBy('id', 'desc')
-                    ->limit(20)
-                    ->pluck('id')
-                    ->toArray();
-
-                \Log::error('Booking not found', [
-                    'searched_id' => $bookingId,
-                    'reference_used' => $reference,
-                    'recent_bookings' => $existingIds,
-                    'database_connection' => \DB::connection()->getDatabaseName()
-                ]);
-
+                \Log::error('Booking not found', ['booking_id' => $bookingId]);
                 return response()->json(['message' => 'Booking not found'], 404);
             }
 
-            // 5. Process the refund result
+            // Process the refund result
             $result = $request->json('Result');
             if (empty($result)) {
-                \Log::error('Missing result data in callback', [
-                    'request_data' => $request->all()
-                ]);
+                \Log::error('Missing result data in callback');
                 return response()->json(['message' => 'Result data is required'], 400);
             }
 
             $resultCode = $result['ResultCode'] ?? null;
             $resultDesc = $result['ResultDesc'] ?? 'No description provided';
 
-            // 6. Update booking based on result
+            // Update booking based on result
             if ($resultCode == 0 || $resultCode == '0') {
                 $updateData = [
                     'refund_status' => 'completed',
@@ -182,12 +149,10 @@ class CarRefundController extends Controller
                 \Log::error('Refund processing failed', [
                     'booking_id' => $bookingId,
                     'mpesa_result_code' => $resultCode,
-                    'failure_reason' => $resultDesc,
-                    'reference' => $reference
+                    'failure_reason' => $resultDesc
                 ]);
             }
 
-            // 7. Return success response
             return response()->json([
                 'message' => 'Callback processed successfully',
                 'booking_id' => $bookingId,

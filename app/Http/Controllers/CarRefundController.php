@@ -47,7 +47,6 @@ class CarRefundController extends Controller
                 $carBooking->update([
                     'refund_approval' => 'approved',
                     'refund_amount' => $amount,
-                    'refund_reference' => $reference,
                     'non_refund_reason' => null,
                     'refund_status' => 'processing',
                 ]);
@@ -95,7 +94,6 @@ class CarRefundController extends Controller
 
             // Find the booking
             $booking = CarBooking::where('id', $bookingId)
-                        ->whereNotNull('refund_reference')
                         ->first();
 
             if (!$booking) {

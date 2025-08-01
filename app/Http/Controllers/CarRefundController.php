@@ -87,35 +87,31 @@ class CarRefundController extends Controller
 
     public function handleRefundCallback(Request $request)
     {
-        // Use a fallback channel if 'car_refunds' isn't configured
-        $logChannel = config('logging.channels.car_refunds') ? 'car_refunds' : 'daily';
-
         try {
-            Log::channel($logChannel)->info('Car Refund Callback Received', $request->all());
+            \Log::info('Car Refund Callback Received', $request->all());
 
             // Validate reference exists
             $reference = $request->input('reference');
             if (!$reference) {
-                Log::channel($logChannel)->warning('No reference in callback');
+                \Log::warning('No reference in callback');
                 return response()->json(['message' => 'Reference missing'], 400);
             }
 
-            // More robust reference parsing with regex
-            if (!preg_match('/^CAR_(\d+)_(\d+)$/', $reference, $matches)) {
-                Log::channel($logChannel)->warning('Invalid reference format', [
-                    'reference' => $reference,
-                    'expected_format' => 'CAR_<booking_id>_<timestamp>'
-                ]);
+            // Parse reference with validation
+            if (!preg_match('/^CAR_(\d+)_/', $reference, $matches)) {
+                \Log::error('Invalid reference format', compact('reference'));
                 return response()->json(['message' => 'Invalid reference format'], 400);
             }
 
-            $bookingId = $matches[1];
-            $booking = CarBooking::find($bookingId);
+            $bookingId = (int)$matches[1];
+            \Log::debug('Parsed booking ID', compact('bookingId'));
 
+            // Find booking with debug
+            $booking = CarBooking::find($bookingId);
             if (!$booking) {
-                Log::channel($logChannel)->warning('Booking not found', [
+                \Log::error('Booking not found', [
                     'booking_id' => $bookingId,
-                    'reference' => $reference
+                    'all_bookings' => CarBooking::pluck('id')->toArray()
                 ]);
                 return response()->json(['message' => 'Booking not found'], 404);
             }
@@ -123,7 +119,7 @@ class CarRefundController extends Controller
             // Validate and process result
             $result = $request->json('Result');
             if (!$result) {
-                Log::channel($logChannel)->error('Missing result in callback', $request->all());
+                \Log::error('Missing result in callback', $request->all());
                 return response()->json(['message' => 'Result missing'], 400);
             }
 
@@ -136,7 +132,7 @@ class CarRefundController extends Controller
                     'refund_completed_at' => now(),
                 ]);
 
-                Log::channel($logChannel)->info('Refund completed successfully', [
+                \Log::info('Refund completed successfully', [
                     'booking_id' => $bookingId,
                     'reference' => $reference
                 ]);
@@ -146,7 +142,7 @@ class CarRefundController extends Controller
                     'refund_failed_reason' => $resultDesc,
                 ]);
 
-                Log::channel($logChannel)->error('Refund failed', [
+                \Log::error('Refund failed', [
                     'booking_id' => $bookingId,
                     'reference' => $reference,
                     'result_code' => $resultCode,
@@ -157,7 +153,7 @@ class CarRefundController extends Controller
             return response()->json(['message' => 'Callback processed'], 200);
 
         } catch (\Exception $e) {
-            Log::channel($logChannel)->error('Callback processing failed', [
+            \Log::error('Callback processing failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'request' => $request->all()

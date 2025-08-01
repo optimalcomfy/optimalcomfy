@@ -80,7 +80,6 @@ class MpesaStkService
                 'description' => $body['errorMessage'] ?? 'Unknown error'
             ];
         } catch (Exception $e) {
-            Log::error('M-Pesa STK Push failed', ['error' => $e->getMessage()]);
             return ['error' => 'MPESA_REQUEST_FAILED'];
         }
     }
@@ -124,11 +123,8 @@ class MpesaStkService
                 "ValidationURL" => $this->callbackUrl . "/mpesa/c2b/validation",
             ]);
 
-            Log::info('Registered C2B URLs', ['response' => $response->json()]);
-
             return $response->json();
         } catch (Exception $e) {
-            Log::error('C2B URL Registration Failed', ['error' => $e->getMessage()]);
             return ['error' => 'C2B_REGISTRATION_FAILED'];
         }
     }

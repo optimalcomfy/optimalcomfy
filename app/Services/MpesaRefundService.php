@@ -22,8 +22,6 @@ class MpesaRefundService
         $response = Http::withBasicAuth($consumerKey, $consumerSecret)
             ->get("{$this->baseUrl}/oauth/v1/generate?grant_type=client_credentials");
     
-        Log::channel('refunds')->info('M-Pesa Refund Token Response:', ['response' => $response->body()]);
-    
         return $response->json()['access_token'] ?? null;
     }
 
@@ -51,13 +49,6 @@ class MpesaRefundService
                 'ResultURL' => $resultUrl,
                 'Occasion' => 'REFUND_' . $reference,
             ]);
-
-        Log::channel('refunds')->info('M-Pesa Refund Request:', [
-            'phone' => $formattedPhone,
-            'amount' => $amount,
-            'reference' => $reference,
-            'response' => $response->json()
-        ]);
     
         return $response->json();
     }

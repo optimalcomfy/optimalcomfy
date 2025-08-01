@@ -946,12 +946,14 @@ const CarBookingShow = () => {
                     <p>Reason: {booking.non_refund_reason}</p>
                   </div>
                 ) : (
-                  <button 
-                    onClick={handleRefund}
-                    className="px-8 py-2 w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-150"
-                  >
-                    Process Refund
-                  </button>
+                  roleId === 1 && (
+                    <button 
+                      onClick={handleRefund}
+                      className="px-8 py-2 w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-150"
+                    >
+                      Process Refund
+                    </button>
+                  )
                 )}
               </div>}
             </div>

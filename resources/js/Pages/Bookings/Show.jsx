@@ -937,24 +937,25 @@ const BookingShow = () => {
               )}
             </div>
 
-            {booking.status === 'Cancelled' &&
-            <div className="bg-white flex flex-col gap-4 rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
-                This booking has been cancelled for this reason:
-              </h3>
-              <p className="text-sm text-gray-600 mb-3">
-                {booking.cancel_reason}
-              </p>
+            {booking.status === 'Cancelled' && (
+              <div className="bg-white flex flex-col gap-4 rounded-xl shadow-md p-6">
+                <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
+                  This booking has been cancelled for this reason:
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  {booking.cancel_reason}
+                </p>
 
-              {(booking.status === 'Cancelled' || booking.status === 'Cancelled') && (
-                <button 
-                  onClick={handleRefund}
-                  className="px-8 py-2 w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-150"
-                >
-                  Process Refund
-                </button>
-              )}
-            </div>}
+                {roleId === 1 && (
+                  <button 
+                    onClick={handleRefund}
+                    className="px-8 py-2 w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-150"
+                  >
+                    Process Refund
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

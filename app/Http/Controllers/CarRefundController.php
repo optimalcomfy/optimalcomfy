@@ -72,7 +72,6 @@ class CarRefundController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::channel('car_refunds')->error('Refund processing failed: ' . $e->getMessage());
             return redirect()->back()
                 ->withErrors(['error' => 'Refund processing failed: ' . $e->getMessage()]);
         }
@@ -81,14 +80,11 @@ class CarRefundController extends Controller
     public function handleRefundCallback(Request $request)
     {
         try {
-            // Simple request logging
-            \Log::info('MPesa Refund Callback Received', ['request' => $request->all()]);
 
             // Get the reference - expecting just the numeric booking ID
             $bookingId = (int)$request->input('reference');
             
             if ($bookingId <= 0) {
-                \Log::error('Invalid booking ID received', ['reference' => $request->input('reference')]);
                 return response()->json(['message' => 'Invalid booking ID'], 400);
             }
 
@@ -97,7 +93,6 @@ class CarRefundController extends Controller
                         ->first();
 
             if (!$booking) {
-                \Log::error('Booking not found', ['booking_id' => $bookingId]);
                 return response()->json(['message' => 'Booking not found'], 404);
             }
 
@@ -112,20 +107,12 @@ class CarRefundController extends Controller
                 'refund_failed_reason' => $success ? null : ($result['ResultDesc'] ?? 'Unknown error')
             ]);
 
-            \Log::info('Refund '.($success ? 'completed' : 'failed'), [
-                'booking_id' => $bookingId,
-                'status' => $booking->refund_status
-            ]);
-
             return response()->json([
                 'message' => 'Callback processed',
                 'status' => $booking->refund_status
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Refund callback error: '.$e->getMessage(), [
-                'exception' => $e
-            ]);
             
             return response()->json([
                 'message' => 'Processing error'

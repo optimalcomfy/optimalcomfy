@@ -23,7 +23,6 @@ class MpesaService
         $response = Http::withBasicAuth($consumerKey, $consumerSecret)
             ->get("{$this->baseUrl}/oauth/v1/generate?grant_type=client_credentials");
     
-        Log::info('M-Pesa Token Response:', ['response' => $response->body()]);
     
         return $response->json()['access_token'] ?? null;
     }
@@ -54,7 +53,6 @@ class MpesaService
                 'Occasion' => 'LoanID_' . $loanId,
             ]);
 
-        Log::info('B2c here:', ['response' => $response]);
     
         return $response->json();
     }

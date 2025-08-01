@@ -25,31 +25,34 @@ class CarController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Car::query();
+        $query = Car::with(['user', 'category', 'bookings'])->orderBy('created_at', 'desc');
 
         $user = Auth::user();
 
+        // Filter by owner if user is a car owner (role_id 2)
         if ($user->role_id == 2) {
-            $query->where('user_id', '=', $user->id);
+            $query->where('user_id', $user->id);
         }
 
+        // Search filter
         if ($request->has('search')) {
             $search = $request->input('search');
-            $query->where('name', 'LIKE', "%$search%")
-                  ->orWhere('brand', 'LIKE', "%$search%")
-                  ->orWhere('model', 'LIKE', "%$search%");
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%$search%")
+                ->orWhere('brand', 'LIKE', "%$search%")
+                ->orWhere('model', 'LIKE', "%$search%");
+            });
         }
 
-        $startDate = $request->query('start_date');
-        $endDate = $request->query('end_date');
+        // Creation date filter
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [
+                $request->input('start_date'),
+                $request->input('end_date')
+            ]);
+        }
 
-        $filterByDate = !empty($startDate) && !empty($endDate);
-        
-        $query->when($filterByDate, function ($query) use ($startDate, $endDate) {
-                    $query->whereBetween('created_at', [$startDate, $endDate]);
-                });
-
-        $cars = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $cars = $query->paginate(10);
 
         return Inertia::render('Cars/Index', [
             'cars' => $cars->items(),
@@ -65,24 +68,11 @@ class CarController extends Controller
 
         $query = Car::with(['user', 'category', 'bookings']);
 
-        // Date filtering
-        $startDate = $request->query('start_date');
-        $endDate = $request->query('end_date');
-        
-        if (!$startDate || !$endDate) {
-            $startDate = Carbon::now()->startOfMonth()->toDateString();
-            $endDate = Carbon::now()->endOfMonth()->toDateString();
-        }
-
-        try {
-            $validStartDate = Carbon::parse($startDate)->startOfDay();
-            $validEndDate = Carbon::parse($endDate)->endOfDay();
-
-            if ($validStartDate->lte($validEndDate)) {
-                $query->whereBetween('created_at', [$validStartDate, $validEndDate]);
-            }
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Invalid date format provided.'], 400);
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [
+                $request->input('start_date'),
+                $request->input('end_date')
+            ]);
         }
 
         // Search functionality

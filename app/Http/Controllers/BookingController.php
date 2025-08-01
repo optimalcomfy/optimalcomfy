@@ -40,6 +40,7 @@ class BookingController extends Controller
     {
         $user = Auth::user();
 
+
         $query = Booking::with('user', 'property');
 
         // Role-based filtering
@@ -54,7 +55,7 @@ class BookingController extends Controller
         }
 
         // Status filtering via translated logic for stay_status
-        if ($request->has('status')) {
+        if ($request->has('status') && $request->input('status') != null) {
             $status = $request->input('status');
 
             $query->where(function ($q) use ($status) {
@@ -126,7 +127,7 @@ class BookingController extends Controller
 
 
         // Stay status filtering - matches the accessor logic
-        if ($request->has('status')) {
+        if ($request->has('status') && $request->input('status') != null) {
             $status = $request->input('status');
             
             $query->where(function($q) use ($status) {

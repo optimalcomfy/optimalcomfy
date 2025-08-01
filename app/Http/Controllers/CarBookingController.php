@@ -50,7 +50,7 @@ class CarBookingController extends Controller
             $query->where('user_id', '=', $user->id);
         }
 
-        if ($request->has('status')) {
+        if ($request->has('status') && $request->input('status') != null) {
             $status = $request->input('status');
 
             $query->where(function ($q) use ($status) {
@@ -108,7 +108,7 @@ class CarBookingController extends Controller
                 });
 
 
-        if ($request->has('status')) {
+       if ($request->has('status') && $request->input('status') != null) {
             $status = $request->input('status');
 
             $query->where(function($q) use ($status) {

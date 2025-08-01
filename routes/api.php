@@ -8,6 +8,7 @@ use App\Http\Controllers\MpesaStkController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CarBookingController;
 use App\Http\Controllers\RefundController;
+use App\Http\Controllers\CarRefundController;
 
 /*
 |--------------------------------------------------------------------------

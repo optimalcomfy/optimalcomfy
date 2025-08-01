@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Booking Cancellation</title>
+    <title>Booking Cancellation</title>
     <style>
         * {
             margin: 0;
@@ -189,9 +189,9 @@
         <div class="header">
             <div class="header-subtitle">
                 @if($recipientType === 'guest')
-                    Your Car Booking Has Been Cancelled
+                    Your Booking Has Been Cancelled
                 @else
-                    Car Booking Cancellation Notification
+                    Booking Cancellation Notification
                 @endif
             </div>
         </div>
@@ -207,11 +207,9 @@
 
             <div class="details-box">
                 <p><strong>Booking Reference:</strong> #{{ $booking->number }}</p>
-                <p><strong>Vehicle:</strong> {{ $booking->car->make }} {{ $booking->car->model }}</p>
-                <p><strong>Pickup Date:</strong> {{ $booking->start_date->format('M j, Y H:i') }}</p>
-                <p><strong>Dropoff Date:</strong> {{ $booking->end_date->format('M j, Y H:i') }}</p>
-                <p><strong>Pickup Location:</strong> {{ $booking->pickup_location }}</p>
-                <p><strong>Dropoff Location:</strong> {{ $booking->dropoff_location }}</p>
+                <p><strong>Vehicle:</strong> {{ $booking->property->property_name }}</p>
+                <p><strong>Check in Date:</strong> {{ $booking->check_in_date->format('M j, Y H:i') }}</p>
+                <p><strong>Checkout Date:</strong> {{ $booking->check_out_date->format('M j, Y H:i') }}</p>
                 <p><strong>Cancellation Reason:</strong> {{ $booking->cancel_reason }}</p>
                 <p><strong>Cancelled On:</strong> {{ $booking->cancelled_at->format('M j, Y H:i') }}</p>
                 <p><strong>Cancelled By:</strong> {{ $booking->cancelled_by_id === $booking->user_id ? 'You' : 'Admin' }}</p>

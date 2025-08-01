@@ -638,7 +638,7 @@ class BookingController extends Controller
     {
         $input = $request->all();
 
-        $booking = Booking::find($input['id']);
+        $booking = Booking::with('property.user')->find($input['id']);
 
         $request->validate([
             'cancel_reason' => 'required|string|min:10|max:500',

@@ -34,7 +34,7 @@ use App\Services\SmsService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 
-use Illuminate\Http\JsonResponse; 
+use Illuminate\Http\JsonResponse;
 
 class WithdrawalController extends Controller
 {
@@ -54,7 +54,7 @@ class WithdrawalController extends Controller
         $user = Auth::user();
         $input = $request->all();
         
-        $amount = (int) $input['amount']; // Ensure this is sent in the request
+        $amount = (int) $input['amount']; 
         
         DB::beginTransaction();
         try {

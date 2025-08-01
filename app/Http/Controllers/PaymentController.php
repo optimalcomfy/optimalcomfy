@@ -41,22 +41,13 @@ class PaymentController extends Controller
 
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
+
+        $filterByDate = !empty($startDate) && !empty($endDate);
         
-        if (!$startDate || !$endDate) {
-            $startDate = Carbon::now()->startOfMonth()->toDateString();
-            $endDate = Carbon::now()->endOfMonth()->toDateString();
-        }
+        $query->when($filterByDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                });
 
-        try {
-            $validStartDate = Carbon::parse($startDate)->startOfDay();
-            $validEndDate = Carbon::parse($endDate)->endOfDay();
-
-            if ($validStartDate->lte($validEndDate)) {
-                $query->whereBetween('created_at', [$validStartDate, $validEndDate]);
-            }
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Invalid date format provided.'], 400);
-        }
 
         $payments = $query->paginate(10);
 
@@ -77,22 +68,13 @@ class PaymentController extends Controller
         // Date filtering
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
+
+        $filterByDate = !empty($startDate) && !empty($endDate);
         
-        if (!$startDate || !$endDate) {
-            $startDate = Carbon::now()->startOfMonth()->toDateString();
-            $endDate = Carbon::now()->endOfMonth()->toDateString();
-        }
+        $query->when($filterByDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                });
 
-        try {
-            $validStartDate = Carbon::parse($startDate)->startOfDay();
-            $validEndDate = Carbon::parse($endDate)->endOfDay();
-
-            if ($validStartDate->lte($validEndDate)) {
-                $query->whereBetween('created_at', [$validStartDate, $validEndDate]);
-            }
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Invalid date format provided.'], 400);
-        }
 
         // Search functionality
         if ($search = $request->query('search')) {

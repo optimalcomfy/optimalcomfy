@@ -36,8 +36,8 @@ class CarRefundController extends Controller
                 $reference = 'CAR_' . $carBooking->id . '_' . now()->timestamp;
                 
                 $response = $this->mpesaRefundService->processRefund(
-                    $phone, 
-                    $amount, 
+                    $phone,
+                    $amount,
                     $reference
                 );
                 
@@ -87,52 +87,83 @@ class CarRefundController extends Controller
 
     public function handleRefundCallback(Request $request)
     {
-        Log::channel('car_refunds')->info('Car Refund Callback Received: ', $request->all());
-    
-        $reference = $request->input('reference');
-        if (!$reference) {
-            Log::channel('car_refunds')->warning('No reference found in callback');
-            return response()->json(['message' => 'Reference missing'], 400);
-        }
-    
-        // Extract booking ID from reference (CAR_bookingid_timestamp)
-        $parts = explode('_', $reference);
-        if (count($parts) < 3) {
-            Log::channel('car_refunds')->warning('Invalid reference format: ' . $reference);
-            return response()->json(['message' => 'Invalid reference'], 400);
-        }
-        
-        $bookingId = $parts[1];
-        $booking = CarBooking::find($bookingId);
-        
-        if (!$booking) {
-            Log::channel('car_refunds')->warning('Car booking not found for ID: ' . $bookingId);
-            return response()->json(['message' => 'Booking not found'], 404);
-        }
-    
-        $result = $request->json('Result');
-        $resultCode = $result['ResultCode'] ?? null;
-        $resultDesc = $result['ResultDesc'] ?? 'No description';
-    
-        if ($resultCode == 0 || $resultCode == '0') {
-            $booking->update([
-                'refund_status' => 'completed',
-                'refund_completed_at' => now(),
+        // Use a fallback channel if 'car_refunds' isn't configured
+        $logChannel = config('logging.channels.car_refunds') ? 'car_refunds' : 'daily';
+
+        try {
+            Log::channel($logChannel)->info('Car Refund Callback Received', $request->all());
+
+            // Validate reference exists
+            $reference = $request->input('reference');
+            if (!$reference) {
+                Log::channel($logChannel)->warning('No reference in callback');
+                return response()->json(['message' => 'Reference missing'], 400);
+            }
+
+            // More robust reference parsing with regex
+            if (!preg_match('/^CAR_(\d+)_(\d+)$/', $reference, $matches)) {
+                Log::channel($logChannel)->warning('Invalid reference format', [
+                    'reference' => $reference,
+                    'expected_format' => 'CAR_<booking_id>_<timestamp>'
+                ]);
+                return response()->json(['message' => 'Invalid reference format'], 400);
+            }
+
+            $bookingId = $matches[1];
+            $booking = CarBooking::find($bookingId);
+
+            if (!$booking) {
+                Log::channel($logChannel)->warning('Booking not found', [
+                    'booking_id' => $bookingId,
+                    'reference' => $reference
+                ]);
+                return response()->json(['message' => 'Booking not found'], 404);
+            }
+
+            // Validate and process result
+            $result = $request->json('Result');
+            if (!$result) {
+                Log::channel($logChannel)->error('Missing result in callback', $request->all());
+                return response()->json(['message' => 'Result missing'], 400);
+            }
+
+            $resultCode = $result['ResultCode'] ?? null;
+            $resultDesc = $result['ResultDesc'] ?? 'No description';
+
+            if ($resultCode == 0 || $resultCode == '0') {
+                $booking->update([
+                    'refund_status' => 'completed',
+                    'refund_completed_at' => now(),
+                ]);
+
+                Log::channel($logChannel)->info('Refund completed successfully', [
+                    'booking_id' => $bookingId,
+                    'reference' => $reference
+                ]);
+            } else {
+                $booking->update([
+                    'refund_status' => 'failed',
+                    'refund_failed_reason' => $resultDesc,
+                ]);
+
+                Log::channel($logChannel)->error('Refund failed', [
+                    'booking_id' => $bookingId,
+                    'reference' => $reference,
+                    'result_code' => $resultCode,
+                    'result_desc' => $resultDesc
+                ]);
+            }
+
+            return response()->json(['message' => 'Callback processed'], 200);
+
+        } catch (\Exception $e) {
+            Log::channel($logChannel)->error('Callback processing failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
             ]);
-            
-            Log::channel('car_refunds')->info('Car refund processed successfully for booking: ' . $bookingId);
-        } else {
-            $booking->update([
-                'refund_status' => 'failed',
-                'refund_failed_reason' => $resultDesc,
-            ]);
-            
-            Log::channel('car_refunds')->error('Car refund failed for booking: ' . $bookingId, [
-                'result_code' => $resultCode,
-                'result_desc' => $resultDesc
-            ]);
+
+            return response()->json(['message' => 'Internal server error'], 500);
         }
-    
-        return response()->json(['message' => 'Callback processed'], 200);
     }
 }

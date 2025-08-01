@@ -415,7 +415,7 @@ class CarBookingController extends Controller
                 Mail::to($user->email)
                 ->send(new CarBookingConfirmation($booking, 'customer'));
 
-                Mail::to($booking->user->email)
+                Mail::to($booking->car->user->email)
                 ->send(new CarBookingConfirmation($booking, 'host'));
             }
 

@@ -36,7 +36,7 @@ class MpesaRefundService
         }
     
         $formattedPhone = $this->formatPhoneNumber($phone);
-        $resultUrl = env('MPESA_REFUND_RESULT_URL') . '?reference=' . urlencode($reference);
+        $resultUrl = env('MPESA_CAR_REFUND_RESULT_URL') . '?reference=' . urlencode($reference);
     
         $response = Http::withToken($accessToken)
             ->post("{$this->baseUrl}/mpesa/b2c/v1/paymentrequest", [
@@ -47,7 +47,7 @@ class MpesaRefundService
                 'PartyA' => env('MPESA_BUSINESS_SHORTCODE'),
                 'PartyB' => $formattedPhone,
                 'Remarks' => 'Booking Refund',
-                'QueueTimeOutURL' => env('MPESA_REFUND_TIMEOUT_URL'),
+                'QueueTimeOutURL' => env('MPESA_CAR_REFUND_TIMEOUT_URL'),
                 'ResultURL' => $resultUrl,
                 'Occasion' => 'REFUND_' . $reference,
             ]);

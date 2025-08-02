@@ -628,7 +628,7 @@ const CarBookingShow = () => {
             </div>
             {roleId !== 3 &&
             <div className="flex space-x-2">
-              {!booking.checked_in && !booking.checked_out && booking.status !== 'Cancelled' && (
+              {!booking.checked_in && !booking.checked_out && booking.status !== 'Cancelled' && booking.status !== 'failed' && (
                 <button
                   onClick={handleCheckIn}
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
@@ -637,7 +637,7 @@ const CarBookingShow = () => {
                   {booking.checkin_verification_code ? 'Verify Check In' : 'Check In'}
                 </button>
               )}
-              {booking.checked_in && !booking.checked_out && booking.status !== 'Cancelled' && (
+              {booking.checked_in && !booking.checked_out && booking.status !== 'Cancelled' && booking.status !== 'failed' && (
                 <button
                   onClick={handleCheckOut}
                   className="flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
@@ -922,7 +922,7 @@ const CarBookingShow = () => {
                   </p>
                 )}
 
-                {!booking.checked_out && booking.status !== 'Cancelled' && (
+                {!booking.checked_out && booking.status !== 'Cancelled' && booking.status !== 'failed' && (
                     <button 
                       onClick={handleCancelBooking}
                       className="px-8 py-2 w-full flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-md transition duration-150"

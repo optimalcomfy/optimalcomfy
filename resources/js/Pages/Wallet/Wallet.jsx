@@ -82,7 +82,7 @@ const Wallet = ({ user }) => {
     const nextPayout = pendingPayouts;
 
     // Calculate pending amount (total earnings minus available balance)
-    const pendingAmount = totalEarnings - availableBalance;
+    const pendingAmount = pendingPayouts - availableBalance;
 
     return (
         <Layout>
@@ -165,7 +165,7 @@ const Wallet = ({ user }) => {
                                     Processing
                                 </h3>
                                 <div className="balance-amount">
-                                    {formatCurrency(totalEarnings - currentBalance)}
+                                    {formatCurrency(pendingAmount)}
                                 </div>
                                 <div className="balance-subtext">
                                     Payments being processed for next payout

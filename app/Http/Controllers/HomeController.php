@@ -244,42 +244,78 @@ class HomeController extends Controller
         // Calculate total revenue from property bookings (excluding external bookings)
         $propertyBookingTotal = Booking::where("status", "Paid")
             ->whereNull("external_booking") // Exclude external bookings
-            ->when(fn($q) => $q->whereHas("user"))
+            ->when(true, function($q) {  // or some condition instead of true
+                return $q->whereHas("user");
+            })
             ->whereHas("property", function ($query) use ($user, $isAdmin) {
                 if (!$isAdmin) {
                     $query->where("user_id", $user->id);
                 }
             })
-            ->sum("total_price");
+            ->with(['property', 'user'])
+            ->get()
+            ->sum(function ($booking) {
+                $platformPrice = $booking->property->platform_price ?? 0;
+                $checkIn = Carbon::parse($booking->check_in_date);
+                $checkOut = Carbon::parse($booking->check_out_date);
+                $days = $checkOut->diffInDays($checkIn);
+                
+                return $platformPrice * $days;
+            });
 
-
-        $availablePropertyBookingTotal = Booking::where("status", "=", "Paid")
-            ->whereNull("external_booking")
-            ->whereNotNull("checked_in")
-            ->whereHas("property", function ($query) use ($user) {
-                $query->where("user_id", $user->id);
-            })
-            ->sum("total_price");
-
-        // Calculate total revenue from car bookings (excluding external bookings)
-        $carBookingTotal = CarBooking::where("status", "Paid")
+        $availablePropertyBookingTotal = Booking::where("status", "Paid")
             ->whereNull("external_booking") // Exclude external bookings
-            ->when(fn($q) => $q->whereHas("user"))
-            ->whereHas("car", function ($query) use ($user, $isAdmin) {
+            ->when(true, function($q) {  // or some condition instead of true
+                return $q->whereHas("user");
+            })
+            ->whereHas("property", function ($query) use ($user, $isAdmin) {
                 if (!$isAdmin) {
                     $query->where("user_id", $user->id);
                 }
             })
-            ->sum("total_price");
+            ->whereNotNull("checked_in")
+            ->with(['property', 'user'])
+            ->get()
+            ->sum(function ($booking) {
+                $platformPrice = $booking->property->platform_price ?? 0;
+                $checkIn = Carbon::parse($booking->check_in_date);
+                $checkOut = Carbon::parse($booking->check_out_date);
+                $days = $checkOut->diffInDays($checkIn);
+                
+                return $platformPrice * $days;
+            });
 
 
-        $availableCarBookingTotal = CarBooking::where("status", "=", "Paid")
+        // Calculate total revenue from car bookings (excluding external bookings)
+        $carBookingTotal = CarBooking::where("status", "Paid")
+            ->whereNull("external_booking")
+            ->whereHas("car", function ($query) use ($user) {
+                $query->where("user_id", $user->id);
+            })
+            ->with('car') // Load the 'car' relationship
+            ->get()
+            ->sum(function ($booking) {
+                $days = Carbon::parse($booking->end_date)->diffInDays(
+                    Carbon::parse($booking->start_date)
+                );
+                return ($booking->car->platform_price ?? 0) * $days;
+            });
+
+        // Available car bookings (checked-in only)
+        $availableCarBookingTotal = CarBooking::where("status", "Paid")
             ->whereNull("external_booking")
             ->whereNotNull("checked_in")
             ->whereHas("car", function ($query) use ($user) {
                 $query->where("user_id", $user->id);
             })
-            ->sum("total_price");
+            ->with('car')
+            ->get()
+            ->sum(function ($booking) {
+                $days = Carbon::parse($booking->end_date)->diffInDays(
+                    Carbon::parse($booking->start_date)
+                );
+                return ($booking->car->platform_price ?? 0) * $days;
+            });
 
         $availablePayouts = ($availablePropertyBookingTotal + $availableCarBookingTotal) * $p;  
 
@@ -310,22 +346,24 @@ class HomeController extends Controller
                 ->take(5)
                 ->get()
                 ->map(function ($booking) {
+                    $days = Carbon::parse($booking->check_in_date)->diffInDays(Carbon::parse($booking->check_out_date));
+                    
                     return [
                         "type" => "property",
                         "title" => $booking->property->title,
                         "amount" => $booking->total_price,
                         "platform_price" => $booking->property->platform_price,
-                        "platform_charges" =>
-                            $booking->property->platform_charges,
+                        "platform_charges" => $booking->property->platform_charges,
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
                         "status" => "completed",
+                        "days" => $days, // Added days count
                     ];
                 }),
 
             // Car bookings
             ...CarBooking::where("status", "Paid")
-                ->whereNull("external_booking") // Exclude external bookings
+                ->whereNull("external_booking")
                 ->when(fn($q) => $q->whereHas("user"))
                 ->whereHas("car", function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
@@ -337,16 +375,18 @@ class HomeController extends Controller
                 ->take(5)
                 ->get()
                 ->map(function ($booking) {
+                    $days = Carbon::parse($booking->start_date)->diffInDays(Carbon::parse($booking->end_date));
+                    
                     return [
                         "type" => "car",
-                        "title" =>
-                            $booking->car->make . " " . $booking->car->model,
+                        "title" => $booking->car->make . " " . $booking->car->model,
                         "amount" => $booking->total_price,
                         "platform_price" => $booking->car->platform_price,
                         "platform_charges" => $booking->car->platform_charges,
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
                         "status" => "completed",
+                        "days" => $days,
                     ];
                 }),
         ])
@@ -355,45 +395,60 @@ class HomeController extends Controller
             ->values()
             ->all();
 
-        // Monthly earnings data for chart (excluding external bookings)
-        $monthlyEarnings = Cache::remember('monthly_earnings_' . $user->id, now()->addHours(6), function() use ($user, $isAdmin, $p) {
-            $earnings = [];
+
+            $monthlyEarnings = [];
+
             for ($i = 11; $i >= 0; $i--) {
                 $month = now()->subMonths($i);
-                $monthStart = $month->startOfMonth()->toDateString();
-                $monthEnd = $month->endOfMonth()->toDateString();
+                $monthStart = $month->copy()->startOfMonth()->toDateString();
+                $monthEnd = $month->copy()->endOfMonth()->toDateString();
 
+                // Property Earnings
                 $propertyEarnings = Booking::where("status", "Paid")
                     ->whereNull("external_booking")
-                    ->when(fn($q) => $q->whereHas("user"))
+                    ->whereBetween("check_in_date", [$monthStart, $monthEnd])
+                    ->when(true, function($q) {
+                        return $q->whereHas("user");
+                    })
                     ->whereHas("property", function ($query) use ($user, $isAdmin) {
                         if (!$isAdmin) {
                             $query->where("user_id", $user->id);
                         }
                     })
-                    ->whereBetween("created_at", [$monthStart, $monthEnd])
-                    ->sum("total_price");
+                    ->with('property')
+                    ->get()
+                    ->sum(function ($booking) {
+                        $platformPrice = $booking->property->platform_price ?? 0;
+                        $days = Carbon::parse($booking->check_out_date)->diffInDays(
+                            Carbon::parse($booking->check_in_date)
+                        );
+                        return $platformPrice * $days;
+                    });
 
+                // Car Earnings
                 $carEarnings = CarBooking::where("status", "Paid")
                     ->whereNull("external_booking")
-                    ->when(fn($q) => $q->whereHas("user"))
-                    ->whereHas("car", function ($query) use ($user, $isAdmin) {
-                        if (!$isAdmin) {
-                            $query->where("user_id", $user->id);
-                        }
+                    ->whereBetween("start_date", [$monthStart, $monthEnd])
+                    ->whereHas("car", function ($query) use ($user) {
+                        $query->where("user_id", $user->id);
                     })
-                    ->whereBetween("created_at", [$monthStart, $monthEnd])
-                    ->sum("total_price");
+                    ->with('car')
+                    ->get()
+                    ->sum(function ($booking) {
+                        $platformPrice = $booking->car->platform_price ?? 0;
+                        $days = Carbon::parse($booking->end_date)->diffInDays(
+                            Carbon::parse($booking->start_date)
+                        );
+                        return $platformPrice * $days;
+                    });
 
-                $earnings[] = [
+                $monthlyEarnings[] = [
                     "month" => $month->format("M Y"),
                     "property_earnings" => $propertyEarnings * $p,
                     "car_earnings" => $carEarnings * $p,
-                    "total" => ($propertyEarnings * $p) + ($carEarnings * $p),
+                    "total" => ($propertyEarnings + $carEarnings) * $p,
                 ];
             }
-            return $earnings;
-        });
 
         $repaymentAmount = Repayment::when($user->role_id != 1, function ($query) use ($user) {
             return $query->where('user_id', $user->id);
@@ -453,36 +508,79 @@ class HomeController extends Controller
         $isAdmin = $user->role_id === 1 || $user->role_id === "1";
 
         // Calculate total revenue from property bookings (only non-external bookings)
-        $propertyBookingTotal = Booking::where("status", "=", "Paid")
-            ->whereNull("external_booking") // Only include non-external bookings
-            ->whereHas("property", function ($query) use ($user) {
-                $query->where("user_id", $user->id);
+        $propertyBookingTotal = Booking::where("status", "Paid")
+            ->whereNull("external_booking") // Exclude external bookings
+            ->when(true, function($q) {  // or some condition instead of true
+                return $q->whereHas("user");
             })
-            ->sum("total_price");
+            ->whereHas("property", function ($query) use ($user, $isAdmin) {
+                if (!$isAdmin) {
+                    $query->where("user_id", $user->id);
+                }
+            })
+            ->with(['property', 'user'])
+            ->get()
+            ->sum(function ($booking) {
+                $platformPrice = $booking->property->platform_price ?? 0;
+                $checkIn = Carbon::parse($booking->check_in_date);
+                $checkOut = Carbon::parse($booking->check_out_date);
+                $days = $checkOut->diffInDays($checkIn);
+                
+                return $platformPrice * $days;
+            });
 
-         $availablePropertyBookingTotal = Booking::where("status", "=", "Paid")
-            ->whereNull("external_booking")
-            ->whereNotNull("checked_in")
-            ->whereHas("property", function ($query) use ($user) {
-                $query->where("user_id", $user->id);
+        $availablePropertyBookingTotal = Booking::where("status", "Paid")
+            ->whereNull("external_booking") // Exclude external bookings
+            ->when(true, function($q) {  // or some condition instead of true
+                return $q->whereHas("user");
             })
-            ->sum("total_price");
+            ->whereHas("property", function ($query) use ($user, $isAdmin) {
+                if (!$isAdmin) {
+                    $query->where("user_id", $user->id);
+                }
+            })
+            ->whereNotNull("checked_in")
+            ->with(['property', 'user'])
+            ->get()
+            ->sum(function ($booking) {
+                $platformPrice = $booking->property->platform_price ?? 0;
+                $checkIn = Carbon::parse($booking->check_in_date);
+                $checkOut = Carbon::parse($booking->check_out_date);
+                $days = $checkOut->diffInDays($checkIn);
+                
+                return $platformPrice * $days;
+            });
 
         // Calculate total revenue from car bookings (only non-external bookings)
-        $carBookingTotal = CarBooking::where("status", "=", "Paid")
+        $carBookingTotal = CarBooking::where("status", "Paid")
             ->whereNull("external_booking")
             ->whereHas("car", function ($query) use ($user) {
                 $query->where("user_id", $user->id);
             })
-            ->sum("total_price");
+            ->with('car') // Load the 'car' relationship
+            ->get()
+            ->sum(function ($booking) {
+                $days = Carbon::parse($booking->end_date)->diffInDays(
+                    Carbon::parse($booking->start_date)
+                );
+                return ($booking->car->platform_price ?? 0) * $days;
+            });
 
-        $availableCarBookingTotal = CarBooking::where("status", "=", "Paid")
+        // Available car bookings (checked-in only)
+        $availableCarBookingTotal = CarBooking::where("status", "Paid")
             ->whereNull("external_booking")
             ->whereNotNull("checked_in")
             ->whereHas("car", function ($query) use ($user) {
                 $query->where("user_id", $user->id);
             })
-            ->sum("total_price");
+            ->with('car')
+            ->get()
+            ->sum(function ($booking) {
+                $days = Carbon::parse($booking->end_date)->diffInDays(
+                    Carbon::parse($booking->start_date)
+                );
+                return ($booking->car->platform_price ?? 0) * $days;
+            });
 
         // Count user's cars and properties
         $carsCount = Car::where("user_id", "=", $user->id)->count();
@@ -501,7 +599,7 @@ class HomeController extends Controller
         $recentTransactions = collect([
             // Property bookings
             ...Booking::where("status", "Paid")
-                ->whereNull("external_booking") // Exclude external bookings
+                ->whereNull("external_booking") 
                 ->when(fn($q) => $q->whereHas("user"))
                 ->whereHas("property", function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
@@ -513,22 +611,24 @@ class HomeController extends Controller
                 ->take(5)
                 ->get()
                 ->map(function ($booking) {
+                    $days = Carbon::parse($booking->check_in_date)->diffInDays(Carbon::parse($booking->check_out_date));
+                    
                     return [
                         "type" => "property",
                         "title" => $booking->property->title,
                         "amount" => $booking->total_price,
                         "platform_price" => $booking->property->platform_price,
-                        "platform_charges" =>
-                            $booking->property->platform_charges,
+                        "platform_charges" => $booking->property->platform_charges,
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
                         "status" => "completed",
+                        "days" => $days,
                     ];
                 }),
 
             // Car bookings
             ...CarBooking::where("status", "Paid")
-                ->whereNull("external_booking") // Exclude external bookings
+                ->whereNull("external_booking")
                 ->when(fn($q) => $q->whereHas("user"))
                 ->whereHas("car", function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
@@ -540,16 +640,18 @@ class HomeController extends Controller
                 ->take(5)
                 ->get()
                 ->map(function ($booking) {
+                    $days = Carbon::parse($booking->start_date)->diffInDays(Carbon::parse($booking->end_date));
+                    
                     return [
                         "type" => "car",
-                        "title" =>
-                            $booking->car->make . " " . $booking->car->model,
+                        "title" => $booking->car->make . " " . $booking->car->model,
                         "amount" => $booking->total_price,
                         "platform_price" => $booking->car->platform_price,
                         "platform_charges" => $booking->car->platform_charges,
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
                         "status" => "completed",
+                        "days" => $days,
                     ];
                 }),
         ])

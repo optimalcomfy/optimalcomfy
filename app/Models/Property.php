@@ -63,7 +63,6 @@ class Property extends Model
     {
         return $this->hasMany(Booking::class)->where('status', 'Paid');
     }
-    
 
     public function variations()
     {
@@ -91,34 +90,30 @@ class Property extends Model
     }
 
     /**
-     * Accessor: Platform price (price + platform charges)
+     * Accessor: Platform price (Guest Price)
+     * Formula: Guest Price = Host Price / (1 - Platform Percentage)
+     * Example: If host price is 5500 and platform takes 15%, guest price = 5500 / (1 - 0.15) = 6470.59
      */
-    
     public function getPlatformPriceAttribute()
     {
         $company = Company::first();
 
         if (!$company || !$company->percentage) {
-            return round($this->amount / 100) * 100;
+            return round($this->amount); // Return host price if no platform fee
         }
 
-        $base = $this->amount;
-        $charges = $base * $company->percentage / 100;
+        $platformPercentage = $company->percentage / 100;
+        $guestPrice = $this->amount / (1 - $platformPercentage);
 
-        return round(($base + $charges) / 100) * 100;
+        return round($guestPrice, 2); // Round to 2 decimal places (currency format)
     }
 
     /**
-     * Accessor: Platform charges (commission only)
+     * Accessor: Platform charges (Guest Price - Host Amount)
+     * Example: If guest price is 6470.59 and host price is 5500, charges = 6470.59 - 5500 = 970.59
      */
     public function getPlatformChargesAttribute()
     {
-        $company = Company::first();
-
-        if (!$company || !$company->percentage) {
-            return 0;
-        }
-
-        return round($this->platform_price * $company->percentage / 100);
+        return round($this->platform_price - $this->amount, 2);
     }
 }

@@ -255,7 +255,7 @@ class HomeController extends Controller
             ->with(['property', 'user'])
             ->get()
             ->sum(function ($booking) {
-                $platformPrice = $booking->property->platform_price ?? 0;
+                $platformPrice = round($booking->property->amount, -2) ?? 0;
                 $checkIn = Carbon::parse($booking->check_in_date);
                 $checkOut = Carbon::parse($booking->check_out_date);
                 $days = $checkOut->diffInDays($checkIn);
@@ -277,7 +277,7 @@ class HomeController extends Controller
             ->with(['property', 'user'])
             ->get()
             ->sum(function ($booking) {
-                $platformPrice = $booking->property->platform_price ?? 0;
+                $platformPrice = round($booking->property->platform_price, -2) ?? 0;
                 $checkIn = Carbon::parse($booking->check_in_date);
                 $checkOut = Carbon::parse($booking->check_out_date);
                 $days = $checkOut->diffInDays($checkIn);
@@ -298,7 +298,7 @@ class HomeController extends Controller
                 $days = Carbon::parse($booking->end_date)->diffInDays(
                     Carbon::parse($booking->start_date)
                 );
-                return ($booking->car->platform_price ?? 0) * $days;
+                return (round($booking->car->platform_price, -2) ?? 0) * $days;
             });
 
         // Available car bookings (checked-in only)
@@ -314,10 +314,10 @@ class HomeController extends Controller
                 $days = Carbon::parse($booking->end_date)->diffInDays(
                     Carbon::parse($booking->start_date)
                 );
-                return ($booking->car->platform_price ?? 0) * $days;
+                return (round($booking->car->amount, -2) ?? 0) * $days;
             });
 
-        $availablePayouts = ($availablePropertyBookingTotal + $availableCarBookingTotal) * $p;  
+        $availablePayouts = ($availablePropertyBookingTotal + $availableCarBookingTotal);
 
         // Count user's cars and properties
         $carsCount = $isAdmin
@@ -328,7 +328,7 @@ class HomeController extends Controller
             : Property::where("user_id", $user->id)->count();
 
         // Calculate pending payouts
-        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal) * $p;
+        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal);
 
         // Recent transactions (excluding external bookings)
         $recentTransactions = collect([
@@ -444,9 +444,9 @@ class HomeController extends Controller
 
                 $monthlyEarnings[] = [
                     "month" => $month->format("M Y"),
-                    "property_earnings" => $propertyEarnings * $p,
-                    "car_earnings" => $carEarnings * $p,
-                    "total" => ($propertyEarnings + $carEarnings) * $p,
+                    "property_earnings" => $propertyEarnings,
+                    "car_earnings" => $carEarnings,
+                    "total" => ($propertyEarnings + $carEarnings),
                 ];
             }
 
@@ -464,9 +464,9 @@ class HomeController extends Controller
             // Wallet specific data
             "carsCount" => $carsCount,
             "propertiesCount" => $propertiesCount,
-            "propertyBookingTotal" => $propertyBookingTotal * $p,
-            "carBookingTotal" => $carBookingTotal * $p,
-            "totalEarnings" => ($propertyBookingTotal * $p) + ($carBookingTotal * $p),
+            "propertyBookingTotal" => $propertyBookingTotal,
+            "carBookingTotal" => $carBookingTotal,
+            "totalEarnings" => ($propertyBookingTotal) + ($carBookingTotal),
             "pendingPayouts" => $pendingPayouts - $repaymentAmount,
             "availableBalance" => $availablePayouts - $repaymentAmount,
             "monthlyEarnings" => $monthlyEarnings,
@@ -521,7 +521,7 @@ class HomeController extends Controller
             ->with(['property', 'user'])
             ->get()
             ->sum(function ($booking) {
-                $platformPrice = $booking->property->platform_price ?? 0;
+                $platformPrice = round($booking->property->amount, -2) ?? 0;
                 $checkIn = Carbon::parse($booking->check_in_date);
                 $checkOut = Carbon::parse($booking->check_out_date);
                 $days = $checkOut->diffInDays($checkIn);
@@ -543,7 +543,7 @@ class HomeController extends Controller
             ->with(['property', 'user'])
             ->get()
             ->sum(function ($booking) {
-                $platformPrice = $booking->property->platform_price ?? 0;
+                $platformPrice = round($booking->property->amount, -2) ?? 0;
                 $checkIn = Carbon::parse($booking->check_in_date);
                 $checkOut = Carbon::parse($booking->check_out_date);
                 $days = $checkOut->diffInDays($checkIn);
@@ -563,7 +563,7 @@ class HomeController extends Controller
                 $days = Carbon::parse($booking->end_date)->diffInDays(
                     Carbon::parse($booking->start_date)
                 );
-                return ($booking->car->platform_price ?? 0) * $days;
+                return (round($booking->car->amount, -2) ?? 0) * $days;
             });
 
         // Available car bookings (checked-in only)
@@ -579,7 +579,7 @@ class HomeController extends Controller
                 $days = Carbon::parse($booking->end_date)->diffInDays(
                     Carbon::parse($booking->start_date)
                 );
-                return ($booking->car->platform_price ?? 0) * $days;
+                return (round($booking->car->amount, -2) ?? 0) * $days;
             });
 
         // Count user's cars and properties
@@ -591,9 +591,9 @@ class HomeController extends Controller
 
 
         // Calculate pending payouts
-        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal) * $p;
+        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal);
 
-        $availablePayouts = ($availablePropertyBookingTotal + $availableCarBookingTotal) * $p;
+        $availablePayouts = ($availablePropertyBookingTotal + $availableCarBookingTotal);
 
         // Recent transactions (only non-external bookings)
         $recentTransactions = collect([
@@ -676,9 +676,9 @@ class HomeController extends Controller
             // Wallet specific data
             "carsCount" => $carsCount,
             "propertiesCount" => $propertiesCount,
-            "propertyBookingTotal" => $propertyBookingTotal * $p,
+            "propertyBookingTotal" => $propertyBookingTotal,
             "carBookingTotal" => $carBookingTotal,
-            "totalEarnings" => ($propertyBookingTotal * $p) + ($carBookingTotal * $p),
+            "totalEarnings" => ($propertyBookingTotal) + ($carBookingTotal),
             "pendingPayouts" => $pendingPayouts - $repaymentAmount,
             "repaymentAmount" => $repaymentAmount,
             "availableBalance" => $availablePayouts - $repaymentAmount,

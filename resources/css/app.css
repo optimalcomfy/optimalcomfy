@@ -54,3 +54,7 @@ body {
   }
 }
 
+
+body {
+  overflow: auto !important;
+}

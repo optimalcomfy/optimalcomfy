@@ -125,13 +125,6 @@ export default function PaymentPending({ auth, laravelVersion, phpVersion }) {
                                         </>
                                     ) : 'Check Payment Status'}
                                 </button>
-                                
-                                <Link 
-                                    href={route('bookings.show', booking.id)} 
-                                    className="px-4 py-2 bg-[#0d3c46] text-white rounded hover:bg-gray-700"
-                                >
-                                    View Booking Details
-                                </Link>
                             </div>
                         </div>
                     </div>

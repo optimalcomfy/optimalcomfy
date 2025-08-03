@@ -262,7 +262,7 @@ const PropertyBookingForm = () => {
       // Create booking
       router.post(route('bookings.store'), data, {
         onSuccess: () => {
-          window.location.href = route('booking.confirmation');
+       
         },
         onError: (errors) => {
           console.error('Booking creation failed:', errors);

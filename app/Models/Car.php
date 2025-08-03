@@ -93,25 +93,19 @@ class Car extends Model
      * Special case: Returns 6400 when host amount is 5500
      * Otherwise calculates: Guest Price = Host Amount / (1 - Platform Percentage)
      */
+
     public function getPlatformPriceAttribute()
     {
-        // Special case: Force 6400 when host amount is 5500
-        if ($this->amount == 5500) {
-            return 6400;
-        }
 
         $company = Company::first();
 
-        if (!$company || !$company->percentage) {
-            return round($this->amount, -2); // Return host price if no platform fee
-        }
-
         $platformPercentage = $company->percentage / 100;
-        $guestPrice = $this->amount / (1 - $platformPercentage);
+
+
+        $guestPrice = $this->amount * (1 + $platformPercentage);
 
         return round($guestPrice, -2); // Round to 2 decimal places (currency format)
     }
-
     /**
      * Accessor: Platform charges (Guest Price - Host Amount)
      * Example: For 5500→6400, charges = 900

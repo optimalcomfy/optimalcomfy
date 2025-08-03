@@ -105,7 +105,7 @@ class Property extends Model
         $platformPercentage = $company->percentage / 100;
         $guestPrice = $this->amount / (1 - $platformPercentage);
 
-        return round($guestPrice, 2); // Round to 2 decimal places (currency format)
+        return round($guestPrice, -2); // Round to 2 decimal places (currency format)
     }
 
     /**
@@ -114,6 +114,6 @@ class Property extends Model
      */
     public function getPlatformChargesAttribute()
     {
-        return round($this->platform_price - $this->amount, 2);
+        return round($this->platform_price - $this->amount, -2);
     }
 }

@@ -98,13 +98,13 @@ class Car extends Model
         $company = Company::first();
 
         if (!$company || !$company->percentage) {
-            return round($this->amount, 2); // Return host price if no platform fee
+            return round($this->amount, -2); // Return host price if no platform fee
         }
 
         $platformPercentage = $company->percentage / 100;
         $guestPrice = $this->amount / (1 - $platformPercentage);
 
-        return round($guestPrice, 2); // Round to 2 decimal places
+        return round($guestPrice, -2); // Round to 2 decimal places
     }
 
     /**
@@ -113,7 +113,7 @@ class Car extends Model
      */
     public function getPlatformChargesAttribute()
     {
-        return round($this->platform_price - $this->amount, 2);
+        return round($this->platform_price - $this->amount, -2);
     }
 
     /**

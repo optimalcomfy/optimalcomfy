@@ -149,7 +149,7 @@ const Indexcategories = () => {
 
         {/* Pagination */}
         {pagination && (
-          <div className="my-6 flex justify-center">
+          <div className="my-6 overflow-x-auto flex justify-center">
             <div className="flex items-center gap-2">
               {/* Previous Page Link */}
               {pagination.prev_page_url ? (

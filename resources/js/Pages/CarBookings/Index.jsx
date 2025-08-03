@@ -453,7 +453,7 @@ const CarBookingsIndex = () => {
               )}
               
               {datePickerOpen && (
-                <div className="absolute right-0 mt-2 z-10 bg-white rounded-lg shadow-lg border border-gray-200 p-4">
+                <div className="absolute mt-2 z-10 bg-white rounded-lg shadow-lg border border-gray-200 p-4">
                   <DateRange
                     editableDateInputs={true}
                     onChange={item => setDateRange([item.selection])}
@@ -582,7 +582,7 @@ const CarBookingsIndex = () => {
 
         {/* Pagination */}
         {pagination && (
-          <div className="my-6 flex justify-center">
+          <div className="my-6 flex overflow-x-auto justify-center">
             <div className="flex items-center gap-2">
               {/* Previous Page Link */}
               {pagination.prev_page_url ? (

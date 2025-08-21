@@ -560,13 +560,6 @@ const CarBookingsIndex = () => {
                         >
                           View
                         </Link>
-                        {roleId === 1 &&
-                        <button
-                          onClick={() => handleDelete(booking.id)}
-                          className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200"
-                        >
-                          Delete
-                        </button>}
                       </div>
                     </td>
                   </tr>

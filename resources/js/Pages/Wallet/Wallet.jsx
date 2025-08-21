@@ -76,7 +76,7 @@ const Wallet = ({ user }) => {
     };
 
     // Calculate last booking payment (most recent transaction)
-    const lastBookingPayment = recentTransactions.length > 0 ? parseFloat(recentTransactions[0].platform_price - recentTransactions[0].platform_charges) * recentTransactions[0].days  : 0;
+    const lastBookingPayment = recentTransactions.length > 0 ? parseFloat(recentTransactions[0].net_amount) * recentTransactions[0].days  : 0;
 
     // Calculate next payout (pendingPayouts)
     const nextPayout = pendingPayouts;
@@ -316,7 +316,7 @@ const Wallet = ({ user }) => {
                                                 </div>
                                                 <div className="transaction-amount">
                                                     <div className="amount-value">
-                                                        {formatCurrency((transaction.platform_price - transaction.platform_charges) * transaction.days)}
+                                                        {formatCurrency((transaction.net_amount - transaction.platform_charges) * transaction.days)}
                                                     </div>
                                                     <div className={`status-badge ${transaction.status === 'Paid' ? 'paid' : 'pending'}`}>
                                                         {transaction.status === 'Paid' ? 'Completed' : 'Processing'}

@@ -217,18 +217,6 @@ const Index = () => {
                         >
                           Edit
                         </Link>}
-                        {roleId === 1 &&
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            handleDelete(repayment.id); // Call SweetAlert2 on delete
-                          }}
-                          className="inline"
-                        >
-                          <button type="submit" className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200">
-                            Delete
-                          </button>
-                        </form>}
                       </div>
                     </td>
                   </tr>

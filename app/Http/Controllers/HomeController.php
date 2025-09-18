@@ -82,7 +82,7 @@ class HomeController extends Controller
                     ->orWhere("price", "LIKE", "%$search%");
             }
 
-            $properties = $query->get();
+            $properties = $query->limit(75)->get();
         }
 
         // Return appropriate response based on request type

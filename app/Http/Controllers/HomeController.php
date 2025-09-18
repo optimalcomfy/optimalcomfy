@@ -30,7 +30,7 @@ class HomeController extends Controller
         if ($request->has('latitude') && $request->has('longitude')) {
             $latitude = $request->query('latitude');
             $longitude = $request->query('longitude');
-            $limit = $request->query('limit', 75);
+            $limit = 56;
 
             // Validate parameters
             if (!is_numeric($latitude) || !is_numeric($longitude)) {
@@ -82,7 +82,7 @@ class HomeController extends Controller
                     ->orWhere("price", "LIKE", "%$search%");
             }
 
-            $properties = $query->limit(75)->get();
+            $properties = $query->limit(28)->get();
         }
 
         // Return appropriate response based on request type
@@ -122,7 +122,7 @@ class HomeController extends Controller
         if ($request->has('latitude') && $request->has('longitude')) {
             $latitude = $request->query('latitude');
             $longitude = $request->query('longitude');
-            $limit = $request->query('limit', 75);
+            $limit = 56;
 
             // Validate parameters
             if (!is_numeric($latitude) || !is_numeric($longitude)) {
@@ -169,7 +169,7 @@ class HomeController extends Controller
                     ->orWhere("price_per_day", "LIKE", "%$search%");
             }
 
-            $cars = $query->limit(75)->get();
+            $cars = $query->limit(28)->get();
         }
 
         // Return appropriate response based on request type

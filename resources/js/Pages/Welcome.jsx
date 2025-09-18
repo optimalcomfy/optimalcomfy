@@ -7,6 +7,8 @@ import { MapPin, Shield, X } from 'lucide-react';
 import Slider from "react-slick";
 import axios from "axios";
 import debounce from "lodash.debounce";
+import { LazyLoadImage } from 'react-lazy-load-image-component';
+import 'react-lazy-load-image-component/src/effects/blur.css';
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -50,6 +52,9 @@ const deleteCookie = (name) => {
   document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
 };
 
+// Base64 encoded placeholder for blur effect (1x1 transparent pixel)
+const PLACEHOLDER_SRC = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E";
+
 function NextArrow({ onClick, disabled }) {
   return (
     <div
@@ -61,7 +66,16 @@ function NextArrow({ onClick, disabled }) {
         }
       }}
     >
-      <img src="/image/chevron.png" alt="Next" className="h-5" loading="lazy" />
+      <LazyLoadImage
+        src="/image/chevron.png"
+        alt="Next"
+        className="h-5"
+        effect="blur"
+        threshold={100}
+        placeholderSrc={PLACEHOLDER_SRC}
+        width={20}
+        height={20}
+      />
     </div>
   );
 }
@@ -77,7 +91,16 @@ function PrevArrow({ onClick, disabled }) {
         }
       }}
     >
-      <img src="/image/left-chevron.png" alt="Prev" className="h-5" loading="lazy" />
+      <LazyLoadImage
+        src="/image/left-chevron.png"
+        alt="Previous"
+        className="h-5"
+        effect="blur"
+        threshold={100}
+        placeholderSrc={PLACEHOLDER_SRC}
+        width={20}
+        height={20}
+      />
     </div>
   );
 }

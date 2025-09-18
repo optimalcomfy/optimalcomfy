@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
-import { Link, Head, router, usePage, useForm } from "@inertiajs/react";
+import { Head, usePage } from "@inertiajs/react";
 import { LayoutProvider } from "@/Layouts/layout/context/layoutcontext.jsx";
 import { PrimeReactProvider } from "primereact/api";
 import HomeLayout from "@/Layouts/HomeLayout";
 import Slider from "react-slick";
 import axios from "axios";
-import debounce from "lodash.debounce";
+import debounce from "lodash/debounce";
+import { MapPin, Shield, X } from 'lucide-react';
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import "../../css/main";
-import "./Welcome.css";
+import "./Cars.css";
 import ProductSkeleton from "@/Components/ProductSkeleton";
-import './Cars.css'
 
 // Lazy-loaded ProductCar component
 const LazyProductCar = React.lazy(() => import("@/Components/ProductCar"));
@@ -23,9 +23,106 @@ const SLIDES_TO_ADD_ON_SCROLL = 2;
 const INITIAL_CARS_PER_SLIDE = 6;
 const CARS_TO_ADD_ON_SWIPE = 6;
 const LOAD_AHEAD_BUFFER = 2;
-const MIN_ITEMS_FOR_SLIDER = 4; // Minimum items to show as slider
+const MIN_ITEMS_FOR_SLIDER = 4;
 const FALLBACK_SECTION_NAME = "Other Areas";
 const MOBILE_CARS_PER_BATCH = 8;
+const LOCATION_COOKIE_NAME = "car_location_permission";
+
+// Cookie management functions
+const getCookie = (name) => {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+};
+
+const setCookie = (name, value, days = 365) => {
+  if (typeof document === 'undefined') return;
+  const date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = `expires=${date.toUTCString()}`;
+  document.cookie = `${name}=${value};${expires};path=/;SameSite=Lax`;
+};
+
+const deleteCookie = (name) => {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+};
+
+// Location Permission Component
+const LocationPermissionModal = ({ onAccept, onReject, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 animate-in slide-in-from-bottom-4">
+        {/* Header */}
+        <div className="relative px-6 pt-6 pb-4">
+          <button 
+            onClick={onClose}
+            className="absolute right-4 top-4 p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200"
+            aria-label="Close modal"
+          >
+            <X size={20} />
+          </button>
+          
+          <div className="flex items-center space-x-3">
+            <div className="h-12 rounded-xl flex items-center justify-center">
+              <MapPin className="w-6 text-[#e6632a]" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 leading-tight">
+                Find Cars Near You
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Discover available vehicles in your area
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="px-6 pb-2">
+          <p className="text-gray-600 leading-relaxed">
+            We can show you available cars near your location for a convenient rental experience. 
+            This helps us display the most relevant vehicles for your area.
+          </p>
+        </div>
+
+        {/* Privacy Note */}
+        <div className="mx-6 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+          <div className="flex items-start space-x-3">
+            <div className="flex flex-col gap-2 items-start text-left">
+              <p className="text-sm flex items-center font-medium text-gray-800 mb-1">
+                <Shield className="w-5 text-[#000000] mt-0.5 flex-shrink-0 mr-auto" />
+                Your privacy is protected
+              </p>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Your location data is only used to show relevant vehicles and is never stored. 
+                You can change this preference at any time in your settings.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="px-6 pb-6 space-y-3">
+          <button 
+            onClick={onAccept}
+            className="w-full bg-[#e6632a] hover:bg-blue-700 text-white font-medium py-3.5 px-4 rounded-xl transition-colors duration-200 shadow-sm hover:shadow-md"
+          >
+            Yes, use my location
+          </button>
+          <button 
+            onClick={onReject}
+            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3.5 px-4 rounded-xl transition-colors duration-200"
+          >
+            No thanks, browse all vehicles
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function NextArrow({ onClick, disabled }) {
   return (
@@ -192,53 +289,62 @@ function shuffleArray(array) {
   return shuffled;
 }
 
-export default function Welcome({ auth, laravelVersion, phpVersion }) {
-    const { flash, cars } = usePage().props;
+export default function Cars() {
+    const { flash, cars: initialCars } = usePage().props;
     const sliderRefs = useRef({});
     const [currentSlides, setCurrentSlides] = useState({});
     const [userLocation, setUserLocation] = useState(null);
     const [groupedCars, setGroupedCars] = useState({});
-    const [mixedCars, setMixedCars] = useState([]); // For mobile mixed display
+    const [mixedCars, setMixedCars] = useState([]);
     const [isMobile, setIsMobile] = useState(false);
     const [visibleLocations, setVisibleLocations] = useState([]);
     const containerRef = useRef(null);
     const [loadedImages, setLoadedImages] = useState({});
     const [loadedCars, setLoadedCars] = useState({});
     const [loadingMore, setLoadingMore] = useState({});
-
-    // Initialize form data and setData function using useForm
-    const { data, setData, errors } = useForm({
-        Car_Type: "Residential",
-        PickupLocation: "",
-        DropoffLocation: "",
-        "Pick Up Date": "",
-        "Pick Up Time": "",
-        "Collection Date": "",
-        "Collection Time": "",
-    });
+    const [locationBasedCars, setLocationBasedCars] = useState(null);
+    const [isLoadingLocationData, setIsLoadingLocationData] = useState(false);
+    const [usingLocationData, setUsingLocationData] = useState(false);
+    const [showLocationPermission, setShowLocationPermission] = useState(false);
+    const [locationPermissionAsked, setLocationPermissionAsked] = useState(false);
 
     // Check if device is mobile
     useEffect(() => {
-        const checkIsMobile = () => {
-            setIsMobile(window.innerWidth <= 768);
-        };
-        
+        const checkIsMobile = () => setIsMobile(window.innerWidth <= 768);
         checkIsMobile();
         const resizeHandler = debounce(checkIsMobile, 200);
         window.addEventListener('resize', resizeHandler);
-        
         return () => window.removeEventListener('resize', resizeHandler);
+    }, []);
+
+    // Check location permission cookie on component mount
+    useEffect(() => {
+        const locationPermission = getCookie(LOCATION_COOKIE_NAME);
+        if (locationPermission === 'granted') {
+            requestLocationAccess();
+        } else if (locationPermission === 'denied') {
+            setLocationPermissionAsked(true);
+        } else {
+            // Show permission modal if not asked before
+            setTimeout(() => {
+                setShowLocationPermission(true);
+            }, 1000);
+        }
     }, []);
 
     // Initialize cars and lazy loading
     useEffect(() => {
-        if (cars && cars.length > 0) {
+        const carsToUse = usingLocationData && locationBasedCars 
+            ? locationBasedCars 
+            : initialCars;
+        
+        if (carsToUse && carsToUse.length > 0) {
             // For desktop: group with minimum threshold
-            const grouped = groupCarsWithMinimum(cars);
+            const grouped = groupCarsWithMinimum(carsToUse);
             setGroupedCars(grouped);
             
             // For mobile: create mixed array with location info
-            const mixed = shuffleArray(cars.map(car => ({
+            const mixed = shuffleArray(carsToUse.map(car => ({
                 ...car,
                 displayLocation: car.location_address ? extractLocationInfo(car.location_address) : 'All Locations'
             })));
@@ -256,41 +362,84 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
             setLoadedCars(initialLoadedCars);
             setVisibleLocations(Object.keys(grouped).slice(0, INITIAL_SLIDES_COUNT));
         }
-    }, [cars]);
+    }, [initialCars, locationBasedCars, usingLocationData]);
 
-    // Geolocation effect
-    useEffect(() => {
-        if (window.navigator.onLine) {
-            const geolocationTimeout = setTimeout(() => {
-                navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        const { latitude: lat, longitude: lon } = position.coords;
-                        try {
-                            const response = await axios.get(
-                                `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
-                            );
-
-                            if (response.data?.address) {
-                                const userLocationData = response.data.address.state || 
-                                                       response.data.address.county || 
-                                                       response.data.address.city ||
-                                                       response.data.address.town ||
-                                                       response.data.address.village;
-                                setUserLocation(userLocationData);
-                            }
-                        } catch (error) {
-                            console.error("Error fetching location data:", error);
-                        }
-                    },
-                    (error) => {
-                        console.error("Geolocation error:", error);
-                    },
-                    { timeout: 5000 }
-                );
-            }, 1000);
-            
-            return () => clearTimeout(geolocationTimeout);
+    // Request location access
+    const requestLocationAccess = useCallback(() => {
+        if (!window.navigator.onLine) {
+            console.error("No internet connection");
+            return;
         }
+
+        setIsLoadingLocationData(true);
+        setShowLocationPermission(false);
+        
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                try {
+                    const { latitude: lat, longitude: lon } = position.coords;
+                    
+                    // Get location name
+                    const locationResponse = await axios.get(
+                        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+                    );
+                    
+                    if (locationResponse.data?.address) {
+                        const userCounty = locationResponse.data.address.state || 
+                                        locationResponse.data.address.county || 
+                                        locationResponse.data.address.city;
+                        setUserLocation(userCounty);
+                    }
+                    
+                    // Fetch location-based cars
+                    try {
+                        const carsResponse = await axios.get(route('cars.all'), {
+                            params: { latitude: lat, longitude: lon, limit: 75 }
+                        });
+                        
+                        if (carsResponse.data?.cars) {
+                            setLocationBasedCars(carsResponse.data.cars);
+                            setUsingLocationData(true);
+                            setCookie(LOCATION_COOKIE_NAME, 'granted');
+                        }
+                    } catch (error) {
+                        console.error("Error fetching location-based cars:", error);
+                        setUsingLocationData(false);
+                    }
+                } catch (error) {
+                    console.error("Error processing location:", error);
+                    setUsingLocationData(false);
+                } finally {
+                    setIsLoadingLocationData(false);
+                    setLocationPermissionAsked(true);
+                }
+            },
+            (error) => {
+                console.error("Geolocation error:", error);
+                setIsLoadingLocationData(false);
+                setUsingLocationData(false);
+                setLocationPermissionAsked(true);
+                setCookie(LOCATION_COOKIE_NAME, 'denied');
+            },
+            { timeout: 10000, enableHighAccuracy: true, maximumAge: 300000 } // Cache for 5 minutes
+        );
+    }, []);
+
+    // Handle permission responses
+    const handleAcceptLocation = useCallback(() => {
+        setCookie(LOCATION_COOKIE_NAME, 'granted');
+        requestLocationAccess();
+    }, [requestLocationAccess]);
+
+    const handleRejectLocation = useCallback(() => {
+        setCookie(LOCATION_COOKIE_NAME, 'denied');
+        setShowLocationPermission(false);
+        setLocationPermissionAsked(true);
+        setUsingLocationData(false);
+    }, []);
+
+    const handleCloseModal = useCallback(() => {
+        setShowLocationPermission(false);
     }, []);
 
     // Intersection Observer for lazy loading more location slides (desktop)
@@ -391,14 +540,13 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         const slider = sliderRefs.current[location]?.current;
         if (slider) {
             const currentSlide = currentSlides[location] || 0;
-            const nextSlide = currentSlide + sliderSettings.slidesToScroll;
             
             slider.slickNext();
             
             const totalCars = groupedCars[location]?.length || 0;
             const currentLoaded = loadedCars[location]?.length || 0;
             
-            if (nextSlide + LOAD_AHEAD_BUFFER >= currentLoaded - 6 && 
+            if (currentSlide + LOAD_AHEAD_BUFFER >= currentLoaded - 6 && 
                 currentLoaded < totalCars && 
                 !loadingMore[location]) {
                 loadMoreCars(location, currentLoaded);
@@ -408,9 +556,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
 
     const handlePrevClick = useCallback((location) => {
         const slider = sliderRefs.current[location]?.current;
-        if (slider) {
-            slider.slickPrev();
-        }
+        if (slider) slider.slickPrev();
     }, []);
 
     const sliderSettings = useMemo(() => ({
@@ -477,7 +623,14 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
 
         return (
             <div className="mobile-mixed-container">
-                <h2 className="mobile-main-title">Available Rides</h2>
+                <div className="location-header">
+                    <h2 className="mobile-main-title">
+                        {usingLocationData ? "Cars Near You" : "Available Vehicles"}
+                    </h2>
+                    {isLoadingLocationData && (
+                        <div className="location-loading">Finding vehicles near you...</div>
+                    )}
+                </div>
                 <div className="mobile-mixed-grid">
                     {visibleCars.map((car, index) => (
                         <div key={car.id || `mixed-${index}`} className="mobile-car-item">
@@ -495,7 +648,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 )}
                 {visibleCars.length >= mixedCars.length && mixedCars.length > 0 && (
                     <div className="end-of-content">
-                        You've seen all available rides
+                        You've seen all available vehicles
                     </div>
                 )}
             </div>
@@ -510,7 +663,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         if (itemCount <= 3) {
             return (
                 <div key={location} className="small-location-grid padding-container p-5 location-container" data-location={location}>
-                    <h2>Rides in {location}</h2>
+                    <h2>Vehicles in {location}</h2>
                     <div className={`cars-grid items-${itemCount}`}>
                         {cars.map((car, idx) => (
                             <div key={car.id || `${location}-${idx}`} className="grid-car-item">
@@ -555,7 +708,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 <div className="slider-header">
                     <h2>
                         {location === FALLBACK_SECTION_NAME ? '✨ ' : ' '}
-                        Rides in {location}
+                        Vehicles in {location}
                     </h2>
                     {!shouldHideArrows && (
                         <div className="slider-arrows">
@@ -582,7 +735,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                         ))}
                         {loadingMore[location] && (
                             <div className="loading-more-cars">
-                                Loading more cars...
+                                Loading more vehicles...
                             </div>
                         )}
                     </Slider>
@@ -591,14 +744,14 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         );
     }, [currentSlides, loadedCars, loadingMore, groupedCars, loadedImages, sliderSettings, handleSliderAfterChange, handleNextClick, handlePrevClick]);
 
-    if (!cars || cars.length === 0) {
+    if (!initialCars || initialCars.length === 0) {
         return (
             <PrimeReactProvider>
                 <LayoutProvider>
-                    <Head title="Rides" />
+                    <Head title="Vehicles" />
                     <HomeLayout>
                         <div className="padding-container p-5">
-                            <h2>No cars available at the moment</h2>
+                            <h2>No vehicles available at the moment</h2>
                         </div>
                     </HomeLayout>
                 </LayoutProvider>
@@ -609,9 +762,24 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
     return (
         <PrimeReactProvider>
             <LayoutProvider>
-                <Head title="Rides" />
+                <Head title="Vehicles" />
                 <HomeLayout>
                     <div ref={containerRef} className="cars-container">
+                        {showLocationPermission && (
+                            <LocationPermissionModal
+                                onAccept={handleAcceptLocation}
+                                onReject={handleRejectLocation}
+                                onClose={handleCloseModal}
+                            />
+                        )}
+                        
+                        {isLoadingLocationData && (
+                            <div className="location-loading-overlay">
+                                <div className="loading-spinner"></div>
+                                <p>Finding the best vehicles near you...</p>
+                            </div>
+                        )}
+                        
                         {isMobile ? (
                             <div className="mobile-layout">
                                 <MobileMixedGrid />

@@ -118,7 +118,66 @@ class HomeController extends Controller
 
     public function allCars(Request $request)
     {
-        $cars = Car::with(["bookings", "initialGallery", "carFeatures"])->get();
+        // Check if location-based filtering is requested
+        if ($request->has('latitude') && $request->has('longitude')) {
+            $latitude = $request->query('latitude');
+            $longitude = $request->query('longitude');
+            $limit = $request->query('limit', 75);
+
+            // Validate parameters
+            if (!is_numeric($latitude) || !is_numeric($longitude)) {
+                return response()->json([
+                    'error' => 'Valid latitude and longitude are required',
+                    'data' => []
+                ], 400);
+            }
+
+            // Query for location-based results
+            $cars = Car::with([
+                "bookings",
+                "initialGallery",
+                "carFeatures",
+            ])
+            ->select('*', DB::raw("
+                (6371 * acos(
+                    cos(radians($latitude)) * 
+                    cos(radians(latitude)) * 
+                    cos(radians(longitude) - radians($longitude)) + 
+                    sin(radians($latitude)) * 
+                    sin(radians(latitude))
+                )) AS distance
+            "))
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->orderBy('distance', 'ASC')
+            ->limit($limit)
+            ->get();
+        } else {
+            // Original query for non-location-based results
+            $query = Car::with([
+                "bookings",
+                "initialGallery",
+                "carFeatures",
+            ])->orderBy("created_at", "desc");
+
+            if ($request->has("search")) {
+                $search = $request->input("search");
+                $query
+                    ->where("make", "LIKE", "%$search%")
+                    ->orWhere("model", "LIKE", "%$search%")
+                    ->orWhere("type", "LIKE", "%$search%")
+                    ->orWhere("price_per_day", "LIKE", "%$search%");
+            }
+
+            $cars = $query->limit(75)->get();
+        }
+
+        // Return appropriate response based on request type
+        if ($request->wantsJson() || $request->has('latitude')) {
+            return response()->json([
+                'cars' => $cars
+            ]);
+        }
 
         return Inertia::render("Cars", [
             "canLogin" => Route::has("login"),

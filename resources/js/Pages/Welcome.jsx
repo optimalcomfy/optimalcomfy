@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback } from "react";
-import { Head, usePage, router } from "@inertiajs/react";
+import { Head, usePage } from "@inertiajs/react";
 import { LayoutProvider } from "@/Layouts/layout/context/layoutcontext.jsx";
 import { PrimeReactProvider } from "primereact/api";
 import HomeLayout from "@/Layouts/HomeLayout";
@@ -206,9 +206,6 @@ export default function Welcome() {
   const [loadedImages, setLoadedImages] = useState({});
   const [loadedProperties, setLoadedProperties] = useState({});
   const [loadingMore, setLoadingMore] = useState({});
-  const [locationBasedProperties, setLocationBasedProperties] = useState(null);
-  const [isLoadingLocationData, setIsLoadingLocationData] = useState(false);
-  const [usingLocationData, setUsingLocationData] = useState(false);
 
   // Check if device is mobile
   useEffect(() => {
@@ -225,12 +222,7 @@ export default function Welcome() {
 
   // Initialize properties and lazy loading
   useEffect(() => {
-    // Use location-based properties if available, otherwise use initial properties
-    const propertiesToUse = usingLocationData && locationBasedProperties 
-      ? locationBasedProperties 
-      : initialProperties;
-    
-    const validProperties = propertiesToUse.filter(property => 
+    const validProperties = initialProperties.filter(property => 
       property?.location && typeof property.location === 'string'
     );
     
@@ -259,61 +251,33 @@ export default function Welcome() {
     // Initially show first 2 counties for desktop
     const counties = Object.keys(grouped);
     setVisibleCounties(counties.slice(0, INITIAL_SLIDES_COUNT));
-  }, [initialProperties, locationBasedProperties, usingLocationData]);
+  }, [initialProperties]);
 
-  // Geolocation effect - updated to fetch location-based properties
+  // Geolocation effect
   useEffect(() => {
     if (window.navigator.onLine) {
       const geolocationTimeout = setTimeout(() => {
-        setIsLoadingLocationData(true);
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const { latitude: lat, longitude: lon } = position.coords;
             try {
-              // First get the user's location name for display
-              const locationResponse = await axios.get(
+              const response = await axios.get(
                 `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
               );
-              
-              if (locationResponse.data?.address) {
-                const userCounty = locationResponse.data.address.state || 
-                                 locationResponse.data.address.county || 
-                                 locationResponse.data.address.city;
+              if (response.data?.address) {
+                const userCounty = response.data.address.state || 
+                                 response.data.address.county || 
+                                 response.data.address.city;
                 setUserLocation(userCounty);
-              }
-              
-              // Then fetch location-based properties from our server
-              try {
-                const propertiesResponse = await axios.get(route('welcome'), {
-                  params: {
-                    latitude: lat,
-                    longitude: lon,
-                    limit: 75
-                  }
-                });
-                
-                if (propertiesResponse.data && propertiesResponse.data.properties) {
-                  setLocationBasedProperties(propertiesResponse.data.properties);
-                  setUsingLocationData(true);
-                }
-              } catch (error) {
-                console.error("Error fetching location-based properties:", error);
-                // Fall back to regular properties if location-based fetch fails
-                setUsingLocationData(false);
               }
             } catch (error) {
               console.error("Error fetching city data:", error);
-              setUsingLocationData(false);
-            } finally {
-              setIsLoadingLocationData(false);
             }
           },
           (error) => {
             console.error("Geolocation error:", error);
-            setIsLoadingLocationData(false);
-            setUsingLocationData(false);
           },
-          { timeout: 5000, enableHighAccuracy: true }
+          { timeout: 5000 }
         );
       }, 1000);
       
@@ -506,16 +470,7 @@ export default function Welcome() {
 
     return (
       <div className="mobile-mixed-container">
-        <div className="location-header">
-          <h2 className="mobile-main-title">
-            {usingLocationData ? "Stays Near You" : "Available Stays"}
-          </h2>
-          {isLoadingLocationData && (
-            <div className="location-loading">
-              Finding stays near you...
-            </div>
-          )}
-        </div>
+        <h2 className="mobile-main-title">Available Stays</h2>
         <div className="mobile-mixed-grid">
           {visibleProperties.map((property, index) => (
             <div key={`mixed-${index}`} className="mobile-property-item">
@@ -650,13 +605,6 @@ export default function Welcome() {
         <Head title="Stays" />
         <HomeLayout>
           <div ref={containerRef} className="properties-container">
-            {isLoadingLocationData && (
-              <div className="location-loading-overlay">
-                <div className="loading-spinner"></div>
-                <p>Finding the best stays near you...</p>
-              </div>
-            )}
-            
             {isMobile ? (
               <div className="mobile-layout">
                 <MobileMixedGrid />
@@ -666,7 +614,6 @@ export default function Welcome() {
                 {sortedCounties.slice(0, visibleCounties.length).map((county) => 
                   renderCountySection(county, groupedProperties[county])
                 )}
-                
                 {loadingMore.counties && (
                   <div className="loading-more-counties">Loading more locations...</div>
                 )}

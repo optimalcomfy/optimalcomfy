@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request; // Add this import
 
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\EmployeeController;
@@ -45,6 +47,8 @@ use App\Http\Controllers\MpesaStkController;
 use App\Http\Controllers\RefundController;
 use App\Http\Controllers\CarRefundController;
 
+use App\Models\Property;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -59,8 +63,52 @@ use App\Http\Controllers\CarRefundController;
 
 Route::post('/send-comment', [ProfileController::class, 'sendComment'])->name('profile.sendComment');
 
+Route::get('/properties/closest', function (Request $request) {
+    try {
+        $latitude = $request->query('latitude');
+        $longitude = $request->query('longitude');
+        $limit = $request->query('limit', 75);
+
+        // Validate required parameters
+        if (!$latitude || !$longitude) {
+            return response()->json([
+                'error' => 'Latitude and longitude are required',
+                'data' => []
+            ], 400);
+        }
+
+        $properties = Property::select('*', DB::raw("
+            (6371 * acos(
+                cos(radians($latitude)) * 
+                cos(radians(latitude)) * 
+                cos(radians(longitude) - radians($longitude)) + 
+                sin(radians($latitude)) * 
+                sin(radians(latitude))
+            )) AS distance
+        "))
+        ->whereNotNull('latitude')
+        ->whereNotNull('longitude')
+        ->orderBy('distance', 'ASC')
+        ->limit($limit)
+        ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $properties
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Server error: ' . $e->getMessage(),
+            'data' => []
+        ], 500);
+    }
+});
+
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/welcome', [HomeController::class, 'index'])->name('welcome');
+Route::get('/properties/load-more', [HomeController::class, 'loadMore'])->name('properties.load-more');
 Route::get('/restaurant', [HomeController::class, 'restaurant'])->name('restaurant');
 Route::get('/activity', [HomeController::class, 'activity'])->name('activity');
 Route::get('/about', [HomeController::class, 'about'])->name('about');

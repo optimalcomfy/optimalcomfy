@@ -663,12 +663,6 @@ export default function Welcome() {
               </div>
             ) : (
               <>
-                {usingLocationData && userLocation && (
-                  <div className="location-notice padding-container p-5">
-                    <h2>✨ Showing stays near {userLocation}</h2>
-                  </div>
-                )}
-                
                 {sortedCounties.slice(0, visibleCounties.length).map((county) => 
                   renderCountySection(county, groupedProperties[county])
                 )}

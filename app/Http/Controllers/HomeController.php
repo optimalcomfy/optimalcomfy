@@ -20,6 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use App\Services\ImageOptimizer;
 
 
 class HomeController extends Controller
@@ -84,6 +85,24 @@ class HomeController extends Controller
 
             $properties = $query->limit(28)->get();
         }
+
+        // Optimize property images
+        $properties->transform(function ($property) {
+            if ($property->initialGallery && count($property->initialGallery) > 0) {
+                $optimizedGallery = [];
+                foreach ($property->initialGallery as $image) {
+                    // Assuming the image path is stored in a 'path' attribute
+                    if (isset($image['path'])) {
+                        $optimizedGallery[] = [
+                            'original' => $image['path'],
+                            'optimized' => ImageOptimizer::getOptimizedUrl($image['path'])
+                        ];
+                    }
+                }
+                $property->optimizedGallery = $optimizedGallery;
+            }
+            return $property;
+        });
 
         // Return appropriate response based on request type
         if ($request->wantsJson() || $request->has('latitude')) {
@@ -172,6 +191,24 @@ class HomeController extends Controller
             $cars = $query->limit(28)->get();
         }
 
+        // Optimize car images
+        $cars->transform(function ($car) {
+            if ($car->initialGallery && count($car->initialGallery) > 0) {
+                $optimizedGallery = [];
+                foreach ($car->initialGallery as $image) {
+                    // Assuming the image path is stored in a 'path' attribute
+                    if (isset($image['path'])) {
+                        $optimizedGallery[] = [
+                            'original' => $image['path'],
+                            'optimized' => ImageOptimizer::getOptimizedUrl($image['path'])
+                        ];
+                    }
+                }
+                $car->optimizedGallery = $optimizedGallery;
+            }
+            return $car;
+        });
+
         // Return appropriate response based on request type
         if ($request->wantsJson() || $request->has('latitude')) {
             return response()->json([
@@ -240,6 +277,32 @@ class HomeController extends Controller
 
         $cars = $query->get();
 
+        // Optimize car images
+        $cars->transform(function ($car) {
+            if ($car->initialGallery && count($car->initialGallery) > 0) {
+                $optimizedGallery = [];
+                foreach ($car->initialGallery as $image) {
+                    // Assuming the image path is stored in a 'path' attribute
+                    if (isset($image['path'])) {
+                        $optimizedGallery[] = [
+                            'original' => $image['path'],
+                            'optimized' => ImageOptimizer::getOptimizedUrl($image['path']),
+                            'responsive' => ImageOptimizer::getResponsiveUrls($image['path'])
+                        ];
+                    }
+                }
+                $car->optimizedGallery = $optimizedGallery;
+            }
+            
+            // Also optimize the primary image if it exists
+            if ($car->image) {
+                $car->optimizedImage = ImageOptimizer::getOptimizedUrl($car->image);
+                $car->responsiveImages = ImageOptimizer::getResponsiveUrls($car->image);
+            }
+            
+            return $car;
+        });
+
         $keys = env("VITE_GOOGLE_MAP_API");
 
         return Inertia::render("SearchCars", [
@@ -252,7 +315,6 @@ class HomeController extends Controller
             "keys" => $keys,
         ]);
     }
-
 
 
     private function getCoordinatesFromLocation($location)
@@ -325,6 +387,59 @@ class HomeController extends Controller
             ->where("id", "=", $car_id)
             ->first();
 
+        // Optimize car images for rental page
+        if ($car) {
+            // Optimize gallery images
+            if ($car->initialGallery && count($car->initialGallery) > 0) {
+                $optimizedGallery = [];
+                foreach ($car->initialGallery as $image) {
+                    if (isset($image['path'])) {
+                        $optimizedGallery[] = [
+                            'original' => $image['path'],
+                            'optimized' => ImageOptimizer::getOptimizedUrl($image['path']),
+                            'responsive' => ImageOptimizer::getResponsiveUrls($image['path'], [320, 640, 800, 1024]),
+                            'thumbnail' => ImageOptimizer::getOptimizedUrl($image['path'], 150, 80),
+                            'preview' => ImageOptimizer::getOptimizedUrl($image['path'], 600, 85)
+                        ];
+                    }
+                }
+                $car->optimizedGallery = $optimizedGallery;
+            }
+            
+            // Optimize primary image
+            if ($car->image) {
+                $car->optimizedImage = ImageOptimizer::getOptimizedUrl($car->image);
+                $car->responsiveImages = ImageOptimizer::getResponsiveUrls($car->image, [320, 640, 800, 1024]);
+                $car->heroImage = ImageOptimizer::getHighQualityOptimizedUrl($car->image, 1200, 90);
+            }
+            
+            // Optimize media images if they exist
+            if ($car->media && count($car->media) > 0) {
+                $optimizedMedia = [];
+                foreach ($car->media as $media) {
+                    if (isset($media['path']) || isset($media['url'])) {
+                        $path = $media['path'] ?? $media['url'];
+                        $optimizedMedia[] = [
+                            'original' => $path,
+                            'optimized' => ImageOptimizer::getOptimizedUrl($path),
+                            'thumbnail' => ImageOptimizer::getOptimizedUrl($path, 100, 75)
+                        ];
+                    }
+                }
+                $car->optimizedMedia = $optimizedMedia;
+            }
+            
+            // Optimize user avatar if exists
+            if ($car->user && $car->user->avatar) {
+                $car->user->optimizedAvatar = ImageOptimizer::getOptimizedUrl($car->user->avatar, 100, 80);
+            }
+            
+            // Optimize category image if exists
+            if ($car->category && $car->category->image) {
+                $car->category->optimizedImage = ImageOptimizer::getOptimizedUrl($car->category->image, 200, 85);
+            }
+        }
+
         return Inertia::render("RentNow", [
             "canLogin" => Route::has("login"),
             "canRegister" => Route::has("register"),
@@ -334,6 +449,7 @@ class HomeController extends Controller
             "flash" => session("flash"),
         ]);
     }
+    
 
     public function hostCalendarPolicy()
     {
@@ -976,6 +1092,36 @@ class HomeController extends Controller
 
         $property = $query->first();
 
+        // Optimize property images
+        if ($property) {
+            // Optimize main property images
+            if ($property->initialGallery && count($property->initialGallery) > 0) {
+                $optimizedGallery = [];
+                foreach ($property->initialGallery as $image) {
+                    if (isset($image['path'])) {
+                        $optimizedGallery[] = [
+                            'original' => $image['path'],
+                            'optimized' => ImageOptimizer::getOptimizedUrl($image['path']),
+                            'responsive' => ImageOptimizer::getResponsiveUrls($image['path'], [320, 640, 800, 1024, 1200]),
+                            'thumbnail' => ImageOptimizer::getOptimizedUrl($image['path'], 150, 80)
+                        ];
+                    }
+                }
+                $property->optimizedGallery = $optimizedGallery;
+            }
+            
+            // Optimize primary image
+            if ($property->image) {
+                $property->optimizedImage = ImageOptimizer::getOptimizedUrl($property->image);
+                $property->responsiveImages = ImageOptimizer::getResponsiveUrls($property->image, [320, 640, 800, 1024, 1200]);
+            }
+            
+            // Optimize user avatar if exists
+            if ($property->user && $property->user->avatar) {
+                $property->user->optimizedAvatar = ImageOptimizer::getOptimizedUrl($property->user->avatar, 100, 80);
+            }
+        }
+
         $similarProperties = [];
         if ($property) {
             $similarProperties = Property::with("initialGallery")
@@ -984,6 +1130,29 @@ class HomeController extends Controller
                 ->orderBy("created_at", "desc")
                 ->limit(4)
                 ->get();
+            
+            // Optimize similar properties images
+            $similarProperties->transform(function ($similarProperty) {
+                if ($similarProperty->initialGallery && count($similarProperty->initialGallery) > 0) {
+                    $optimizedGallery = [];
+                    foreach ($similarProperty->initialGallery as $image) {
+                        if (isset($image['path'])) {
+                            $optimizedGallery[] = [
+                                'original' => $image['path'],
+                                'optimized' => ImageOptimizer::getOptimizedUrl($image['path'], 400, 75),
+                                'thumbnail' => ImageOptimizer::getOptimizedUrl($image['path'], 150, 70)
+                            ];
+                        }
+                    }
+                    $similarProperty->optimizedGallery = $optimizedGallery;
+                }
+                
+                if ($similarProperty->image) {
+                    $similarProperty->optimizedImage = ImageOptimizer::getOptimizedUrl($similarProperty->image, 400, 75);
+                }
+                
+                return $similarProperty;
+            });
         }
 
         return Inertia::render("PropertyDetail", [
@@ -1072,6 +1241,32 @@ class HomeController extends Controller
         });
 
         $properties = $query->limit(56)->get();
+
+        // Optimize property images
+        $properties->transform(function ($property) {
+            if ($property->initialGallery && count($property->initialGallery) > 0) {
+                $optimizedGallery = [];
+                foreach ($property->initialGallery as $image) {
+                    // Assuming the image path is stored in a 'path' attribute
+                    if (isset($image['path'])) {
+                        $optimizedGallery[] = [
+                            'original' => $image['path'],
+                            'optimized' => ImageOptimizer::getOptimizedUrl($image['path']),
+                            'responsive' => ImageOptimizer::getResponsiveUrls($image['path'])
+                        ];
+                    }
+                }
+                $property->optimizedGallery = $optimizedGallery;
+            }
+            
+            // Also optimize the primary image if it exists
+            if ($property->image) {
+                $property->optimizedImage = ImageOptimizer::getOptimizedUrl($property->image);
+                $property->responsiveImages = ImageOptimizer::getResponsiveUrls($property->image);
+            }
+            
+            return $property;
+        });
 
         $keys = env("VITE_GOOGLE_MAP_API");
 

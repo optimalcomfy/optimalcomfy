@@ -79,4 +79,4 @@ jobs:
           username: ${{ secrets.FTP_USERNAME_TEST }}
           password: ${{ secrets.FTP_PASSWORD_TEST }}
           local-dir: ./
-          server-dir: /test_ftp_server/
+          server-dir: /public_html/

@@ -195,14 +195,20 @@ class HomeController extends Controller
 
         $query = Car::with(["bookings", "initialGallery", "carFeatures"]);
 
-        if ($input["location"]) {
+        $latitude = null;
+        $longitude = null;
+
+        // 🌍 If location is provided, get coordinates
+        if (!empty($input["location"])) {
             $location = $input["location"];
-            $query->where(function ($q) use ($location) {
-                $q->where("location_address", "LIKE", "%$location%");
-            });
+
+            $coordinates = $this->getCoordinatesFromLocation($location);
+            if ($coordinates) {
+                $latitude = $coordinates['latitude'];
+                $longitude = $coordinates['longitude'];
+            }
         }
 
-        // ✅ Availability Check
         if ($request->filled(["checkIn", "checkOut"])) {
             $checkIn = Carbon::parse($input["checkIn"]);
             $checkOut = Carbon::parse($input["checkOut"]);
@@ -212,14 +218,25 @@ class HomeController extends Controller
                 $checkOut
             ) {
                 $bookingQuery->where(function ($q) use ($checkIn, $checkOut) {
-                    $q->where("start_date", "<", $checkOut)->where(
-                        "end_date",
-                        ">",
-                        $checkIn
-                    );
+                    $q->where("start_date", "<", $checkOut)
+                        ->where("end_date", ">", $checkIn);
                 });
             });
         }
+
+        // 📍 Distance Filter (only if lat/lng found)
+        $query->when($latitude && $longitude, function ($query) use ($latitude, $longitude) {
+            return $query->select('*', DB::raw("
+                (6371 * acos(
+                    cos(radians($latitude)) * 
+                    cos(radians(latitude)) * 
+                    cos(radians(longitude) - radians($longitude)) + 
+                    sin(radians($latitude)) * 
+                    sin(radians(latitude))
+                )) AS distance
+            "))
+            ->orderBy('distance', 'ASC');
+        });
 
         $cars = $query->get();
 
@@ -235,6 +252,27 @@ class HomeController extends Controller
             "keys" => $keys,
         ]);
     }
+
+
+
+     private function getCoordinatesFromLocation($location)
+     {
+         $url = "https://nominatim.openstreetmap.org/search?format=json&q=" . urlencode($location);
+     
+         $response = \Illuminate\Support\Facades\Http::withHeaders([
+             'User-Agent' => 'LaravelApp/1.0'
+         ])->get($url);
+     
+         if ($response->ok() && count($response->json()) > 0) {
+             $data = $response->json()[0];
+             return [
+                 'latitude' => $data['lat'],
+                 'longitude' => $data['lon']
+             ];
+         }
+     
+         return null;
+     }
 
     public function rentNow(Request $request)
     {
@@ -948,17 +986,23 @@ class HomeController extends Controller
             "initialGallery",
             "propertyAmenities",
             "propertyFeatures",
-            "PropertyServices",
+            "propertyServices",
         ])->orderBy("created_at", "desc");
 
         $input = $request->all();
 
-        // Search by name/type/price
-        if ($input["location"]) {
+        $latitude = null;
+        $longitude = null;
+
+        // 🌍 If location is provided, get coordinates
+        if (!empty($input["location"])) {
             $location = $input["location"];
-            $query->where(function ($q) use ($location) {
-                $q->where("location", "LIKE", "%$location%");
-            });
+
+            $coordinates = $this->getCoordinatesFromLocation($location);
+            if ($coordinates) {
+                $latitude = $coordinates['latitude'];
+                $longitude = $coordinates['longitude'];
+            }
         }
 
         // ✅ Availability Check
@@ -971,16 +1015,27 @@ class HomeController extends Controller
                 $checkOut
             ) {
                 $bookingQuery->where(function ($q) use ($checkIn, $checkOut) {
-                    $q->where("check_in_date", "<", $checkOut)->where(
-                        "check_out_date",
-                        ">",
-                        $checkIn
-                    );
+                    $q->where("check_in_date", "<", $checkOut)
+                        ->where("check_out_date", ">", $checkIn);
                 });
             });
         }
 
-        $properties = $query->get();
+        // 📍 Distance Filter (only if lat/lng found)
+        $query->when($latitude && $longitude, function ($query) use ($latitude, $longitude) {
+            return $query->select('*', DB::raw("
+                (6371 * acos(
+                    cos(radians($latitude)) * 
+                    cos(radians(latitude)) * 
+                    cos(radians(longitude) - radians($longitude)) + 
+                    sin(radians($latitude)) * 
+                    sin(radians(latitude))
+                )) AS distance
+            "))
+            ->orderBy('distance', 'ASC');
+        });
+
+        $properties = $query->limit(56)->get();
 
         $keys = env("VITE_GOOGLE_MAP_API");
 

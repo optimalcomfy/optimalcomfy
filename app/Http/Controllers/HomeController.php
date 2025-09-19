@@ -255,24 +255,60 @@ class HomeController extends Controller
 
 
 
-     private function getCoordinatesFromLocation($location)
-     {
-         $url = "https://nominatim.openstreetmap.org/search?format=json&q=" . urlencode($location);
-     
-         $response = \Illuminate\Support\Facades\Http::withHeaders([
-             'User-Agent' => 'LaravelApp/1.0'
-         ])->get($url);
-     
-         if ($response->ok() && count($response->json()) > 0) {
-             $data = $response->json()[0];
-             return [
-                 'latitude' => $data['lat'],
-                 'longitude' => $data['lon']
-             ];
-         }
-     
-         return null;
-     }
+    private function getCoordinatesFromLocation($location)
+    {
+        $cacheKey = 'geocode:' . md5($location);
+        
+        return Cache::remember($cacheKey, 86400, function () use ($location) { // 24 hours cache
+            // Try Nominatim first
+            try {
+                $nominatimResponse = \Illuminate\Support\Facades\Http::timeout(5)
+                    ->retry(2, 100)
+                    ->withHeaders([
+                        'User-Agent' => 'YourAppName/1.0 (your@email.com)',
+                        'Accept' => 'application/json',
+                    ])
+                    ->get('https://nominatim.openstreetmap.org/search', [
+                        'format' => 'json',
+                        'q' => $location,
+                        'limit' => 1
+                    ]);
+                
+                if ($nominatimResponse->successful() && count($nominatimResponse->json()) > 0) {
+                    $data = $nominatimResponse->json()[0];
+                    return [
+                        'latitude' => $data['lat'],
+                        'longitude' => $data['lon']
+                    ];
+                }
+            } catch (\Exception $e) {
+                \Log::warning("Nominatim geocoding failed for: {$location}", ['error' => $e->getMessage()]);
+            }
+            
+            // Fallback: Use a simple location database or return null
+            return $this->getFallbackCoordinates($location);
+        });
+    }
+
+    private function getFallbackCoordinates($location)
+    {
+        // Simple fallback for common locations
+        $commonLocations = [
+            'nairobi cbd' => ['latitude' => -1.2921, 'longitude' => 36.8219],
+            'nairobi' => ['latitude' => -1.2921, 'longitude' => 36.8219],
+            'mombasa' => ['latitude' => -4.0435, 'longitude' => 39.6682],
+            'kisumu' => ['latitude' => -0.1022, 'longitude' => 34.7617],
+            // Add more common locations as needed
+        ];
+        
+        $normalizedLocation = strtolower(trim($location));
+        
+        if (array_key_exists($normalizedLocation, $commonLocations)) {
+            return $commonLocations[$normalizedLocation];
+        }
+        
+        return null;
+    }
 
     public function rentNow(Request $request)
     {

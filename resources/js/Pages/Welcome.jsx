@@ -377,7 +377,7 @@ export default function Welcome() {
           
           // Fetch location-based properties
           try {
-            const propertiesResponse = await axios.get(route('welcome'), {
+            const propertiesResponse = await axios.get(route('home'), {
               params: { latitude: lat, longitude: lon, limit: 75 }
             });
             

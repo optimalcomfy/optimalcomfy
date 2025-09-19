@@ -416,7 +416,7 @@ export default function Cars() {
                     
                     // Fetch location-based cars
                     try {
-                        const carsResponse = await axios.get(route('cars.all'), {
+                        const carsResponse = await axios.get(route('all-cars'), {
                             params: { latitude: lat, longitude: lon, limit: 75 }
                         });
                         

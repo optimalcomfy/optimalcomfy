@@ -406,7 +406,6 @@ class HomeController extends Controller
                 $car->optimizedGallery = $optimizedGallery;
             }
             
-            // Optimize primary image
             if ($car->image) {
                 $car->optimizedImage = ImageOptimizer::getOptimizedUrl($car->image);
                 $car->responsiveImages = ImageOptimizer::getResponsiveUrls($car->image, [320, 640, 800, 1024]);

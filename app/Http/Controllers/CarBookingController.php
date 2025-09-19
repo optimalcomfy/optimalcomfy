@@ -460,6 +460,7 @@ class CarBookingController extends Controller
 	        'total_price'     => $totalPrice,
 	        'pickup_location' => $request->pickup_location,
 	        'dropoff_location'=> $request->pickup_location,
+            'external_booking' => 'Yes',
 	        'status'          => 'Paid',
 	        'special_requests'=> $request->special_requests,
 	    ]);

@@ -361,7 +361,7 @@ const Dashboard = () => {
                       <td className="py-3 px-3 text-sm capitalize">{transaction.type}</td>
                       <td className="py-3 px-3 text-sm">{transaction.guest}</td>
                       <td className="py-3 px-3 text-sm text-right font-medium">
-                        {parseFloat((transaction.net_amount - transaction.platform_charges) * transaction.days).toFixed(2)}
+                        {parseFloat((transaction.net_amount)).toFixed(2)}
                       </td>
                       {roleId === 1 &&
                       <>

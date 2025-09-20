@@ -316,7 +316,7 @@ const Wallet = ({ user }) => {
                                                 </div>
                                                 <div className="transaction-amount">
                                                     <div className="amount-value">
-                                                        {formatCurrency((transaction.net_amount - transaction.platform_charges) * transaction.days)}
+                                                        {formatCurrency((transaction.net_amount) * transaction.days)}
                                                     </div>
                                                     <div className={`status-badge ${transaction.status === 'Paid' ? 'paid' : 'pending'}`}>
                                                         {transaction.status === 'Paid' ? 'Completed' : 'Processing'}

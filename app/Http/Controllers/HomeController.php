@@ -759,7 +759,9 @@ class HomeController extends Controller
 
         $repaymentAmount = Repayment::when($user->role_id != 1, function ($query) use ($user) {
             return $query->where('user_id', $user->id);
-        })->sum('amount');
+        })
+        ->where('status', 'Approved')
+        ->sum('amount');
 
         return Inertia::render("Dashboard", [
             "canLogin" => Route::has("login"),
@@ -837,7 +839,7 @@ class HomeController extends Controller
 
         $availablePropertyBookingTotal = Booking::where("status", "Paid")
             ->whereNull("external_booking")
-            ->when(true, function($q) {  
+            ->when(true, function($q) {
                 return $q->whereHas("user");
             })
             ->whereHas("property", function ($query) use ($user, $isAdmin) {
@@ -862,7 +864,7 @@ class HomeController extends Controller
             ->whereHas("car", function ($query) use ($user) {
                 $query->where("user_id", $user->id);
             })
-            ->with('car') 
+            ->with('car')
             ->get()
             ->sum(function ($booking) {
                 $days = Carbon::parse($booking->end_date)->diffInDays(
@@ -896,7 +898,7 @@ class HomeController extends Controller
 
         $recentTransactions = collect([
             ...Booking::where("status", "Paid")
-                ->whereNull("external_booking") 
+                ->whereNull("external_booking")
                 ->when(fn($q) => $q->whereHas("user"))
                 ->whereHas("property", function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
@@ -918,7 +920,7 @@ class HomeController extends Controller
                         "amount" => $booking->total_price,
                         "platform_price" => $booking->property->platform_price,
                         "platform_charges" => $platformChargesAmount,
-                        "net_amount" => $booking->total_price * $p, 
+                        "net_amount" => $booking->total_price * $p,
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
                         "status" => "completed",
@@ -949,7 +951,7 @@ class HomeController extends Controller
                         "amount" => $booking->total_price,
                         "platform_price" => $booking->car->platform_price,
                         "platform_charges" => $platformChargesAmount,
-                        "net_amount" => $booking->car->platform_price * $p, 
+                        "net_amount" => $booking->car->platform_price * $p,
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
                         "status" => "completed",
@@ -965,7 +967,9 @@ class HomeController extends Controller
 
         $repaymentAmount = Repayment::when($user->role_id != 1, function ($query) use ($user) {
             return $query->where('user_id', $user->id);
-        })->sum('amount');
+        })
+        ->where('status', 'Approved')
+        ->sum('amount');
 
 
         return Inertia::render("Wallet/Wallet", [

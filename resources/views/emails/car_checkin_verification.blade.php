@@ -262,7 +262,7 @@
         
         <div class="content">
             <h2 class="welcome-text">
-                Your verification code for checking into
+                Your verification code for pick up
                 <span class="property-name">{{ $booking->car->name }}</span>
                 is ready!
             </h2>

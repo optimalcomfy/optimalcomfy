@@ -353,7 +353,7 @@
             <div class="checkout-icon">🛎️</div>
             
             <h2 class="farewell-text">
-                Your verification code for checking out of
+                Your verification code for dropping off your
                 <span class="property-name">{{ $booking->car->name }}</span>
                 is ready!
             </h2>

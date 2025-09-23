@@ -19,7 +19,6 @@ const Dashboard = () => {
     carsCount,
     totalBookingsCount, 
     monthlyEarnings, 
-    averagePropertyBookingValue,
     propertyBookingTotal,
     carBookingTotal,
     totalEarnings,
@@ -83,6 +82,13 @@ const Dashboard = () => {
     };
     setLineOptions(lineOptions);
   };
+
+    const formatCurrency = (amount) => {
+        if (typeof amount === 'string') {
+            amount = parseFloat(amount);
+        }
+        return amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    };
   
   const applyDarkTheme = () => {
     const lineOptions = {
@@ -249,7 +255,7 @@ const Dashboard = () => {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value) => [`${value?.toFixed(2)}`, 'Amount']}
+                  formatter={(value) => [`${formatCurrency(value)}`, 'Amount']}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -280,23 +286,11 @@ const Dashboard = () => {
             Financial Summary
           </h3>
           <div className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">Total Earnings</span>
-                <span className="font-bold">{totalEarnings?.toFixed(2) || '0.00'}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                <div 
-                  className="bg-peachDark h-2 rounded-full" 
-                  style={{ width: `${Math.min(100, (totalEarnings / 10000) * 100)}%` }}
-                ></div>
-              </div>
-            </div>
             
             <div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Available Balance</span>
-                <span className="font-bold">{availableBalance?.toFixed(2) || '0.00'}</span>
+                <span className="font-bold">{formatCurrency(availableBalance)}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                 <div 
@@ -309,7 +303,7 @@ const Dashboard = () => {
             <div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Pending Payouts</span>
-                <span className="font-bold">{pendingPayouts?.toFixed(2) || '0.00'}</span>
+                <span className="font-bold">{formatCurrency(pendingPayouts)}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                 <div 
@@ -319,10 +313,6 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-          <button className="mt-4 w-full py-2 text-sm bg-blue-50 dark:bg-gray-700 text-blue-500 dark:text-blue-300 rounded-lg flex items-center justify-center gap-2">
-            <Wallet size={16} />
-            Request Withdrawal
-          </button>
         </div>
       </div>
     );
@@ -361,12 +351,12 @@ const Dashboard = () => {
                       <td className="py-3 px-3 text-sm capitalize">{transaction.type}</td>
                       <td className="py-3 px-3 text-sm">{transaction.guest}</td>
                       <td className="py-3 px-3 text-sm text-right font-medium">
-                        {parseFloat((transaction.net_amount)).toFixed(2)}
+                        {formatCurrency(transaction.net_amount)}
                       </td>
                       {roleId === 1 &&
                       <>
-                      <td className="px-6 py-4 whitespace-wrap">KES {transaction.platform_price}</td>
-                      <td className="px-6 py-4 whitespace-wrap">KES {transaction.platform_charges}</td>
+                      <td className="px-6 py-4 whitespace-wrap">KES {formatCurrency(transaction.platform_price)}</td>
+                      <td className="px-6 py-4 whitespace-wrap">KES {formatCurrency(transaction.platform_charges)}</td>
                       </>}
                       <td className="py-3 px-3 text-sm text-right">
                         <span className={`px-2 py-1 rounded-full text-xs ${

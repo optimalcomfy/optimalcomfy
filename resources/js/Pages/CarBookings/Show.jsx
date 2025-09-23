@@ -659,7 +659,7 @@ const CarBookingShow = () => {
                 <div className="md:flex-shrink-0 md:w-1/3">
                   <img 
                     className="h-48 w-full object-cover md:h-full" 
-                    src={booking.car.images?.[0]?.image || '/images/default-car.jpg'} 
+                    src={`/storage/${booking.car?.initial_gallery?.[0]?.image}` || '/images/default-car.jpg'} 
                     alt={booking.car.name}
                   />
                 </div>

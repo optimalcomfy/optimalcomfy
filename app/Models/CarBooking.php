@@ -88,4 +88,10 @@ class CarBooking extends Model
     {
         return $this->belongsTo(Car::class);
     }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'booking_id')
+                    ->where('booking_type', 'car');
+    }
 }

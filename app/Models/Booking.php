@@ -87,6 +87,7 @@ class Booking extends Model
 
     public function payments()
     {
-        return $this->hasMany(Payment::class);
+        return $this->hasMany(Payment::class, 'booking_id')
+                    ->where('booking_type', 'property');
     }
 }

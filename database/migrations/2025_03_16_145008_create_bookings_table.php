@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
             $table->string('number')->nullable();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('property_id')->constrained('properties')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('restrict');
+            $table->foreignId('property_id')->constrained('properties')->onDelete('restrict');
             $table->date('check_in_date');
             $table->date('check_out_date');
             $table->timestamp('checked_in')->nullable();
@@ -31,7 +31,7 @@ return new class extends Migration
             $table->text('non_refund_reason')->nullable();
             $table->double('refund_amount')->nullable();
             $table->unsignedBigInteger('cancelled_by_id')->nullable();
-            $table->foreign('cancelled_by_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('cancelled_by_id')->references('id')->on('users')->onDelete('restrict');
             $table->timestamps();
         });
     }

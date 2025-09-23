@@ -28,13 +28,21 @@ const Product = (props) => {
           {initial_gallery.length > 0 ?
           <>
             {initial_gallery?.map((image, index) => (
+              <>{image.image ?               
               <img
                 key={index}
                 src={`/storage/${image.image}`}
                 onClick={() => router.visit(route('property-detail', { id }))}
                 alt={`Image ${index + 1} of ${property_name}`}
                 className="w-full aspect-[20/19] object-cover"
-              />
+              /> :               
+              <img
+                key={index}
+                src={`/images/no-pic.avif`}
+                onClick={() => router.visit(route('property-detail', { id }))}
+                alt={`Image ${index + 1} of ${property_name}`}
+                className="w-full aspect-[20/19] object-cover"
+              /> }</>
             ))}
           </>
           :

@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('car_bookings', function (Blueprint $table) {
             $table->id();
             $table->string('number')->nullable();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('car_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->onDelete('restrict');
+            $table->foreignId('car_id')->constrained()->onDelete('restrict');
             $table->date('start_date');
             $table->date('end_date');
             $table->timestamp('checked_in')->nullable();
@@ -34,7 +34,7 @@ return new class extends Migration
             $table->text('non_refund_reason')->nullable();
             $table->double('refund_amount')->nullable();
             $table->unsignedBigInteger('cancelled_by_id')->nullable();
-            $table->foreign('cancelled_by_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('cancelled_by_id')->references('id')->on('users')->onDelete('restrict');
             $table->timestamps();
         });
     }

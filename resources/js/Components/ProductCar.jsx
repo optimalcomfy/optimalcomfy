@@ -30,13 +30,21 @@ const ProductCar = (props) => {
           {initial_gallery.length > 0 ?
           <>
             {initial_gallery?.map((image, index) => (
-              <img
-                key={index}
-                src={`/storage/${image.image}`}
-                onClick={() => router.visit(route('rent-now', { car_id: id }))}
-                alt={`Image ${index + 1} of ${carDisplayName}`}
-                className="w-full aspect-[20/19] object-cover"
-              />
+              <>{image.image ?               
+                <img
+                  key={index}
+                  src={`/storage/${image.image}`}
+                  onClick={() => router.visit(route('rent-now', { car_id: id }))}
+                  alt={`Image ${index + 1} of ${carDisplayName}`}
+                  className="w-full aspect-[20/19] object-cover"
+                /> :               
+                <img
+                  key={index}
+                  src={`/images/no-pic.avif`}
+                  onClick={() => router.visit(route('rent-now', { car_id: id }))}
+                  alt={`Image ${index + 1} of ${carDisplayName}`}
+                  className="w-full aspect-[20/19] object-cover"
+                /> }</>
             ))}
           </>
             :

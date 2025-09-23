@@ -27,6 +27,7 @@ use Illuminate\Http\JsonResponse;
 
 use App\Mail\CarCheckInVerification;
 use App\Mail\CarCheckOutVerification;
+use App\Services\SmsService;
 
 class CarBookingController extends Controller
 {
@@ -35,6 +36,13 @@ class CarBookingController extends Controller
      */
 
     use Mpesa;
+    protected $smsService;
+
+    public function __construct(SmsService $smsService = null)
+    {
+        $this->smsService = $smsService;
+    }
+    
 
     public function index(Request $request)
     {
@@ -517,7 +525,15 @@ class CarBookingController extends Controller
                 $booking->checkin_verification_code = CarBooking::generateVerificationCode();
                 $booking->save();
                 
-                Mail::to($booking->user->email)->send(new CarCheckInVerification($booking));
+                // Mail::to($booking->user->email)->send(new CarCheckInVerification($booking));
+
+                $user = User::find($booking->user_id);
+
+                $this->smsService->sendSms(
+                    "254743630811", 
+                    "Hello {$user->name}, Your OTP for car pick up verification is: {$booking->checkin_verification_code}"
+                );
+
                 
                 return back()->with('success', 'Verification code sent to your email. Please enter it to complete check-in.');
             }

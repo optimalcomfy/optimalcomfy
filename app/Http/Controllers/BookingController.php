@@ -30,6 +30,7 @@ use App\Mail\CheckInVerification;
 use App\Mail\CheckOutVerification;
 use App\Mail\BookingCancelled;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Services\SmsService;
 
 class BookingController extends Controller
 {
@@ -578,7 +579,7 @@ class BookingController extends Controller
             }
 
             $booking->checked_in = now();
-            $booking->checkin_verification_code = null; // Clear the code after use
+            $booking->checkin_verification_code = null; 
             $booking->save();
 
             return back()->with('success', 'Successfully checked in!');

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->double('amount')->nullable();
             $table->dateTime('payment_date')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('restrict');
             $table->timestamps();
         });
     }

@@ -83,16 +83,12 @@ const Dashboard = () => {
     setLineOptions(lineOptions);
   };
 
-  const formatCurrency = (amount) => {
-    if (typeof amount === 'string') {
-      amount = parseFloat(amount);
-    }
-    if (isNaN(amount)) return '0';
-    return amount.toLocaleString('en-US', { 
-      minimumFractionDigits: 0, 
-      maximumFractionDigits: amount % 1 === 0 ? 0 : 2 
-    });
-  };
+    const formatCurrency = (amount) => {
+        if (typeof amount === 'string') {
+            amount = parseFloat(amount);
+        }
+        return `KES ${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    };
 
   const applyDarkTheme = () => {
     const lineOptions = {

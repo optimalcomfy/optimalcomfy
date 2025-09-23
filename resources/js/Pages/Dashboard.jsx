@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell
+  PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
 import { 
   Home, Users, Calendar, Star, DollarSign, Loader, Check, Car, Plus, 
-  Wallet, Settings, MapPin, Briefcase, CreditCard, Activity 
+  Wallet, Settings, MapPin, Briefcase, CreditCard, Activity, AlertTriangle,
+  TrendingDown, TrendingUp
 } from 'lucide-react';
 import { usePage, useForm } from '@inertiajs/react';
 import { LayoutContext } from '@/Layouts/layout/context/layoutcontext';
 import Layout from "@/Layouts/layout/layout.jsx";
-
 
 const Dashboard = () => {
   // Get all available data from props
@@ -25,6 +25,7 @@ const Dashboard = () => {
     pendingPayouts,
     availableBalance,
     recentTransactions,
+    hostsWithOverdrafts: overdraftData,
     auth,
     flash
   } = usePage().props;
@@ -39,7 +40,6 @@ const Dashboard = () => {
   const roleId = parseInt(auth.user?.role_id);
   const isDarkMode = layoutConfig.colorScheme === 'dark';
   const [isLoading, setIsLoading] = useState(false);
-
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -83,13 +83,17 @@ const Dashboard = () => {
     setLineOptions(lineOptions);
   };
 
-    const formatCurrency = (amount) => {
-        if (typeof amount === 'string') {
-            amount = parseFloat(amount);
-        }
-        return amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    };
-  
+  const formatCurrency = (amount) => {
+    if (typeof amount === 'string') {
+      amount = parseFloat(amount);
+    }
+    if (isNaN(amount)) return '0';
+    return amount.toLocaleString('en-US', { 
+      minimumFractionDigits: 0, 
+      maximumFractionDigits: amount % 1 === 0 ? 0 : 2 
+    });
+  };
+
   const applyDarkTheme = () => {
     const lineOptions = {
       plugins: {
@@ -120,7 +124,7 @@ const Dashboard = () => {
     };
     setLineOptions(lineOptions);
   };
-  
+
   useEffect(() => {
     if (layoutConfig.colorScheme === 'light') {
       applyLightTheme();
@@ -150,28 +154,151 @@ const Dashboard = () => {
   };
 
   // Custom InfoCard component
-  const InfoCard = ({ title, value, icon, iconColor, description, trend }) => {
+  const InfoCard = ({ title, value, icon, iconColor, description, trend, isNegative }) => {
     const Icon = icon;
     const trendColor = trend?.value > 0 ? 'green' : trend?.value < 0 ? 'red' : 'gray';
     const trendIcon = trend?.value > 0 ? '↑' : trend?.value < 0 ? '↓' : '→';
     
     return (
       <div className="flex-1 p-3 min-w-[250px]">
-        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} ${isNegative ? 'border-l-4 border-red-500' : ''}`}>
           <div className="flex justify-between gap-4 items-center mb-3">
             <h3 className="text-lg font-semibold">{title}</h3>
-            <div className={`p-2 rounded-full bg-${iconColor}-100 text-${iconColor}-500`}>
+            <div className={`p-2 rounded-full ${isNegative ? 'bg-red-100 text-red-500' : `bg-${iconColor}-100 text-${iconColor}-500`}`}>
               <Icon size={20} />
             </div>
           </div>
           <div className="mt-2">
-            <span className="text-2xl font-bold">{value}</span>
+            <span className={`text-2xl font-bold ${isNegative ? 'text-red-500' : ''}`}>
+              {isNegative && '-'}{value}
+            </span>
             {trend && (
               <span className={`ml-2 text-sm text-${trendColor}-500`}>
                 {trendIcon} {Math.abs(trend.value)}% {trend.period}
               </span>
             )}
             <p className="text-sm text-gray-500 mt-1">{description}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Overdraft Summary Card
+  const OverdraftSummary = () => {
+    const totalOverdraft = overdraftData.reduce((sum, host) => sum + Math.abs(host.overdraft_amount), 0);
+    const affectedHosts = overdraftData.length;
+
+    return (
+      <div className="p-3 min-w-[280px]">
+        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} border-l-4 border-red-500`}>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-red-500">
+            <AlertTriangle size={18} />
+            Overdraft Summary
+          </h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Total Overdraft Amount</span>
+              <span className="font-bold text-red-500">-{formatCurrency(totalOverdraft)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Affected Hosts</span>
+              <span className="font-bold">{affectedHosts}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Average Overdraft</span>
+              <span className="font-bold text-red-500">-{formatCurrency(totalOverdraft / affectedHosts)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Overdraft Hosts List
+  const OverdraftHostsList = () => {
+    return (
+      <div className="flex-[2] p-3 min-w-full">
+        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <TrendingDown size={18} />
+            Hosts with Overdraft
+          </h3>
+          {overdraftData.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">Host Name</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">Email</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">Properties</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">Vehicles</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Available Balance</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Overdraft Amount</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {overdraftData.map((host, index) => (
+                    <tr key={host.id} className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                      <td className="py-3 px-3 text-sm font-medium">{host.name}</td>
+                      <td className="py-3 px-3 text-sm">{host.email}</td>
+                      <td className="py-3 px-3 text-sm">{host.properties_count}</td>
+                      <td className="py-3 px-3 text-sm">{host.cars_count}</td>
+                      <td className="py-3 px-3 text-sm text-right font-medium text-red-500">
+                        -{formatCurrency(Math.abs(host.available_balance))}
+                      </td>
+                      <td className="py-3 px-3 text-sm text-right">
+                        {formatCurrency(host.overdraft_amount)}
+                      </td>
+                      <td className="py-3 px-3 text-sm text-right">
+                        <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
+                          Overdraft
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-gray-500">
+              No hosts with overdraft found
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Overdraft Chart
+  const OverdraftChart = () => {
+    const chartData = overdraftData.map(host => ({
+      name: host.name.split(' ')[0], // First name only
+      overdraft: Math.abs(host.overdraft_amount),
+      balance: Math.abs(host.available_balance),
+      properties: host.properties_count,
+      cars: host.cars_count
+    }));
+
+    return (
+      <div className="flex-1 p-3 min-w-[300px]">
+        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+          <h3 className="text-lg font-semibold mb-4">Overdraft Overview</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value) => [formatCurrency(value), 'Amount']}
+                />
+                <Legend />
+                <Bar dataKey="overdraft" fill="#EF4444" name="Overdraft Amount" />
+                <Bar dataKey="balance" fill="#F59E0B" name="Negative Balance" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
@@ -278,26 +405,33 @@ const Dashboard = () => {
 
   // Financial Summary Card
   const FinancialSummary = () => {
+    const hasOverdraft = availableBalance < 0;
+    
     return (
-      <div className="flex-1 p-3 min-w-[300px]">
-        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+      <div className="p-3 min-w-[300px]">
+        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} ${hasOverdraft ? 'border-l-4 border-red-500' : ''}`}>
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <CreditCard size={18} />
             Financial Summary
+            {hasOverdraft && <AlertTriangle size={16} className="text-red-500" />}
           </h3>
           <div className="space-y-4">
-            
             <div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Available Balance</span>
-                <span className="font-bold">{formatCurrency(availableBalance)}</span>
+                <span className={`font-bold ${hasOverdraft ? 'text-red-500' : ''}`}>
+                  {hasOverdraft && '-'}{formatCurrency(Math.abs(availableBalance))}
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                 <div 
-                  className="bg-green-500 h-2 rounded-full" 
-                  style={{ width: `${Math.min(100, (availableBalance / totalEarnings) * 100)}%` }}
+                  className={`h-2 rounded-full ${hasOverdraft ? 'bg-red-500' : 'bg-green-500'}`} 
+                  style={{ width: `${Math.min(100, (Math.abs(availableBalance) / (totalEarnings || 1)) * 100)}%` }}
                 ></div>
               </div>
+              {hasOverdraft && (
+                <p className="text-xs text-red-500 mt-1">Your account is in overdraft</p>
+              )}
             </div>
             
             <div>
@@ -308,7 +442,7 @@ const Dashboard = () => {
               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                 <div 
                   className="bg-yellow-500 h-2 rounded-full" 
-                  style={{ width: `${Math.min(100, (pendingPayouts / totalEarnings) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (pendingPayouts / (totalEarnings || 1)) * 100)}%` }}
                 ></div>
               </div>
             </div>
@@ -402,9 +536,11 @@ const Dashboard = () => {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* First Column */}
         {(roleId !== 4) && (
-        <div className="flex flex-col flex-1 gap-4">
+        <div className="flex flex-col flex-1 justify-start gap-4">
           <UserProfileCard />
           {(roleId === 1 || roleId === 2) && <FinancialSummary />}
+          {/* Overdraft Summary - Only show for admin/management roles */}
+          {(roleId === 1) && overdraftData.length > 0 && <OverdraftSummary />}
         </div>)}
 
         {/* Second Column */}
@@ -440,6 +576,17 @@ const Dashboard = () => {
               trend={{ value: 8, period: 'this month' }}
             />)}
           </div>
+
+          {/* Overdraft Section - Only show for admin/management roles */}
+          {(roleId === 1) && overdraftData.length > 0 && (
+            <>
+              <div className="flex flex-wrap -mx-3">
+                <OverdraftChart />
+                <EarningsBreakdown />
+              </div>
+              <OverdraftHostsList />
+            </>
+          )}
 
           {(roleId === 4) && (
             <div className="max-w-2xl bg-white p-6 rounded-lg shadow-md">
@@ -480,10 +627,9 @@ const Dashboard = () => {
             </div>
           )}
 
-
           {(roleId === 1 || roleId === 2) && (
             <div className="flex flex-wrap -mx-3">
-              <EarningsBreakdown />
+              {(roleId !== 1 || overdraftData.length === 0) && <EarningsBreakdown />}
               
               <div className="flex-1 p-3 min-w-[300px]">
                 <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>

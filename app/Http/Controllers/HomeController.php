@@ -11,6 +11,7 @@ use App\Models\Property;
 use App\Models\Company;
 use App\Models\Repayment;
 use App\Models\Food;
+use App\Models\User;
 use App\Models\Car;
 use App\Models\CarBooking;
 use App\Models\Booking;
@@ -636,6 +637,11 @@ class HomeController extends Controller
         ->where('status', 'Approved')
         ->sum('amount');
 
+         $hostsWithOverdrafts = [];
+        if ($isAdmin) {
+            $hostsWithOverdrafts = $this->getHostsWithOverdrafts();
+        }
+
         return Inertia::render("Dashboard", [
             "canLogin" => Route::has("login"),
             "canRegister" => Route::has("register"),
@@ -653,6 +659,7 @@ class HomeController extends Controller
             "availableBalance" => $availablePayouts - $repaymentAmount,
             "monthlyEarnings" => $monthlyEarnings,
             "recentTransactions" => $recentTransactions,
+            'hostsWithOverdrafts'=> $hostsWithOverdrafts,
 
             // Performance metrics (excluding external bookings)
             "averagePropertyBookingValue" =>
@@ -679,6 +686,78 @@ class HomeController extends Controller
                     })
                     ->count(),
         ]);
+    }
+
+    private function getHostsWithOverdrafts()
+    {
+        $company = Company::first();
+        $p = 1 - $company->percentage / 100;
+        
+        // Get all hosts (users who are not admins)
+        $hosts = User::where('role_id', '!=', 1)->get();
+        
+        $hostsWithOverdrafts = [];
+        
+        foreach ($hosts as $host) {
+            // Calculate available payouts for this host
+            $availablePropertyBookingTotal = Booking::where("status", "Paid")
+                ->whereNull("external_booking")
+                ->whereNotNull("checked_in")
+                ->whereHas("user")
+                ->whereHas("property", function ($query) use ($host) {
+                    $query->where("user_id", $host->id);
+                })
+                ->whereHas('payments')
+                ->withSum('payments', 'amount')
+                ->get()
+                ->sum('payments_sum_amount') * $p;
+
+            $availableCarBookingTotal = CarBooking::where("status", "Paid")
+                ->whereNull("external_booking")
+                ->whereNotNull("checked_in")
+                ->whereHas("car", function ($query) use ($host) {
+                    $query->where("user_id", $host->id);
+                })
+                ->whereHas('payments')
+                ->withSum('payments', 'amount')
+                ->get()
+                ->sum('payments_sum_amount') * $p;
+
+            $availablePayouts = $availablePropertyBookingTotal + $availableCarBookingTotal;
+            
+            // Calculate repayments for this host
+            $repaymentAmount = Repayment::where('user_id', $host->id)
+                ->where('status', 'Approved')
+                ->sum('amount');
+                
+            // Calculate available balance
+            $availableBalance = $availablePayouts - $repaymentAmount;
+            
+            // Check if host is in overdraft
+            $isInOverdraft = $availableBalance < 0;
+            $overdraftAmount = $isInOverdraft ? abs($availableBalance) : 0;
+            
+            if ($isInOverdraft) {
+                $hostsWithOverdrafts[] = [
+                    'id' => $host->id,
+                    'name' => $host->name,
+                    'email' => $host->email,
+                    'available_balance' => $availableBalance,
+                    'overdraft_amount' => $overdraftAmount,
+                    'overdraft_limit' => $host->overdraft_limit,
+                    'overdraft_enabled' => $host->overdraft_enabled,
+                    'properties_count' => Property::where('user_id', $host->id)->count(),
+                    'cars_count' => Car::where('user_id', $host->id)->count(),
+                ];
+            }
+        }
+        
+        // Sort by overdraft amount (highest first)
+        usort($hostsWithOverdrafts, function($a, $b) {
+            return $b['overdraft_amount'] <=> $a['overdraft_amount'];
+        });
+        
+        return $hostsWithOverdrafts;
     }
 
     public function hostWallet(Request $request)

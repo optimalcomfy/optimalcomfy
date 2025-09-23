@@ -136,24 +136,6 @@ const Wallet = ({ user }) => {
                                 </button>
                             </div>
 
-                            {/* Total Earnings Card */}
-                            <div className="balance-card total-earnings">
-                                <div className="balance-card-header">
-                                    <div className="icon-wrapper">
-                                        <TrendingUp size={24} />
-                                    </div>
-                                </div>
-                                <h3 className="balance-card-label">
-                                    Total Earnings
-                                </h3>
-                                <div className="balance-amount">
-                                    {formatCurrency(totalEarnings)}
-                                </div>
-                                <div className="balance-subtext">
-                                    All-time earnings including pending amounts
-                                </div>
-                            </div>
-
                             {/* Pending Earnings Card */}
                             <div className="balance-card pending-earnings">
                                 <div className="balance-card-header">

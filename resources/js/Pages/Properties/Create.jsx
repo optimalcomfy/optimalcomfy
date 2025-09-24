@@ -84,6 +84,13 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
     return () => clearTimeout(timeoutId);
   }, [data.location]);
 
+  // Reset variations when checkbox is unchecked or total_rooms changes
+  useEffect(() => {
+    if (!hasVariations) {
+      setVariations([]);
+    }
+  }, [hasVariations, data.total_rooms]);
+
   const handleLocationSelect = (suggestion) => {
     setData('location', suggestion);
     setLocationSuggestions([]);
@@ -96,35 +103,98 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
     "Farm Stay", "Hostel", "Guesthouse", "Lighthouse", "Luxury Villa", "Penthouse",
   ];
 
+  // Validate form before submission
+  const validateForm = () => {
+    const requiredFields = {
+      property_name: data.property_name,
+      type: data.type,
+      location: data.location,
+      amount: data.amount
+    };
+
+    for (const [field, value] of Object.entries(requiredFields)) {
+      if (!value) {
+        alert(`Please fill in the ${field.replace('_', ' ')} field`);
+        return false;
+      }
+    }
+
+    if (images.length < 3) {
+      alert('Please upload at least 3 images');
+      return false;
+    }
+
+    return true;
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+    
     setIsLoading(true);
 
     try {
       // Prepare all data
       const formData = new FormData();
       
-      // Add basic property data
-      Object.keys(data).forEach(key => {
-        if (key !== 'images') {
-          formData.append(key, data[key]);
+      // Add basic property data (excluding arrays/objects)
+      const basicData = {
+        property_name: data.property_name,
+        type: data.type,
+        amount: data.amount,
+        price_per_night: data.price_per_night,
+        max_adults: data.max_adults,
+        max_children: data.max_children,
+        total_rooms: data.total_rooms,
+        status: data.status,
+        location: data.location,
+        wifi_password: data.wifi_password,
+        cook: data.cook,
+        cleaner: data.cleaner,
+        emergency_contact: data.emergency_contact,
+        key_location: data.key_location,
+        apartment_name: data.apartment_name,
+        block: data.block,
+        house_number: data.house_number,
+        lock_box_location: data.lock_box_location,
+        wifi_name: data.wifi_name
+      };
+
+      // Add basic data to formData
+      Object.keys(basicData).forEach(key => {
+        if (basicData[key] !== null && basicData[key] !== undefined) {
+          formData.append(key, basicData[key]);
         }
       });
 
-      // Add amenities
-      formData.append('amenities', JSON.stringify(selectedAmenities));
+      // Add amenities as array (not JSON string)
+      selectedAmenities.forEach(amenityId => {
+        formData.append('amenities[]', amenityId);
+      });
 
-      // Add variations (include standard if none exist)
-      const finalVariations = [...variations];
-      if (finalVariations.length === 0 || !finalVariations.some(v => v.type === 'Standard')) {
-        finalVariations.unshift({
-          type: 'Standard',
-          price: data.price_per_night,
-          rooms: data.total_rooms
+      // ONLY add variations if hasVariations is true OR if there are custom variations
+      if (hasVariations || variations.length > 0) {
+        const finalVariations = [...variations];
+        
+        // Only add Standard variation if checkbox is checked or variations exist
+        if (finalVariations.length === 0 || !finalVariations.some(v => v.type === 'Standard')) {
+          finalVariations.unshift({
+            type: 'Standard',
+            price: data.price_per_night,
+            rooms: parseInt(data.total_rooms)
+          });
+        }
+
+        // Add variations as array items
+        finalVariations.forEach((variation, index) => {
+          formData.append(`variations[${index}][type]`, variation.type);
+          formData.append(`variations[${index}][price]`, variation.price);
+          formData.append(`variations[${index}][rooms]`, variation.rooms);
         });
       }
-      formData.append('variations', JSON.stringify(finalVariations));
+      // If hasVariations is false and no custom variations, don't send variations at all
 
       // Add images
       images.forEach((image, index) => {
@@ -136,6 +206,9 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
         forceFormData: true,
         onSuccess: () => {
           // Redirect happens from backend
+        },
+        onError: (errors) => {
+          console.log('Submission errors:', errors);
         }
       });
 
@@ -167,8 +240,8 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
     
     setVariations([...variations, {
       type: newVariation.type,
-      price: newVariation.price,
-      rooms: newVariation.rooms
+      price: parseFloat(newVariation.price) || 0,
+      rooms: parseInt(newVariation.rooms) || 1
     }]);
     
     setNewVariation({
@@ -180,21 +253,6 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
 
   const removeVariation = (index) => {
     setVariations(variations.filter((_, i) => i !== index));
-  };
-
-  const generateSuggestedVariations = () => {
-    if (totalRooms <= 1) return;
-    
-    const suggestions = [];
-    for (let i = 1; i < totalRooms; i++) {
-      suggestions.push({
-        type: `${i} Bedroom${i > 1 ? 's' : ''}`,
-        price: (data.price_per_night * (i / totalRooms)).toFixed(2),
-        rooms: i
-      });
-    }
-    
-    setVariations(suggestions);
   };
 
   return (
@@ -252,8 +310,9 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                     min="1"
                     value={data.total_rooms}
                     onChange={(e) => {
-                      setData("total_rooms", e.target.value);
-                      setTotalRooms(e.target.value);
+                      const rooms = parseInt(e.target.value) || 1;
+                      setData("total_rooms", rooms);
+                      setTotalRooms(rooms);
                     }}
                     className="w-full border px-4 py-2 rounded-lg"
                     required
@@ -298,7 +357,7 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                     min="0"
                     step="0.01"
                     value={data.amount}
-                    onChange={(e) => setData("amount", e.target.value)}
+                    onChange={(e) => setData("amount", parseFloat(e.target.value) || 0)}
                     className="w-full border px-4 py-2 rounded-lg"
                     required
                   />
@@ -467,7 +526,14 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                   <input
                     type="checkbox"
                     checked={hasVariations}
-                    onChange={() => setHasVariations(!hasVariations)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setHasVariations(checked);
+                      // Clear variations when unchecked
+                      if (!checked) {
+                        setVariations([]);
+                      }
+                    }}
                     className="h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-gray-900 font-medium">Offer partial bookings (rent individual rooms)?</span>
@@ -476,40 +542,44 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
 
               {hasVariations && (
                 <div className="space-y-6">
-                  <div className="bg-yellow-50 p-4 rounded-lg">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <Bed className="h-5 w-5 text-yellow-600" />
-                      </div>
-                      <div className="ml-3">
-                        <h3 className="text-sm font-medium text-yellow-800">Suggested Room Options</h3>
-                        <div className="mt-2 text-sm text-yellow-700">
-                          <p>Based on your property at KES {data.price_per_night} per night:</p>
+                  {totalRooms > 1 && (
+                    <>
+                      <div className="bg-yellow-50 p-4 rounded-lg">
+                        <div className="flex">
+                          <div className="flex-shrink-0">
+                            <Bed className="h-5 w-5 text-yellow-600" />
+                          </div>
+                          <div className="ml-3">
+                            <h3 className="text-sm font-medium text-yellow-800">Suggested Room Options</h3>
+                            <div className="mt-2 text-sm text-yellow-700">
+                              <p>Based on your property at KES {data.price_per_night} per night:</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Array.from({ length: data.total_rooms - 1 }, (_, i) => i + 1).map(rooms => (
-                      <div key={rooms} className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                        onClick={() => {
-                          setVariations([...variations, {
-                            type: `${rooms} Bedroom${rooms > 1 ? 's' : ''}`,
-                            price: (data.price_per_night * (rooms / data.total_rooms)).toFixed(2),
-                            rooms: rooms
-                          }]);
-                        }}>
-                        <div className="flex items-center">
-                          <Bed className="h-5 w-5 text-gray-500 mr-2" />
-                          <span className="font-medium">{rooms} Bedroom{rooms > 1 ? 's' : ''}</span>
-                        </div>
-                        <div className="mt-2 text-sm text-gray-600">
-                          KES {(data.price_per_night * (rooms / data.total_rooms)).toFixed(2)}/night
-                        </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Array.from({ length: data.total_rooms - 1 }, (_, i) => i + 1).map(rooms => (
+                          <div key={rooms} className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
+                            onClick={() => {
+                              setVariations([...variations, {
+                                type: `${rooms} Bedroom${rooms > 1 ? 's' : ''}`,
+                                price: (data.price_per_night * (rooms / data.total_rooms)).toFixed(2),
+                                rooms: rooms
+                              }]);
+                            }}>
+                            <div className="flex items-center">
+                              <Bed className="h-5 w-5 text-gray-500 mr-2" />
+                              <span className="font-medium">{rooms} Bedroom{rooms > 1 ? 's' : ''}</span>
+                            </div>
+                            <div className="mt-2 text-sm text-gray-600">
+                              KES {(data.price_per_night * (rooms / data.total_rooms)).toFixed(2)}/night
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </>
+                  )}
 
                   <div className="border-t pt-6">
                     <h3 className="text-lg font-medium mb-4">Custom Room Options</h3>
@@ -531,7 +601,7 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                           min="1"
                           max={data.total_rooms - 1}
                           value={newVariation.rooms}
-                          onChange={(e) => setNewVariation({...newVariation, rooms: e.target.value})}
+                          onChange={(e) => setNewVariation({...newVariation, rooms: parseInt(e.target.value) || 1})}
                           className="w-full border px-4 py-2 rounded-lg"
                         />
                       </div>

@@ -207,6 +207,7 @@ class PropertyController extends Controller
         try {
             // 1. Create basic property
             $validatedData = $request->all();
+
             
             // Get coordinates if location provided
             if (!empty($validatedData['location'])) {

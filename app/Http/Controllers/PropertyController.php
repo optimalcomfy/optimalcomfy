@@ -207,7 +207,6 @@ class PropertyController extends Controller
         try {
             // 1. Create basic property
             $validatedData = $request->all();
-
             
             // Get coordinates if location provided
             if (!empty($validatedData['location'])) {
@@ -239,21 +238,17 @@ class PropertyController extends Controller
                 }
             }
 
+            // 3. Save variations if provided - WITHOUT automatically adding "Standard"
             if ($request->has('variations')) {
                 $variations = $request->input('variations');
                 if (is_string($variations)) {
                     $variations = json_decode($variations, true);
                 }
                 
-                if (!collect($variations)->contains('type', 'Standard')) {
-                    array_unshift($variations, [
-                        'type' => 'Standard',
-                        'price' => $property->price_per_night,
-                        'rooms' => $property->total_rooms
-                    ]);
+                // Only create variations that are explicitly provided
+                if (is_array($variations) && !empty($variations)) {
+                    $property->variations()->createMany($variations);
                 }
-                
-                $property->variations()->createMany($variations);
             }
 
             if ($request->hasFile('images')) {

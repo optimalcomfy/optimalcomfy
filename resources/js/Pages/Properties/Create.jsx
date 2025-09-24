@@ -177,15 +177,6 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
       // ONLY add variations if hasVariations is true OR if there are custom variations
       if (hasVariations || variations.length > 0) {
         const finalVariations = [...variations];
-        
-        // Only add Standard variation if checkbox is checked or variations exist
-        if (finalVariations.length === 0 || !finalVariations.some(v => v.type === 'Standard')) {
-          finalVariations.unshift({
-            type: 'Standard',
-            price: data.price_per_night,
-            rooms: parseInt(data.total_rooms)
-          });
-        }
 
         // Add variations as array items
         finalVariations.forEach((variation, index) => {

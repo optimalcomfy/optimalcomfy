@@ -12,7 +12,7 @@ trait Mpesa
     protected $consumerSecret;
     protected $passkey;
     protected $businessShortCode;
-    protected $callbackUrl; // For STK Push callback
+    protected $callbackUrl;
     protected $baseUrl;
 
     // New properties for additional Mpesa APIs
@@ -23,8 +23,6 @@ trait Mpesa
 
     public function __construct()
     {
-        \Log::info('=== MPESA TRAIT CONSTRUCTOR CALLED ===');
-
         $this->consumerKey = config('services.mpesa.consumer_key');
         $this->consumerSecret = config('services.mpesa.consumer_secret');
         $this->passkey = config('services.mpesa.passkey');
@@ -34,53 +32,33 @@ trait Mpesa
 
         // Initialize new configuration properties
         $this->initiatorName = config('services.mpesa.initiator_name');
-        $this->securityCredential = config('services.mpesa.security_credential');
+        $this->securityCredential = config('services.mpesa.security_credential'); // This should be an encrypted password
         $this->resultURL = config('services.mpesa.result_url');
         $this->queueTimeOutURL = config('services.mpesa.queue_timeout_url');
 
-        \Log::info('M-Pesa Trait Configuration Loaded:', [
-            'baseUrl' => $this->baseUrl,
-            'consumerKey_set' => !empty($this->consumerKey),
-            'consumerSecret_set' => !empty($this->consumerSecret),
-            'businessShortCode' => $this->businessShortCode,
-            'config_files_loaded' => config('services.mpesa') ? 'YES' : 'NO',
-        ]);
-
         $this->validateConfig();
-
-        \Log::info('=== MPESA TRAIT CONSTRUCTOR COMPLETED ===');
     }
 
     protected function validateConfig(): void
     {
-        \Log::info('Validating M-Pesa configuration...');
-
         $required = [
             'consumerKey',
             'consumerSecret',
             'passkey',
             'businessShortCode',
             'baseUrl',
+            // Add new required configs if they are mandatory for all operations
+            // 'initiatorName',
+            // 'securityCredential',
+            // 'resultURL',
+            // 'queueTimeOutURL',
         ];
 
         foreach ($required as $key) {
             if (empty($this->$key)) {
-                \Log::error('M-Pesa configuration validation failed:', [
-                    'missing_key' => $key,
-                    'current_value' => $this->$key,
-                    'all_config' => [
-                        'consumerKey' => !empty($this->consumerKey) ? 'SET' : 'MISSING',
-                        'consumerSecret' => !empty($this->consumerSecret) ? 'SET' : 'MISSING',
-                        'passkey' => !empty($this->passkey) ? 'SET' : 'MISSING',
-                        'businessShortCode' => !empty($this->businessShortCode) ? 'SET' : 'MISSING',
-                        'baseUrl' => $this->baseUrl,
-                    ]
-                ]);
                 throw new Exception("MPesa configuration error: {$key} is not configured.");
             }
         }
-
-        \Log::info('M-Pesa configuration validation passed');
     }
 
     /**
@@ -99,140 +77,40 @@ trait Mpesa
 
     public function generateAccessToken(): string
     {
-        // Add comprehensive debugging at the start
-        \Log::info('=== M-PESA ACCESS TOKEN GENERATION STARTED ===');
-        \Log::info('M-Pesa Configuration Values:', [
-            'baseUrl' => $this->baseUrl,
-            'consumerKey_set' => !empty($this->consumerKey) ? 'YES' : 'NO',
-            'consumerSecret_set' => !empty($this->consumerSecret) ? 'YES' : 'NO',
-            'consumerKey_length' => strlen($this->consumerKey ?? ''),
-            'consumerSecret_length' => strlen($this->consumerSecret ?? ''),
-            'businessShortCode' => $this->businessShortCode,
-        ]);
-
         $credentials = base64_encode($this->consumerKey . ":" . $this->consumerSecret);
         $url = $this->baseUrl . "/oauth/v1/generate?grant_type=client_credentials";
 
-        \Log::info('Generated URL Details:', [
-            'final_url' => $url,
-            'url_length' => strlen($url),
-            'base_url' => $this->baseUrl,
-            'credentials_set' => !empty($credentials) ? 'YES' : 'NO',
-            'credentials_length' => strlen($credentials),
-        ]);
-
-        // Validate URL before making the request
-        if (empty($url)) {
-            \Log::error('URL is empty!');
-            throw new Exception('URL is empty');
-        }
-
-        if (filter_var($url, FILTER_VALIDATE_URL) === false) {
-            \Log::error('URL validation failed:', [
-                'url' => $url,
-                'filter_var_result' => filter_var($url, FILTER_VALIDATE_URL)
-            ]);
-            throw new Exception('Invalid URL format: ' . $url);
-        }
-
-        $curl = null;
+        $curl = null; // Initialize curl
         try {
-            \Log::info('Attempting to initialize cURL...');
-
             $curl = curl_init();
-            if ($curl === false) {
-                \Log::error('Failed to initialize cURL');
-                throw new Exception('Failed to initialize cURL');
-            }
-
-            \Log::info('cURL initialized successfully');
-
-            $curlOptions = [
+            curl_setopt_array($curl, [
                 CURLOPT_URL => $url,
                 CURLOPT_HTTPHEADER => ["Authorization: Basic " . $credentials],
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HEADER => false,
-                CURLOPT_SSL_VERIFYPEER => false, // Temporarily disable for debugging
-                CURLOPT_SSL_VERIFYHOST => 0,
-                CURLOPT_TIMEOUT => 30,
-                CURLOPT_VERBOSE => true, // Enable verbose output
-            ];
-
-            \Log::info('Setting cURL options:', [
-                'url' => $url,
-                'headers' => ["Authorization: Basic " . substr($credentials, 0, 20) . "..."],
-                'ssl_verify_peer' => false,
+                CURLOPT_SSL_VERIFYPEER => true,
             ]);
 
-            curl_setopt_array($curl, $curlOptions);
-
-            \Log::info('Executing cURL request...');
             $response = curl_exec($curl);
-
-            \Log::info('cURL execution completed');
-
             if ($response === false) {
-                $curlError = curl_error($curl);
-                $curlErrno = curl_errno($curl);
-
-                \Log::error('cURL Request Failed:', [
-                    'error_message' => $curlError,
-                    'error_number' => $curlErrno,
-                    'url' => $url,
-                    'http_code' => curl_getinfo($curl, CURLINFO_HTTP_CODE),
-                    'total_time' => curl_getinfo($curl, CURLINFO_TOTAL_TIME),
-                ]);
-
-                throw new Exception('Curl error during access token generation: ' . $curlError . ' (Error #' . $curlErrno . ')');
+                throw new Exception('Curl error during access token generation: ' . curl_error($curl));
             }
-
-            \Log::info('cURL Response Received:', [
-                'response_length' => strlen($response),
-                'response_preview' => substr($response, 0, 200) . '...',
-                'http_code' => curl_getinfo($curl, CURLINFO_HTTP_CODE),
-            ]);
 
             $data = json_decode($response);
-
             if (!isset($data->access_token)) {
-                \Log::error('M-Pesa API Response Error:', [
-                    'full_response' => $response,
-                    'json_decode_result' => json_last_error_msg(),
-                    'url' => $url,
-                    'http_code' => curl_getinfo($curl, CURLINFO_HTTP_CODE),
-                ]);
-
-                if (isset($data->errorMessage)) {
-                    throw new Exception('M-Pesa API Error: ' . $data->errorMessage);
-                } else {
-                    throw new Exception('Failed to get access token from M-Pesa. Response: ' . $response);
-                }
+                throw new Exception('Failed to get access token from M-Pesa.');
             }
-
-            \Log::info('Access Token Generated Successfully:', [
-                'token_preview' => substr($data->access_token, 0, 20) . '...',
-                'token_length' => strlen($data->access_token),
-            ]);
 
             return $data->access_token;
-
         } catch (\Exception $e) {
-            \Log::error('Exception in generateAccessToken:', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'url' => $url,
-                'baseUrl' => $this->baseUrl,
-            ]);
-            throw $e;
+            throw $e; // Re-throw exception to be caught by the controller
         } finally {
             if ($curl) {
-                \Log::info('Closing cURL handle');
                 curl_close($curl);
             }
-            \Log::info('=== M-PESA ACCESS TOKEN GENERATION COMPLETED ===');
         }
     }
+
     /**
      * Initiates an STK Push request.
      * @param string $type 'Paybill' or 'BuyGoods'

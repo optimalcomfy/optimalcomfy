@@ -42,7 +42,7 @@ class CarBookingController extends Controller
     {
         $this->smsService = $smsService;
     }
-    
+
 
     public function index(Request $request)
     {
@@ -86,7 +86,7 @@ class CarBookingController extends Controller
         $endDate = $request->query('end_date');
 
         $filterByDate = !empty($startDate) && !empty($endDate);
-        
+
         $query->when($filterByDate, function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('created_at', [$startDate, $endDate]);
                 });
@@ -110,7 +110,7 @@ class CarBookingController extends Controller
         $endDate = $request->query('end_date');
 
         $filterByDate = !empty($startDate) && !empty($endDate);
-        
+
         $query->when($filterByDate, function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('created_at', [$startDate, $endDate]);
                 });
@@ -122,19 +122,19 @@ class CarBookingController extends Controller
             $query->where(function($q) use ($status) {
                 switch ($status) {
                     case 'checked_out':
-                        $q->whereNotNull('checked_out');  
+                        $q->whereNotNull('checked_out');
                         break;
                     case 'checked_in':
-                        $q->whereNotNull('checked_in')   
-                        ->whereNull('checked_out');   
+                        $q->whereNotNull('checked_in')
+                        ->whereNull('checked_out');
                         break;
                     case 'upcoming_stay':
                         $q->where('status', 'paid')
-                        ->whereNull('checked_in');  
+                        ->whereNull('checked_in');
                         break;
                     default:
                         $q->where('status', $status)
-                        ->whereNull('checked_in')  
+                        ->whereNull('checked_in')
                         ->whereNull('checked_out');
                 }
             });
@@ -223,7 +223,7 @@ class CarBookingController extends Controller
 
         try {
             Mail::to($booking->user->email)->send(new CancelledCarBooking($booking, 'guest'));
-            
+
             Mail::to($booking->property->user->email)->send(new CancelledCarBooking($booking, 'host'));
         } catch (\Exception $e) {
             \Log::error('Cancellation email error: ' . $e->getMessage());
@@ -262,7 +262,7 @@ class CarBookingController extends Controller
         $user = Auth::user();
         $validatedData['user_id'] = $user->id;
 
-        $car = Car::findOrFail($request->car_id); 
+        $car = Car::findOrFail($request->car_id);
 
         // Calculate number of days
         $startDate = Carbon::parse($request->start_date);
@@ -288,7 +288,7 @@ class CarBookingController extends Controller
 
 
         try {
-            $callbackBase = config('services.mpesa.ride_callback_url')
+            $callbackBase = env('MPESA_RIDE_CALLBACK_URL')
                 ?? secure_url('/api/mpesa/ride/stk/callback');
 
             $callbackData = [
@@ -333,19 +333,19 @@ class CarBookingController extends Controller
         try {
             // Parse the callback data
             $callbackData = $request->json()->all();
-            
+
             // Extract the transaction details from callback
             $resultCode = $callbackData['Body']['stkCallback']['ResultCode'] ?? null;
             $resultDesc = $callbackData['Body']['stkCallback']['ResultDesc'] ?? null;
             $merchantRequestID = $callbackData['Body']['stkCallback']['MerchantRequestID'] ?? null;
             $checkoutRequestID = $callbackData['Body']['stkCallback']['CheckoutRequestID'] ?? null;
-            
+
             // Get the additional data passed in the callback URL
             $callbackParams = json_decode($request->query('data'), true);
-            
+
             // Find the related booking
             $booking = CarBooking::with('car.user')->find($callbackParams['booking_id'] ?? null);
-            
+
             if (!$booking) {
                 \Log::error('Booking not found for callback', ['callbackParams' => $callbackParams]);
                 return response()->json(['message' => 'Booking not found'], 404);
@@ -368,7 +368,7 @@ class CarBookingController extends Controller
             // If payment was successful
             if ($resultCode === 0) {
                 $callbackMetadata = $callbackData['Body']['stkCallback']['CallbackMetadata']['Item'] ?? [];
-                
+
                 // Extract M-Pesa receipt details from callback metadata
                 foreach ($callbackMetadata as $item) {
                     switch ($item['Name']) {
@@ -524,17 +524,17 @@ class CarBookingController extends Controller
             if (!$booking->checkin_verification_code) {
                 $booking->checkin_verification_code = CarBooking::generateVerificationCode();
                 $booking->save();
-                
+
                 // Mail::to($booking->user->email)->send(new CarCheckInVerification($booking));
 
                 $user = User::find($booking->user_id);
 
                 $this->smsService->sendSms(
-                    "254743630811", 
+                    "254743630811",
                     "Hello {$user->name}, Your OTP for car pick up verification is: {$booking->checkin_verification_code}"
                 );
 
-                
+
                 return back()->with('success', 'Verification code sent to your email. Please enter it to complete check-in.');
             }
 
@@ -561,9 +561,9 @@ class CarBookingController extends Controller
             if (!$booking->checkout_verification_code) {
                 $booking->checkout_verification_code = CarBooking::generateVerificationCode();
                 $booking->save();
-                
+
                 Mail::to($booking->user->email)->send(new CarCheckOutVerification($booking));
-                
+
                 return back()->with('success', 'Verification code sent to your email. Please enter it to complete check-out.');
             }
 
@@ -572,7 +572,7 @@ class CarBookingController extends Controller
             }
 
             $booking->checked_out = now();
-            $booking->checkout_verification_code = null; 
+            $booking->checkout_verification_code = null;
             $booking->save();
 
             return back()->with('success', 'Successfully checked out!');
@@ -584,7 +584,7 @@ class CarBookingController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    
+
     public function destroy(CarBooking $carBooking)
     {
         $carBooking->delete();

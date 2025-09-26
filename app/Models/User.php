@@ -111,4 +111,27 @@ class User extends Authenticatable
     {
         return $this->hasOne('App\Models\Company', 'id', 'company_id');
     }
+
+
+    public function generateWithdrawalCode(): string
+    {
+        $code = rand(100000, 999999);
+        $this->withdrawal_code = $code;
+        $this->save();
+
+        return $code;
+    }
+
+    public function validateWithdrawalCode(string $code): bool
+    {
+        return $this->withdrawal_code === $code;
+    }
+
+
+    public function clearWithdrawalCode(): void
+    {
+        $this->withdrawal_code = null;
+        $this->save();
+    }
+
 }

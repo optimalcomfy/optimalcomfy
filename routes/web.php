@@ -63,47 +63,6 @@ use App\Models\Property;
 
 Route::post('/send-comment', [ProfileController::class, 'sendComment'])->name('profile.sendComment');
 
-Route::get('/properties/closest', function (Request $request) {
-    try {
-        $latitude = $request->query('latitude');
-        $longitude = $request->query('longitude');
-        $limit = $request->query('limit', 75);
-
-        // Validate required parameters
-        if (!$latitude || !$longitude) {
-            return response()->json([
-                'error' => 'Latitude and longitude are required',
-                'data' => []
-            ], 400);
-        }
-
-        $properties = Property::select('*', DB::raw("
-            (6371 * acos(
-                cos(radians($latitude)) * 
-                cos(radians(latitude)) * 
-                cos(radians(longitude) - radians($longitude)) + 
-                sin(radians($latitude)) * 
-                sin(radians(latitude))
-            )) AS distance
-        "))
-        ->whereNotNull('latitude')
-        ->whereNotNull('longitude')
-        ->orderBy('distance', 'ASC')
-        ->limit($limit)
-        ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $properties
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Server error: ' . $e->getMessage(),
-            'data' => []
-        ], 500);
-    }
-});
 
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -132,7 +91,7 @@ Route::get('/joby/{job}', [HomeController::class, 'showJob'])->name('jobShow');
 Route::get('/locations','App\Http\Controllers\LocationController@locations');
 
 Route::middleware('auth')->group(function () {
-    
+
     Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -145,7 +104,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('companies', CompanyController::class);
     Route::get('/companies/list', [CompanyController::class, 'list'])->name('companies.list');
 
-    
+
     Route::resource('loans', LoanController::class);
     Route::get('/loans/{loan}/approve', [LoanController::class, 'approve'])->name('loans.approval');
     Route::post('/loans/{loan}/loanApproval', [LoanController::class, 'approveLoan'])->name('loans.approveLoan');
@@ -162,7 +121,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/car-bookings/{car_booking}/refund', [CarRefundController::class, 'handleRefund'])
     ->name('car-bookings.handle-refund');
-    
+
     Route::put('/stay-bookings-cancel', [BookingController::class, 'cancel'])
     ->name('stay-bookings.cancel');
 
@@ -228,6 +187,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/properties/{property}/features', [PropertyFeatureController::class, 'getByProperty'])->name('properties.features.byProperty');
 
     Route::post('/withdraw', [WithdrawalController::class, 'processDisbursement'])->name('withdraw');
+
+    Route::post('/withdraw/initiate', [WithdrawalController::class, 'initiateWithdrawal'])->name('withdraw.initiate');
+    Route::post('/withdraw/verify', [WithdrawalController::class, 'verifyAndWithdraw'])->name('withdraw.verify');
+    Route::post('/withdraw/resend-code', [WithdrawalController::class, 'resendVerificationCode'])->name('withdraw.resend-code');
 
     Route::get('/books/lookup', [BookingController::class, 'lookup'])->name('bookings.lookup');
 });

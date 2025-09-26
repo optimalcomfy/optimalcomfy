@@ -30,7 +30,8 @@ class Booking extends Model
         'refund_approval',
         'non_refund_reason',
         'refund_amount',
-        'cancelled_by_id'
+        'cancelled_by_id',
+        'referral_code'
     ];
 
     protected $appends = ['stay_status'];
@@ -49,15 +50,15 @@ class Booking extends Model
         if ($this->checked_out) {
             return 'checked_out';
         }
-        
+
         if ($this->checked_in) {
             return 'checked_in';
         }
-        
+
         if ($this->status === 'paid' && !$this->checked_in) {
             return 'upcoming_stay';
         }
-        
+
         return $this->status;
     }
 

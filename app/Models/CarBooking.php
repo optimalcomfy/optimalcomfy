@@ -32,7 +32,8 @@ class CarBooking extends Model
         'refund_approval',
         'non_refund_reason',
         'refund_amount',
-        'cancelled_by_id'
+        'cancelled_by_id',
+        'referral_code'
     ];
 
     // Add this to automatically include the accessor in JSON/array outputs
@@ -53,7 +54,7 @@ class CarBooking extends Model
         if ($this->checked_out) {
             return 'checked_out';
         }
-        
+
         if ($this->checked_in) {
             return 'checked_in';
         }
@@ -61,7 +62,7 @@ class CarBooking extends Model
         if ($this->status === 'paid' && !$this->checked_in) {
             return 'upcoming_stay';
         }
-        
+
         return $this->status;
     }
 

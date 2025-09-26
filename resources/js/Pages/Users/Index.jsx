@@ -4,7 +4,7 @@ import Layout from "@/Layouts/layout/layout.jsx";
 import Swal from 'sweetalert2';
 import { FileText, FileSpreadsheet, Plus, Filter, X } from 'lucide-react';
 import { jsPDF } from "jspdf";
-import "jspdf-autotable"; 
+import "jspdf-autotable";
 import * as XLSX from 'xlsx';
 
 const Index = () => {
@@ -55,7 +55,7 @@ const Index = () => {
       <div className="w-full">
         {/* Header Section */}
         <div className="lg:hidden mb-4">
-          <button 
+          <button
             onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
             className="inline-flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
@@ -73,7 +73,7 @@ const Index = () => {
 
         {/* Top Section - Responsive */}
         <div className={`
-          ${mobileFiltersOpen ? 'block' : 'hidden'} 
+          ${mobileFiltersOpen ? 'block' : 'hidden'}
           lg:block bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4
         `}>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -121,6 +121,7 @@ const Index = () => {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Phone</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Referral code</th>
                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -132,6 +133,7 @@ const Index = () => {
                     <td className="px-6 py-4 whitespace-wrap">{user.email}</td>
                     <td className="px-6 py-4 whitespace-wrap">{user.phone}</td>
                     <td className="px-6 py-4 whitespace-wrap">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-wrap">{user.referral_code}</td>
                     <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
                         <Link

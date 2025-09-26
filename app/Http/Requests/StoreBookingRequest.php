@@ -32,7 +32,8 @@ class StoreBookingRequest extends FormRequest
             'checked_out' => 'nullable',
             'number' => 'nullable',
             'variation_id' => 'nullable',
-            'external_booking' => 'nullable'
+            'external_booking' => 'nullable',
+            'referral_code'=> 'nullable',
         ];
     }
 }

@@ -28,6 +28,8 @@ class StoreCompanyRequest extends FormRequest
             'email' => 'required|email|unique:companies,email',
             'phone' => 'required|string|max:15',
             'percentage' => 'required',
+            'referral_percentage' => 'required',
+            'booking_referral_percentage' => 'nullable'
         ];
     }
 }

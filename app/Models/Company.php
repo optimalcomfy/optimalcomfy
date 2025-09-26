@@ -17,6 +17,8 @@ class Company extends Model
         'email',
         'password',
         'address',
-        'percentage'
+        'percentage',
+        'referral_percentage',
+        'booking_referral_percentage'
     ];
 }

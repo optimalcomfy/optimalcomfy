@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -49,7 +49,11 @@ class User extends Authenticatable
         'emergency_contact',
         'contact_phone',
         'user_type',
-        'host_id'
+        'host_id',
+        'withdrawal_code',
+        'Phone_verification_code',
+        'referral_code',
+        'ristay_verified'
     ];
 
     /**
@@ -63,18 +67,6 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be appended to the user model.
-     *
-     * @var array<int, string>
-     */
-
-    public function company()
-    {
-        return $this->hasOne('App\Models\Company', 'id', 'company_id');
-    }
-
-
-    /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
@@ -85,4 +77,38 @@ class User extends Authenticatable
         'date_of_birth' => 'date',
         'preferred_countries' => 'array',
     ];
+
+    /**
+     * Boot function from Laravel model events
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            if (empty($user->referral_code)) {
+                $user->referral_code = static::generateUniqueReferralCode();
+            }
+        });
+    }
+
+    /**
+     * Generate a unique referral code
+     */
+    protected static function generateUniqueReferralCode(): string
+    {
+        $code = Str::upper(Str::random(8));
+
+        // Check if code already exists
+        while (static::where('referral_code', $code)->exists()) {
+            $code = Str::upper(Str::random(8));
+        }
+
+        return $code;
+    }
+
+    public function company()
+    {
+        return $this->hasOne('App\Models\Company', 'id', 'company_id');
+    }
 }

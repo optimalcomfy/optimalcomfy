@@ -497,7 +497,7 @@ class CarBookingController extends Controller
      * Update the specified resource in storage.
      */
 
-    public function update(Request $request)
+    public function update(Request $request, SmsService $smsService)
     {
 
         $input = $request->all();
@@ -522,6 +522,11 @@ class CarBookingController extends Controller
                 Mail::to($booking->user->email)->send(new CarCheckInVerification($booking));
 
                 $user = User::find($booking->user_id);
+
+                $smsService->sendSms(
+                    $user->phone,
+                    "Hello {$user->name}, Your OTP for car pick up verification is: {$booking->checkin_verification_code}"
+                );
 
 
                 return back()->with('success', 'Verification code sent to your email. Please enter it to complete check-in.');
@@ -550,6 +555,13 @@ class CarBookingController extends Controller
             if (!$booking->checkout_verification_code) {
                 $booking->checkout_verification_code = CarBooking::generateVerificationCode();
                 $booking->save();
+
+                $user = User::find($booking->user_id);
+
+                $smsService->sendSms(
+                    $user->phone,
+                    "Hello {$user->name}, Your OTP for drop off verification is: {$booking->checkout_verification_code}"
+                );
 
                 Mail::to($booking->user->email)->send(new CarCheckOutVerification($booking));
 

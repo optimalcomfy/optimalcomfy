@@ -41,14 +41,14 @@ const AppMenu = () => {
                 { label: 'Cancelled reservation', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'Cancelled'}), roles: [1, 2,3] },
                 { label: 'Upcoming rides', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'upcoming_stay'}), roles: [1, 2,3] },
                 { label: 'Current rides', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'checked_in'}), roles: [1, 2,3] },
-                { label: 'Checked out', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'checked_out'}), roles: [1, 2,3] }              
+                { label: 'Checked out', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'checked_out'}), roles: [1, 2,3] }
             ]
         },
         {
             label: 'Payments & Reviews',
             items: [
                 { label: 'Payments', icon: 'pi pi-fw pi-credit-card', to: route('payments.index'), roles: [1] },
-                { label: 'Ristay wallet', icon: 'pi pi-fw pi-credit-card', to: route('wallet'), roles: [2] }
+                { label: 'Ristay wallet', icon: 'pi pi-fw pi-credit-card', to: route('wallet'), roles: [2,3,4] }
             ]
         },
         {
@@ -57,18 +57,18 @@ const AppMenu = () => {
                 { label: 'Company', icon: 'pi pi-fw pi-briefcase', to: route('companies.index'), roles: [1] }
             ]
         },
-    ];    
+    ];
 
     const filteredModel = model.map(section => ({
         ...section,
         items: section.items.filter(item => item.roles.includes(roleId)),
-    })).filter(section => section.items.length > 0); 
+    })).filter(section => section.items.length > 0);
 
     return (
         <MenuProvider>
             <ul className="layout-menu">
                 {filteredModel.map((item, i) => {
-                    return !item?.separator ? 
+                    return !item?.separator ?
                         <AppMenuitem item={item} root={true} index={i} key={item?.label} />
                      : <li className="menu-separator"></li>;
                 })}

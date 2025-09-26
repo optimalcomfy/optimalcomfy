@@ -34,7 +34,8 @@ class UpdateCarBookingRequest extends FormRequest
             'checked_in' => 'nullable',
             'checked_out' => 'nullable',
             'number' => 'nullable',
-            'external_booking' => 'nullable'
+            'external_booking' => 'nullable',
+            'referral_code'=> 'nullable',
         ];
     }
 }

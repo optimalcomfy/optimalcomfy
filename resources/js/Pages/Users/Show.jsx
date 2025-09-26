@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { 
-  FiUser, FiMail, FiPhone, FiFileText, FiCalendar, 
+import {
+  FiUser, FiMail, FiPhone, FiFileText, FiCalendar,
   FiMapPin, FiHome, FiGlobe, FiShield, FiPhoneCall,
-  FiAward, FiKey
+  FiAward, FiKey,
+  FiCode
 } from 'react-icons/fi';
 
 const Show = ({ user }) => {
@@ -24,10 +25,10 @@ const Show = ({ user }) => {
 
   // Only include files that exist
   const files = [
-    user.id_verification && { 
-      name: 'ID Verification', 
+    user.id_verification && {
+      name: 'ID Verification',
       value: `/storage/${user.id_verification}`,
-      icon: <FiShield className="text-[#d15623]" /> 
+      icon: <FiShield className="text-[#d15623]" />
     }
   ].filter(Boolean);
 
@@ -35,7 +36,7 @@ const Show = ({ user }) => {
     <Layout>
       <div className="max-w-5xl bg-white rounded-xl shadow-md overflow-hidden">
         {/* Header with accent color */}
-        <div 
+        <div
           className="p-6 text-white"
           style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
         >
@@ -47,52 +48,53 @@ const Show = ({ user }) => {
           {/* Main Content Column */}
           <div className="md:col-span-2 space-y-6">
             {/* Personal Info Card */}
-            <div 
+            <div
               className="rounded-lg p-5 shadow-sm border"
               style={{ backgroundColor: lightBg, borderColor: `${primaryColor}20` }}
             >
-              <h2 
+              <h2
                 className="text-xl font-semibold mb-4 flex items-center gap-2"
                 style={{ color: primaryColor }}
               >
                 <FiUser /> Personal Information
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {user.email && <InfoItem icon={<FiMail />} label="Email" value={user.email} />}
                 {user.phone && <InfoItem icon={<FiPhone />} label="Phone" value={user.phone} />}
+                {user.referral_code && <InfoItem icon={<FiCode />} label="Referral code" value={user.referral_code} />}
                 {user.date_of_birth && (
-                  <InfoItem 
-                    icon={<FiCalendar />} 
-                    label="Date of Birth" 
-                    value={new Date(user.date_of_birth).toLocaleDateString()} 
+                  <InfoItem
+                    icon={<FiCalendar />}
+                    label="Date of Birth"
+                    value={new Date(user.date_of_birth).toLocaleDateString()}
                   />
                 )}
                 {user.address && <InfoItem icon={<FiHome />} label="Address" value={user.address} />}
                 {user.city && user.country && (
-                  <InfoItem 
-                    icon={<FiMapPin />} 
-                    label="Location" 
-                    value={`${user.city}, ${user.country}`} 
+                  <InfoItem
+                    icon={<FiMapPin />}
+                    label="Location"
+                    value={`${user.city}, ${user.country}`}
                   />
                 )}
                 {user.postal_code && <InfoItem icon={<FiGlobe />} label="Postal Code" value={user.postal_code} />}
                 {user.emergency_contact && (
-                  <InfoItem 
-                    icon={<FiPhoneCall />} 
-                    label="Emergency Contact" 
-                    value={user.emergency_contact} 
+                  <InfoItem
+                    icon={<FiPhoneCall />}
+                    label="Emergency Contact"
+                    value={user.emergency_contact}
                   />
                 )}
               </div>
             </div>
 
             {/* System Info Card */}
-            <div 
+            <div
               className="rounded-lg p-5 shadow-sm border"
               style={{ backgroundColor: lightBg, borderColor: `${primaryColor}20` }}
             >
-              <h2 
+              <h2
                 className="text-xl font-semibold mb-4 flex items-center gap-2"
                 style={{ color: primaryColor }}
               >
@@ -100,17 +102,17 @@ const Show = ({ user }) => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {user.role_id && (
-                  <InfoItem 
-                    icon={<FiAward />} 
-                    label="Account Type" 
-                    value={roleMap[parseInt(user.role_id)]} 
+                  <InfoItem
+                    icon={<FiAward />}
+                    label="Account Type"
+                    value={roleMap[parseInt(user.role_id)]}
                   />
                 )}
                 {user.created_at && (
-                  <InfoItem 
-                    icon="🕒" 
-                    label="Member Since" 
-                    value={new Date(user.created_at).toLocaleDateString()} 
+                  <InfoItem
+                    icon="🕒"
+                    label="Member Since"
+                    value={new Date(user.created_at).toLocaleDateString()}
                   />
                 )}
               </div>
@@ -121,20 +123,20 @@ const Show = ({ user }) => {
           <div className="space-y-6">
             {/* Files Section (only show if files exist) */}
             {files.length > 0 && (
-              <div 
+              <div
                 className="rounded-lg p-5 shadow-sm border h-full"
                 style={{ backgroundColor: lightBg, borderColor: `${primaryColor}20` }}
               >
-                <h2 
+                <h2
                   className="text-xl font-semibold mb-4 flex items-center gap-2"
                   style={{ color: primaryColor }}
                 >
                   <FiFileText /> Documents
                 </h2>
-                
+
                 <div className="space-y-3">
                   {files.map((file, index) => (
-                    <FileItem 
+                    <FileItem
                       key={index}
                       icon={file.icon}
                       name={file.name}
@@ -147,29 +149,29 @@ const Show = ({ user }) => {
             )}
 
             {/* Actions */}
-            <div 
+            <div
               className="rounded-lg p-5 shadow-sm border"
               style={{ backgroundColor: lightBg, borderColor: `${primaryColor}20` }}
             >
-              <h3 
+              <h3
                 className="font-medium mb-3"
                 style={{ color: accentColor }}
               >
                 User Actions
               </h3>
               <div className="flex flex-col space-y-2">
-                <Link 
+                <Link
                   href={route('users.edit', user.id)}
                   className="px-4 py-2 text-white rounded transition text-sm font-medium text-center"
                   style={{ backgroundColor: primaryColor }}
                 >
                   Edit Profile
                 </Link>
-                <Link 
+                <Link
                   href={route('users.index')}
                   className="px-4 py-2 bg-white rounded border transition text-sm text-center"
-                  style={{ 
-                    borderColor: primaryColor, 
+                  style={{
+                    borderColor: primaryColor,
                     color: primaryColor
                   }}
                 >
@@ -197,9 +199,9 @@ const InfoItem = ({ icon, label, value }) => (
 
 // Reusable File Item Component
 const FileItem = ({ icon, name, url, primaryColor }) => (
-  <a 
-    href={url} 
-    target="_blank" 
+  <a
+    href={url}
+    target="_blank"
     rel="noopener noreferrer"
     className="flex items-center justify-between p-3 bg-white rounded border border-gray-200 hover:shadow-md transition"
     style={{ hover: { borderColor: primaryColor } }}
@@ -208,7 +210,7 @@ const FileItem = ({ icon, name, url, primaryColor }) => (
       <div className="text-lg">{icon}</div>
       <span className="font-medium text-gray-700">{name}</span>
     </div>
-    <span 
+    <span
       className="text-sm font-medium"
       style={{ color: primaryColor }}
     >

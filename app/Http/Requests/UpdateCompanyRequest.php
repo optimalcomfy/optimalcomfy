@@ -28,6 +28,8 @@ class UpdateCompanyRequest extends FormRequest
             'email' => 'nullable',
             'phone' => 'required|string|max:15',
             'percentage' => 'required',
+            'referral_percentage' => 'nullable',
+            'booking_referral_percentage' => 'nullable'
         ];
     }
 }

@@ -27,6 +27,7 @@ class UserController extends Controller
             // Apply search conditions to the existing query
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%$search%")
+                ->orWhere('referral_code', 'LIKE', "%$search%")
                 ->orWhere('email', 'LIKE', "%$search%");
             });
         }
@@ -102,7 +103,7 @@ class UserController extends Controller
         if (!empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         } else {
-            unset($data['password']); 
+            unset($data['password']);
         }
 
         $user->update($data);

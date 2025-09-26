@@ -17,7 +17,7 @@ class StoreCarBookingRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, 
+     * @return array<string,
      */
 
     public function rules(): array
@@ -36,7 +36,8 @@ class StoreCarBookingRequest extends FormRequest
             'checked_out' => 'nullable',
             'number' => 'nullable',
             'phone' => 'nullable',
-            'external_booking' => 'nullable'
+            'external_booking' => 'nullable',
+            'referral_code'=> 'nullable',
         ];
     }
 }

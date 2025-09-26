@@ -10,7 +10,9 @@ const EditCompany = ({ company, errors }) => {
     address: company.address,
     email: company.email,
     phone: company.phone,
-    percentage: company.percentage
+    percentage: company.percentage,
+    referral_percentage: company.referral_percentage,
+    booking_referral_percentage: company.booking_referral_percentage
   });
 
   const handleSubmit = (e) => {
@@ -93,6 +95,28 @@ const EditCompany = ({ company, errors }) => {
             />
             {errors.percentage && <div className="text-sm text-red-500 mt-1">{errors.percentage}</div>}
           </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Referral percentage</label>
+                <input
+                type="text"
+                value={data.referral_percentage}
+                onChange={(e) => setData('referral_percentage', e.target.value)}
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                {errors.referral_percentage && <div className="text-sm text-red-500 mt-1">{errors.referral_percentage}</div>}
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Booking Referral percentage</label>
+                <input
+                type="text"
+                value={data.booking_referral_percentage}
+                onChange={(e) => setData('booking_referral_percentage', e.target.value)}
+                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                {errors.booking_referral_percentage && <div className="text-sm text-red-500 mt-1">{errors.booking_referral_percentage}</div>}
+            </div>
 
           {/* Submit Button */}
           <button

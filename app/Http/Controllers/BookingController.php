@@ -86,7 +86,7 @@ class BookingController extends Controller
         $endDate = $request->query('end_date');
 
         $filterByDate = !empty($startDate) && !empty($endDate);
-        
+
         $query->when($filterByDate, function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('created_at', [$startDate, $endDate]);
                 });
@@ -116,12 +116,12 @@ class BookingController extends Controller
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
 
-        
+
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
 
         $filterByDate = !empty($startDate) && !empty($endDate);
-        
+
         $query->when($filterByDate, function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('created_at', [$startDate, $endDate]);
                 });
@@ -130,23 +130,23 @@ class BookingController extends Controller
         // Stay status filtering - matches the accessor logic
         if ($request->has('status') && $request->input('status') != null) {
             $status = $request->input('status');
-            
+
             $query->where(function($q) use ($status) {
                 switch ($status) {
                     case 'checked_out':
-                        $q->whereNotNull('checked_out');  
+                        $q->whereNotNull('checked_out');
                         break;
                     case 'checked_in':
-                        $q->whereNotNull('checked_in')   
-                        ->whereNull('checked_out');   
+                        $q->whereNotNull('checked_in')
+                        ->whereNull('checked_out');
                         break;
                     case 'upcoming_stay':
                         $q->where('status', 'paid')
-                        ->whereNull('checked_in');  
+                        ->whereNull('checked_in');
                         break;
                     default:
                         $q->where('status', $status)
-                        ->whereNull('checked_in')  
+                        ->whereNull('checked_in')
                         ->whereNull('checked_out');
                 }
             });
@@ -209,13 +209,13 @@ class BookingController extends Controller
 
         $query = Property::with(['bookings', 'variations']);
 
-        if ($user->role_id == 2) { 
+        if ($user->role_id == 2) {
             $query->where('user_id', $user->id);
         }
 
         return Inertia::render('Bookings/Create', [
             'users' => $users,
-            'properties' => $query->get(), 
+            'properties' => $query->get(),
         ]);
     }
 
@@ -235,7 +235,7 @@ class BookingController extends Controller
                 'refund_amount' => $request->refund_amount,
                 'non_refund_reason' => null,
             ]);
-            
+
             Mail::to('amosbillykipchumba@gmail.com')
             ->send(new RefundNotification($booking, 'approved'));
 
@@ -249,7 +249,7 @@ class BookingController extends Controller
 
             Mail::to('amosbillykipchumba@gmail.com')
             ->send(new RefundNotification($booking, 'rejected', $request->reason));
-            
+
             return redirect()->back()->with('success', 'Refund rejected successfully.');
         }
     }
@@ -263,10 +263,10 @@ class BookingController extends Controller
             'check_out_date' => 'required|date|after:check_in_date',
             'total_price' => 'required|numeric|min:1',
             'variation_id' => 'nullable',
-            'phone' => 'required|string' 
+            'phone' => 'required|string'
         ]);
 
-        // 
+        //
 
         $user = Auth::user();
 
@@ -282,7 +282,7 @@ class BookingController extends Controller
 
         try {
 
-            $callbackBase = config('services.mpesa.callback_url') 
+            $callbackBase = config('services.mpesa.callback_url')
                 ?? secure_url('/api/mpesa/stk/callback');
 
             $callbackData = [
@@ -326,20 +326,20 @@ class BookingController extends Controller
         try {
             // Parse callback data
             $callbackData = $request->json()->all();
-            
+
             // Extract transaction details
             $resultCode = $callbackData['Body']['stkCallback']['ResultCode'] ?? null;
             $resultDesc = $callbackData['Body']['stkCallback']['ResultDesc'] ?? null;
             $merchantRequestID = $callbackData['Body']['stkCallback']['MerchantRequestID'] ?? null;
             $checkoutRequestID = $callbackData['Body']['stkCallback']['CheckoutRequestID'] ?? null;
-            
+
             // Get additional callback parameters
             $callbackParams = json_decode($request->query('data'), true);
-            
+
             // Find the booking with all necessary relationships
             $booking = Booking::with(['user', 'property.user', 'payments'])
                             ->find($callbackParams['booking_id'] ?? null);
-            
+
             if (!$booking) {
                 \Log::error('Booking not found', ['booking_id' => $callbackParams['booking_id'] ?? null]);
                 return response()->json(['message' => 'Booking not found'], 404);
@@ -362,7 +362,7 @@ class BookingController extends Controller
             // Process successful payment
             if ($resultCode === 0) {
                 $callbackMetadata = $callbackData['Body']['stkCallback']['CallbackMetadata']['Item'] ?? [];
-                
+
                 foreach ($callbackMetadata as $item) {
                     switch ($item['Name']) {
                         case 'MpesaReceiptNumber':
@@ -381,7 +381,7 @@ class BookingController extends Controller
                 }
 
                 $booking->update(['status' => 'paid']);
-                
+
                 // Send confirmation emails
                 $this->sendConfirmationEmails($booking);
             } else {
@@ -423,13 +423,13 @@ class BookingController extends Controller
 
                 Mail::to($booking->user->email)
                     ->send(new BookingConfirmation($booking, 'customer'));
-                
+
                 // Send to host
                 if ($booking->property->user) {
                     Mail::to($booking->property->user->email)
                         ->send(new BookingConfirmation($booking, 'host'));
                 }
-                
+
             } catch (\Exception $e) {
                 \Log::error('Email sending failed: ' . $e->getMessage(), [
                     'booking_id' => $booking->id,
@@ -497,10 +497,10 @@ class BookingController extends Controller
         if ($request->type === 'car') {
             $booking = CarBooking::where('number', $request->number)->first();
 
-            return redirect()->route('car-bookings.show', $booking->id); 
+            return redirect()->route('car-bookings.show', $booking->id);
         } else {
             $booking = Booking::where('number', $request->number)->first();
-            
+
             return Inertia::render('RistayPass', [
                 'booking' => $booking->load([
                     'user',
@@ -549,7 +549,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function update(Request $request, Booking $booking)
+    public function update(Request $request, Booking $booking, SmsService $smsService)
     {
         $validated = $request->validate([
             'checked_in' => 'nullable',
@@ -567,9 +567,16 @@ class BookingController extends Controller
             if (!$booking->checkin_verification_code) {
                 $booking->checkin_verification_code = Booking::generateVerificationCode();
                 $booking->save();
-                
+
                 Mail::to($booking->user->email)->send(new CheckInVerification($booking));
-                
+
+                $user = User::find($booking->user_id);
+
+                $smsService->sendSms(
+                    $user->phone,
+                    "Hello {$user->name}, Your OTP for checkin verification is: {$booking->checkin_verification_code}"
+                );
+
                 return back()->with('success', 'Verification code sent to your email. Please enter it to complete check-in.');
             }
 
@@ -579,7 +586,7 @@ class BookingController extends Controller
             }
 
             $booking->checked_in = now();
-            $booking->checkin_verification_code = null; 
+            $booking->checkin_verification_code = null;
             $booking->save();
 
             return back()->with('success', 'Successfully checked in!');
@@ -599,9 +606,16 @@ class BookingController extends Controller
             if (!$booking->checkout_verification_code) {
                 $booking->checkout_verification_code = Booking::generateVerificationCode();
                 $booking->save();
-                
+
                 Mail::to($booking->user->email)->send(new CheckOutVerification($booking));
-                
+
+                $user = User::find($booking->user_id);
+
+                $smsService->sendSms(
+                    $user->phone,
+                    "Hello {$user->name}, Your OTP for checkout verification is: {$booking->checkout_verification_code}"
+                );
+
                 return back()->with('success', 'Verification code sent to your email. Please enter it to complete check-out.');
             }
 
@@ -648,7 +662,7 @@ class BookingController extends Controller
 
         try {
             Mail::to($booking->user->email)->send(new BookingCancelled($booking, 'guest'));
-            
+
             Mail::to($booking->property->user->email)->send(new BookingCancelled($booking, 'host'));
         } catch (\Exception $e) {
             \Log::error('Cancellation email error: ' . $e->getMessage());

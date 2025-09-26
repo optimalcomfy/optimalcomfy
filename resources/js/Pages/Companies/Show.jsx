@@ -22,35 +22,43 @@ const Show = ({ company }) => {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-4 card">
             <div className="flex justify-between">
-              <strong className="text-gray-600">Name:</strong> 
+              <strong className="text-gray-600">Name:</strong>
               <span className="text-gray-800">{company.name}</span>
             </div>
             <div className="flex justify-between">
-              <strong className="text-gray-600">Industry:</strong> 
+              <strong className="text-gray-600">Industry:</strong>
               <span className="text-gray-800">{company.industry}</span>
             </div>
             <div className="flex justify-between">
-              <strong className="text-gray-600">Address:</strong> 
+              <strong className="text-gray-600">Address:</strong>
               <span className="text-gray-800">{company.address}</span>
             </div>
             <div className="flex justify-between">
-              <strong className="text-gray-600">Email:</strong> 
+              <strong className="text-gray-600">Email:</strong>
               <span className="text-gray-800">{company.email}</span>
             </div>
             <div className="flex justify-between">
-              <strong className="text-gray-600">Phone:</strong> 
+              <strong className="text-gray-600">Phone:</strong>
               <span className="text-gray-800">{company.phone}</span>
             </div>
             <div className="flex justify-between">
-              <strong className="text-gray-600">Platform rate:</strong> 
+              <strong className="text-gray-600">Platform rate:</strong>
               <span className="text-gray-800">{company.percentage}%</span>
+            </div>
+            <div className="flex justify-between">
+              <strong className="text-gray-600">Referral percentage rate:</strong>
+              <span className="text-gray-800">{company.referral_percentage}%</span>
+            </div>
+            <div className="flex justify-between">
+              <strong className="text-gray-600">Booking Referral percentage rate:</strong>
+              <span className="text-gray-800">{company.booking_referral_percentage}%</span>
             </div>
           </div>
         </div>
 
         <div className="mt-8 text-left">
-          <Link 
-            href={route('companies.index')} 
+          <Link
+            href={route('companies.index')}
             className="inline-block px-6 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">
             Back to Companies
           </Link>

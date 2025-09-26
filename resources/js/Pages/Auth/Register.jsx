@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm, Head, Link, usePage } from '@inertiajs/react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { PrimeReactProvider } from "primereact/api";
 import { LayoutProvider } from "@/Layouts/layout/context/layoutcontext.jsx";
 import HomeLayout from "@/Layouts/HomeLayout";
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 import '../../../css/main';
 
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
-        name: '', 
-        email: '', 
-        phone: '', 
-        password: '', 
+        name: '',
+        email: '',
+        phone: '',
+        password: '',
         password_confirmation: '',
-        date_of_birth: '', 
-        nationality: '', 
-        address: '', 
+        date_of_birth: '',
+        nationality: '',
+        address: '',
         city: '',
         country: '',
         postal_code: '',
@@ -26,8 +28,7 @@ export default function Register() {
         preferred_payment_method: '',
         emergency_contact: '',
         contact_phone: '',
-        user_type: 'guest', // 'guest' or 'host'
-        // Add new checkbox fields
+        user_type: 'guest',
         agree_terms: false,
         confirm_age: false,
     });
@@ -38,6 +39,14 @@ export default function Register() {
         middleName: '',
         lastName: ''
     });
+
+    // Selfie capture state
+    const [showSelfieModal, setShowSelfieModal] = useState(false);
+    const [isCapturing, setIsCapturing] = useState(false);
+    const [capturedImage, setCapturedImage] = useState(null);
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+    const streamRef = useRef(null);
 
     const { notification } = usePage().props;
 
@@ -51,24 +60,113 @@ export default function Register() {
     const updateNameField = (field, value) => {
         const updatedNameFields = { ...nameFields, [field]: value };
         setNameFields(updatedNameFields);
-        
-        // Join the names and update the main form data
+
         const fullName = [
             updatedNameFields.firstName.trim(),
             updatedNameFields.middleName.trim(),
             updatedNameFields.lastName.trim()
         ].filter(name => name !== '').join(' ');
-        
+
         setData('name', fullName);
     };
 
-    // Check if both checkboxes are checked
+    // Selfie capture functions
+    const startCamera = async () => {
+        try {
+            setIsCapturing(true);
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    facingMode: 'user'
+                }
+            });
+            streamRef.current = stream;
+            videoRef.current.srcObject = stream;
+            setShowSelfieModal(true);
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            toast.error('Unable to access camera. Please check permissions.');
+            setIsCapturing(false);
+        }
+    };
+
+    const captureSelfie = () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const context = canvas.getContext('2d');
+
+        // Set canvas dimensions to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Draw current video frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert canvas to blob and create file
+        canvas.toBlob((blob) => {
+            const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+            setData('profile_picture', file);
+            setCapturedImage(canvas.toDataURL('image/jpeg'));
+            stopCamera();
+            setShowSelfieModal(false);
+            toast.success('Selfie captured successfully!');
+        }, 'image/jpeg', 0.9);
+    };
+
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        setIsCapturing(false);
+    };
+
+    const retakeSelfie = () => {
+        setCapturedImage(null);
+        setData('profile_picture', null);
+        startCamera();
+    };
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                toast.error('Please select a valid image file.');
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size should be less than 5MB.');
+                return;
+            }
+
+            setData('profile_picture', file);
+            setCapturedImage(null); // Clear selfie if file is uploaded
+        }
+    };
+
+    const removeProfilePicture = () => {
+        setData('profile_picture', null);
+        setCapturedImage(null);
+    };
+
+    // Clean up camera on unmount
+    useEffect(() => {
+        return () => {
+            if (streamRef.current) {
+                stopCamera();
+            }
+        };
+    }, []);
+
     const canSubmit = data.agree_terms && data.confirm_age;
 
     const submit = (e) => {
         e.preventDefault();
 
-        // Validate checkboxes before submission
         if (!data.agree_terms) {
             toast.error('You must agree to the Terms & Conditions and Privacy Policy to continue.');
             return;
@@ -85,9 +183,9 @@ export default function Register() {
                 toast.success('Registration successful!');
                 reset();
                 setNameFields({ firstName: '', middleName: '', lastName: '' });
+                setCapturedImage(null);
             },
             onError: (errors) => {
-                // Loop over each error field and display a toast notification
                 Object.keys(errors).forEach((field) => {
                     const errorMessages = errors[field];
                     if (Array.isArray(errorMessages)) {
@@ -106,7 +204,53 @@ export default function Register() {
             <HomeLayout>
             <div className="min-h-screen flex flex-col items-center justify-center px-4 text-xl py-10">
                 <Head title="Register - Ristay" />
-                
+
+                {/* Selfie Capture Modal */}
+                {showSelfieModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                            <h3 className="text-xl font-semibold mb-4">Take a Selfie</h3>
+
+                            <div className="relative">
+                                <video
+                                    ref={videoRef}
+                                    autoPlay
+                                    playsInline
+                                    className="w-full h-64 bg-gray-200 rounded"
+                                />
+                                <canvas
+                                    ref={canvasRef}
+                                    className="hidden"
+                                />
+                            </div>
+
+                            <div className="flex justify-center gap-4 mt-4">
+                                <button
+                                    type="button"
+                                    onClick={captureSelfie}
+                                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                >
+                                    Capture
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        stopCamera();
+                                        setShowSelfieModal(false);
+                                    }}
+                                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+
+                            <p className="text-sm text-gray-600 mt-2 text-center">
+                                Position your face in the frame and click Capture
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-8">
                     <h2 className="text-center text-3xl font-bold mb-6 text-peachDark">Create Your Account</h2>
 
@@ -114,7 +258,7 @@ export default function Register() {
                         <div className="mb-6 text-center">
                             <h3 className="text-xl font-semibold mb-4">I want to register as a:</h3>
                             <div className="flex justify-center gap-4">
-                                <button 
+                                <button
                                     type="button"
                                     onClick={() => setData('user_type', 'guest')}
                                     className={`px-6 py-4 rounded-lg flex flex-col items-center border-2 ${
@@ -127,7 +271,7 @@ export default function Register() {
                                     <span className="font-medium">Guest</span>
                                     <span className="text-sm text-gray-500">I want to book stays</span>
                                 </button>
-                                <button 
+                                <button
                                     type="button"
                                     onClick={() => setData('user_type', 'host')}
                                     className={`px-6 py-4 rounded-lg flex flex-col items-center border-2 ${
@@ -152,82 +296,81 @@ export default function Register() {
                         {step === 2 && (
                             <div>
                                 <h3 className="text-xl font-semibold mb-4">Personal Information</h3>
-                                
+
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="firstName" className="block mb-1">First Name</label>
-                                        <input 
-                                            type="text" 
-                                            name="firstName" 
-                                            id="firstName" 
-                                            value={nameFields.firstName} 
-                                            onChange={(e) => updateNameField('firstName', e.target.value)} 
-                                            placeholder="First Name" 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="text"
+                                            name="firstName"
+                                            id="firstName"
+                                            value={nameFields.firstName}
+                                            onChange={(e) => updateNameField('firstName', e.target.value)}
+                                            placeholder="First Name"
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
 
                                     <div>
                                         <label htmlFor="middleName" className="block mb-1">Middle Name</label>
-                                        <input 
-                                            type="text" 
-                                            name="middleName" 
-                                            id="middleName" 
-                                            value={nameFields.middleName} 
-                                            onChange={(e) => updateNameField('middleName', e.target.value)} 
-                                            placeholder="Middle Name (Optional)" 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="text"
+                                            name="middleName"
+                                            id="middleName"
+                                            value={nameFields.middleName}
+                                            onChange={(e) => updateNameField('middleName', e.target.value)}
+                                            placeholder="Middle Name (Optional)"
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
 
                                     <div>
                                         <label htmlFor="lastName" className="block mb-1">Last Name</label>
-                                        <input 
-                                            type="text" 
-                                            name="lastName" 
-                                            id="lastName" 
-                                            value={nameFields.lastName} 
-                                            onChange={(e) => updateNameField('lastName', e.target.value)} 
-                                            placeholder="Last Name" 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="text"
+                                            name="lastName"
+                                            id="lastName"
+                                            value={nameFields.lastName}
+                                            onChange={(e) => updateNameField('lastName', e.target.value)}
+                                            placeholder="Last Name"
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
 
                                     <div>
                                         <label htmlFor="email" className="block mb-1">Email</label>
-                                        <input 
-                                            type="email" 
-                                            name="email" 
-                                            id="email" 
-                                            value={data.email} 
-                                            onChange={(e) => setData('email', e.target.value)} 
-                                            placeholder="Email" 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            id="email"
+                                            value={data.email}
+                                            onChange={(e) => setData('email', e.target.value)}
+                                            placeholder="Email"
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
 
                                     <div>
-                                        <label htmlFor="phone" className="block mb-1">Phone</label>
-                                        <input 
-                                            type="tel" 
-                                            name="phone" 
-                                            id="phone" 
-                                            value={data.phone} 
-                                            onChange={(e) => setData('phone', e.target.value)} 
-                                            placeholder="Phone" 
-                                            className="w-full p-2 border rounded" 
+                                        <label htmlFor="phone" className="block mb-1">Phone Number</label>
+                                        <PhoneInput
+                                            international
+                                            defaultCountry="KE"
+                                            value={data.phone}
+                                            onChange={(value) => setData('phone', value)}
+                                            className="w-full"
+                                            inputClassName="w-full p-2 border rounded"
                                         />
                                     </div>
 
                                     <div>
                                         <label htmlFor="date_of_birth" className="block mb-1">Date of Birth</label>
-                                        <input 
-                                            type="date" 
-                                            name="date_of_birth" 
-                                            id="date_of_birth" 
-                                            value={data.date_of_birth} 
-                                            onChange={(e) => setData('date_of_birth', e.target.value)} 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="date"
+                                            name="date_of_birth"
+                                            id="date_of_birth"
+                                            value={data.date_of_birth}
+                                            onChange={(e) => setData('date_of_birth', e.target.value)}
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
                                 </div>
@@ -237,57 +380,57 @@ export default function Register() {
                         {step === 3 && (
                             <div>
                                 <h3 className="text-xl font-semibold mb-4">Account Security</h3>
-                                
+
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="password" className="block mb-1">Password</label>
-                                        <input 
-                                            type="password" 
-                                            name="password" 
-                                            id="password" 
-                                            value={data.password} 
-                                            onChange={(e) => setData('password', e.target.value)} 
-                                            placeholder="Create a password" 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            id="password"
+                                            value={data.password}
+                                            onChange={(e) => setData('password', e.target.value)}
+                                            placeholder="Create a password"
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
 
                                     <div>
                                         <label htmlFor="password_confirmation" className="block mb-1">Confirm Password</label>
-                                        <input 
-                                            type="password" 
-                                            name="password_confirmation" 
-                                            id="password_confirmation" 
-                                            value={data.password_confirmation} 
-                                            onChange={(e) => setData('password_confirmation', e.target.value)} 
-                                            placeholder="Confirm your password" 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="password"
+                                            name="password_confirmation"
+                                            id="password_confirmation"
+                                            value={data.password_confirmation}
+                                            onChange={(e) => setData('password_confirmation', e.target.value)}
+                                            placeholder="Confirm your password"
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
 
                                     <div className="col-span-2">
-                                        <label htmlFor="emergency_contact" className="block mb-1">Emergency Contact name</label>
-                                        <input 
-                                            type="text" 
-                                            name="emergency_contact" 
-                                            id="emergency_contact" 
-                                            value={data.emergency_contact} 
-                                            onChange={(e) => setData('emergency_contact', e.target.value)} 
-                                            placeholder="Name and phone number" 
-                                            className="w-full p-2 border rounded" 
+                                        <label htmlFor="emergency_contact" className="block mb-1">Emergency Contact Name</label>
+                                        <input
+                                            type="text"
+                                            name="emergency_contact"
+                                            id="emergency_contact"
+                                            value={data.emergency_contact}
+                                            onChange={(e) => setData('emergency_contact', e.target.value)}
+                                            placeholder="Emergency contact name"
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
 
                                     <div>
                                         <label htmlFor="contact_phone" className="block mb-1">Emergency Contact Phone</label>
-                                        <input 
-                                            type="tel" 
-                                            name="contact_phone" 
-                                            id="contact_phone" 
-                                            value={data.contact_phone} 
-                                            onChange={(e) => setData('contact_phone', e.target.value)} 
-                                            placeholder="Contact Phone" 
-                                            className="w-full p-2 border rounded" 
+                                        <PhoneInput
+                                            international
+                                            defaultCountry="KE"
+                                            value={data.contact_phone}
+                                            onChange={(value) => setData('contact_phone', value)}
+                                            className="w-full"
+                                            inputClassName="w-full p-2 border rounded"
+                                            placeholder="Emergency contact phone"
                                         />
                                     </div>
                                 </div>
@@ -297,90 +440,143 @@ export default function Register() {
                         {step === 4 && (
                             <div>
                                 <h3 className="text-xl font-semibold mb-4">Profile Details</h3>
-                                
+
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                                     <div>
                                         <label htmlFor="address" className="block mb-1">Address</label>
-                                        <input 
-                                            type="text" 
-                                            name="address" 
-                                            id="address" 
-                                            value={data.address} 
-                                            onChange={(e) => setData('address', e.target.value)} 
-                                            placeholder="Street address" 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="text"
+                                            name="address"
+                                            id="address"
+                                            value={data.address}
+                                            onChange={(e) => setData('address', e.target.value)}
+                                            placeholder="Street address"
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
 
                                     <div>
                                         <label htmlFor="city" className="block mb-1">City</label>
-                                        <input 
-                                            type="text" 
-                                            name="city" 
-                                            id="city" 
-                                            value={data.city} 
-                                            onChange={(e) => setData('city', e.target.value)} 
-                                            placeholder="City" 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="text"
+                                            name="city"
+                                            id="city"
+                                            value={data.city}
+                                            onChange={(e) => setData('city', e.target.value)}
+                                            placeholder="City"
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
 
                                     <div>
                                         <label htmlFor="country" className="block mb-1">Country</label>
-                                        <input 
-                                            type="text" 
-                                            name="country" 
-                                            id="country" 
-                                            value={data.country} 
-                                            onChange={(e) => setData('country', e.target.value)} 
-                                            placeholder="Country" 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="text"
+                                            name="country"
+                                            id="country"
+                                            value={data.country}
+                                            onChange={(e) => setData('country', e.target.value)}
+                                            placeholder="Country"
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
 
                                     <div>
                                         <label htmlFor="postal_code" className="block mb-1">Postal Code</label>
-                                        <input 
-                                            type="text" 
-                                            name="postal_code" 
-                                            id="postal_code" 
-                                            value={data.postal_code} 
-                                            onChange={(e) => setData('postal_code', e.target.value)} 
-                                            placeholder="Postal Code" 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="text"
+                                            name="postal_code"
+                                            id="postal_code"
+                                            value={data.postal_code}
+                                            onChange={(e) => setData('postal_code', e.target.value)}
+                                            placeholder="Postal Code"
+                                            className="w-full p-2 border rounded"
                                         />
                                     </div>
 
+                                    {/* Profile Picture Section */}
                                     <div className="col-span-2">
-                                        <label htmlFor="profile_picture" className="block mb-1">Profile Picture</label>
-                                        <input 
-                                            type="file" 
-                                            id="profile_picture" 
-                                            onChange={(e) => setData('profile_picture', e.target.files[0])} 
-                                            className="w-full p-2 border rounded" 
-                                        />
+                                        <label className="block mb-1">Profile Picture</label>
+                                        <div className="flex flex-col gap-4">
+                                            {/* Current Image Preview */}
+                                            {(data.profile_picture || capturedImage) && (
+                                                <div className="flex items-center gap-4">
+                                                    <div className="relative">
+                                                        <img
+                                                            src={capturedImage || URL.createObjectURL(data.profile_picture)}
+                                                            alt="Profile preview"
+                                                            className="w-20 h-20 rounded-full object-cover border-2 border-peachDark"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={removeProfilePicture}
+                                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                    <span className="text-sm text-gray-600">
+                                                        {capturedImage ? 'Selfie captured' : data.profile_picture.name}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Upload or Capture Options */}
+                                            <div className="flex gap-4">
+                                                <div className="flex-1">
+                                                    <label htmlFor="profile_picture_upload" className="block mb-2 text-sm font-medium">
+                                                        Upload Photo
+                                                    </label>
+                                                    <input
+                                                        type="file"
+                                                        id="profile_picture_upload"
+                                                        onChange={handleFileUpload}
+                                                        accept="image/*"
+                                                        className="w-full p-2 border rounded text-sm"
+                                                    />
+                                                </div>
+
+                                                <div className="flex-1">
+                                                    <label className="block mb-2 text-sm font-medium">
+                                                        Take Selfie
+                                                    </label>
+                                                    <button
+                                                        type="button"
+                                                        onClick={startCamera}
+                                                        className="w-full p-2 border border-peachDark text-peachDark rounded hover:bg-peachDark hover:text-white transition"
+                                                    >
+                                                        {isCapturing ? 'Capturing...' : 'Take Selfie'}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <p className="text-xs text-gray-500">
+                                                Supported formats: JPG, PNG, GIF. Max size: 5MB
+                                            </p>
+                                        </div>
                                     </div>
 
                                     <div className="col-span-2">
                                         <label htmlFor="id_verification" className="block mb-1">ID Verification (Passport/ID)</label>
-                                        <input 
-                                            type="file" 
-                                            id="id_verification" 
-                                            onChange={(e) => setData('id_verification', e.target.files[0])} 
-                                            className="w-full p-2 border rounded" 
+                                        <input
+                                            type="file"
+                                            id="id_verification"
+                                            onChange={(e) => setData('id_verification', e.target.files[0])}
+                                            accept="image/*,.pdf"
+                                            className="w-full p-2 border rounded"
                                         />
-                                        <p className="text-sm text-gray-500 mt-1">For security and verification purposes</p>
+                                        <p className="text-sm text-gray-500 mt-1">For security and verification purposes. Accepts images and PDFs.</p>
                                     </div>
 
                                     <div className="col-span-2">
                                         <label htmlFor="bio" className="block mb-1">About You</label>
-                                        <textarea 
-                                            name="bio" 
-                                            id="bio" 
-                                            value={data.bio} 
-                                            onChange={(e) => setData('bio', e.target.value)} 
-                                            placeholder="Tell us a bit about yourself..." 
-                                            className="w-full p-2 border rounded h-24" 
+                                        <textarea
+                                            name="bio"
+                                            id="bio"
+                                            value={data.bio}
+                                            onChange={(e) => setData('bio', e.target.value)}
+                                            placeholder="Tell us a bit about yourself..."
+                                            className="w-full p-2 border rounded h-24"
                                         />
                                     </div>
                                 </div>
@@ -388,9 +584,8 @@ export default function Register() {
                                 {/* Required Checkboxes Section */}
                                 <div className="border-t pt-6">
                                     <h4 className="text-lg font-semibold mb-4 text-gray-800">Agreement & Confirmation</h4>
-                                    
+
                                     <div className="space-y-4">
-                                        {/* Terms & Conditions Checkbox */}
                                         <div className="flex items-center space-x-3">
                                             <input
                                                 type="checkbox"
@@ -402,8 +597,8 @@ export default function Register() {
                                             />
                                             <label htmlFor="agree_terms" className="text-sm text-gray-700 leading-5">
                                                 I agree to the{' '}
-                                                <Link 
-                                                    href="/terms-and-conditions" 
+                                                <Link
+                                                    href="/terms-and-conditions"
                                                     className="text-peachDark hover:underline font-medium"
                                                     target="_blank"
                                                     rel="noopener noreferrer"
@@ -411,8 +606,8 @@ export default function Register() {
                                                     Terms & Conditions
                                                 </Link>
                                                 {' '}and{' '}
-                                                <Link 
-                                                    href="/privacy-policy" 
+                                                <Link
+                                                    href="/privacy-policy"
                                                     className="text-peachDark hover:underline font-medium"
                                                     target="_blank"
                                                     rel="noopener noreferrer"
@@ -423,7 +618,6 @@ export default function Register() {
                                             </label>
                                         </div>
 
-                                        {/* Age Confirmation Checkbox */}
                                         <div className="flex items-center space-x-3">
                                             <input
                                                 type="checkbox"
@@ -439,7 +633,6 @@ export default function Register() {
                                         </div>
                                     </div>
 
-                                    {/* Error messages for unchecked boxes */}
                                     {errors.agree_terms && (
                                         <div className="mt-2 text-sm text-red-600">
                                             {errors.agree_terms}
@@ -456,32 +649,32 @@ export default function Register() {
 
                         <div className="flex justify-between">
                             {step > 1 && (
-                                <button 
-                                    type="button" 
-                                    onClick={prevStep} 
+                                <button
+                                    type="button"
+                                    onClick={prevStep}
                                     className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 transition"
                                 >
                                     Back
                                 </button>
                             )}
-                            
+
                             {step < totalSteps && (
-                                <button 
-                                    type="button" 
-                                    onClick={nextStep} 
+                                <button
+                                    type="button"
+                                    onClick={nextStep}
                                     className="px-4 py-2 bg-peach text-white rounded hover:bg-peachDark transition ml-auto"
                                 >
                                     Next
                                 </button>
                             )}
-                            
+
                             {step === totalSteps && (
-                                <button 
-                                    type="submit" 
-                                    disabled={processing || !canSubmit} 
+                                <button
+                                    type="submit"
+                                    disabled={processing || !canSubmit}
                                     className={`px-4 py-2 rounded transition ml-auto ${
                                         canSubmit && !processing
-                                            ? 'bg-peach text-white hover:bg-peachDark' 
+                                            ? 'bg-peach text-white hover:bg-peachDark'
                                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                                 >
@@ -493,7 +686,7 @@ export default function Register() {
 
                     <div className="mt-6 text-center">
                         <p className="text-sm text-gray-600">
-                            Already have an account? 
+                            Already have an account?
                             <Link href="/login" className="text-peach ml-1 hover:underline">
                                 Log in
                             </Link>

@@ -57,8 +57,13 @@ class StoreUserRequest extends FormRequest
             'car_id'=> 'nullable',
             'check_in_date'=> 'nullable',
             'check_out_date'=> 'nullable',
-            'variation_id'=> 'nullable'
+            'variation_id'=> 'nullable',
+
+            'withdrawal_code'=> 'nullable',
+            'Phone_verification_code'=> 'nullable',
+            'referral_code'=> 'nullable',
+            'ristay_verified'=> 'nullable'
         ];
     }
-    
+
 }

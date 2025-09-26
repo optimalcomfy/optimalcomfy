@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { 
+import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
-import { 
-  Home, Users, Calendar, Star, DollarSign, Loader, Check, Car, Plus, 
+import {
+  Home, Users, Calendar, Star, DollarSign, Loader, Check, Car, Plus,
   Wallet, Settings, MapPin, Briefcase, CreditCard, Activity, AlertTriangle,
   TrendingDown, TrendingUp
 } from 'lucide-react';
@@ -14,11 +14,11 @@ import Layout from "@/Layouts/layout/layout.jsx";
 
 const Dashboard = () => {
   // Get all available data from props
-  const { 
-    propertiesCount, 
+  const {
+    propertiesCount,
     carsCount,
-    totalBookingsCount, 
-    monthlyEarnings, 
+    totalBookingsCount,
+    monthlyEarnings,
     propertyBookingTotal,
     carBookingTotal,
     totalEarnings,
@@ -31,10 +31,10 @@ const Dashboard = () => {
   } = usePage().props;
 
   const { data, setData, get, processing } = useForm({
-    type: "", 
+    type: "",
     number: "",
   });
-  
+
   const [lineOptions, setLineOptions] = useState({});
   const { layoutConfig } = useContext(LayoutContext);
   const roleId = parseInt(auth.user?.role_id);
@@ -154,7 +154,7 @@ const Dashboard = () => {
     const Icon = icon;
     const trendColor = trend?.value > 0 ? 'green' : trend?.value < 0 ? 'red' : 'gray';
     const trendIcon = trend?.value > 0 ? '↑' : trend?.value < 0 ? '↓' : '→';
-    
+
     return (
       <div className="flex-1 p-3 min-w-[250px]">
         <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} ${isNegative ? 'border-l-4 border-red-500' : ''}`}>
@@ -287,7 +287,7 @@ const Dashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip 
+                <Tooltip
                   formatter={(value) => [formatCurrency(value), 'Amount']}
                 />
                 <Legend />
@@ -307,9 +307,9 @@ const Dashboard = () => {
       <div className="p-3">
         <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
           <div className="flex items-center gap-4">
-            <img 
-              src={`/storage/${auth.user.profile_picture}`} 
-              alt="Profile" 
+            <img
+              src={`/storage/${auth.user.profile_picture}`}
+              alt="Profile"
               className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
             />
             <div>
@@ -326,6 +326,12 @@ const Dashboard = () => {
                     {lang.toUpperCase()}
                   </span>
                 ))}
+              </div>
+              <div className='flex flex-col lg:flex-row gap-2 items-center'>
+                <p className="text-sm text-gray-500 my-auto">Referral code</p>
+                <p className="text-red-500 font-bold text-2xl flex items-center gap-1">
+                    {auth.user?.referral_code}
+                </p>
               </div>
             </div>
           </div>
@@ -377,7 +383,7 @@ const Dashboard = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   formatter={(value) => [`${formatCurrency(value)}`, 'Amount']}
                 />
               </PieChart>
@@ -386,8 +392,8 @@ const Dashboard = () => {
           <div className="flex justify-center gap-4 mt-2">
             {data.map((item, index) => (
               <div key={index} className="flex items-center">
-                <div 
-                  className="w-3 h-3 rounded-full mr-2" 
+                <div
+                  className="w-3 h-3 rounded-full mr-2"
                   style={{ backgroundColor: COLORS[index % COLORS.length] }}
                 />
                 <span className="text-sm">{item.name}</span>
@@ -402,7 +408,7 @@ const Dashboard = () => {
   // Financial Summary Card
   const FinancialSummary = () => {
     const hasOverdraft = availableBalance < 0;
-    
+
     return (
       <div className="p-3 min-w-[300px]">
         <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} ${hasOverdraft ? 'border-l-4 border-red-500' : ''}`}>
@@ -420,8 +426,8 @@ const Dashboard = () => {
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                <div 
-                  className={`h-2 rounded-full ${hasOverdraft ? 'bg-red-500' : 'bg-green-500'}`} 
+                <div
+                  className={`h-2 rounded-full ${hasOverdraft ? 'bg-red-500' : 'bg-green-500'}`}
                   style={{ width: `${Math.min(100, (Math.abs(availableBalance) / (totalEarnings || 1)) * 100)}%` }}
                 ></div>
               </div>
@@ -429,15 +435,15 @@ const Dashboard = () => {
                 <p className="text-xs text-red-500 mt-1">Your account is in overdraft</p>
               )}
             </div>
-            
+
             <div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Pending Payouts</span>
                 <span className="font-bold">{formatCurrency(pendingPayouts)}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                <div 
-                  className="bg-yellow-500 h-2 rounded-full" 
+                <div
+                  className="bg-yellow-500 h-2 rounded-full"
                   style={{ width: `${Math.min(100, (pendingPayouts / (totalEarnings || 1)) * 100)}%` }}
                 ></div>
               </div>
@@ -490,8 +496,8 @@ const Dashboard = () => {
                       </>}
                       <td className="py-3 px-3 text-sm text-right">
                         <span className={`px-2 py-1 rounded-full text-xs ${
-                          transaction.status === 'completed' 
-                            ? 'bg-green-100 text-green-800' 
+                          transaction.status === 'completed'
+                            ? 'bg-green-100 text-green-800'
                             : transaction.status === 'pending'
                               ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-red-100 text-red-800'
@@ -517,7 +523,7 @@ const Dashboard = () => {
   return (
     <Layout>
       {isLoading && <LoadingScreen />}
-      
+
       {/* Flash Messages */}
       {flash && (
         <div className="p-3">
@@ -543,31 +549,31 @@ const Dashboard = () => {
         <div className="flex flex-col flex-[2] gap-4">
           <div className="flex flex-wrap -mx-3">
             {(roleId === 1 || roleId === 2) && (
-              <InfoCard 
-                title="Total Properties" 
-                value={propertiesCount} 
-                icon={Home} 
-                iconColor="blue" 
+              <InfoCard
+                title="Total Properties"
+                value={propertiesCount}
+                icon={Home}
+                iconColor="blue"
                 description="Your listed properties"
                 trend={{ value: 12, period: 'this month' }}
               />
             )}
             {(roleId === 1 || roleId === 2) && (
-              <InfoCard 
-                title="Total Vehicles" 
-                value={carsCount} 
-                icon={Car} 
-                iconColor="purple" 
+              <InfoCard
+                title="Total Vehicles"
+                value={carsCount}
+                icon={Car}
+                iconColor="purple"
                 description="Your listed vehicles"
                 trend={{ value: 5, period: 'this month' }}
               />
             )}
              {(roleId !== 4) && (
-            <InfoCard 
-              title="Total Bookings" 
-              value={totalBookingsCount} 
-              icon={Calendar} 
-              iconColor="green" 
+            <InfoCard
+              title="Total Bookings"
+              value={totalBookingsCount}
+              icon={Calendar}
+              iconColor="green"
               description="All-time bookings"
               trend={{ value: 8, period: 'this month' }}
             />)}
@@ -626,7 +632,7 @@ const Dashboard = () => {
           {(roleId === 1 || roleId === 2) && (
             <div className="flex flex-wrap -mx-3">
               {(roleId !== 1 || overdraftData.length === 0) && <EarningsBreakdown />}
-              
+
               <div className="flex-1 p-3 min-w-[300px]">
                 <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
                   <h3 className="text-lg font-semibold mb-4">Monthly Performance</h3>
@@ -636,33 +642,33 @@ const Dashboard = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
                         <XAxis dataKey="month" />
                         <YAxis />
-                       <Tooltip 
+                       <Tooltip
                           formatter={(value) => {
                               const num = parseFloat(value);
                               return [isNaN(num) ? value : num.toFixed(2), 'Amount'];
                           }}
                           />
                         <Legend />
-                        <Line 
-                          type="monotone" 
-                          dataKey="total" 
-                          stroke="#3B82F6" 
-                          activeDot={{ r: 8 }} 
-                          strokeWidth={2} 
+                        <Line
+                          type="monotone"
+                          dataKey="total"
+                          stroke="#3B82F6"
+                          activeDot={{ r: 8 }}
+                          strokeWidth={2}
                           name="Total Earnings"
                         />
-                        <Line 
-                          type="monotone" 
-                          dataKey="property_earnings" 
-                          stroke="#10B981" 
-                          strokeWidth={2} 
+                        <Line
+                          type="monotone"
+                          dataKey="property_earnings"
+                          stroke="#10B981"
+                          strokeWidth={2}
                           name="Property Earnings"
                         />
-                        <Line 
-                          type="monotone" 
-                          dataKey="car_earnings" 
-                          stroke="#8B5CF6" 
-                          strokeWidth={2} 
+                        <Line
+                          type="monotone"
+                          dataKey="car_earnings"
+                          stroke="#8B5CF6"
+                          strokeWidth={2}
                           name="Car Earnings"
                         />
                       </LineChart>

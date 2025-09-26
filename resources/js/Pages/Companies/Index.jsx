@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { useForm } from '@inertiajs/react';
 import "react-daterange-picker/dist/css/react-calendar.css";
 import { jsPDF } from "jspdf";
-import "jspdf-autotable"; 
+import "jspdf-autotable";
 import * as XLSX from 'xlsx';
 import { FileText, FileSpreadsheet, Plus, Filter, X } from 'lucide-react';
 
@@ -56,29 +56,29 @@ const Index = () => {
     doc.addImage(logoUrl, 'PNG', 10, 10, 80, 30);
     doc.setFontSize(14);
     doc.text(`All Companies Report`, 14, 50);
-    
+
     const columns = [
-      "Name", 
-      "Industry", 
-      "Address", 
-      "Email", 
+      "Name",
+      "Industry",
+      "Address",
+      "Email",
       "Phone"
     ];
-    
+
     const rows = companies.map(data => [
-      data.name, 
-      data.industry, 
-      data.address, 
+      data.name,
+      data.industry,
+      data.address,
       data.email,
       data.phone
     ]);
-    
+
     doc.autoTable({
       head: [columns],
       body: rows,
       startY: 60,
     });
-    
+
     doc.save("companies_reports.pdf");
   };
 
@@ -90,7 +90,7 @@ const Index = () => {
       Email: data.email,
       Phone: data.phone
     })));
-  
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Companies');
     XLSX.writeFile(wb, 'companies_report.xlsx');
@@ -101,7 +101,7 @@ const Index = () => {
       <div className="w-full">
         {/* Mobile Filters Toggle */}
         <div className="lg:hidden mb-4">
-          <button 
+          <button
             onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
             className="inline-flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
@@ -119,7 +119,7 @@ const Index = () => {
 
         {/* Top Section - Responsive */}
         <div className={`
-          ${mobileFiltersOpen ? 'block' : 'hidden'} 
+          ${mobileFiltersOpen ? 'block' : 'hidden'}
           lg:block bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4
         `}>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -145,6 +145,8 @@ const Index = () => {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase">Email</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase">Phone</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase">Platform rate</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase">Referral percentage rate</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase">Booking Referral percentage rate</th>
                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-600 uppercase">Actions</th>
               </tr>
             </thead>
@@ -157,16 +159,18 @@ const Index = () => {
                     <td className="px-6 py-4">{company.email}</td>
                     <td className="px-6 py-4">{company.phone}</td>
                     <td className="px-6 py-4">{company.percentage}%</td>
+                    <td className="px-6 py-4">{company.referral_percentage}%</td>
+                    <td className="px-6 py-4">{company.booking_referral_percentage}%</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
-                        <Link 
-                          href={route('companies.show', company.id)} 
+                        <Link
+                          href={route('companies.show', company.id)}
                           className="bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 flex items-center"
                         >
                           <span className="my-auto px-4 py-2">View</span>
                         </Link>
-                        <Link 
-                          href={route('companies.edit', company.id)} 
+                        <Link
+                          href={route('companies.edit', company.id)}
                           className="flex items-center bg-yellow-500 text-white rounded-lg text-xs hover:bg-yellow-600"
                         >
                           <span className="my-auto px-4 py-2">Edit</span>

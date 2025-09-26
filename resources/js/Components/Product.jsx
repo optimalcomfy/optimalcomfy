@@ -17,8 +17,12 @@ const Product = (props) => {
     dayRange,
     platform_price,
     time,
-    id
+    id,
+    user // Add user prop to access verification status
   } = props;
+
+  // Check if user is verified
+  const isVerified = user?.ristay_verified === "1";
 
   return (
     <div className="relative flex flex-col cursor-pointer">
@@ -28,14 +32,14 @@ const Product = (props) => {
           {initial_gallery.length > 0 ?
           <>
             {initial_gallery?.map((image, index) => (
-              <>{image.image ?               
+              <>{image.image ?
               <img
                 key={index}
                 src={`/storage/${image.image}`}
                 onClick={() => router.visit(route('property-detail', { id }))}
                 alt={`Image ${index + 1} of ${property_name}`}
                 className="w-full aspect-[20/19] object-cover"
-              /> :               
+              /> :
               <img
                 key={index}
                 src={`/images/no-pic.avif`}
@@ -54,6 +58,15 @@ const Product = (props) => {
           />
           }
         </PropertySlider>
+
+        {/* Verification Badge */}
+        {isVerified && (
+          <div className="absolute top-3 left-3 bg-white px-1 py-1 font-bold rounded-full flex items-center gap-1 shadow-sm">
+            <svg className="h-4 text-[#f0661d]" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+        )}
 
         {/* Pagination Dots */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-x-[5px]">
@@ -77,14 +90,14 @@ const Product = (props) => {
           {property_name} in {location}
         </div>
         <div className="mt-[6px] col-span-2">
-          <span className="font-light">KES {platform_price} for one night</span> 
+          <span className="font-light">KES {platform_price} for one night</span>
         </div>
       </Link>
     </div>
   );
 };
 
-// Optional: Add PropTypes
+// Updated PropTypes to include user object
 Product.propTypes = {
   property_name: PropTypes.string.isRequired,
   initial_gallery: PropTypes.arrayOf(
@@ -98,6 +111,10 @@ Product.propTypes = {
   dayRange: PropTypes.string,
   platform_price: PropTypes.number.isRequired,
   time: PropTypes.string,
+  id: PropTypes.number.isRequired,
+  user: PropTypes.shape({
+    ristay_verified: PropTypes.string
+  })
 };
 
 export default Product;

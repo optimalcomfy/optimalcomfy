@@ -111,7 +111,7 @@ const Show = ({ user }) => {
           </div>
         </div>
 
-        <div className="p-6 grid md:grid-cols-3 gap-6">
+        <div className="p-6 grid md:grid-cols-2 gap-6">
           {/* Main Content Column */}
           <div className="md:col-span-2 space-y-6">
             {/* Personal Info Card */}

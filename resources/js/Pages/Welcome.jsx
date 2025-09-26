@@ -3,7 +3,6 @@ import { Head, usePage } from "@inertiajs/react";
 import { LayoutProvider } from "@/Layouts/layout/context/layoutcontext.jsx";
 import { PrimeReactProvider } from "primereact/api";
 import HomeLayout from "@/Layouts/HomeLayout";
-import Product from "@/Components/Product";
 import Slider from "react-slick";
 import axios from "axios";
 import debounce from "lodash.debounce";
@@ -61,17 +60,17 @@ function PrevArrow({ onClick, disabled }) {
 
 function extractLocationInfo(location) {
   if (!location) return 'Unknown Location';
-  
+
   try {
     const parts = location.split(',').map(part => part.trim());
-    
+
     if (parts.length >= 3) {
       const county = parts[parts.length - 2];
       return county || 'Unknown Location';
     } else if (parts.length === 2) {
       return parts[0] || 'Unknown Location';
     }
-    
+
     return 'Unknown Location';
   } catch (error) {
     console.error('Error processing location:', error);
@@ -82,20 +81,20 @@ function extractLocationInfo(location) {
 function groupPropertiesWithMinimum(properties) {
   const grouped = {};
   const smallGroups = [];
-  
+
   properties.forEach(property => {
     const county = extractLocationInfo(property.location);
-    
+
     if (!grouped[county]) {
       grouped[county] = [];
     }
-    
+
     grouped[county].push(property);
   });
-  
+
   // Separate counties with enough items vs those with few items
   const finalGrouped = {};
-  
+
   Object.entries(grouped).forEach(([county, items]) => {
     if (items.length >= MIN_ITEMS_FOR_SLIDER) {
       finalGrouped[county] = items;
@@ -104,36 +103,36 @@ function groupPropertiesWithMinimum(properties) {
       smallGroups.push(...items.map(item => ({ ...item, originalCounty: county })));
     }
   });
-  
+
   // If we have small groups, create a combined section
   if (smallGroups.length > 0) {
     finalGrouped[FALLBACK_SECTION_NAME] = smallGroups;
   }
-  
+
   return finalGrouped;
 }
 
 function sortCountiesByPriority(groupedProperties, userLocation) {
   const counties = Object.keys(groupedProperties);
-  
+
   return counties.sort((a, b) => {
     const aCount = groupedProperties[a].length;
     const bCount = groupedProperties[b].length;
-    
+
     // Priority 1: User's location (if available)
     if (userLocation) {
       const aIsUserLocation = a.toLowerCase().includes(userLocation.toLowerCase());
       const bIsUserLocation = b.toLowerCase().includes(userLocation.toLowerCase());
-      
+
       if (aIsUserLocation && !bIsUserLocation) return -1;
       if (!aIsUserLocation && bIsUserLocation) return 1;
     }
-    
+
     // Priority 2: Counties with more properties come first
     if (aCount !== bCount) {
       return bCount - aCount;
     }
-    
+
     // Priority 3: Alphabetical
     return a.localeCompare(b);
   });
@@ -179,7 +178,7 @@ function getDynamicSliderSettings(itemCount, baseSettings) {
       ],
     };
   }
-  
+
   return baseSettings;
 }
 
@@ -212,42 +211,42 @@ export default function Welcome() {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
+
     checkIsMobile();
     const resizeHandler = debounce(checkIsMobile, 200);
     window.addEventListener('resize', resizeHandler);
-    
+
     return () => window.removeEventListener('resize', resizeHandler);
   }, []);
 
   // Initialize properties and lazy loading
   useEffect(() => {
-    const validProperties = initialProperties.filter(property => 
+    const validProperties = initialProperties.filter(property =>
       property?.location && typeof property.location === 'string'
     );
-    
+
     // For desktop: group with minimum threshold
     const grouped = groupPropertiesWithMinimum(validProperties);
     setGroupedProperties(grouped);
-    
+
     // For mobile: create mixed array with location info
     const mixed = shuffleArray(validProperties.map(property => ({
       ...property,
       displayLocation: extractLocationInfo(property.location)
     })));
     setMixedProperties(mixed);
-    
+
     const initialSlides = {};
     const initialLoadedProperties = {};
-    
+
     Object.keys(grouped).forEach(county => {
       initialSlides[county] = 0;
       initialLoadedProperties[county] = grouped[county].slice(0, INITIAL_PROPERTIES_PER_SLIDE);
     });
-    
+
     setCurrentSlides(initialSlides);
     setLoadedProperties(initialLoadedProperties);
-    
+
     // Initially show first 2 counties for desktop
     const counties = Object.keys(grouped);
     setVisibleCounties(counties.slice(0, INITIAL_SLIDES_COUNT));
@@ -265,8 +264,8 @@ export default function Welcome() {
                 `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
               );
               if (response.data?.address) {
-                const userCounty = response.data.address.state || 
-                                 response.data.address.county || 
+                const userCounty = response.data.address.state ||
+                                 response.data.address.county ||
                                  response.data.address.city;
                 setUserLocation(userCounty);
               }
@@ -280,7 +279,7 @@ export default function Welcome() {
           { timeout: 5000 }
         );
       }, 1000);
-      
+
       return () => clearTimeout(geolocationTimeout);
     }
   }, []);
@@ -288,18 +287,18 @@ export default function Welcome() {
   // Load more properties function for desktop sliders
   const loadMoreProperties = useCallback((county, currentLoaded) => {
     setLoadingMore(prev => ({ ...prev, [county]: true }));
-    
+
     setTimeout(() => {
       const nextBatch = groupedProperties[county].slice(
-        currentLoaded, 
+        currentLoaded,
         Math.min(currentLoaded + PROPERTIES_TO_ADD_ON_SWIPE, groupedProperties[county].length)
       );
-      
+
       setLoadedProperties(prev => ({
         ...prev,
         [county]: [...(prev[county] || []), ...nextBatch]
       }));
-      
+
       setLoadingMore(prev => ({ ...prev, [county]: false }));
     }, 300);
   }, [groupedProperties]);
@@ -313,7 +312,7 @@ export default function Welcome() {
         entries.forEach(entry => {
           if (entry.isIntersecting && !loadingMore.counties) {
             setLoadingMore(prev => ({ ...prev, counties: true }));
-            
+
             setTimeout(() => {
               setVisibleCounties(prev => {
                 const allCounties = Object.keys(groupedProperties);
@@ -368,12 +367,12 @@ export default function Welcome() {
   // Handle slider change
   const handleSliderAfterChange = useCallback((county, currentSlide) => {
     setCurrentSlides(prev => ({ ...prev, [county]: currentSlide }));
-    
+
     const totalProperties = groupedProperties[county]?.length || 0;
     const currentLoaded = loadedProperties[county]?.length || 0;
-    
-    if (currentSlide + LOAD_AHEAD_BUFFER >= currentLoaded - 6 && 
-        currentLoaded < totalProperties && 
+
+    if (currentSlide + LOAD_AHEAD_BUFFER >= currentLoaded - 6 &&
+        currentLoaded < totalProperties &&
         !loadingMore[county]) {
       loadMoreProperties(county, currentLoaded);
     }
@@ -385,14 +384,14 @@ export default function Welcome() {
     if (slider) {
       const currentSlide = currentSlides[county] || 0;
       const nextSlide = currentSlide + sliderSettings.slidesToScroll;
-      
+
       slider.slickNext();
-      
+
       const totalProperties = groupedProperties[county]?.length || 0;
       const currentLoaded = loadedProperties[county]?.length || 0;
-      
-      if (nextSlide + LOAD_AHEAD_BUFFER >= currentLoaded - 6 && 
-          currentLoaded < totalProperties && 
+
+      if (nextSlide + LOAD_AHEAD_BUFFER >= currentLoaded - 6 &&
+          currentLoaded < totalProperties &&
           !loadingMore[county]) {
         loadMoreProperties(county, currentLoaded);
       }
@@ -454,7 +453,7 @@ export default function Welcome() {
             setVisibleProperties(prev => {
               const nextIndex = prev.length;
               const nextBatch = mixedProperties.slice(
-                nextIndex, 
+                nextIndex,
                 nextIndex + MOBILE_PROPERTIES_PER_BATCH
               );
               return [...prev, ...nextBatch];
@@ -498,7 +497,7 @@ export default function Welcome() {
   // Render county section (desktop)
   const renderCountySection = useCallback((county, properties) => {
     const itemCount = properties.length;
-    
+
     // Use grid layout for very small counts
     if (itemCount <= 3) {
       return (
@@ -516,7 +515,7 @@ export default function Welcome() {
         </div>
       );
     }
-    
+
     // Use slider for larger counts
     const currentSlide = currentSlides[county] || 0;
     const loadedCount = loadedProperties[county]?.length || 0;
@@ -533,15 +532,15 @@ export default function Welcome() {
     });
 
     // Calculate if next button should be disabled
-    const isNextDisabled = (loadedCount >= totalCount) && 
+    const isNextDisabled = (loadedCount >= totalCount) &&
                          (currentSlide >= loadedCount - slidesToShow);
-    
+
     const isPrevDisabled = currentSlide === 0;
     const shouldHideArrows = itemCount <= 2;
 
     return (
-      <div 
-        key={county} 
+      <div
+        key={county}
         className={`product-slider-container padding-container p-5 county-container ${shouldHideArrows ? 'no-arrows' : ''}`}
         data-county={county}
       >
@@ -611,7 +610,7 @@ export default function Welcome() {
               </div>
             ) : (
               <>
-                {sortedCounties.slice(0, visibleCounties.length).map((county) => 
+                {sortedCounties.slice(0, visibleCounties.length).map((county) =>
                   renderCountySection(county, groupedProperties[county])
                 )}
                 {loadingMore.counties && (

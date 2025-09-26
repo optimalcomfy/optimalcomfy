@@ -64,9 +64,9 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                             {car?.initial_gallery.slice(1, 5).map((item, index) => (
                               item?.image && (
                                 <div key={index} className="img__container">
-                                  <img 
-                                    src={`/storage/${item.image}`} 
-                                    alt="room" 
+                                  <img
+                                    src={`/storage/${item.image}`}
+                                    alt="room"
                                   />
                                 </div>
                               )
@@ -80,10 +80,10 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                   <>
                     {car?.initial_gallery[0]?.image ? (
                       <div className="rounded-lg overflow-hidden mt-4 relative">
-                        <img 
-                          src={`/storage/${car?.initial_gallery[0]?.image}`} 
-                          className="w-full h-[50vh] object-cover object-center" 
-                          alt="car" 
+                        <img
+                          src={`/storage/${car?.initial_gallery[0]?.image}`}
+                          className="w-full h-[50vh] object-cover object-center"
+                          alt="car"
                         />
                         <button type="button" onClick={() => setGalleryVisible(true)} className="view-all-images">
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -96,10 +96,10 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                       </div>
                     ):
                     <div className="rounded-lg overflow-hidden mt-4 relative">
-                        <img 
+                        <img
                           src='/images/no-pic.avif'
-                          className="w-full h-[50vh] object-contain object-center" 
-                          alt="car" 
+                          className="w-full h-[50vh] object-contain object-center"
+                          alt="car"
                         />
                       </div>
                     }
@@ -115,11 +115,19 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                 <div className="container container--details container-m">
                   <div className="section__content">
                     <div className="heading">
-                      <div className="heading__title">
+                      <div className="heading__title flex flex-col items-start gap-2">
                         <h3 className="content-title">
-                          Owned by {car?.user?.name}
+                            Owned by {car?.user?.name}
                         </h3>
-                      </div>
+                        {car?.user?.ristay_verified === "1" && (
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            Verified
+                            </span>
+                        )}
+                        </div>
                     </div>
                     <hr />
 
@@ -129,7 +137,7 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                       {car?.description}
                     </p>
                     <p className="section__content-paragraph">
-                      This {car?.year} {car?.brand} {car?.model} is perfect for your transportation needs in {car?.location_address}. 
+                      This {car?.year} {car?.brand} {car?.model} is perfect for your transportation needs in {car?.location_address}.
                       With {car?.seats} comfortable seats and {car?.doors} doors, it offers convenience and reliability for your journey.
                     </p>
                     <button className="show-more">
@@ -138,7 +146,7 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                         <img src="/images/icons/small-arrow.svg" alt="arrow" />
                       </div>
                     </button>
-                    
+
                     <hr />
                     {/* Car specifications card */}
                     <div className="card">
@@ -229,15 +237,15 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
 
                   </div>
 
-                 
+
                   <CarRideForm car={car} />
                 </div>
               </section>
 
-               <PopupGallery 
-                  images={car?.initial_gallery || []} 
-                  visible={galleryVisible} 
-                  onHide={() => setGalleryVisible(false)} 
+               <PopupGallery
+                  images={car?.initial_gallery || []}
+                  visible={galleryVisible}
+                  onHide={() => setGalleryVisible(false)}
                 />
             </div>
           </HomeLayout>

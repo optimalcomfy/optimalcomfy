@@ -62,14 +62,14 @@ function PrevArrow({ onClick, disabled }) {
 // Utility function to extract and format location from location_address
 function extractLocationInfo(locationAddress) {
   if (!locationAddress) return 'Unknown Location';
-  
+
   // Convert to title case and clean up the location
   const cleanLocation = locationAddress
     .toLowerCase()
     .split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
-  
+
   return cleanLocation;
 }
 
@@ -77,20 +77,20 @@ function extractLocationInfo(locationAddress) {
 function groupCarsWithMinimum(cars) {
   const grouped = {};
   const smallGroups = [];
-  
+
   cars.forEach(car => {
     const location = car.location_address ? extractLocationInfo(car.location_address) : 'All Locations';
-    
+
     if (!grouped[location]) {
       grouped[location] = [];
     }
-    
+
     grouped[location].push(car);
   });
-  
+
   // Separate locations with enough items vs those with few items
   const finalGrouped = {};
-  
+
   Object.entries(grouped).forEach(([location, items]) => {
     if (items.length >= MIN_ITEMS_FOR_SLIDER) {
       finalGrouped[location] = items;
@@ -99,39 +99,39 @@ function groupCarsWithMinimum(cars) {
       smallGroups.push(...items.map(item => ({ ...item, originalLocation: location })));
     }
   });
-  
+
   // If we have small groups, create a combined section
   if (smallGroups.length > 0) {
     finalGrouped[FALLBACK_SECTION_NAME] = smallGroups;
   }
-  
+
   return finalGrouped;
 }
 
 // Sort locations by priority
 function sortLocationsByPriority(groupedCars, userLocation) {
   const locations = Object.keys(groupedCars);
-  
+
   return locations.sort((a, b) => {
     const aCount = groupedCars[a].length;
     const bCount = groupedCars[b].length;
-    
+
     // Priority 1: User's location (if available)
     if (userLocation) {
       const aIsUserLocation = a.toLowerCase().includes(userLocation.toLowerCase()) ||
                              userLocation.toLowerCase().includes(a.toLowerCase());
       const bIsUserLocation = b.toLowerCase().includes(userLocation.toLowerCase()) ||
                              userLocation.toLowerCase().includes(b.toLowerCase());
-      
+
       if (aIsUserLocation && !bIsUserLocation) return -1;
       if (!aIsUserLocation && bIsUserLocation) return 1;
     }
-    
+
     // Priority 2: Locations with more cars come first
     if (aCount !== bCount) {
       return bCount - aCount;
     }
-    
+
     // Priority 3: Alphabetical
     return a.localeCompare(b);
   });
@@ -178,7 +178,7 @@ function getDynamicSliderSettings(itemCount, baseSettings) {
       ],
     };
   }
-  
+
   return baseSettings;
 }
 
@@ -222,11 +222,11 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         const checkIsMobile = () => {
             setIsMobile(window.innerWidth <= 768);
         };
-        
+
         checkIsMobile();
         const resizeHandler = debounce(checkIsMobile, 200);
         window.addEventListener('resize', resizeHandler);
-        
+
         return () => window.removeEventListener('resize', resizeHandler);
     }, []);
 
@@ -236,22 +236,22 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
             // For desktop: group with minimum threshold
             const grouped = groupCarsWithMinimum(cars);
             setGroupedCars(grouped);
-            
+
             // For mobile: create mixed array with location info
             const mixed = shuffleArray(cars.map(car => ({
                 ...car,
                 displayLocation: car.location_address ? extractLocationInfo(car.location_address) : 'All Locations'
             })));
             setMixedCars(mixed);
-            
+
             const initialSlides = {};
             const initialLoadedCars = {};
-            
+
             Object.keys(grouped).forEach(location => {
                 initialSlides[location] = 0;
                 initialLoadedCars[location] = grouped[location].slice(0, INITIAL_CARS_PER_SLIDE);
             });
-            
+
             setCurrentSlides(initialSlides);
             setLoadedCars(initialLoadedCars);
             setVisibleLocations(Object.keys(grouped).slice(0, INITIAL_SLIDES_COUNT));
@@ -271,8 +271,8 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                             );
 
                             if (response.data?.address) {
-                                const userLocationData = response.data.address.state || 
-                                                       response.data.address.county || 
+                                const userLocationData = response.data.address.state ||
+                                                       response.data.address.county ||
                                                        response.data.address.city ||
                                                        response.data.address.town ||
                                                        response.data.address.village;
@@ -288,7 +288,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     { timeout: 5000 }
                 );
             }, 1000);
-            
+
             return () => clearTimeout(geolocationTimeout);
         }
     }, []);
@@ -302,7 +302,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 entries.forEach(entry => {
                     if (entry.isIntersecting && !loadingMore.locations) {
                         setLoadingMore(prev => ({ ...prev, locations: true }));
-                        
+
                         setTimeout(() => {
                             setVisibleLocations(prev => {
                                 const allLocations = Object.keys(groupedCars);
@@ -357,30 +357,30 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
     // Load more cars when scrolling right in a slider
     const loadMoreCars = useCallback((location, currentLoaded) => {
         setLoadingMore(prev => ({ ...prev, [location]: true }));
-        
+
         setTimeout(() => {
             const nextBatch = groupedCars[location].slice(
-                currentLoaded, 
+                currentLoaded,
                 Math.min(currentLoaded + CARS_TO_ADD_ON_SWIPE, groupedCars[location].length)
             );
-            
+
             setLoadedCars(prev => ({
                 ...prev,
                 [location]: [...(prev[location] || []), ...nextBatch]
             }));
-            
+
             setLoadingMore(prev => ({ ...prev, [location]: false }));
         }, 300);
     }, [groupedCars]);
 
     const handleSliderAfterChange = useCallback((location, currentSlide) => {
         setCurrentSlides(prev => ({ ...prev, [location]: currentSlide }));
-        
+
         const totalCars = groupedCars[location]?.length || 0;
         const currentLoaded = loadedCars[location]?.length || 0;
-        
-        if (currentSlide + LOAD_AHEAD_BUFFER >= currentLoaded - 6 && 
-            currentLoaded < totalCars && 
+
+        if (currentSlide + LOAD_AHEAD_BUFFER >= currentLoaded - 6 &&
+            currentLoaded < totalCars &&
             !loadingMore[location]) {
             loadMoreCars(location, currentLoaded);
         }
@@ -392,14 +392,14 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         if (slider) {
             const currentSlide = currentSlides[location] || 0;
             const nextSlide = currentSlide + sliderSettings.slidesToScroll;
-            
+
             slider.slickNext();
-            
+
             const totalCars = groupedCars[location]?.length || 0;
             const currentLoaded = loadedCars[location]?.length || 0;
-            
-            if (nextSlide + LOAD_AHEAD_BUFFER >= currentLoaded - 6 && 
-                currentLoaded < totalCars && 
+
+            if (nextSlide + LOAD_AHEAD_BUFFER >= currentLoaded - 6 &&
+                currentLoaded < totalCars &&
                 !loadingMore[location]) {
                 loadMoreCars(location, currentLoaded);
             }
@@ -461,7 +461,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                         setVisibleCars(prev => {
                             const nextIndex = prev.length;
                             const nextBatch = mixedCars.slice(
-                                nextIndex, 
+                                nextIndex,
                                 nextIndex + MOBILE_CARS_PER_BATCH
                             );
                             return [...prev, ...nextBatch];
@@ -505,7 +505,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
     // Render location section (desktop)
     const renderLocationSection = useCallback((location, cars) => {
         const itemCount = cars.length;
-        
+
         // Use grid layout for very small counts
         if (itemCount <= 3) {
             return (
@@ -523,7 +523,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 </div>
             );
         }
-        
+
         // Use slider for larger counts
         const currentSlide = currentSlides[location] || 0;
         const loadedCount = loadedCars[location]?.length || 0;
@@ -540,15 +540,15 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
         });
 
         // Calculate if next button should be disabled
-        const isNextDisabled = (loadedCount >= totalCount) && 
+        const isNextDisabled = (loadedCount >= totalCount) &&
                              (currentSlide >= loadedCount - slidesToShow);
-        
+
         const isPrevDisabled = currentSlide === 0;
         const shouldHideArrows = itemCount <= 2;
 
         return (
-            <div 
-                key={location} 
+            <div
+                key={location}
                 className={`car-slider-container padding-container p-5 location-container ${shouldHideArrows ? 'no-arrows' : ''}`}
                 data-location={location}
             >
@@ -618,7 +618,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                             </div>
                         ) : (
                             <>
-                                {sortedLocations.slice(0, visibleLocations.length).map((location) => 
+                                {sortedLocations.slice(0, visibleLocations.length).map((location) =>
                                     renderLocationSection(location, groupedCars[location])
                                 )}
                                 {loadingMore.locations && (

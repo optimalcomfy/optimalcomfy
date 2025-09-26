@@ -51,9 +51,9 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     property?.initial_gallery[0]?.image && (
                       <div className="hero-images hidden lg:flex">
                         <div className="img__container--hero">
-                          <img 
-                            src={`/storage/${property?.initial_gallery[0]?.image}`} 
-                            alt="room" 
+                          <img
+                            src={`/storage/${property?.initial_gallery[0]?.image}`}
+                            alt="room"
                           />
                           <button type="button" onClick={() => setGalleryVisible(true)} className="view-all-images">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -69,9 +69,9 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                             {property?.initial_gallery.slice(1, 5).map((item, index) => (
                               item?.image && (
                                 <div key={index} className="img__container">
-                                  <img 
-                                    src={`/storage/${item.image}`} 
-                                    alt="room" 
+                                  <img
+                                    src={`/storage/${item.image}`}
+                                    alt="room"
                                   />
                                 </div>
                               )
@@ -84,10 +84,10 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     // Single image layout
                     property?.initial_gallery?.[0]?.image ? (
                       <div className="single-image-container">
-                        <img 
-                          src={`/storage/${property?.initial_gallery[0]?.image}`} 
-                          className="single-image" 
-                          alt="room" 
+                        <img
+                          src={`/storage/${property?.initial_gallery[0]?.image}`}
+                          className="single-image"
+                          alt="room"
                         />
                         <button type="button" onClick={() => setGalleryVisible(true)} className="view-all-images">
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -101,10 +101,10 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     )
                     :
                     <div className="single-image-container">
-                        <img 
+                        <img
                           src='/images/no-pic.avif'
-                          className="w-full h-[50vh] object-contain object-cente" 
-                          alt="room" 
+                          className="w-full h-[50vh] object-contain object-cente"
+                          alt="room"
                         />
                       </div>
                   )}
@@ -118,13 +118,21 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 <div className="container container--details container-m">
                   <div className="section__content">
                     <div className="heading">
-                      <div className="heading__title">
+                        <div className="heading__title flex flex-col items-start gap-2">
                         <h3 className="content-title">
-                          Hosted by {property?.user?.name}
+                            Hosted by {property?.user?.name}
                         </h3>
-                      </div>
+                        {property?.user?.ristay_verified === "1" && (
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            Verified
+                            </span>
+                        )}
+                        </div>
                       <div className="section__img">
-                    
+
                       </div>
                     </div>
                     <hr />
@@ -169,7 +177,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                               </button>
                             )}
                           </div>
-                          
+
                           {/* Other images */}
                           {property?.initial_gallery[1]?.image &&
                             <div className="img__container">
@@ -218,10 +226,10 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 </div>
               </section>
 
-               <PopupGallery 
-                images={property?.initial_gallery || []} 
-                visible={galleryVisible} 
-                onHide={() => setGalleryVisible(false)} 
+               <PopupGallery
+                images={property?.initial_gallery || []}
+                visible={galleryVisible}
+                onHide={() => setGalleryVisible(false)}
               />
             </div>
 

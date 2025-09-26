@@ -36,6 +36,7 @@ class HomeController extends Controller
             "propertyAmenities",
             "propertyFeatures",
             "PropertyServices",
+            "user"
         ])
         ->withCount(['bookings as bookings_count' => function($query) {
             $query->where('status', 'Paid');
@@ -50,30 +51,30 @@ class HomeController extends Controller
                     if (empty($image['path']) && empty($image['image'])) {
                         return false;
                     }
-                    
+
                     $imagePath = $image['path'] ?? $image['image'];
-                    
+
                     // Skip if path is null or empty
                     if (empty($imagePath)) {
                         return false;
                     }
-                    
+
                     // Handle both relative paths and full URLs
                     if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
                         return true; // External URL, assume it exists
                     }
-                    
+
                     // Local storage path
-                    $storagePath = str_starts_with($imagePath, 'public/') 
+                    $storagePath = str_starts_with($imagePath, 'public/')
                         ? storage_path('app/' . $imagePath)
                         : storage_path('app/public/' . $imagePath);
-                    
+
                     return file_exists($storagePath) && is_file($storagePath);
                 })->values(); // Reset keys
-                
+
                 $property->setRelation('initialGallery', $validGallery);
             }
-            
+
             return $property;
         });
 
@@ -108,6 +109,7 @@ class HomeController extends Controller
             "bookings",
             "initialGallery",
             "carFeatures",
+            "user"
         ])
         ->withCount(['bookings as bookings_count' => function($query) {
             $query->where('status', 'Paid');
@@ -123,30 +125,30 @@ class HomeController extends Controller
                     if (empty($image['path']) && empty($image['image'])) {
                         return false;
                     }
-                    
+
                     $imagePath = $image['path'] ?? $image['image'];
-                    
+
                     // Skip if path is null or empty
                     if (empty($imagePath)) {
                         return false;
                     }
-                    
+
                     // Handle both relative paths and full URLs
                     if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
                         return true; // External URL, assume it exists
                     }
-                    
+
                     // Local storage path
-                    $storagePath = str_starts_with($imagePath, 'public/') 
+                    $storagePath = str_starts_with($imagePath, 'public/')
                         ? storage_path('app/' . $imagePath)
                         : storage_path('app/public/' . $imagePath);
-                    
+
                     return file_exists($storagePath) && is_file($storagePath);
                 })->values(); // Reset keys
-                
+
                 $car->setRelation('initialGallery', $validGallery);
             }
-            
+
             // Then create optimized gallery from the validated images
             if ($car->initialGallery && count($car->initialGallery) > 0) {
                 $optimizedGallery = [];
@@ -160,7 +162,7 @@ class HomeController extends Controller
                 }
                 $car->optimizedGallery = $optimizedGallery;
             }
-            
+
             return $car;
         });
 
@@ -178,7 +180,7 @@ class HomeController extends Controller
     {
         $input = $request->all();
 
-        $query = Car::with(["bookings", "initialGallery", "carFeatures"]);
+        $query = Car::with(["bookings", "initialGallery", "carFeatures", "user"]);
 
         $latitude = null;
         $longitude = null;
@@ -213,10 +215,10 @@ class HomeController extends Controller
         $query->when($latitude && $longitude, function ($query) use ($latitude, $longitude) {
             return $query->select('*', DB::raw("
                 (6371 * acos(
-                    cos(radians($latitude)) * 
-                    cos(radians(latitude)) * 
-                    cos(radians(longitude) - radians($longitude)) + 
-                    sin(radians($latitude)) * 
+                    cos(radians($latitude)) *
+                    cos(radians(latitude)) *
+                    cos(radians(longitude) - radians($longitude)) +
+                    sin(radians($latitude)) *
                     sin(radians(latitude))
                 )) AS distance
             "))
@@ -233,30 +235,30 @@ class HomeController extends Controller
                     if (empty($image['path']) && empty($image['image'])) {
                         return false;
                     }
-                    
+
                     $imagePath = $image['path'] ?? $image['image'];
-                    
+
                     // Skip if path is null or empty
                     if (empty($imagePath)) {
                         return false;
                     }
-                    
+
                     // Handle both relative paths and full URLs
                     if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
                         return true; // External URL, assume it exists
                     }
-                    
+
                     // Local storage path
-                    $storagePath = str_starts_with($imagePath, 'public/') 
+                    $storagePath = str_starts_with($imagePath, 'public/')
                         ? storage_path('app/' . $imagePath)
                         : storage_path('app/public/' . $imagePath);
-                    
+
                     return file_exists($storagePath) && is_file($storagePath);
                 })->values(); // Reset keys
-                
+
                 $car->setRelation('initialGallery', $validGallery);
             }
-            
+
             // Then create simple gallery from the validated images (without ImageOptimizer)
             if ($car->initialGallery && count($car->initialGallery) > 0) {
                 $simpleGallery = [];
@@ -276,22 +278,22 @@ class HomeController extends Controller
                 }
                 $car->optimizedGallery = $simpleGallery;
             }
-            
+
             // Also handle the primary image if it exists and is valid (without ImageOptimizer)
             if ($car->image) {
                 $imagePath = $car->image;
                 $isValid = false;
-                
+
                 // Validate primary image
                 if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
                     $isValid = true; // External URL
                 } else {
-                    $storagePath = str_starts_with($imagePath, 'public/') 
+                    $storagePath = str_starts_with($imagePath, 'public/')
                         ? storage_path('app/' . $imagePath)
                         : storage_path('app/public/' . $imagePath);
                     $isValid = file_exists($storagePath) && is_file($storagePath);
                 }
-                
+
                 if ($isValid) {
                     $car->optimizedImage = $imagePath; // Use original image
                     $car->responsiveImages = [
@@ -301,7 +303,7 @@ class HomeController extends Controller
                     ];
                 }
             }
-            
+
             return $car;
         });
 
@@ -322,7 +324,7 @@ class HomeController extends Controller
     private function getCoordinatesFromLocation($location)
     {
         $cacheKey = 'geocode:' . md5($location);
-        
+
         return Cache::remember($cacheKey, 86400, function () use ($location) { // 24 hours cache
             // Try Nominatim first
             try {
@@ -337,7 +339,7 @@ class HomeController extends Controller
                         'q' => $location,
                         'limit' => 1
                     ]);
-                
+
                 if ($nominatimResponse->successful() && count($nominatimResponse->json()) > 0) {
                     $data = $nominatimResponse->json()[0];
                     return [
@@ -348,7 +350,7 @@ class HomeController extends Controller
             } catch (\Exception $e) {
                 \Log::warning("Nominatim geocoding failed for: {$location}", ['error' => $e->getMessage()]);
             }
-            
+
             // Fallback: Use a simple location database or return null
             return $this->getFallbackCoordinates($location);
         });
@@ -364,13 +366,13 @@ class HomeController extends Controller
             'kisumu' => ['latitude' => -0.1022, 'longitude' => 34.7617],
             // Add more common locations as needed
         ];
-        
+
         $normalizedLocation = strtolower(trim($location));
-        
+
         if (array_key_exists($normalizedLocation, $commonLocations)) {
             return $commonLocations[$normalizedLocation];
         }
-        
+
         return null;
     }
 
@@ -407,13 +409,13 @@ class HomeController extends Controller
                 }
                 $car->optimizedGallery = $optimizedGallery;
             }
-            
+
             if ($car->image) {
                 $car->optimizedImage = ImageOptimizer::getOptimizedUrl($car->image);
                 $car->responsiveImages = ImageOptimizer::getResponsiveUrls($car->image, [320, 640, 800, 1024]);
                 $car->heroImage = ImageOptimizer::getHighQualityOptimizedUrl($car->image, 1200, 90);
             }
-            
+
             // Optimize media images if they exist
             if ($car->media && count($car->media) > 0) {
                 $optimizedMedia = [];
@@ -429,12 +431,12 @@ class HomeController extends Controller
                 }
                 $car->optimizedMedia = $optimizedMedia;
             }
-            
+
             // Optimize user avatar if exists
             if ($car->user && $car->user->avatar) {
                 $car->user->optimizedAvatar = ImageOptimizer::getOptimizedUrl($car->user->avatar, 100, 80);
             }
-            
+
             // Optimize category image if exists
             if ($car->category && $car->category->image) {
                 $car->category->optimizedImage = ImageOptimizer::getOptimizedUrl($car->category->image, 200, 85);
@@ -450,7 +452,7 @@ class HomeController extends Controller
             "flash" => session("flash"),
         ]);
     }
-    
+
 
     public function hostCalendarPolicy()
     {
@@ -626,7 +628,7 @@ class HomeController extends Controller
                 ->map(function ($booking) use ($p) {
                     $totalPayments = $booking->payments->sum('amount');
                     $days = Carbon::parse($booking->check_in_date)->diffInDays(Carbon::parse($booking->check_out_date));
-                    
+
                     return [
                         "type" => "property",
                         "title" => $booking->property->title,
@@ -658,7 +660,7 @@ class HomeController extends Controller
                 ->map(function ($booking) use ($p) {
                     $totalPayments = $booking->payments->sum('amount');
                     $days = Carbon::parse($booking->start_date)->diffInDays(Carbon::parse($booking->end_date));
-                    
+
                     return [
                         "type" => "car",
                         "title" => $booking->car->make . " " . $booking->car->model,
@@ -790,12 +792,12 @@ class HomeController extends Controller
     {
         $company = Company::first();
         $p = 1 - $company->percentage / 100;
-        
+
         // Get all hosts (users who are not admins)
         $hosts = User::where('role_id', '!=', 1)->get();
-        
+
         $hostsWithOverdrafts = [];
-        
+
         foreach ($hosts as $host) {
             // Calculate available payouts for this host
             $availablePropertyBookingTotal = Booking::where("status", "Paid")
@@ -822,19 +824,19 @@ class HomeController extends Controller
                 ->sum('payments_sum_amount') * $p;
 
             $availablePayouts = $availablePropertyBookingTotal + $availableCarBookingTotal;
-            
+
             // Calculate repayments for this host
             $repaymentAmount = Repayment::where('user_id', $host->id)
                 ->where('status', 'Approved')
                 ->sum('amount');
-                
+
             // Calculate available balance
             $availableBalance = $availablePayouts - $repaymentAmount;
-            
+
             // Check if host is in overdraft
             $isInOverdraft = $availableBalance < 0;
             $overdraftAmount = $isInOverdraft ? abs($availableBalance) : 0;
-            
+
             if ($isInOverdraft) {
                 $hostsWithOverdrafts[] = [
                     'id' => $host->id,
@@ -849,12 +851,12 @@ class HomeController extends Controller
                 ];
             }
         }
-        
+
         // Sort by overdraft amount (highest first)
         usort($hostsWithOverdrafts, function($a, $b) {
             return $b['overdraft_amount'] <=> $a['overdraft_amount'];
         });
-        
+
         return $hostsWithOverdrafts;
     }
 
@@ -872,7 +874,7 @@ class HomeController extends Controller
                     $query->where("user_id", $user->id);
                 }
             })
-            ->whereHas('payments') 
+            ->whereHas('payments')
             ->withSum('payments', 'amount')
             ->get()
             ->sum('payments_sum_amount');
@@ -933,17 +935,17 @@ class HomeController extends Controller
                 ->latest()
                 ->take(5)
                 ->get()
-                ->map(function ($booking) use ($p) { 
+                ->map(function ($booking) use ($p) {
                     $totalPayments = $booking->payments->sum('amount');
                     $days = Carbon::parse($booking->check_in_date)->diffInDays(Carbon::parse($booking->check_out_date));
-                    
+
                     return [
                         "type" => "property",
                         "title" => $booking->property->title,
                         "amount" => $totalPayments,
                         "platform_price" => $booking->property->platform_price,
                         "platform_charges" => $booking->property->platform_charges,
-                        "net_amount" => $totalPayments * $p, 
+                        "net_amount" => $totalPayments * $p,
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
                         "status" => "completed",
@@ -959,22 +961,22 @@ class HomeController extends Controller
                         $query->where("user_id", $user->id);
                     }
                 })
-                ->whereHas('payments') 
+                ->whereHas('payments')
                 ->with(["car", "user", "payments"])
                 ->latest()
                 ->take(5)
                 ->get()
-                ->map(function ($booking) use ($p) { 
+                ->map(function ($booking) use ($p) {
                     $totalPayments = $booking->payments->sum('amount');
                     $days = Carbon::parse($booking->start_date)->diffInDays(Carbon::parse($booking->end_date));
-                    
+
                     return [
                         "type" => "car",
                         "title" => $booking->car->make . " " . $booking->car->model,
                         "amount" => $totalPayments,
                         "platform_price" => $booking->car->platform_price,
                         "platform_charges" => $booking->car->platform_charges,
-                        "net_amount" => $totalPayments * $p, 
+                        "net_amount" => $totalPayments * $p,
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
                         "status" => "completed",
@@ -1121,13 +1123,13 @@ class HomeController extends Controller
                 }
                 $property->optimizedGallery = $optimizedGallery;
             }
-            
+
             // Optimize primary image
             if ($property->image) {
                 $property->optimizedImage = ImageOptimizer::getOptimizedUrl($property->image);
                 $property->responsiveImages = ImageOptimizer::getResponsiveUrls($property->image, [320, 640, 800, 1024, 1200]);
             }
-            
+
             // Optimize user avatar if exists
             if ($property->user && $property->user->avatar) {
                 $property->user->optimizedAvatar = ImageOptimizer::getOptimizedUrl($property->user->avatar, 100, 80);
@@ -1142,7 +1144,7 @@ class HomeController extends Controller
                 ->orderBy("created_at", "desc")
                 ->limit(4)
                 ->get();
-            
+
             // Optimize similar properties images
             $similarProperties->transform(function ($similarProperty) {
                 if ($similarProperty->initialGallery && count($similarProperty->initialGallery) > 0) {
@@ -1158,11 +1160,11 @@ class HomeController extends Controller
                     }
                     $similarProperty->optimizedGallery = $optimizedGallery;
                 }
-                
+
                 if ($similarProperty->image) {
                     $similarProperty->optimizedImage = ImageOptimizer::getOptimizedUrl($similarProperty->image, 400, 75);
                 }
-                
+
                 return $similarProperty;
             });
         }
@@ -1204,6 +1206,7 @@ class HomeController extends Controller
             "propertyAmenities",
             "propertyFeatures",
             "propertyServices",
+            "user"
         ])->orderBy("created_at", "desc");
 
         $input = $request->all();
@@ -1242,10 +1245,10 @@ class HomeController extends Controller
         $query->when($latitude && $longitude, function ($query) use ($latitude, $longitude) {
             return $query->select('*', DB::raw("
                 (6371 * acos(
-                    cos(radians($latitude)) * 
-                    cos(radians(latitude)) * 
-                    cos(radians(longitude) - radians($longitude)) + 
-                    sin(radians($latitude)) * 
+                    cos(radians($latitude)) *
+                    cos(radians(latitude)) *
+                    cos(radians(longitude) - radians($longitude)) +
+                    sin(radians($latitude)) *
                     sin(radians(latitude))
                 )) AS distance
             "))
@@ -1262,30 +1265,30 @@ class HomeController extends Controller
                     if (empty($image['path']) && empty($image['image'])) {
                         return false;
                     }
-                    
+
                     $imagePath = $image['path'] ?? $image['image'];
-                    
+
                     // Skip if path is null or empty
                     if (empty($imagePath)) {
                         return false;
                     }
-                    
+
                     // Handle both relative paths and full URLs
                     if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
                         return true; // External URL, assume it exists
                     }
-                    
+
                     // Local storage path
-                    $storagePath = str_starts_with($imagePath, 'public/') 
+                    $storagePath = str_starts_with($imagePath, 'public/')
                         ? storage_path('app/' . $imagePath)
                         : storage_path('app/public/' . $imagePath);
-                    
+
                     return file_exists($storagePath) && is_file($storagePath);
                 })->values(); // Reset keys
-                
+
                 $property->setRelation('initialGallery', $validGallery);
             }
-            
+
             // Then create simple gallery without optimization
             if ($property->initialGallery && count($property->initialGallery) > 0) {
                 $simpleGallery = [];
@@ -1305,7 +1308,7 @@ class HomeController extends Controller
                 }
                 $property->optimizedGallery = $simpleGallery;
             }
-            
+
             // Also handle the primary image
             if ($property->image) {
                 $property->optimizedImage = $property->image;
@@ -1315,7 +1318,7 @@ class HomeController extends Controller
                     'large' => $property->image
                 ];
             }
-            
+
             return $property;
         });
 

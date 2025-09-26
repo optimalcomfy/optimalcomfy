@@ -7,20 +7,24 @@ const ProductCar = (props) => {
   const [page, setPage] = useState(1);
 
   const {
-    name, // Changed from car_name to name
+    name,
     brand,
     model,
     year,
-    location_address, // Using location_address from data
-    platform_price, // Changed from price_per_night to platform_price
+    location_address,
+    platform_price,
     id,
-    initial_gallery
+    initial_gallery,
+    user // Add user prop to access verification status
   } = props;
 
   // Create derived values from available data
   const carDisplayName = `${brand} ${model} ${name}`;
   const locationDisplay = location_address || 'Location not specified';
   const yearDisplay = `${year}`;
+
+  // Check if user is verified
+  const isVerified = user?.ristay_verified === "1";
 
   return (
     <div className="relative flex flex-col cursor-pointer">
@@ -30,14 +34,14 @@ const ProductCar = (props) => {
           {initial_gallery.length > 0 ?
           <>
             {initial_gallery?.map((image, index) => (
-              <>{image.image ?               
+              <>{image.image ?
                 <img
                   key={index}
                   src={`/storage/${image.image}`}
                   onClick={() => router.visit(route('rent-now', { car_id: id }))}
                   alt={`Image ${index + 1} of ${carDisplayName}`}
                   className="w-full aspect-[20/19] object-cover"
-                /> :               
+                /> :
                 <img
                   key={index}
                   src={`/images/no-pic.avif`}
@@ -57,6 +61,15 @@ const ProductCar = (props) => {
             }
         </CarRentSlider>
 
+        {/* Verification Badge */}
+        {isVerified && (
+          <div className="absolute top-3 left-3 bg-white px-1 font-bold py-1 rounded-full flex items-center gap-1 shadow-sm">
+            <svg className="h-4 text-[#f0661d]" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+        )}
+
         {/* Pagination Dots */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-x-[5px]">
           {initial_gallery?.map((_, index) => (
@@ -73,7 +86,7 @@ const ProductCar = (props) => {
 
       {/* Product Details */}
       <Link
-        href={route('rent-now', { car_id: id })} // Changed from car_id to id for consistency
+        href={route('rent-now', { car_id: id })}
         className="grid grid-cols-[minmax(0,1fr),max-content] gap-[2px_8px] mt-3 text-[.9375rem] leading-[19px] px-2">
         <div className="font-bold">
           {carDisplayName}
@@ -89,7 +102,7 @@ const ProductCar = (props) => {
   );
 };
 
-// Updated PropTypes to match actual data structure
+// Updated PropTypes to include user object
 ProductCar.propTypes = {
   name: PropTypes.string.isRequired,
   brand: PropTypes.string.isRequired,
@@ -105,6 +118,9 @@ ProductCar.propTypes = {
   location_address: PropTypes.string,
   platform_price: PropTypes.string.isRequired,
   id: PropTypes.number.isRequired,
+  user: PropTypes.shape({
+    ristay_verified: PropTypes.string
+  })
 };
 
 export default ProductCar;

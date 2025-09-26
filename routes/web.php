@@ -193,6 +193,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/withdraw/resend-code', [WithdrawalController::class, 'resendVerificationCode'])->name('withdraw.resend-code');
 
     Route::get('/books/lookup', [BookingController::class, 'lookup'])->name('bookings.lookup');
+
+    Route::post('/{user}/verify', [UserController::class, 'verify'])->name('users.verify');
+    Route::post('/{user}/unverify', [UserController::class, 'unverify'])->name('users.unverify');
 });
 
 // Route to initiate the payment (usually triggered by a logged-in user)

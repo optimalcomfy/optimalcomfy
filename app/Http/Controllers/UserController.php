@@ -119,4 +119,28 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'User deleted successfully.');
     }
+
+    public function verify(User $user)
+    {
+        $user->update([
+            'ristay_verified' => true,
+        ]);
+
+        return redirect()->back()->with('success', 'User verified successfully!');
+    }
+
+    /**
+     * Unverify a user
+     */
+
+    public function unverify(User $user)
+    {
+
+        $user->update([
+            'ristay_verified' => false,
+            'verified_at' => null,
+        ]);
+
+        return redirect()->back()->with('success', 'User verification removed!');
+    }
 }

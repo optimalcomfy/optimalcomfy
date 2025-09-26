@@ -1,11 +1,11 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
+import Swal from "sweetalert2";
 import {
   FiUser, FiMail, FiPhone, FiFileText, FiCalendar,
   FiMapPin, FiHome, FiGlobe, FiShield, FiPhoneCall,
-  FiAward, FiKey,
-  FiCode
+  FiAward, FiKey, FiCheckCircle, FiCode
 } from 'react-icons/fi';
 
 const Show = ({ user }) => {
@@ -15,6 +15,8 @@ const Show = ({ user }) => {
   const accentColor = '#34495e';
   const lightBg = '#fdf6f2';
 
+  const { auth } = usePage().props;
+
   // Role mapping
   const roleMap = {
     1: 'Super Admin',
@@ -23,14 +25,65 @@ const Show = ({ user }) => {
     4: 'House Manager'
   };
 
+  // Verification form
+  const { post, processing } = useForm();
+
+  const verifyUser = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You are about to verify this user.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#16a34a",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, verify"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        post(route('users.verify', user.id), {
+          onSuccess: () => {
+            Swal.fire("Verified!", "The user has been verified successfully.", "success");
+          }
+        });
+      }
+    });
+  };
+
+  const unverifyUser = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You are about to unverify this user.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ca8a04",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, unverify"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        post(route('users.unverify', user.id), {
+          onSuccess: () => {
+            Swal.fire("Unverified!", "The user has been unverified.", "success");
+          }
+        });
+      }
+    });
+  };
+
   // Only include files that exist
   const files = [
     user.id_verification && {
       name: 'ID Verification',
       value: `/storage/${user.id_verification}`,
       icon: <FiShield className="text-[#d15623]" />
+    },
+    user.profile_picture && {
+      name: 'Profile Picture',
+      value: `/storage/${user.profile_picture}`,
+      icon: <FiShield className="text-[#d15623]" />
     }
   ].filter(Boolean);
+
+  // Check if user has permission to verify (admins only)
+  const canVerify = parseInt(auth.user.role_id) === 1;
 
   return (
     <Layout>
@@ -40,8 +93,22 @@ const Show = ({ user }) => {
           className="p-6 text-white"
           style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
         >
-          <h1 className="text-3xl font-bold">{user.name}</h1>
-          <p className="opacity-90 capitalize">{roleMap[user.role_id] || 'User'} Profile</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">{user.name}</h1>
+              <p className="opacity-90 capitalize">{roleMap[user.role_id] || 'User'} Profile</p>
+            </div>
+            {user.ristay_verified == "1" ? (
+              <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1 rounded-full">
+                <FiCheckCircle className="text-green-300" />
+                <span className="text-green-200 font-medium">Ristay Verified</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1 rounded-full">
+                <span className="text-yellow-200 font-medium">Not Verified</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="p-6 grid md:grid-cols-3 gap-6">
@@ -115,13 +182,19 @@ const Show = ({ user }) => {
                     value={new Date(user.created_at).toLocaleDateString()}
                   />
                 )}
+                <InfoItem
+                  icon={<FiCheckCircle />}
+                  label="Verification Status"
+                  value={user.ristay_verified === "1" ? 'Verified' : 'Not Verified'}
+                  valueColor={user.ristay_verified === "1" ? 'text-green-600' : 'text-yellow-600'}
+                />
               </div>
             </div>
           </div>
 
           {/* Right Column */}
-          <div className="space-y-6">
-            {/* Files Section (only show if files exist) */}
+          <div className="space-y-6 flex-col flex lg:flex-row gap-4">
+            {/* Files Section */}
             {files.length > 0 && (
               <div
                 className="rounded-lg p-5 shadow-sm border h-full"
@@ -167,6 +240,28 @@ const Show = ({ user }) => {
                 >
                   Edit Profile
                 </Link>
+
+                {/* Verification Button - Only show for admins */}
+                {canVerify && (
+                  user.ristay_verified === "1" ? (
+                    <button
+                      onClick={unverifyUser}
+                      disabled={processing}
+                      className="px-4 py-2 bg-yellow-600 text-white rounded transition text-sm font-medium text-center disabled:opacity-50"
+                    >
+                      {processing ? 'Processing...' : 'Unverify User'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={verifyUser}
+                      disabled={processing}
+                      className="px-4 py-2 bg-green-600 text-white rounded transition text-sm font-medium text-center disabled:opacity-50"
+                    >
+                      {processing ? 'Processing...' : 'Verify User'}
+                    </button>
+                  )
+                )}
+
                 <Link
                   href={route('users.index')}
                   className="px-4 py-2 bg-white rounded border transition text-sm text-center"
@@ -186,25 +281,24 @@ const Show = ({ user }) => {
   );
 };
 
-// Reusable Info Item Component
-const InfoItem = ({ icon, label, value }) => (
+// Updated InfoItem component
+const InfoItem = ({ icon, label, value, valueColor = '' }) => (
   <div className="flex items-start space-x-3">
     <div className="mt-1 text-gray-500">{icon}</div>
     <div>
       <p className="text-sm text-gray-600">{label}</p>
-      <p className="font-medium" style={{ color: '#34495e' }}>{value}</p>
+      <p className={`font-medium ${valueColor}`} style={{ color: valueColor ? '' : '#34495e' }}>{value}</p>
     </div>
   </div>
 );
 
-// Reusable File Item Component
+// File Item Component
 const FileItem = ({ icon, name, url, primaryColor }) => (
   <a
     href={url}
     target="_blank"
     rel="noopener noreferrer"
     className="flex items-center justify-between p-3 bg-white rounded border border-gray-200 hover:shadow-md transition"
-    style={{ hover: { borderColor: primaryColor } }}
   >
     <div className="flex items-center space-x-3">
       <div className="text-lg">{icon}</div>

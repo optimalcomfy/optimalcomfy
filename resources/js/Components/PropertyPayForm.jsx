@@ -7,7 +7,7 @@ const PropertyBookingForm = () => {
   const { flash, pagination, property, auth } = usePage().props;
   const url = usePage().url;
   const params = new URLSearchParams(url.split('?')[1]);
-  
+
   const checkInDate = params.get('check_in_date');
   const checkOutDate = params.get('check_out_date');
   const variationId = params.get('variation_id');
@@ -44,7 +44,7 @@ const PropertyBookingForm = () => {
     is_registered: false,
     user_type: 'guest'
   });
-  
+
   // Location suggestions state
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
@@ -55,23 +55,23 @@ const PropertyBookingForm = () => {
   const isRangeBooked = (startDate, endDate, variationId = null) => {
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
-    
+
     const end = new Date(endDate);
     end.setHours(0, 0, 0, 0);
-    
+
     return property.bookings.some(booking => {
       // Skip if we're checking for standard and this booking is for a variation
       if (variationId === null && booking.variation_id !== null) return false;
-      
+
       // Skip if we're checking for a variation and this booking is for standard or a different variation
       if (variationId !== null && booking.variation_id !== variationId) return false;
-      
+
       const bookingStart = new Date(booking.check_in_date);
       bookingStart.setHours(0, 0, 0, 0);
-      
+
       const bookingEnd = new Date(booking.check_out_date);
       bookingEnd.setHours(0, 0, 0, 0);
-      
+
       return (
         (start >= bookingStart && start < bookingEnd) || // Start date is within a booking
         (end > bookingStart && end <= bookingEnd) ||    // End date is within a booking
@@ -122,7 +122,7 @@ const PropertyBookingForm = () => {
 
     // Check if this date is booked for the selected variation (or standard)
     if (name === 'check_in_date' && isRangeBooked(value, value, data.variation_id)) {
-      const message = data.variation_id 
+      const message = data.variation_id
         ? 'This date is already booked for the selected room type. Please choose different dates.'
         : 'This date is already booked for the standard room. Please choose different dates.';
       showErrorAlert(message);
@@ -131,7 +131,7 @@ const PropertyBookingForm = () => {
 
     // If changing check-in date and we have a check-out date, validate the range
     if (name === 'check_in_date' && data.check_out_date && isRangeBooked(value, data.check_out_date, data.variation_id)) {
-      const message = data.variation_id 
+      const message = data.variation_id
         ? 'The selected dates overlap with an existing booking for this room type.'
         : 'The selected dates overlap with an existing booking for the standard room.';
       showErrorAlert(message);
@@ -143,26 +143,26 @@ const PropertyBookingForm = () => {
 
   const handleVariationChange = (variation) => {
     const newVariationId = variation?.id || null;
-    
+
     // Check if current selected dates are available for the new variation
     if (data.check_in_date && data.check_out_date) {
       if (isRangeBooked(data.check_in_date, data.check_out_date, newVariationId)) {
-        const message = variation 
+        const message = variation
           ? 'The currently selected dates are not available for this room type. Please choose different dates.'
           : 'The currently selected dates are not available for the standard room. Please choose different dates.';
         showErrorAlert(message);
         return;
       }
     }
-    
+
     setSelectedVariation(variation);
     updateData('variation_id', newVariationId);
-    
+
     // Recalculate price if dates are already selected
     if (data.check_in_date && data.check_out_date) {
       const nights = calculateDays(data.check_in_date, data.check_out_date);
       const basePrice = nights * (variation ? variation.platform_price : property.platform_price);
-      
+
       updateData('total_price', basePrice);
     }
   };
@@ -188,7 +188,7 @@ const PropertyBookingForm = () => {
         setShowLocationSuggestions(false);
         return;
       }
-      
+
       setIsLoadingSuggestions(true);
       try {
         const res = await fetch(`/locations?query=${encodeURIComponent(data.current_location)}`);
@@ -219,7 +219,7 @@ const PropertyBookingForm = () => {
       const nights = calculateDays(data.check_in_date, data.check_out_date);
       const pricePerNight = selectedVariation ? selectedVariation.platform_price : property.platform_price;
       const basePrice = nights * pricePerNight;
-      
+
       updateData('nights', nights);
       updateData('total_price', basePrice);
     } else {
@@ -262,7 +262,7 @@ const PropertyBookingForm = () => {
       // Create booking
       router.post(route('bookings.store'), data, {
         onSuccess: () => {
-       
+
         },
         onError: (errors) => {
           console.error('Booking creation failed:', errors);
@@ -298,8 +298,8 @@ const PropertyBookingForm = () => {
     <div className="flex items-center gap-3 mb-6">
       <div style={{width: '80px'}} className={`
         rounded-full flex items-center justify-center font-semibold text-sm
-        ${completed ? 'bg-green-500 text-white' : 
-          step === currentStep ? 'bg-peachDark text-white' : 
+        ${completed ? 'bg-green-500 text-white' :
+          step === currentStep ? 'bg-peachDark text-white' :
           'bg-gray-200 text-gray-600'}
       `}>
         {completed ? <Check className="w-5 h-5" /> : step}
@@ -325,10 +325,10 @@ const PropertyBookingForm = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto lg:p-4">
-        
+
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <button 
+          <button
             onClick={() => window.history.back()}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
@@ -338,19 +338,19 @@ const PropertyBookingForm = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row justify-center lg:grid-cols-2 gap-8">
-          
+
           {/* Left Column - Booking Form */}
           <div className="space-y-6">
-            
+
             {/* Step 1: Date Selection & Reserve */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 lg:p-6">
-              <StepIndicator 
-                step={1} 
-                currentStep={currentStep} 
+              <StepIndicator
+                step={1}
+                currentStep={currentStep}
                 title="Select dates"
                 completed={currentStep > 1}
               />
-              
+
               {currentStep >= 1 && (
                 <div className="space-y-4">
                   {/* Variations Selection */}
@@ -360,7 +360,7 @@ const PropertyBookingForm = () => {
                         Select Room Type
                       </label>
                       <div className="grid grid-cols-1 gap-2">
-                        <div 
+                        <div
                           className={`p-3 border rounded-lg cursor-pointer ${!selectedVariation ? 'border-orange-400 bg-orange-50' : 'border-gray-300 hover:border-gray-400'}`}
                           onClick={() => handleVariationChange(null)}
                         >
@@ -373,9 +373,9 @@ const PropertyBookingForm = () => {
                             </span>
                           </div>
                         </div>
-                        
+
                         {property.variations.map((variation) => (
-                          <div 
+                          <div
                             key={variation.id}
                             className={`p-3 border rounded-lg cursor-pointer ${selectedVariation?.id === variation.id ? 'border-orange-400 bg-orange-50' : 'border-gray-300 hover:border-gray-400'}`}
                             onClick={() => handleVariationChange(variation)}
@@ -396,7 +396,7 @@ const PropertyBookingForm = () => {
 
                   {/* Date Selection */}
                   <div className="flex flex-col lg:flex-row border border-gray-300 rounded-xl overflow-hidden">
-                    <div 
+                    <div
                       className="border-b lg:border-r flex-1 border-gray-300 p-4 cursor-pointer"
                       onClick={() => handleDivClick('check_in_date')}
                     >
@@ -413,8 +413,8 @@ const PropertyBookingForm = () => {
                         min={today}
                       />
                     </div>
-                    
-                    <div 
+
+                    <div
                       className="p-4 flex-1 cursor-pointer"
                       onClick={() => handleDivClick('check_out_date')}
                     >
@@ -448,13 +448,13 @@ const PropertyBookingForm = () => {
             {/* Step 2: User Information */}
             {currentStep >= 2 && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 lg:p-6">
-                <StepIndicator 
-                  step={2} 
-                  currentStep={currentStep} 
+                <StepIndicator
+                  step={2}
+                  currentStep={currentStep}
                   title="Your information"
                   completed={currentStep > 2}
                 />
-                
+
                 <div className="space-y-6">
                   {/* User Type Selection */}
                   {!auth.user &&
@@ -493,9 +493,9 @@ const PropertyBookingForm = () => {
                     {data.is_registered === true ?
                     <Link
                       type="button"
-                      href={route('c-login', { 
-                        property_id: property.id, 
-                        check_in_date: checkInDate, 
+                      href={route('c-login', {
+                        property_id: property.id,
+                        check_in_date: checkInDate,
                         check_out_date: checkOutDate,
                         variation_id: variationId || null
                       })}
@@ -507,9 +507,9 @@ const PropertyBookingForm = () => {
                     :
                     <Link
                       type="button"
-                      href={route('c-register', { 
-                        property_id: property.id, 
-                        check_in_date: checkInDate, 
+                      href={route('c-register', {
+                        property_id: property.id,
+                        check_in_date: checkInDate,
                         check_out_date: checkOutDate,
                         variation_id: variationId || null
                       })}
@@ -528,19 +528,18 @@ const PropertyBookingForm = () => {
             {/* Step 3: Review and Confirm */}
             {currentStep >= 3 && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 lg:p-6">
-                <StepIndicator 
-                  step={3} 
-                  currentStep={currentStep} 
+                <StepIndicator
+                  step={3}
+                  currentStep={currentStep}
                   title="Confirm and pay"
                 />
-                
+
                 <div className="space-y-6">
                   <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                     <div className="flex items-center gap-3 text-blue-800">
                       <Shield className="w-5 h-5" />
                       <div className="text-sm">
                         <p className="font-medium">Your payment is protected</p>
-                        <p>You won't be charged until your booking is confirmed</p>
                       </div>
                     </div>
                   </div>
@@ -568,13 +567,13 @@ const PropertyBookingForm = () => {
                           onChange={(e) => {
                             // Remove any non-digit characters
                             const value = e.target.value.replace(/\D/g, '');
-                            
+
                             // Update state with full phone number (254 prefix + entered digits)
                             setData({
                               ...data,
                               phone: '254' + value
                             });
-                            
+
                             // Update the input value (without the prefix)
                             e.target.value = value;
                           }}
@@ -609,12 +608,12 @@ const PropertyBookingForm = () => {
           {/* Right Column - Property Summary */}
           <div className="lg:sticky lg:top-4 lg:self-start">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 lg:p-6 space-y-6">
-              
+
               {/* Property Preview */}
               <div className="flex gap-4">
                 <img
-                  src={property.initial_gallery && property.initial_gallery.length > 0 
-                    ? `/storage/${property.initial_gallery[0].image}` 
+                  src={property.initial_gallery && property.initial_gallery.length > 0
+                    ? `/storage/${property.initial_gallery[0].image}`
                     : `/images/property-placeholder.jpg`}
                   alt={property.property_name}
                   className="w-24 h-24 rounded-xl object-cover"
@@ -632,7 +631,7 @@ const PropertyBookingForm = () => {
               {data.check_in_date && data.check_out_date && (
                 <div className="space-y-4 pt-4 border-t border-gray-200">
                   <h4 className="font-semibold">Your trip</h4>
-                  
+
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <div>
@@ -642,7 +641,7 @@ const PropertyBookingForm = () => {
                         </p>
                       </div>
                       {currentStep >= 1 && (
-                        <button 
+                        <button
                           onClick={() => setCurrentStep(1)}
                           className="text-sm text-peachDark hover:underline font-medium"
                         >
@@ -666,7 +665,7 @@ const PropertyBookingForm = () => {
               {nights > 0 && (
                 <div className="space-y-3 pt-4 border-t border-gray-200">
                   <h4 className="font-semibold">Price details</h4>
-                  
+
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm">
@@ -675,7 +674,7 @@ const PropertyBookingForm = () => {
                       <span className="text-sm">KES {subtotal.toLocaleString()}</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                     <span className="font-semibold">Total</span>
                     <span className="font-semibold text-lg">KES {totalPrice.toLocaleString()}</span>

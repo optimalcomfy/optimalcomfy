@@ -103,27 +103,27 @@
 
     <div class="booking-details">
         <h2 class="section-title">Booking Details</h2>
-        
+
         <div class="info-row">
             <span class="info-label">Booking number:</span>
             <span>{{ $booking->number ?? 'N/A' }}</span>
         </div>
-        
+
         <div class="info-row">
             <span class="info-label">Car:</span>
             <span>{{ $booking->car->name ?? ($booking->car->make . ' ' . $booking->car->model) ?? 'N/A' }}</span>
         </div>
-        
+
         <div class="info-row">
             <span class="info-label">Start Date:</span>
             <span>{{ $booking->start_date ? \Carbon\Carbon::parse($booking->start_date)->format('l, F j, Y g:i A') : 'Not specified' }}</span>
         </div>
-        
+
         <div class="info-row">
             <span class="info-label">End Date:</span>
             <span>{{ $booking->end_date ? \Carbon\Carbon::parse($booking->end_date)->format('l, F j, Y g:i A') : 'Not specified' }}</span>
         </div>
-        
+
         <div class="info-row">
             <span class="info-label">Duration:</span>
             <span>
@@ -134,7 +134,7 @@
                 @endif
             </span>
         </div>
-        
+
         @if($recipientType === 'customer' && $booking->car->user)
             <div class="info-row">
                 <span class="info-label">Host Name:</span>
@@ -147,7 +147,7 @@
         <!-- CUSTOMER-SPECIFIC CONTENT -->
         <div class="booking-details">
             <h2 class="section-title">Pickup Instructions</h2>
-            
+
             <p><strong>Pickup Location:</strong> {{ $booking->pickup_location ?? 'To be confirmed' }}</p>
             <p><strong>Required Documents:</strong></p>
             <ul>
@@ -155,7 +155,7 @@
                 <li>National ID or Passport</li>
                 <li>Credit/Debit card for security deposit</li>
             </ul>
-            
+
             @if(Route::has('bookings.show'))
             <a href="{{ route('bookings.show', $booking->id) }}" class="btn">
                 View Your Booking Details
@@ -166,31 +166,31 @@
         <!-- HOST-SPECIFIC CONTENT -->
         <div class="booking-details">
             <h2 class="section-title">Customer Information</h2>
-            
+
             <div class="info-row">
                 <span class="info-label">Name:</span>
                 <span>{{ $booking->user->name ?? 'N/A' }}</span>
             </div>
-            
+
             <div class="info-row">
                 <span class="info-label">Email:</span>
                 <span>{{ $booking->user->email ?? 'N/A' }}</span>
             </div>
-            
+
             @if($booking->user->phone ?? false)
             <div class="info-row">
                 <span class="info-label">Phone:</span>
                 <span>{{ $booking->user->phone }}</span>
             </div>
             @endif
-            
+
             @if($booking->special_requests ?? false)
             <div class="info-row">
                 <span class="info-label">Special Requests:</span>
                 <span>{{ $booking->special_requests }}</span>
             </div>
             @endif
-            
+
             @if(Route::has('host.bookings.show'))
             <a href="{{ route('host.bookings.show', $booking->id) }}" class="btn btn-host">
                 Manage This Booking
@@ -200,24 +200,10 @@
     @endif
 
     <div class="booking-details">
-        <h2 class="section-title">Payment Summary</h2>
-        
-        <div class="info-row">
-            <span class="info-label">Total Amount:</span>
-            <span class="amount">KSh {{ number_format($booking->total_price ?? 0, 2) }}</span>
-        </div>
-        
         <div class="info-row">
             <span class="info-label">Booking Status:</span>
             <span class="status {{ strtolower($booking->status ?? 'pending') }}">{{ ucfirst($booking->status ?? 'Pending') }}</span>
         </div>
-        
-        @if($recipientType === 'host')
-        <div class="info-row">
-            <span class="info-label">Your Earnings:</span>
-            <span class="amount">KSh {{ number_format($booking->host_earnings ?? 0, 2) }}</span>
-        </div>
-        @endif
     </div>
 
     @if($recipientType === 'customer')
@@ -239,7 +225,7 @@
             <p>Please prepare the vehicle for pickup at the scheduled time.</p>
             <p>For any questions, contact our host support at hosts@example.com</p>
         @endif
-        
+
         <p><em>This is an automated email. Please do not reply directly to this message.</em></p>
     </div>
 </body>

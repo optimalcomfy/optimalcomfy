@@ -84,27 +84,11 @@
 
     <div class="booking-details">
         <h2 class="section-title">Payment Information</h2>
-        @if($recipientType !== 'host')
-        <div class="info-row">
-            <span class="info-label">Amount:</span>
-            <span class="amount">KSh {{ number_format($booking->total_price, 2) }}</span>
-        </div>
-         @endif
-        <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span class="status {{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
-        </div>
         @if($payment && $payment->mpesa_receipt)
-        <div class="info-row">
-            <span class="info-label">MPesa Receipt:</span>
-            <span>{{ $payment->mpesa_receipt }}</span>
-        </div>
-        @endif
-        @if($recipientType === 'host')
-        <div class="info-row">
-            <span class="info-label">Your Earnings:</span>
-            <span class="amount">KSh {{ number_format($booking->total_price * 0.85, 2) }}</span>
-        </div>
+            <div class="info-row">
+                <span class="info-label">MPesa Receipt:</span>
+                <span>{{ $payment->mpesa_receipt }}</span>
+            </div>
         @endif
     </div>
 

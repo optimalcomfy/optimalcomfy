@@ -58,7 +58,7 @@ class WithdrawalController extends Controller
             ->latest()
             ->first();
 
-        return Inertia::render('Withdrawal/WaitingForCallback', [
+        return Inertia::render('Wallet/WaitingForCallback', [
             'amount' => $request->amount,
             'repayment' => $repayment
         ]);
@@ -103,7 +103,7 @@ class WithdrawalController extends Controller
             DB::commit();
 
             // Redirect to waiting page instead of back
-            return Inertia::render('Withdrawal/WaitingForCallback', [
+            return Inertia::render('Wallet/WaitingForCallback', [
                 'amount' => $amount,
                 'repayment' => $repayment
             ]);
@@ -323,7 +323,7 @@ class WithdrawalController extends Controller
             DB::commit();
 
             // Redirect to waiting page
-            return Inertia::render('Withdrawal/WaitingForCallback', [
+            return Inertia::render('Wallet/WaitingForCallback', [
                 'amount' => $amount,
                 'repayment' => $repayment
             ]);

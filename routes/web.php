@@ -188,6 +188,8 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/withdraw', [WithdrawalController::class, 'processDisbursement'])->name('withdraw');
 
+    Route::get('/withdrawal/waiting', [WithdrawalController::class, 'waitingPage'])->name('withdrawal.waiting');
+
     Route::post('/withdraw/initiate', [WithdrawalController::class, 'initiateWithdrawal'])->name('withdraw.initiate');
     Route::post('/withdraw/verify', [WithdrawalController::class, 'verifyAndWithdraw'])->name('withdraw.verify');
     Route::post('/withdraw/resend-code', [WithdrawalController::class, 'resendVerificationCode'])->name('withdraw.resend-code');

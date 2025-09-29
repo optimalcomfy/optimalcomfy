@@ -69,22 +69,11 @@ const Wallet = ({ user }) => {
             {
                 preserveScroll: true,
                 onSuccess: (page) => {
-                    if (page.props.flash?.success) {
-                        setShowWithdrawModal(false);
-                        setVerificationStep(false);
-                        setVerificationCode('');
-                        setWithdrawAmount('');
-                        Swal.fire('Success!', page.props.flash.success, 'success').then(() => {
-                            router.reload({ only: ['availableBalance', 'recentTransactions', 'pendingPayouts', 'totalEarnings'] });
-                        });
-                    }else {
-                        Swal.fire('Error', page.props.flash.error)
-                    }
                 },
                 onError: (errors) => {
                     Swal.fire('Error', errors.message || 'Failed to process withdrawal', 'error');
-                },
-                onFinish: () => setIsProcessing(false),
+                    setIsProcessing(false);
+                }
             }
         );
     };

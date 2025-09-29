@@ -49,10 +49,23 @@ class WithdrawalController extends Controller
         $this->smsService = $smsService;
     }
 
+    public function waitingPage(Request $request)
+    {
+        $user = Auth::user();
+
+        $repayment = Repayment::where('user_id', $user->id)
+            ->whereIn('status', ['Pending', 'Approved', 'Failed'])
+            ->latest()
+            ->first();
+
+        return Inertia::render('Withdrawal/WaitingForCallback', [
+            'amount' => $request->amount,
+            'repayment' => $repayment
+        ]);
+    }
 
     public function processDisbursement(Request $request)
     {
-
         $request->validate([
             'amount' => 'required|numeric|min:100',
             'verification_code' => 'required|string|size:6',
@@ -89,18 +102,23 @@ class WithdrawalController extends Controller
 
             DB::commit();
 
-            // Return Inertia response instead of JSON
-            return redirect()->back()->with('success', 'Withdrawal initiated successfully');
+            // Redirect to waiting page instead of back
+            return Inertia::render('Withdrawal/WaitingForCallback', [
+                'amount' => $amount,
+                'repayment' => $repayment
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Disbursement failed:', ['error' => $e->getMessage()]);
 
-            // Return Inertia response with error
-            return redirect()->back()->withErrors(['error' => 'Disbursement failed: ' . $e->getMessage()]);
+            return back()->with([
+                'flash' => [
+                    'error' => 'Disbursement failed: ' . $e->getMessage(),
+                ],
+            ]);
         }
     }
-
 
     public function handleTimeout(Request $request)
     {
@@ -109,60 +127,101 @@ class WithdrawalController extends Controller
         return response()->json(['message' => 'Timeout callback received'], 200);
     }
 
-
     public function handleMpesaCallback(Request $request)
     {
         Log::info('B2C Callback Received: ', $request->all());
 
-        $repaymentId = $request->input('loanId');
+        $callbackData = $request->all();
+
+        // Extract repayment ID from the callback - adjust this based on your M-Pesa callback structure
+        $repaymentId = null;
+
+        // Try different possible locations for the repayment ID
+        if (isset($callbackData['Result']['ResultParameters']['ResultParameter'])) {
+            $content = $callbackData['Result']['ResultParameters']['ResultParameter'];
+            foreach ($content as $row) {
+                if (isset($row['Key']) && $row['Key'] === 'TransactionReceipt' || $row['Key'] === 'TransactionID') {
+                    // You might need to map this to your repayment ID differently
+                    // This depends on how you structure the conversation ID in your B2C request
+                    $repaymentId = $this->extractRepaymentIdFromConversationId($row['Value']);
+                    break;
+                }
+            }
+        }
+
+        // Alternative: if you passed repayment ID as loanId in the initial request
+        if (!$repaymentId && isset($callbackData['loanId'])) {
+            $repaymentId = $callbackData['loanId'];
+        }
 
         if ($repaymentId) {
             $repayment = Repayment::find($repaymentId);
 
             if ($repayment) {
-                $result = $request->json('Result');
+                $result = $callbackData['Result'];
                 $resultCode = $result['ResultCode'] ?? null;
                 $resultDesc = $result['ResultDesc'] ?? 'No description';
 
-                $content = $result['ResultParameters']['ResultParameter'] ?? [];
-                $data = [];
-
-                foreach ($content as $row) {
-                    $data[$row['Key']] = $row['Value'];
-                }
-
-                Log::info('data: ', $data);
-
                 if ($resultCode == 0 || $resultCode == '0') {
                     $repayment->update(['status' => 'Approved']);
-
-                    $repayment->refresh()->load(['user']);
-
-                    return Inertia::render('Repayments/Approval', [
-                        'repayment' => $repayment,
-                        'repaymentFailure'=> $repayment->status != 'Approved' ? 'The disbursement failed. Please contact Centiflow for assistance.' : 'The disbursement was successful!',
-                    ]);
+                    Log::info('Withdrawal approved for repayment ID: ' . $repaymentId);
                 } else {
-
                     $repayment->update(['status' => 'Failed']);
-
-                    return Inertia::render('Repayments/Approval', [
-                        'repayment' => $repayment,
-                        'repaymentFailure'=> $repayment->status != 'Approved' ? 'The disbursement failed. Please contact Centiflow for assistance.' : 'The disbursement was successful!',
-                    ]);
+                    Log::error('Withdrawal failed for repayment ID: ' . $repaymentId . ' - ' . $resultDesc);
                 }
+
+                // Return JSON response for M-Pesa callback
+                return response()->json([
+                    'ResultCode' => 0,
+                    'ResultDesc' => 'Callback processed successfully'
+                ], 200);
             } else {
                 Log::warning('Repayment not found for ID: ' . $repaymentId);
             }
         } else {
-            Log::warning('No repayment Id found in callback');
+            Log::warning('No repayment ID found in callback');
         }
 
-        $repayment->refresh()->load(['user']);
+        return response()->json([
+            'ResultCode' => 0,
+            'ResultDesc' => 'Callback received'
+        ], 200);
+    }
 
-        return Inertia::render('Repayments/Approval', [
-            'repayment' => $repayment,
-            'repaymentFailure'=> $repayment->status != 'Approved' ? 'The disbursement failed. Please contact Centiflow for assistance.' : 'The disbursement was successful!',
+    /**
+     * Extract repayment ID from M-Pesa conversation ID
+     * This depends on how you format the conversation ID in your MpesaService
+     */
+    private function extractRepaymentIdFromConversationId($conversationId)
+    {
+        // Example: if you format conversation ID as "repayment_{id}_timestamp"
+        if (preg_match('/repayment_(\d+)_/', $conversationId, $matches)) {
+            return $matches[1];
+        }
+
+        // Alternative: if you use the repayment ID directly as conversation ID
+        return is_numeric($conversationId) ? $conversationId : null;
+    }
+
+    public function checkWithdrawalStatus(Request $request)
+    {
+        $user = Auth::user();
+        $repaymentId = $request->repayment_id;
+
+        $repayment = Repayment::where('id', $repaymentId)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$repayment) {
+            return response()->json([
+                'status' => 'not_found',
+                'message' => 'Withdrawal not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => $repayment->status,
+            'repayment' => $repayment
         ]);
     }
 
@@ -224,8 +283,7 @@ class WithdrawalController extends Controller
         }
     }
 
-
-    public function verifyAndWithdraw(Request $request, SmsService $smsService)
+    public function verifyAndWithdraw(Request $request)
     {
         $request->validate([
             'amount' => 'required|numeric|min:1',
@@ -244,28 +302,41 @@ class WithdrawalController extends Controller
             ]);
         }
 
+        DB::beginTransaction();
         try {
-            $withdrawal = $this->processWithdrawal($user, $amount);
+            $phone = $user->phone;
 
+            // Create repayment record
+            $repayment = Repayment::create([
+                'amount' => $amount,
+                'payment_date' => now(),
+                'user_id' => $user->id,
+                'status' => 'Pending'
+            ]);
+
+            // Use M-Pesa service to initiate payment
+            $response = $this->mpesaService->sendB2CPayment($phone, $amount, $repayment->id);
+
+            // Clear the verification code
             $user->clearWithdrawalCode();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Withdrawal processed successfully',
-                'withdrawal' => $withdrawal
+            DB::commit();
+
+            // Redirect to waiting page
+            return Inertia::render('Withdrawal/WaitingForCallback', [
+                'amount' => $amount,
+                'repayment' => $repayment
             ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             \Log::error('Withdrawal processing failed: ' . $e->getMessage());
 
             return back()->with([
                 'flash' => [
-                    'error' => 'Withdrawal processing failed. Please try again later.',
+                    'error' => 'Withdrawal processing failed: ' . $e->getMessage(),
                 ],
             ]);
         }
     }
-
-
-
 }

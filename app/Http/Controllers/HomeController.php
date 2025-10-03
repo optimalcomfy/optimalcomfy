@@ -211,8 +211,10 @@ class HomeController extends Controller
             });
         }
 
-        // 📍 Distance Filter (only if lat/lng found)
+
         $query->when($latitude && $longitude, function ($query) use ($latitude, $longitude) {
+            $radius = 20;
+
             return $query->select('*', DB::raw("
                 (6371 * acos(
                     cos(radians($latitude)) *
@@ -222,6 +224,7 @@ class HomeController extends Controller
                     sin(radians(latitude))
                 )) AS distance
             "))
+            ->having('distance', '<=', $radius)
             ->orderBy('distance', 'ASC');
         });
 
@@ -1243,6 +1246,8 @@ class HomeController extends Controller
 
         // 📍 Distance Filter (only if lat/lng found)
         $query->when($latitude && $longitude, function ($query) use ($latitude, $longitude) {
+            $radius = 20;
+
             return $query->select('*', DB::raw("
                 (6371 * acos(
                     cos(radians($latitude)) *
@@ -1252,6 +1257,7 @@ class HomeController extends Controller
                     sin(radians(latitude))
                 )) AS distance
             "))
+            ->having('distance', '<=', $radius) // ← Add this line
             ->orderBy('distance', 'ASC');
         });
 
@@ -1330,6 +1336,7 @@ class HomeController extends Controller
             "keys" => $keys,
         ]);
     }
+
     public function showJob(Job $job)
     {
         return Inertia::render("Jobs/Joby", [

@@ -52,4 +52,12 @@ return [
         'queue_timeout_url' => env('MPESA_QUEUE_TIMEOUT_URL'),
     ],
 
+    'onfon' => [
+        'api_url' => env('ONFON_API_URL', 'https://api.onfonmedia.co.ke/v1/sms/SendBulkSMS'),
+        'api_key' => env('ONFON_API_KEY', '9lbRzN35WuE27HZO4XgMskU8rF6dnw0Lv1CecixjKhDJISPY'),
+        'access_key' => env('ONFON_ACCESS_KEY', 'ristay'),
+        'client_id' => env('ONFON_CLIENT_ID', 'ristay'),
+        'sender_id' => env('ONFON_SENDER_ID', 'Ristay'),
+    ],
+
 ];

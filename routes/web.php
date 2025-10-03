@@ -238,4 +238,14 @@ Route::get('/ride/{booking}/payment-pending', [CarBookingController::class, 'pay
 Route::get('/api/ride/{booking}/payment-status', [CarBookingController::class, 'paymentStatus'])
     ->name('ride.payment.status');
 
+Route::get('/test-ristay-sender', function () {
+    $smsService = app(App\Services\SmsService::class);
+
+    $result = $smsService->sendSms('254743630811', 'Test message with RISTAY sender ID');
+
+    Log::info('RISTAY Sender Test Result', $result);
+    return response()->json($result);
+});
+
+
 require __DIR__.'/auth.php';

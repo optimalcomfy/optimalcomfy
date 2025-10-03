@@ -213,7 +213,7 @@ class HomeController extends Controller
 
 
         $query->when($latitude && $longitude, function ($query) use ($latitude, $longitude) {
-            $radius = 20;
+            $radius = 10;
 
             return $query->select('*', DB::raw("
                 (6371 * acos(
@@ -1246,7 +1246,7 @@ class HomeController extends Controller
 
         // 📍 Distance Filter (only if lat/lng found)
         $query->when($latitude && $longitude, function ($query) use ($latitude, $longitude) {
-            $radius = 20;
+            $radius = 10;
 
             return $query->select('*', DB::raw("
                 (6371 * acos(

@@ -33,13 +33,6 @@ class CarBookingController extends Controller
 {
     use Mpesa;
 
-    protected $smsService;
-
-    public function __construct(SmsService $smsService)
-    {
-        $this->smsService = $smsService;
-    }
-
     public function index(Request $request)
     {
         $query = CarBooking::with(['car', 'user'])->orderBy('created_at', 'desc');
@@ -192,7 +185,7 @@ class CarBookingController extends Controller
         return response()->json($exportData);
     }
 
-    public function cancel(Request $request)
+    public function cancel(Request $request, SmsService $smsService)
     {
         $input = $request->all();
 
@@ -221,7 +214,7 @@ class CarBookingController extends Controller
             Mail::to($booking->user->email)->send(new CancelledCarBooking($booking, 'guest'));
 
             // Send cancellation SMS
-            $this->sendCarCancellationSms($booking);
+            $this->sendCarCancellationSms($booking, $smsService);
 
             if ($booking->car->user) {
                 Mail::to($booking->car->user->email)->send(new CancelledCarBooking($booking, 'host'));
@@ -248,7 +241,7 @@ class CarBookingController extends Controller
         ]);
     }
 
-    public function store(StoreCarBookingRequest $request)
+    public function store(StoreCarBookingRequest $request, SmsService $smsService)
     {
         $validatedData = $request->validated();
         $user = Auth::user();
@@ -280,7 +273,7 @@ class CarBookingController extends Controller
 
         try {
             // Send booking confirmation SMS
-            $this->sendCarBookingConfirmationSms($booking, 'pending');
+            $this->sendCarBookingConfirmationSms($booking, 'pending', $smsService);
 
             $callbackBase = env('MPESA_RIDE_CALLBACK_URL')
                 ?? secure_url('/api/mpesa/ride/stk/callback');
@@ -313,7 +306,7 @@ class CarBookingController extends Controller
             $booking->update(['status' => 'failed']);
 
             // Send payment failure SMS
-            $this->sendCarPaymentFailureSms($booking, $e->getMessage());
+            $this->sendCarPaymentFailureSms($booking, $e->getMessage(), $smsService);
 
             return back()
                 ->withInput()
@@ -321,7 +314,7 @@ class CarBookingController extends Controller
         }
     }
 
-    public function handleCallback(Request $request)
+    public function handleCallback(Request $request, SmsService $smsService)
     {
         try {
             // Parse the callback data
@@ -384,14 +377,14 @@ class CarBookingController extends Controller
                 $booking->update(['status' => 'paid']);
 
                 // Send confirmation SMS
-                $this->sendCarBookingConfirmationSms($booking, 'confirmed');
+                $this->sendCarBookingConfirmationSms($booking, 'confirmed', $smsService);
 
             } else {
                 // Payment failed
                 $booking->update(['status' => 'failed']);
 
                 // Send payment failure SMS
-                $this->sendCarPaymentFailureSms($booking, $resultDesc);
+                $this->sendCarPaymentFailureSms($booking, $resultDesc, $smsService);
             }
 
             // Create payment record
@@ -442,7 +435,7 @@ class CarBookingController extends Controller
         ]);
     }
 
-    public function add(StoreCarBookingRequest $request)
+    public function add(StoreCarBookingRequest $request, SmsService $smsService)
     {
         $validatedData = $request->validated();
         $user = Auth::user();
@@ -474,7 +467,7 @@ class CarBookingController extends Controller
         ]);
 
         // Send external booking confirmation SMS
-        $this->sendCarBookingConfirmationSms($booking, 'external');
+        $this->sendCarBookingConfirmationSms($booking, 'external', $smsService);
 
         return redirect()->route('car-bookings.index')->with('success', 'Car booking added successfully.');
     }
@@ -496,7 +489,7 @@ class CarBookingController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    public function update(Request $request, SmsService $smsService)
     {
         $input = $request->all();
 
@@ -522,7 +515,7 @@ class CarBookingController extends Controller
                 $user = User::find($booking->user_id);
 
                 // Send check-in verification SMS
-                $this->smsService->sendSms(
+                $smsService->sendSms(
                     $user->phone,
                     "Hello {$user->name}, Your OTP for car pickup verification is: {$booking->checkin_verification_code}"
                 );
@@ -539,7 +532,7 @@ class CarBookingController extends Controller
             $booking->save();
 
             // Send check-in confirmation SMS
-            $this->sendCarCheckInConfirmationSms($booking);
+            $this->sendCarCheckInConfirmationSms($booking, $smsService);
 
             return back()->with('success', 'Successfully checked in! Enjoy your ride!');
         }
@@ -560,7 +553,7 @@ class CarBookingController extends Controller
                 $user = User::find($booking->user_id);
 
                 // Send check-out verification SMS
-                $this->smsService->sendSms(
+                $smsService->sendSms(
                     $user->phone,
                     "Hello {$user->name}, Your OTP for car drop-off verification is: {$booking->checkout_verification_code}"
                 );
@@ -579,7 +572,7 @@ class CarBookingController extends Controller
             $booking->save();
 
             // Send check-out confirmation SMS
-            $this->sendCarCheckOutConfirmationSms($booking);
+            $this->sendCarCheckOutConfirmationSms($booking, $smsService);
 
             return back()->with('success', 'Successfully checked out! Thank you for using our service.');
         }
@@ -598,7 +591,7 @@ class CarBookingController extends Controller
      * SMS Notification Methods for Car Bookings
      */
 
-    private function sendCarBookingConfirmationSms(CarBooking $booking, string $type = 'confirmed')
+    private function sendCarBookingConfirmationSms(CarBooking $booking, string $type = 'confirmed', SmsService $smsService)
     {
         try {
             $user = $booking->user;
@@ -624,14 +617,14 @@ class CarBookingController extends Controller
                     $message = "Hello {$user->name}, your car booking for {$car->name} has been updated. Status: {$booking->status}";
             }
 
-            $this->smsService->sendSms($user->phone, $message);
+            $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
             \Log::error('Car booking confirmation SMS failed: ' . $e->getMessage());
         }
     }
 
-    private function sendCarPaymentFailureSms(CarBooking $booking, string $reason = '')
+    private function sendCarPaymentFailureSms(CarBooking $booking, string $reason = '', SmsService $smsService)
     {
         try {
             $user = $booking->user;
@@ -643,14 +636,14 @@ class CarBookingController extends Controller
                 $message .= " Reason: {$reason}";
             }
 
-            $this->smsService->sendSms($user->phone, $message);
+            $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
             \Log::error('Car payment failure SMS failed: ' . $e->getMessage());
         }
     }
 
-    private function sendCarCheckInConfirmationSms(CarBooking $booking)
+    private function sendCarCheckInConfirmationSms(CarBooking $booking, SmsService $smsService)
     {
         try {
             $user = $booking->user;
@@ -658,14 +651,14 @@ class CarBookingController extends Controller
 
             $message = "Hello {$user->name}, you have successfully picked up {$car->name} ({$car->license_plate}). Have a safe and enjoyable journey!";
 
-            $this->smsService->sendSms($user->phone, $message);
+            $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
             \Log::error('Car check-in confirmation SMS failed: ' . $e->getMessage());
         }
     }
 
-    private function sendCarCheckOutConfirmationSms(CarBooking $booking)
+    private function sendCarCheckOutConfirmationSms(CarBooking $booking, SmsService $smsService)
     {
         try {
             $user = $booking->user;
@@ -673,14 +666,14 @@ class CarBookingController extends Controller
 
             $message = "Hello {$user->name}, thank you for returning {$car->name} ({$car->license_plate}). We hope you enjoyed your ride and look forward to serving you again!";
 
-            $this->smsService->sendSms($user->phone, $message);
+            $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
             \Log::error('Car check-out confirmation SMS failed: ' . $e->getMessage());
         }
     }
 
-    private function sendCarCancellationSms(CarBooking $booking)
+    private function sendCarCancellationSms(CarBooking $booking, SmsService $smsService)
     {
         try {
             $user = $booking->user;
@@ -688,7 +681,7 @@ class CarBookingController extends Controller
 
             $message = "Hello {$user->name}, your car booking for {$car->name} has been cancelled. We hope to serve you in the future.";
 
-            $this->smsService->sendSms($user->phone, $message);
+            $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
             \Log::error('Car cancellation SMS failed: ' . $e->getMessage());

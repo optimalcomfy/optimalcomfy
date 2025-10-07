@@ -83,44 +83,36 @@ trait Mpesa
     public function generateAccessToken(): string
     {
         $credentials = base64_encode($this->consumerKey . ":" . $this->consumerSecret);
-        // Concatenate the cleaned $this->baseUrl with the relative path
-        $url = $this->baseUrl . "/oauth/v1/generate?grant_type=client_credentials";
 
-        $curl = null;
-        try {
-            Log::info('Generating M-Pesa access token', ['url' => $url]);
+        // Make sure the full URL includes the host
+        $url = 'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
 
-            $curl = curl_init();
-            curl_setopt_array($curl, [
-                CURLOPT_URL => $url,
-                CURLOPT_HTTPHEADER => ["Authorization: Basic " . $credentials],
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HEADER => false,
-                CURLOPT_SSL_VERIFYPEER => true,
-            ]);
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $url,
+            CURLOPT_HTTPHEADER => ["Authorization: Basic " . $credentials],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER => false,
+            CURLOPT_SSL_VERIFYPEER => true,
+        ]);
 
-            $response = curl_exec($curl);
-            if ($response === false) {
-                $error = curl_error($curl);
-                Log::error('Curl error during access token generation', ['error' => $error]);
-                throw new Exception('Curl error during access token generation: ' . $error);
-            }
+        $response = curl_exec($curl);
 
-            $data = json_decode($response);
-            Log::info('Access token response', ['response' => $response]);
-
-            if (!isset($data->access_token)) {
-                throw new Exception('Failed to get access token from M-Pesa. Response: ' . $response);
-            }
-
-            return $data->access_token;
-        } catch (\Exception $e) {
-            Log::error('Access token generation failed', ['message' => $e->getMessage()]);
-            throw $e;
-        } finally {
-            if ($curl) curl_close($curl);
+        if ($response === false) {
+            $error = curl_error($curl);
+            throw new \Exception('Curl error during access token generation: ' . $error);
         }
+
+        $data = json_decode($response);
+        if (!isset($data->access_token)) {
+            throw new \Exception('Failed to get access token from M-Pesa. Response: ' . $response);
+        }
+
+        curl_close($curl);
+
+        return $data->access_token;
     }
+
 
     public function STKPush(string $type, string $amount, string $phone, string $callback, string $reference, string $narrative): array
     {

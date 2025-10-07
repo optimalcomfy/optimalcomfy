@@ -36,13 +36,6 @@ class BookingController extends Controller
 {
     use Mpesa;
 
-    protected $smsService;
-
-    public function __construct(SmsService $smsService)
-    {
-        $this->smsService = $smsService;
-    }
-
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -217,7 +210,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function handleRefund(Request $request, Booking $booking)
+    public function handleRefund(Request $request, Booking $booking, SmsService $smsService)
     {
         $request->validate([
             'action' => 'required|in:approve,reject',
@@ -233,7 +226,7 @@ class BookingController extends Controller
             ]);
 
             // Send SMS notification for refund approval
-            $this->sendRefundSms($booking, 'approved', $request->refund_amount);
+            $this->sendRefundSms($booking, 'approved', $request->refund_amount, $smsService);
 
             Mail::to($booking->user->email)
             ->send(new RefundNotification($booking, 'approved'));
@@ -247,7 +240,7 @@ class BookingController extends Controller
             ]);
 
             // Send SMS notification for refund rejection
-            $this->sendRefundSms($booking, 'rejected', 0, $request->reason);
+            $this->sendRefundSms($booking, 'rejected', 0, $smsService, $request->reason);
 
             Mail::to($booking->user->email)
             ->send(new RefundNotification($booking, 'rejected', $request->reason));
@@ -256,7 +249,7 @@ class BookingController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(Request $request, SmsService $smsService)
     {
         $request->validate([
             'property_id' => 'required|exists:properties,id',
@@ -281,7 +274,7 @@ class BookingController extends Controller
 
         try {
             // Send booking confirmation SMS
-            $this->sendBookingConfirmationSms($booking, 'pending');
+            $this->sendBookingConfirmationSms($booking, 'pending', $smsService);
 
             $callbackBase = config('services.mpesa.callback_url')
                 ?? secure_url('/api/mpesa/stk/callback');
@@ -322,7 +315,7 @@ class BookingController extends Controller
     /**
      * Handle M-Pesa STK Push callback
      */
-    public function handleCallback(Request $request)
+    public function handleCallback(Request $request, SmsService $smsService)
     {
         try {
             // Parse callback data
@@ -385,12 +378,12 @@ class BookingController extends Controller
 
                 // Send confirmation emails and SMS
                 $this->sendConfirmationEmails($booking);
-                $this->sendBookingConfirmationSms($booking, 'confirmed');
+                $this->sendBookingConfirmationSms($booking, 'confirmed', $smsService);
 
             } else {
                 $booking->update(['status' => 'failed']);
                 // Send payment failure SMS
-                $this->sendPaymentFailureSms($booking, $resultDesc);
+                $this->sendPaymentFailureSms($booking, $resultDesc, $smsService);
                 \Log::error('Payment failed', [
                     'booking_id' => $booking->id,
                     'error' => $resultDesc
@@ -461,7 +454,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function add(Request $request)
+    public function add(Request $request, SmsService $smsService)
     {
         $request->validate([
             'property_id' => 'required|exists:properties,id',
@@ -485,7 +478,7 @@ class BookingController extends Controller
         ]);
 
         // Send SMS for external booking
-        $this->sendBookingConfirmationSms($booking, 'external');
+        $this->sendBookingConfirmationSms($booking, 'external', $smsService);
 
         return redirect()->route('bookings.index')->with('success', 'Booking added successfully.');
     }
@@ -546,7 +539,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function update(Request $request, Booking $booking)
+    public function update(Request $request, Booking $booking, SmsService $smsService)
     {
         $validated = $request->validate([
             'checked_in' => 'nullable',
@@ -570,7 +563,7 @@ class BookingController extends Controller
                 $user = User::find($booking->user_id);
 
                 // Send check-in verification SMS
-                $this->smsService->sendSms(
+                $smsService->sendSms(
                     $user->phone,
                     "Hello {$user->name}, Your OTP for check-in verification is: {$booking->checkin_verification_code}"
                 );
@@ -588,7 +581,7 @@ class BookingController extends Controller
             $booking->save();
 
             // Send check-in confirmation SMS
-            $this->sendCheckInConfirmationSms($booking);
+            $this->sendCheckInConfirmationSms($booking, $smsService);
 
             return back()->with('success', 'Successfully checked in!');
         }
@@ -613,7 +606,7 @@ class BookingController extends Controller
                 $user = User::find($booking->user_id);
 
                 // Send check-out verification SMS
-                $this->smsService->sendSms(
+                $smsService->sendSms(
                     $user->phone,
                     "Hello {$user->name}, Your OTP for check-out verification is: {$booking->checkout_verification_code}"
                 );
@@ -631,7 +624,7 @@ class BookingController extends Controller
             $booking->save();
 
             // Send check-out confirmation SMS
-            $this->sendCheckOutConfirmationSms($booking);
+            $this->sendCheckOutConfirmationSms($booking, $smsService);
 
             return back()->with('success', 'Successfully checked out!');
         }
@@ -639,7 +632,7 @@ class BookingController extends Controller
         return back()->with('error', 'No valid action performed.');
     }
 
-    public function cancel(Request $request)
+    public function cancel(Request $request, SmsService $smsService)
     {
         $input = $request->all();
 
@@ -668,7 +661,7 @@ class BookingController extends Controller
             Mail::to($booking->property->user->email)->send(new BookingCancelled($booking, 'host'));
 
             // Send cancellation SMS to guest
-            $this->sendCancellationSms($booking);
+            $this->sendCancellationSms($booking, $smsService);
 
         } catch (\Exception $e) {
             \Log::error('Cancellation email/SMS error: ' . $e->getMessage());
@@ -688,7 +681,7 @@ class BookingController extends Controller
      * SMS Notification Methods
      */
 
-    private function sendBookingConfirmationSms(Booking $booking, string $type = 'confirmed')
+    private function sendBookingConfirmationSms(Booking $booking, string $type = 'confirmed', SmsService $smsService)
     {
         try {
             $user = $booking->user;
@@ -714,14 +707,14 @@ class BookingController extends Controller
                     $message = "Hello {$user->name}, your booking at {$property->property_name} has been updated. Status: {$booking->status}";
             }
 
-            $this->smsService->sendSms($user->phone, $message);
+            $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
             \Log::error('Booking confirmation SMS failed: ' . $e->getMessage());
         }
     }
 
-    private function sendPaymentFailureSms(Booking $booking, string $reason = '')
+    private function sendPaymentFailureSms(Booking $booking, string $reason = '', SmsService $smsService)
     {
         try {
             $user = $booking->user;
@@ -733,14 +726,14 @@ class BookingController extends Controller
                 $message .= " Reason: {$reason}";
             }
 
-            $this->smsService->sendSms($user->phone, $message);
+            $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
             \Log::error('Payment failure SMS failed: ' . $e->getMessage());
         }
     }
 
-    private function sendCheckInConfirmationSms(Booking $booking)
+    private function sendCheckInConfirmationSms(Booking $booking, SmsService $smsService)
     {
         try {
             $user = $booking->user;
@@ -748,14 +741,14 @@ class BookingController extends Controller
 
             $message = "Hello {$user->name}, you have successfully checked in to {$property->property_name}. We hope you enjoy your stay!";
 
-            $this->smsService->sendSms($user->phone, $message);
+            $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
             \Log::error('Check-in confirmation SMS failed: ' . $e->getMessage());
         }
     }
 
-    private function sendCheckOutConfirmationSms(Booking $booking)
+    private function sendCheckOutConfirmationSms(Booking $booking, SmsService $smsService)
     {
         try {
             $user = $booking->user;
@@ -763,14 +756,14 @@ class BookingController extends Controller
 
             $message = "Hello {$user->name}, thank you for staying at {$property->property_name}. We hope to see you again soon!";
 
-            $this->smsService->sendSms($user->phone, $message);
+            $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
             \Log::error('Check-out confirmation SMS failed: ' . $e->getMessage());
         }
     }
 
-    private function sendCancellationSms(Booking $booking)
+    private function sendCancellationSms(Booking $booking, SmsService $smsService)
     {
         try {
             $user = $booking->user;
@@ -778,14 +771,14 @@ class BookingController extends Controller
 
             $message = "Hello {$user->name}, your booking at {$property->property_name} has been cancelled. We hope to host you in the future.";
 
-            $this->smsService->sendSms($user->phone, $message);
+            $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
             \Log::error('Cancellation SMS failed: ' . $e->getMessage());
         }
     }
 
-    private function sendRefundSms(Booking $booking, string $status, float $amount = 0, string $reason = '')
+    private function sendRefundSms(Booking $booking, string $status, float $amount = 0, SmsService $smsService, string $reason = '')
     {
         try {
             $user = $booking->user;
@@ -799,7 +792,7 @@ class BookingController extends Controller
                 }
             }
 
-            $this->smsService->sendSms($user->phone, $message);
+            $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
             \Log::error('Refund SMS failed: ' . $e->getMessage());

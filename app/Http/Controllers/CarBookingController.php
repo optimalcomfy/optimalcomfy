@@ -11,50 +11,81 @@ use App\Models\Payment;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\PesapalController;
 use Carbon\Carbon;
-use App\Services\SmsService;
+use App\Http\Controllers\MpesaStkController;
+use App\Services\MpesaStkService;
 use App\Traits\Mpesa;
-use App\Mail\CancelledCarBooking;
+
+use App\Mail\BookingConfirmation;
 use App\Mail\CarBookingConfirmation;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\CancelledCarBooking;
+
+use Illuminate\Http\JsonResponse;
+
 use App\Mail\CarCheckInVerification;
 use App\Mail\CarCheckOutVerification;
+use App\Services\SmsService;
 
 class CarBookingController extends Controller
 {
     use Mpesa;
 
-    /**
-     * Display a listing of the resource.
-     */
+    protected $smsService;
+
+    public function __construct(SmsService $smsService)
+    {
+        $this->smsService = $smsService;
+    }
+
     public function index(Request $request)
     {
         $query = CarBooking::with(['car', 'user'])->orderBy('created_at', 'desc');
+
         $user = Auth::user();
 
         if ($user->role_id == 2) {
-            $query->whereHas('car', fn($q) => $q->where('user_id', $user->id));
+            $query->whereHas('car', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
         } elseif ($user->role_id == 3) {
-            $query->where('user_id', $user->id);
+            $query->where('user_id', '=', $user->id);
         }
 
-        if ($status = $request->input('status')) {
+        if ($request->has('status') && $request->input('status') != null) {
+            $status = $request->input('status');
+
             $query->where(function ($q) use ($status) {
-                if ($status === 'checked_out') $q->whereNotNull('checked_out');
-                elseif ($status === 'checked_in') $q->whereNull('checked_out')->whereNotNull('checked_in');
-                elseif ($status === 'upcoming_stay') $q->where('status', 'paid')->whereNull('checked_in');
-                else $q->where('status', $status);
+                if ($status === 'checked_out') {
+                    $q->whereNotNull('checked_out');
+                } elseif ($status === 'checked_in') {
+                    $q->whereNull('checked_out')->whereNotNull('checked_in');
+                } elseif ($status === 'upcoming_stay') {
+                    $q->where('status', 'paid')->whereNull('checked_in');
+                } else {
+                    $q->where('status', $status);
+                }
             });
         }
 
-        if ($search = $request->input('search')) {
-            $query->whereHas('user', fn($q) => $q->where('name', 'LIKE', "%$search%")->orWhere('email', 'LIKE', "%$search%"));
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%$search%")
+                  ->orWhere('email', 'LIKE', "%$search%");
+            });
         }
 
-        if ($startDate = $request->query('start_date')) {
-            $endDate = $request->query('end_date');
-            $query->when($endDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]));
-        }
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $filterByDate = !empty($startDate) && !empty($endDate);
+
+        $query->when($filterByDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                });
 
         $carBookings = $query->paginate(10);
 
@@ -65,23 +96,42 @@ class CarBookingController extends Controller
         ]);
     }
 
-    public function exportData(Request $request)
+    public function exportData(Request $request): JsonResponse
     {
         $user = Auth::user();
+
         $query = CarBooking::with(['user', 'car']);
 
-        if ($startDate = $request->query('start_date')) {
-            $endDate = $request->query('end_date');
-            $query->when($endDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]));
-        }
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
 
-        if ($status = $request->query('status')) {
-            $query->where(function ($q) use ($status) {
+        $filterByDate = !empty($startDate) && !empty($endDate);
+
+        $query->when($filterByDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                });
+
+
+       if ($request->has('status') && $request->input('status') != null) {
+            $status = $request->input('status');
+
+            $query->where(function($q) use ($status) {
                 switch ($status) {
-                    case 'checked_out': $q->whereNotNull('checked_out'); break;
-                    case 'checked_in': $q->whereNotNull('checked_in')->whereNull('checked_out'); break;
-                    case 'upcoming_stay': $q->where('status', 'paid')->whereNull('checked_in'); break;
-                    default: $q->where('status', $status)->whereNull('checked_in')->whereNull('checked_out');
+                    case 'checked_out':
+                        $q->whereNotNull('checked_out');
+                        break;
+                    case 'checked_in':
+                        $q->whereNotNull('checked_in')
+                        ->whereNull('checked_out');
+                        break;
+                    case 'upcoming_stay':
+                        $q->where('status', 'paid')
+                        ->whereNull('checked_in');
+                        break;
+                    default:
+                        $q->where('status', $status)
+                        ->whereNull('checked_in')
+                        ->whereNull('checked_out');
                 }
             });
         }
@@ -89,15 +139,27 @@ class CarBookingController extends Controller
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('number', 'LIKE', "%$search%")
-                  ->orWhere('status', 'LIKE', "%$search%")
-                  ->orWhere('external_booking', 'LIKE', "%$search%")
-                  ->orWhereHas('user', fn($q2) => $q2->where('name', 'LIKE', "%$search%"))
-                  ->orWhereHas('car', fn($q2) => $q2->where('name', 'LIKE', "%$search%")->orWhere('license_plate', 'LIKE', "%$search%"));
+                    ->orWhere('status', 'LIKE', "%$search%")
+                    ->orWhere('external_booking', 'LIKE', "%$search%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%$search%");
+                    })
+                    ->orWhereHas('car', function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%$search%")
+                            ->orWhere('license_plate', 'LIKE', "%$search%");
+                    });
             });
         }
 
+
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
         if ($user->role_id == 2) {
-            $query->whereHas('car', fn($q) => $q->where('company_id', $user->company_id));
+            $query->whereHas('car', function ($q) use ($user) {
+                $q->where('company_id', $user->company_id);
+            });
         } elseif ($user->role_id == 3) {
             $query->where('user_id', $user->id);
         }
@@ -105,8 +167,10 @@ class CarBookingController extends Controller
         $carBookings = $query->orderBy('created_at', 'desc')->get();
 
         $exportData = $carBookings->map(function ($booking) {
-            $days = Carbon::parse($booking->start_date)->diffInDays(Carbon::parse($booking->end_date));
-            $totalPrice = optional($booking->car)->platform_price * max($days, 1);
+            $startDate = Carbon::parse($booking->start_date);
+            $endDate = Carbon::parse($booking->end_date);
+            $days = $endDate->diffInDays($startDate);
+            $totalPrice = optional($booking->car)->platform_price * $days;
 
             return [
                 'number' => $booking->number,
@@ -130,9 +194,13 @@ class CarBookingController extends Controller
 
     public function cancel(Request $request)
     {
-        $booking = CarBooking::findOrFail($request->id);
+        $input = $request->all();
 
-        $request->validate(['cancel_reason' => 'required|string|min:10|max:500']);
+        $booking = CarBooking::find($input['id']);
+
+        $request->validate([
+            'cancel_reason' => 'required|string|min:10|max:500',
+        ]);
 
         if ($booking->checked_in || $booking->status === 'Cancelled') {
             return back()->with('error', 'Booking cannot be cancelled at this stage.');
@@ -145,9 +213,19 @@ class CarBookingController extends Controller
             'cancelled_by_id' => auth()->id(),
         ]);
 
+        $booking->start_date = Carbon::parse($booking->start_date);
+        $booking->end_date = Carbon::parse($booking->end_date);
+        $booking->cancelled_at = Carbon::parse($booking->cancelled_at);
+
         try {
             Mail::to($booking->user->email)->send(new CancelledCarBooking($booking, 'guest'));
-            Mail::to($booking->car->user->email)->send(new CancelledCarBooking($booking, 'host'));
+
+            // Send cancellation SMS
+            $this->sendCarCancellationSms($booking);
+
+            if ($booking->car->user) {
+                Mail::to($booking->car->user->email)->send(new CancelledCarBooking($booking, 'host'));
+            }
         } catch (\Exception $e) {
             \Log::error('Cancellation email error: ' . $e->getMessage());
         }
@@ -158,34 +236,54 @@ class CarBookingController extends Controller
     public function create()
     {
         $user = Auth::user();
-        $query = Car::with('bookings');
 
-        if ($user->role_id == 2) $query->where('user_id', $user->id);
+        $query = Car::with(['bookings']);
 
-        return Inertia::render('CarBookings/Create', ['cars' => $query->get()]);
+        if ($user->role_id == 2) {
+            $query->where('user_id', $user->id);
+        }
+
+        return Inertia::render('CarBookings/Create', [
+            'cars' => $query->get(),
+        ]);
     }
 
     public function store(StoreCarBookingRequest $request)
     {
-        $validated = $request->validated();
+        $validatedData = $request->validated();
         $user = Auth::user();
-        $validated['user_id'] = $user->id;
+        $validatedData['user_id'] = $user->id;
 
         $car = Car::findOrFail($request->car_id);
+
+        // Calculate number of days
         $startDate = Carbon::parse($request->start_date);
         $endDate = Carbon::parse($request->end_date);
-        $days = max($startDate->diffInDays($endDate), 1);
+        $days = $startDate->diffInDays($endDate);
+
+        // Ensure at least 1 day
+        $days = max($days, 1);
+
         $totalPrice = $car->price_per_day * $days;
 
-        $booking = CarBooking::create(array_merge($validated, [
-            'user_id' => $user->id,
-            'total_price' => $totalPrice,
-            'status' => 'pending',
-            'dropoff_location' => $request->pickup_location
-        ]));
+        $booking = CarBooking::create([
+            'user_id'         => $user->id,
+            'car_id'          => $request->car_id,
+            'start_date'      => $request->start_date,
+            'end_date'        => $request->end_date,
+            'total_price'     => $totalPrice,
+            'pickup_location' => $request->pickup_location,
+            'dropoff_location'=> $request->pickup_location,
+            'status'          => 'pending',
+            'special_requests'=> $request->special_requests,
+        ]);
 
         try {
-            $callbackBase = env('MPESA_RIDE_CALLBACK_URL') ?? secure_url('/api/mpesa/ride/stk/callback');
+            // Send booking confirmation SMS
+            $this->sendCarBookingConfirmationSms($booking, 'pending');
+
+            $callbackBase = env('MPESA_RIDE_CALLBACK_URL')
+                ?? secure_url('/api/mpesa/ride/stk/callback');
 
             $callbackData = [
                 'phone' => $request->phone,
@@ -196,33 +294,57 @@ class CarBookingController extends Controller
 
             $callbackUrl = $callbackBase . '?data=' . urlencode(json_encode($callbackData));
 
-            $this->STKPush('Paybill', $booking->total_price, $request->phone, $callbackUrl, 'reference', 'Book Ristay');
+            $this->STKPush(
+                'Paybill',
+                $booking->total_price,
+                $request->phone,
+                $callbackUrl,
+                'reference',
+                'Book Ristay'
+            );
 
             return redirect()->route('ride.payment.pending', [
                 'booking' => $booking->id,
                 'message' => 'Payment initiated. Please complete the M-Pesa payment on your phone.'
             ]);
+
         } catch (\Exception $e) {
             \Log::error('M-Pesa payment initiation failed: ' . $e->getMessage());
             $booking->update(['status' => 'failed']);
 
-            return back()->withInput()->withErrors(['payment' => 'Payment initiation failed due to a system error.']);
+            // Send payment failure SMS
+            $this->sendCarPaymentFailureSms($booking, $e->getMessage());
+
+            return back()
+                ->withInput()
+                ->withErrors(['payment' => 'Payment initiation failed due to a system error.']);
         }
     }
 
     public function handleCallback(Request $request)
     {
         try {
+            // Parse the callback data
             $callbackData = $request->json()->all();
+
+            // Extract the transaction details from callback
+            $resultCode = $callbackData['Body']['stkCallback']['ResultCode'] ?? null;
+            $resultDesc = $callbackData['Body']['stkCallback']['ResultDesc'] ?? null;
+            $merchantRequestID = $callbackData['Body']['stkCallback']['MerchantRequestID'] ?? null;
+            $checkoutRequestID = $callbackData['Body']['stkCallback']['CheckoutRequestID'] ?? null;
+
+            // Get the additional data passed in the callback URL
             $callbackParams = json_decode($request->query('data'), true);
-            $booking = CarBooking::with('car.user')->findOrFail($callbackParams['booking_id'] ?? null);
 
-            $stkCallback = $callbackData['Body']['stkCallback'] ?? [];
-            $resultCode = $stkCallback['ResultCode'] ?? null;
-            $resultDesc = $stkCallback['ResultDesc'] ?? null;
-            $merchantRequestID = $stkCallback['MerchantRequestID'] ?? null;
-            $checkoutRequestID = $stkCallback['CheckoutRequestID'] ?? null;
+            // Find the related booking
+            $booking = CarBooking::with('car.user')->find($callbackParams['booking_id'] ?? null);
 
+            if (!$booking) {
+                \Log::error('Booking not found for callback', ['callbackParams' => $callbackParams]);
+                return response()->json(['message' => 'Booking not found'], 404);
+            }
+
+            // Prepare payment data
             $paymentData = [
                 'user_id' => $booking->user_id,
                 'booking_id' => $booking->id,
@@ -236,33 +358,69 @@ class CarBookingController extends Controller
                 'failure_reason' => $resultCode !== 0 ? $resultDesc : null,
             ];
 
+            // If payment was successful
             if ($resultCode === 0) {
-                foreach ($stkCallback['CallbackMetadata']['Item'] ?? [] as $item) {
-                    match($item['Name']) {
-                        'MpesaReceiptNumber' => $paymentData['mpesa_receipt'] = $item['Value'],
-                        'TransactionDate' => $paymentData['transaction_date'] = date('Y-m-d H:i:s', strtotime($item['Value'])),
-                        'Amount' => $paymentData['amount'] = $item['Value'],
-                        'PhoneNumber' => $paymentData['phone'] = $item['Value'],
-                        default => null
-                    };
+                $callbackMetadata = $callbackData['Body']['stkCallback']['CallbackMetadata']['Item'] ?? [];
+
+                // Extract M-Pesa receipt details from callback metadata
+                foreach ($callbackMetadata as $item) {
+                    switch ($item['Name']) {
+                        case 'MpesaReceiptNumber':
+                            $paymentData['mpesa_receipt'] = $item['Value'];
+                            break;
+                        case 'TransactionDate':
+                            $paymentData['transaction_date'] = date('Y-m-d H:i:s', strtotime($item['Value']));
+                            break;
+                        case 'Amount':
+                            $paymentData['amount'] = $item['Value'];
+                            break;
+                        case 'PhoneNumber':
+                            $paymentData['phone'] = $item['Value'];
+                            break;
+                    }
                 }
 
+                // Update booking status
                 $booking->update(['status' => 'paid']);
+
+                // Send confirmation SMS
+                $this->sendCarBookingConfirmationSms($booking, 'confirmed');
+
             } else {
+                // Payment failed
                 $booking->update(['status' => 'failed']);
+
+                // Send payment failure SMS
+                $this->sendCarPaymentFailureSms($booking, $resultDesc);
             }
 
+            // Create payment record
             $payment = Payment::create($paymentData);
 
-            if ($resultCode === 0) {
-                Mail::to($booking->user->email)->send(new CarBookingConfirmation($booking, 'customer'));
-                Mail::to($booking->car->user->email)->send(new CarBookingConfirmation($booking, 'host'));
+            if($resultCode === 0) {
+                $user  = User::find($booking->user_id);
+
+                Mail::to($user->email)
+                ->send(new CarBookingConfirmation($booking, 'customer'));
+
+                if ($booking->car->user) {
+                    Mail::to($booking->car->user->email)
+                    ->send(new CarBookingConfirmation($booking, 'host'));
+                }
             }
 
-            return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Callback processed successfully']);
+            // Return success response to M-Pesa
+            return response()->json([
+                'ResultCode' => 0,
+                'ResultDesc' => 'Callback processed successfully'
+            ]);
+
         } catch (\Exception $e) {
-            \Log::error('M-Pesa callback error: ' . $e->getMessage());
-            return response()->json(['ResultCode' => 1, 'ResultDesc' => 'Error processing callback'], 500);
+            \Log::error('Car booking callback error: ' . $e->getMessage());
+            return response()->json([
+                'ResultCode' => 1,
+                'ResultDesc' => 'Error processing callback'
+            ], 500);
         }
     }
 
@@ -286,21 +444,37 @@ class CarBookingController extends Controller
 
     public function add(StoreCarBookingRequest $request)
     {
-        $validated = $request->validated();
+        $validatedData = $request->validated();
         $user = Auth::user();
-        $validated['user_id'] = $user->id;
+        $validatedData['user_id'] = $user->id;
 
         $car = Car::findOrFail($request->car_id);
-        $days = max(Carbon::parse($request->start_date)->diffInDays(Carbon::parse($request->end_date)), 1);
+
+        // Calculate number of days
+        $startDate = Carbon::parse($request->start_date);
+        $endDate = Carbon::parse($request->end_date);
+        $days = $startDate->diffInDays($endDate);
+
+        // Ensure at least 1 day
+        $days = max($days, 1);
+
         $totalPrice = $car->price_per_day * $days;
 
-        $booking = CarBooking::create(array_merge($validated, [
-            'user_id' => $user->id,
-            'total_price' => $totalPrice,
+        $booking = CarBooking::create([
+            'user_id'         => $user->id,
+            'car_id'          => $request->car_id,
+            'start_date'      => $request->start_date,
+            'end_date'        => $request->end_date,
+            'total_price'     => $totalPrice,
+            'pickup_location' => $request->pickup_location,
+            'dropoff_location'=> $request->pickup_location,
             'external_booking' => 'Yes',
-            'status' => 'Paid',
-            'dropoff_location' => $request->pickup_location
-        ]));
+            'status'          => 'Paid',
+            'special_requests'=> $request->special_requests,
+        ]);
+
+        // Send external booking confirmation SMS
+        $this->sendCarBookingConfirmationSms($booking, 'external');
 
         return redirect()->route('car-bookings.index')->with('success', 'Car booking added successfully.');
     }
@@ -315,12 +489,18 @@ class CarBookingController extends Controller
     public function edit(CarBooking $carBooking)
     {
         $cars = Car::all();
-        return Inertia::render('CarBookings/Edit', ['carBooking' => $carBooking, 'cars' => $cars]);
+
+        return Inertia::render('CarBookings/Edit', [
+            'carBooking' => $carBooking,
+            'cars' => $cars,
+        ]);
     }
 
-    public function update(Request $request, SmsService $smsService)
+    public function update(Request $request)
     {
-        $booking = CarBooking::findOrFail($request->id);
+        $input = $request->all();
+
+        $booking = CarBooking::find($input['id']);
 
         $validated = $request->validate([
             'checked_in' => 'nullable',
@@ -329,7 +509,9 @@ class CarBookingController extends Controller
         ]);
 
         if ($request->has('checked_in')) {
-            if ($booking->checked_in) return back()->with('error', 'This car booking is already checked in.');
+            if ($booking->checked_in) {
+                return back()->with('error', 'This car booking is already checked in.');
+            }
 
             if (!$booking->checkin_verification_code) {
                 $booking->checkin_verification_code = CarBooking::generateVerificationCode();
@@ -337,48 +519,69 @@ class CarBookingController extends Controller
 
                 Mail::to($booking->user->email)->send(new CarCheckInVerification($booking));
 
-                $smsService->sendSms(
-                    $booking->user->phone,
-                    "Hello {$booking->user->name}, Your OTP for car pick up verification is: {$booking->checkin_verification_code}"
+                $user = User::find($booking->user_id);
+
+                // Send check-in verification SMS
+                $this->smsService->sendSms(
+                    $user->phone,
+                    "Hello {$user->name}, Your OTP for car pickup verification is: {$booking->checkin_verification_code}"
                 );
 
-                return back()->with('success', 'Verification code sent to your email and phone. Enter it to complete check-in.');
+                return back()->with('success', 'Verification code sent to your email and phone. Please enter it to complete check-in.');
             }
 
             if ($request->verification_code !== $booking->checkin_verification_code) {
                 return back()->with('error', 'Invalid verification code.');
             }
 
-            $booking->update(['checked_in' => now(), 'checkin_verification_code' => null]);
+            $booking->checked_in = now();
+            $booking->checkin_verification_code = null;
+            $booking->save();
 
-            return back()->with('success', 'Successfully checked in!');
+            // Send check-in confirmation SMS
+            $this->sendCarCheckInConfirmationSms($booking);
+
+            return back()->with('success', 'Successfully checked in! Enjoy your ride!');
         }
 
         if ($request->has('checked_out')) {
-            if ($booking->checked_out) return back()->with('error', 'This car booking is already checked out.');
-            if (!$booking->checked_in) return back()->with('error', 'Cannot check out before checking in.');
+            if ($booking->checked_out) {
+                return back()->with('error', 'This car booking is already checked out.');
+            }
+
+            if (!$booking->checked_in) {
+                return back()->with('error', 'Cannot check out before checking in.');
+            }
 
             if (!$booking->checkout_verification_code) {
                 $booking->checkout_verification_code = CarBooking::generateVerificationCode();
                 $booking->save();
 
-                Mail::to($booking->user->email)->send(new CarCheckOutVerification($booking));
+                $user = User::find($booking->user_id);
 
-                $smsService->sendSms(
-                    $booking->user->phone,
-                    "Hello {$booking->user->name}, Your OTP for drop off verification is: {$booking->checkout_verification_code}"
+                // Send check-out verification SMS
+                $this->smsService->sendSms(
+                    $user->phone,
+                    "Hello {$user->name}, Your OTP for car drop-off verification is: {$booking->checkout_verification_code}"
                 );
 
-                return back()->with('success', 'Verification code sent to your email and phone. Enter it to complete check-out.');
+                Mail::to($booking->user->email)->send(new CarCheckOutVerification($booking));
+
+                return back()->with('success', 'Verification code sent to your email and phone. Please enter it to complete check-out.');
             }
 
             if ($request->verification_code !== $booking->checkout_verification_code) {
                 return back()->with('error', 'Invalid verification code.');
             }
 
-            $booking->update(['checked_out' => now(), 'checkout_verification_code' => null]);
+            $booking->checked_out = now();
+            $booking->checkout_verification_code = null;
+            $booking->save();
 
-            return back()->with('success', 'Successfully checked out!');
+            // Send check-out confirmation SMS
+            $this->sendCarCheckOutConfirmationSms($booking);
+
+            return back()->with('success', 'Successfully checked out! Thank you for using our service.');
         }
 
         return back()->with('error', 'No valid action performed.');
@@ -387,6 +590,108 @@ class CarBookingController extends Controller
     public function destroy(CarBooking $carBooking)
     {
         $carBooking->delete();
+
         return redirect()->route('car-bookings.index')->with('success', 'Car booking deleted successfully.');
+    }
+
+    /**
+     * SMS Notification Methods for Car Bookings
+     */
+
+    private function sendCarBookingConfirmationSms(CarBooking $booking, string $type = 'confirmed')
+    {
+        try {
+            $user = $booking->user;
+            $car = $booking->car;
+
+            $startDate = Carbon::parse($booking->start_date)->format('M j, Y');
+            $endDate = Carbon::parse($booking->end_date)->format('M j, Y');
+
+            switch ($type) {
+                case 'pending':
+                    $message = "Hello {$user->name}, your car booking for {$car->name} is pending payment. Amount: KES {$booking->total_price}. Pickup: {$startDate}";
+                    break;
+
+                case 'confirmed':
+                    $message = "Hello {$user->name}, your car booking for {$car->name} ({$car->license_plate}) is confirmed! Booking #{$booking->number}. Pickup: {$startDate}, Return: {$endDate}. Pickup location: {$booking->pickup_location}";
+                    break;
+
+                case 'external':
+                    $message = "Hello {$user->name}, your external car booking for {$car->name} has been added. Pickup: {$startDate}, Return: {$endDate}";
+                    break;
+
+                default:
+                    $message = "Hello {$user->name}, your car booking for {$car->name} has been updated. Status: {$booking->status}";
+            }
+
+            $this->smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            \Log::error('Car booking confirmation SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    private function sendCarPaymentFailureSms(CarBooking $booking, string $reason = '')
+    {
+        try {
+            $user = $booking->user;
+            $car = $booking->car;
+
+            $message = "Hello {$user->name}, your payment for car booking ({$car->name}) failed. Please try again or contact support.";
+
+            if (!empty($reason)) {
+                $message .= " Reason: {$reason}";
+            }
+
+            $this->smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            \Log::error('Car payment failure SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    private function sendCarCheckInConfirmationSms(CarBooking $booking)
+    {
+        try {
+            $user = $booking->user;
+            $car = $booking->car;
+
+            $message = "Hello {$user->name}, you have successfully picked up {$car->name} ({$car->license_plate}). Have a safe and enjoyable journey!";
+
+            $this->smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            \Log::error('Car check-in confirmation SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    private function sendCarCheckOutConfirmationSms(CarBooking $booking)
+    {
+        try {
+            $user = $booking->user;
+            $car = $booking->car;
+
+            $message = "Hello {$user->name}, thank you for returning {$car->name} ({$car->license_plate}). We hope you enjoyed your ride and look forward to serving you again!";
+
+            $this->smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            \Log::error('Car check-out confirmation SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    private function sendCarCancellationSms(CarBooking $booking)
+    {
+        try {
+            $user = $booking->user;
+            $car = $booking->car;
+
+            $message = "Hello {$user->name}, your car booking for {$car->name} has been cancelled. We hope to serve you in the future.";
+
+            $this->smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            \Log::error('Car cancellation SMS failed: ' . $e->getMessage());
+        }
     }
 }

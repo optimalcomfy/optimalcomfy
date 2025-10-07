@@ -28,7 +28,10 @@ trait Mpesa
         $this->passkey = config('services.mpesa.passkey');
         $this->businessShortCode = config('services.mpesa.business_shortcode');
         $this->callbackUrl = config('services.mpesa.callback_url');
-        $this->baseUrl = config('services.mpesa.base_url');
+
+        // Retrieve and clean the base URL to ensure no trailing slash, which prevents double slashes in concatenated URLs
+        $baseUrl = config('services.mpesa.base_url');
+        $this->baseUrl = rtrim($baseUrl, '/');
 
         // Initialize new configuration properties
         $this->initiatorName = config('services.mpesa.initiator_name');
@@ -55,7 +58,10 @@ trait Mpesa
         ];
 
         foreach ($required as $key) {
+            // Use the internal property name $key to check if the value is truthy
             if (empty($this->$key)) {
+                // Log the failure with the property name for better debugging
+                Log::error("MPesa configuration error: Required config '{$key}' is missing or empty.");
                 throw new Exception("MPesa configuration error: {$key} is not configured.");
             }
         }
@@ -78,6 +84,7 @@ trait Mpesa
     public function generateAccessToken(): string
     {
         $credentials = base64_encode($this->consumerKey . ":" . $this->consumerSecret);
+        // Concatenate the cleaned $this->baseUrl with the relative path
         $url = $this->baseUrl . "/oauth/v1/generate?grant_type=client_credentials";
 
         $curl = null;
@@ -104,7 +111,7 @@ trait Mpesa
             Log::info('Access token response', ['response' => $response]);
 
             if (!isset($data->access_token)) {
-                throw new Exception('Failed to get access token from M-Pesa.');
+                throw new Exception('Failed to get access token from M-Pesa. Response: ' . $response);
             }
 
             return $data->access_token;
@@ -118,6 +125,7 @@ trait Mpesa
 
     public function STKPush(string $type, string $amount, string $phone, string $callback, string $reference, string $narrative): array
     {
+        // Use $this->baseUrl which is guaranteed not to have a trailing slash
         $url = $this->baseUrl . '/mpesa/stkpush/v1/processrequest';
         $phone = '254' . substr($phone, -9);
 
@@ -139,7 +147,18 @@ trait Mpesa
 
         $curl = null;
         try {
-            Log::info('Initiating STK Push', ['url' => $url, 'payload' => $payload]);
+            // Note: Removed PartyB and PhoneNumber from payload log to match original log structure,
+            // but kept Amount and essential info.
+            Log::info('Initiating STK Push', ['url' => $url, 'payload' => [
+                'BusinessShortCode' => $this->businessShortCode,
+                'Timestamp' => $formattedTimestamp,
+                'TransactionType' => $payload['TransactionType'],
+                'Amount' => $payload['Amount'],
+                'PartyA' => $payload['PartyA'],
+                'CallBackURL' => $payload['CallBackURL'],
+                'AccountReference' => $payload['AccountReference'],
+                'TransactionDesc' => $payload['TransactionDesc'],
+            ]]);
 
             $curl = curl_init();
             curl_setopt_array($curl, [

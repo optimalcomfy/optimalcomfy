@@ -24,7 +24,20 @@ class MpesaStkService
         $this->callbackUrl = config('services.mpesa.callback_url');
         $this->baseUrl = config('services.mpesa.base_url');
 
+        $this->logConfig();
         $this->validateConfig();
+    }
+
+    protected function logConfig(): void
+    {
+        Log::info('MPesa configuration loaded', [
+            'consumerKey' => $this->consumerKey ? 'SET' : 'NULL',
+            'consumerSecret' => $this->consumerSecret ? 'SET' : 'NULL',
+            'passkey' => $this->passkey ? 'SET' : 'NULL',
+            'businessShortCode' => $this->businessShortCode ? 'SET' : 'NULL',
+            'callbackUrl' => $this->callbackUrl ? 'SET' : 'NULL',
+            'baseUrl' => $this->baseUrl ?? 'NULL',
+        ]);
     }
 
     protected function validateConfig(): void
@@ -40,6 +53,7 @@ class MpesaStkService
 
         foreach ($required as $key) {
             if (empty($this->$key)) {
+                Log::error("MPesa configuration error: {$key} is not set");
                 throw new Exception("MPesa {$key} is not configured.");
             }
         }
@@ -51,7 +65,10 @@ class MpesaStkService
             $phone = $this->formatPhoneNumber($phone);
             $timestamp = now()->format('YmdHis');
             $password = base64_encode($this->businessShortCode . $this->passkey . $timestamp);
+
+            Log::info("Generating M-Pesa access token for STK Push");
             $accessToken = $this->generateAccessToken();
+            Log::info("Access token generated", ['accessToken' => substr($accessToken, 0, 5) . '...']);
 
             $response = Http::withToken($accessToken)
                 ->post("{$this->baseUrl}/mpesa/stkpush/v1/processrequest", [
@@ -69,6 +86,7 @@ class MpesaStkService
                 ]);
 
             $body = $response->json();
+            Log::info("STK Push response", ['response' => $body]);
 
             if ($response->successful() && isset($body['ResponseCode']) && $body['ResponseCode'] == '0') {
                 return array_merge(['success' => true], $body);
@@ -80,20 +98,31 @@ class MpesaStkService
                 'description' => $body['errorMessage'] ?? 'Unknown error'
             ];
         } catch (Exception $e) {
-            return ['error' => 'MPESA_REQUEST_FAILED'];
+            Log::error("STK Push exception", ['message' => $e->getMessage()]);
+            return ['error' => 'MPESA_REQUEST_FAILED', 'message' => $e->getMessage()];
         }
     }
 
     protected function generateAccessToken()
     {
+        Log::info("Requesting M-Pesa access token", ['baseUrl' => $this->baseUrl]);
+
         $response = Http::withBasicAuth($this->consumerKey, $this->consumerSecret)
             ->get("{$this->baseUrl}/oauth/v1/generate?grant_type=client_credentials");
 
         if (!$response->successful()) {
+            Log::error("Failed to obtain M-Pesa access token", ['response' => $response->body()]);
             throw new Exception('Failed to obtain M-Pesa access token');
         }
 
-        return $response->json()['access_token'];
+        $token = $response->json()['access_token'] ?? null;
+
+        if (!$token) {
+            Log::error("Access token not found in M-Pesa response", ['response' => $response->body()]);
+            throw new Exception('Access token not found in M-Pesa response');
+        }
+
+        return $token;
     }
 
     protected function formatPhoneNumber($phone)
@@ -108,12 +137,14 @@ class MpesaStkService
             return $phone;
         }
 
+        Log::error('Invalid phone number format', ['phone' => $phone]);
         throw new Exception('Invalid phone number format');
     }
 
     public function registerC2BUrls()
     {
         try {
+            Log::info("Registering C2B URLs");
             $accessToken = $this->generateAccessToken();
 
             $response = Http::withToken($accessToken)->post("{$this->baseUrl}/mpesa/c2b/v1/registerurl", [
@@ -123,10 +154,12 @@ class MpesaStkService
                 "ValidationURL" => $this->callbackUrl . "/mpesa/c2b/validation",
             ]);
 
+            Log::info("C2B registration response", ['response' => $response->json()]);
+
             return $response->json();
         } catch (Exception $e) {
-            return ['error' => 'C2B_REGISTRATION_FAILED'];
+            Log::error("C2B registration exception", ['message' => $e->getMessage()]);
+            return ['error' => 'C2B_REGISTRATION_FAILED', 'message' => $e->getMessage()];
         }
     }
 }
-

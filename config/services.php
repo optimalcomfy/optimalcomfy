@@ -42,10 +42,10 @@ return [
         'consumer_secret' => env('MPESA_CONSUMER_SECRET'),
         'passkey' => env('MPESA_PASSKEY'),
         'business_shortcode' => env('MPESA_BUSINESS_SHORTCODE'),
+        'base_url' => env('MPESA_BASE_URL', 'https://api.safaricom.co.ke'),
+        'auth_url' => env('MPESA_AUTH_URL', env('MPESA_BASE_URL').'/oauth/v1/generate?grant_type=client_credentials'),
         'callback_url' => env('MPESA_CALLBACK_URL'),
         'ride_callback_url' => env('MPESA_RIDE_CALLBACK_URL'),
-        'base_url' => env('MPESA_BASE_URL', 'https://api.safaricom.co.ke'),
-        // New Mpesa configuration properties
         'initiator_name' => env('MPESA_INITIATOR_NAME'),
         'security_credential' => env('MPESA_SECURITY_CREDENTIAL'),
         'result_url' => env('MPESA_RESULT_URL'),

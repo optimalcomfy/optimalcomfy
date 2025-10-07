@@ -80,8 +80,10 @@ trait Mpesa
         $credentials = base64_encode($this->consumerKey . ":" . $this->consumerSecret);
         $url = $this->baseUrl . "/oauth/v1/generate?grant_type=client_credentials";
 
-        $curl = null; // Initialize curl
+        $curl = null;
         try {
+            Log::info('Generating M-Pesa access token', ['url' => $url]);
+
             $curl = curl_init();
             curl_setopt_array($curl, [
                 CURLOPT_URL => $url,
@@ -93,42 +95,33 @@ trait Mpesa
 
             $response = curl_exec($curl);
             if ($response === false) {
-                throw new Exception('Curl error during access token generation: ' . curl_error($curl));
+                $error = curl_error($curl);
+                Log::error('Curl error during access token generation', ['error' => $error]);
+                throw new Exception('Curl error during access token generation: ' . $error);
             }
 
             $data = json_decode($response);
+            Log::info('Access token response', ['response' => $response]);
+
             if (!isset($data->access_token)) {
                 throw new Exception('Failed to get access token from M-Pesa.');
             }
 
             return $data->access_token;
         } catch (\Exception $e) {
-            throw $e; // Re-throw exception to be caught by the controller
+            Log::error('Access token generation failed', ['message' => $e->getMessage()]);
+            throw $e;
         } finally {
-            if ($curl) {
-                curl_close($curl);
-            }
+            if ($curl) curl_close($curl);
         }
     }
 
-    /**
-     * Initiates an STK Push request.
-     * @param string $type 'Paybill' or 'BuyGoods'
-     * @param string $amount The amount to be paid.
-     * @param string $phone The customer's phone number in 07xx... or 2547xx... format.
-     * @param string $callback The publicly accessible HTTPS URL for receiving the transaction result.
-     * @param string $reference A unique identifier for the transaction (e.g., Order ID).
-     * @param string $narrative A short description of the transaction.
-     * @return array The response from the M-Pesa API.
-     */
     public function STKPush(string $type, string $amount, string $phone, string $callback, string $reference, string $narrative): array
     {
         $url = $this->baseUrl . '/mpesa/stkpush/v1/processrequest';
-        $phone = '254' . substr($phone, -9); // Sanitize phone number
+        $phone = '254' . substr($phone, -9);
 
-        $currentTime = Carbon::rawParse('now');
-        $formattedTimestamp = $currentTime->format('YmdHis');
-        $phpDefaultTimezone = date_default_timezone_get();
+        $formattedTimestamp = Carbon::rawParse('now')->format('YmdHis');
 
         $payload = [
             'BusinessShortCode' => $this->businessShortCode,
@@ -146,6 +139,8 @@ trait Mpesa
 
         $curl = null;
         try {
+            Log::info('Initiating STK Push', ['url' => $url, 'payload' => $payload]);
+
             $curl = curl_init();
             curl_setopt_array($curl, [
                 CURLOPT_URL => $url,
@@ -161,18 +156,20 @@ trait Mpesa
 
             $response = curl_exec($curl);
             if ($response === false) {
-                throw new Exception('Curl error during STK Push: ' . curl_error($curl));
+                $error = curl_error($curl);
+                Log::error('Curl error during STK Push', ['error' => $error]);
+                throw new Exception('Curl error during STK Push: ' . $error);
             }
 
             $decodedResponse = json_decode($response, true);
+            Log::info('STK Push response', ['response' => $decodedResponse]);
 
             return $decodedResponse;
         } catch (\Exception $e) {
+            Log::error('STK Push failed', ['message' => $e->getMessage()]);
             throw $e;
         } finally {
-            if (isset($curl)) {
-                curl_close($curl);
-            }
+            if ($curl) curl_close($curl);
         }
     }
 

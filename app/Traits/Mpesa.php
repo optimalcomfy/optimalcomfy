@@ -29,18 +29,17 @@ trait Mpesa
         $this->businessShortCode = config('services.mpesa.business_shortcode');
         $this->callbackUrl = config('services.mpesa.callback_url');
 
-        // Retrieve and clean the base URL to ensure no trailing slash, which prevents double slashes in concatenated URLs
-        $baseUrl = config('services.mpesa.base_url');
-        $this->baseUrl = rtrim($baseUrl, '/');
+        // Hard-coded base URL
+        $this->baseUrl = 'https://api.safaricom.co.ke';
 
-        // Initialize new configuration properties
         $this->initiatorName = config('services.mpesa.initiator_name');
-        $this->securityCredential = config('services.mpesa.security_credential'); // This should be an encrypted password
+        $this->securityCredential = config('services.mpesa.security_credential');
         $this->resultURL = config('services.mpesa.result_url');
         $this->queueTimeOutURL = config('services.mpesa.queue_timeout_url');
 
         $this->validateConfig();
     }
+
 
     protected function validateConfig(): void
     {

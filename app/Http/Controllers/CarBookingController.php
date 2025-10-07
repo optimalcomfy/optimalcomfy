@@ -266,6 +266,17 @@ class CarBookingController extends Controller
 
         $totalPrice = $car->price_per_day * $days;
 
+        // --- NEW: Configuration Pre-Check for M-Pesa API Base URL ---
+        // This checks if the core M-Pesa configuration is present before attempting STK Push.
+        $baseUrl = config('services.mpesa.base_url');
+        if (empty($baseUrl)) {
+            \Log::error('CRITICAL: M-Pesa MPESA_BASE_URL is not configured. STK Push aborted.');
+            return back()
+                ->withInput()
+                ->withErrors(['payment' => 'Payment initiation failed. System configuration error. Please contact support.']);
+        }
+        // --- END Pre-Check ---
+
         $booking = CarBooking::create([
             'user_id'         => $user->id,
             'car_id'          => $request->car_id,
@@ -309,15 +320,22 @@ class CarBookingController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('M-Pesa payment initiation failed: ' . $e->getMessage());
+            $errorMessage = $e->getMessage();
+            \Log::error('M-Pesa payment initiation failed: ' . $errorMessage);
             $booking->update(['status' => 'failed']);
 
+            // Send a more informative error message to the user if the specific cURL error is detected
+            $userFacingReason = 'Payment initiation failed due to a system error.';
+            if (str_contains($errorMessage, 'URL rejected: No host part in the URL')) {
+                 $userFacingReason = 'Payment initiation failed due to a system configuration error. Please contact support.';
+            }
+
             // Send payment failure SMS
-            $this->sendCarPaymentFailureSms($booking, $e->getMessage());
+            $this->sendCarPaymentFailureSms($booking, $userFacingReason);
 
             return back()
                 ->withInput()
-                ->withErrors(['payment' => 'Payment initiation failed due to a system error.']);
+                ->withErrors(['payment' => $userFacingReason]);
         }
     }
 

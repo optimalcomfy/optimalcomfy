@@ -23,19 +23,21 @@ trait Mpesa
 
     public function __construct()
     {
-        $this->consumerKey = config('services.mpesa.consumer_key');
-        $this->consumerSecret = config('services.mpesa.consumer_secret');
-        $this->passkey = config('services.mpesa.passkey');
-        $this->businessShortCode = config('services.mpesa.business_shortcode');
-        $this->callbackUrl = config('services.mpesa.callback_url');
+        // Hard-coded credentials
+        $this->consumerKey = 'CfJSkGXYvvSSRyP4fscBOXe88nnTZLeaSH8h9MIgGVVuCRnd';
+        $this->consumerSecret = 'XLlobTJpUAMvANJqllsiPnWs3GwWxtN4owUtnUyq6G5egOGxJ6szoeSbyIMU2a2E';
+        $this->passkey = '33bc90b9874798faf198e13c4f51a189528c612e605dd3e857215080c7b6a964';
+        $this->businessShortCode = '4160396';
+        $this->callbackUrl = 'https://test.ristay.co.ke/api/mpesa/stk/callback';
 
         // Hard-coded base URL
         $this->baseUrl = 'https://api.safaricom.co.ke';
 
-        $this->initiatorName = config('services.mpesa.initiator_name');
-        $this->securityCredential = config('services.mpesa.security_credential');
-        $this->resultURL = config('services.mpesa.result_url');
-        $this->queueTimeOutURL = config('services.mpesa.queue_timeout_url');
+        // Additional credentials
+        $this->initiatorName = 'RISTAYAPI';
+        $this->securityCredential = 'imfSuXGk3bTx06J4ZF0+8q5dCy4dNeI7n+Q6/yDrLuSZm76VzfgEWP5Sk38qFmWIrWpuMLiRi3MDtS/c/BV8G6icVpN7IGygLZvzIGpG3LDTDwF//rxAzRFZtCGSjxJybC8DeKj7O/Ltpe4YOJfwW7e1uS+TdGLGr1tVndqa+xdkebA26dOAcYo+yQN+l22mtXtLojHzBxYKhlrL3WeZYLlRgPlqpMRpToSrXidjtlWLQh95bS665cBN5Jz0P+Gmqn5K5Xoy/qX4DgYVD286y/r5iyB/9uenl6Di8f3e4bFja+yCvE2d/fl21Dtk35+iu5sdo97mykJl5B4ZSxJwKg==';
+        $this->resultURL = 'https://test.ristay.co.ke/api/mpesa/result';
+        $this->queueTimeOutURL = 'https://test.ristay.co.ke/api/mpesa/timeout';
 
         $this->validateConfig();
     }

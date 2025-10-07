@@ -61,10 +61,8 @@ const Product = (props) => {
 
         {/* Verification Badge */}
         {isVerified && (
-          <div className="absolute top-3 left-3 bg-white px-1 py-1 font-bold rounded-full flex items-center gap-1 shadow-sm">
-            <svg className="h-4 text-[#f0661d]" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
+          <div className="absolute top-3 left-3 bg-green-500 px-2 font-bold py-1 rounded-full flex items-center gap-1 shadow-sm">
+            <small className="text-xs text-white">Verified</small>
           </div>
         )}
 

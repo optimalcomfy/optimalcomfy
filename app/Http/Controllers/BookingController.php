@@ -267,16 +267,6 @@ class BookingController extends Controller
             'phone' => 'required|string'
         ]);
 
-        // --- NEW: Configuration Pre-Check for M-Pesa ---
-        $baseUrl = config('services.mpesa.base_url');
-        if (empty($baseUrl)) {
-            \Log::error('CRITICAL: M-Pesa MPESA_BASE_URL is not configured in .env. STK Push aborted.');
-            return back()
-                ->withInput()
-                ->withErrors(['payment' => 'Payment initiation failed. System configuration error. Please contact support.']);
-        }
-        // --- END Pre-Check ---
-
         $user = Auth::user();
 
         $booking = Booking::create([
@@ -320,21 +310,12 @@ class BookingController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            $errorMessage = $e->getMessage();
-            \Log::error('M-Pesa payment initiation failed: ' . $errorMessage);
+            \Log::error('M-Pesa payment initiation failed: ' . $e->getMessage());
             $booking->update(['status' => 'failed']);
-
-            // Send a more informative payment failure SMS if the specific cURL error is detected
-            $userFacingReason = 'Payment initiation failed due to a system error.';
-            if (str_contains($errorMessage, 'URL rejected: No host part in the URL')) {
-                 $userFacingReason = 'Payment initiation failed due to a system configuration error. Please contact support.';
-            }
-
-            $this->sendPaymentFailureSms($booking, $userFacingReason);
 
             return back()
                 ->withInput()
-                ->withErrors(['payment' => $userFacingReason]);
+                ->withErrors(['payment' => 'Payment initiation failed due to a system error.']);
         }
     }
 

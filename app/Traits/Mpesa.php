@@ -23,21 +23,21 @@ trait Mpesa
 
     public function __construct()
     {
-        $this->consumerKey = 'CfJSkGXYvvSSRyP4fscBOXe88nnTZLeaSH8h9MIgGVVuCRnd';
-        $this->consumerSecret = 'XLlobTJpUAMvANJqllsiPnWs3GwWxtN4owUtnUyq6G5egOGxJ6szoeSbyIMU2a2E';
-        $this->passkey = '33bc90b9874798faf198e13c4f51a189528c612e605dd3e857215080c7b6a964';
-        $this->businessShortCode = '4160396'; // Must not be null
-        $this->callbackUrl = 'https://test.ristay.co.ke/api/mpesa/ride/stk/callback';
+        $this->consumerKey = config('services.mpesa.consumer_key');
+        $this->consumerSecret = config('services.mpesa.consumer_secret');
+        $this->passkey = config('services.mpesa.passkey');
+        $this->businessShortCode = config('services.mpesa.business_shortcode');
+        $this->callbackUrl = config('services.mpesa.callback_url');
+        $this->baseUrl = config('services.mpesa.base_url');
 
-        $this->baseUrl = 'https://api.safaricom.co.ke';
+        // Initialize new configuration properties
+        $this->initiatorName = config('services.mpesa.initiator_name');
+        $this->securityCredential = config('services.mpesa.security_credential'); // This should be an encrypted password
+        $this->resultURL = config('services.mpesa.result_url');
+        $this->queueTimeOutURL = config('services.mpesa.queue_timeout_url');
 
-        $this->initiatorName = 'RISTAYAPI';
-        $this->securityCredential = 'imfSuXGk3bTx06J4ZF0+8q5dCy4dNeI7n+Q6/yDrLuSZm76VzfgEWP5Sk38qFmWIrWpuMLiRi3MDtS/c/BV8G6icVpN7IGygLZvzIGpG3LDTDwF//rxAzRFZtCGSjxJybC8DeKj7O/Ltpe4YOJfwW7e1uS+TdGLGr1tVndqa+xdkebA26dOAcYo+yQN+l22mtXtLojHzBxYKhlrL3WeZYLlRgPlqpMRpToSrXidjtlWLQh95bS665cBN5Jz0P+Gmqn5K5Xoy/qX4DgYVD286y/r5iyB/9uenl6Di8f3e4bFja+yCvE2d/fl21Dtk35+iu5sdo97mykJl5B4ZSxJwKg==';
-        $this->resultURL = 'https://test.ristay.co.ke/api/mpesa/result';
-        $this->queueTimeOutURL = 'https://test.ristay.co.ke/api/mpesa/timeout';
+        $this->validateConfig();
     }
-
-
 
     protected function validateConfig(): void
     {
@@ -55,10 +55,7 @@ trait Mpesa
         ];
 
         foreach ($required as $key) {
-            // Use the internal property name $key to check if the value is truthy
             if (empty($this->$key)) {
-                // Log the failure with the property name for better debugging
-                Log::error("MPesa configuration error: Required config '{$key}' is missing or empty.");
                 throw new Exception("MPesa configuration error: {$key} is not configured.");
             }
         }
@@ -81,44 +78,57 @@ trait Mpesa
     public function generateAccessToken(): string
     {
         $credentials = base64_encode($this->consumerKey . ":" . $this->consumerSecret);
+        $url = $this->baseUrl . "/oauth/v1/generate?grant_type=client_credentials";
 
-        // Make sure the full URL includes the host
-        $url = 'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
+        $curl = null; // Initialize curl
+        try {
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $url,
+                CURLOPT_HTTPHEADER => ["Authorization: Basic " . $credentials],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HEADER => false,
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
 
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $url,
-            CURLOPT_HTTPHEADER => ["Authorization: Basic " . $credentials],
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HEADER => false,
-            CURLOPT_SSL_VERIFYPEER => true,
-        ]);
+            $response = curl_exec($curl);
+            if ($response === false) {
+                throw new Exception('Curl error during access token generation: ' . curl_error($curl));
+            }
 
-        $response = curl_exec($curl);
+            $data = json_decode($response);
+            if (!isset($data->access_token)) {
+                throw new Exception('Failed to get access token from M-Pesa.');
+            }
 
-        if ($response === false) {
-            $error = curl_error($curl);
-            throw new \Exception('Curl error during access token generation: ' . $error);
+            return $data->access_token;
+        } catch (\Exception $e) {
+            throw $e; // Re-throw exception to be caught by the controller
+        } finally {
+            if ($curl) {
+                curl_close($curl);
+            }
         }
-
-        $data = json_decode($response);
-        if (!isset($data->access_token)) {
-            throw new \Exception('Failed to get access token from M-Pesa. Response: ' . $response);
-        }
-
-        curl_close($curl);
-
-        return $data->access_token;
     }
 
-
+    /**
+     * Initiates an STK Push request.
+     * @param string $type 'Paybill' or 'BuyGoods'
+     * @param string $amount The amount to be paid.
+     * @param string $phone The customer's phone number in 07xx... or 2547xx... format.
+     * @param string $callback The publicly accessible HTTPS URL for receiving the transaction result.
+     * @param string $reference A unique identifier for the transaction (e.g., Order ID).
+     * @param string $narrative A short description of the transaction.
+     * @return array The response from the M-Pesa API.
+     */
     public function STKPush(string $type, string $amount, string $phone, string $callback, string $reference, string $narrative): array
     {
-        // Use $this->baseUrl which is guaranteed not to have a trailing slash
         $url = $this->baseUrl . '/mpesa/stkpush/v1/processrequest';
-        $phone = '254' . substr($phone, -9);
+        $phone = '254' . substr($phone, -9); // Sanitize phone number
 
-        $formattedTimestamp = Carbon::rawParse('now')->format('YmdHis');
+        $currentTime = Carbon::rawParse('now');
+        $formattedTimestamp = $currentTime->format('YmdHis');
+        $phpDefaultTimezone = date_default_timezone_get();
 
         $payload = [
             'BusinessShortCode' => $this->businessShortCode,
@@ -136,19 +146,6 @@ trait Mpesa
 
         $curl = null;
         try {
-            // Note: Removed PartyB and PhoneNumber from payload log to match original log structure,
-            // but kept Amount and essential info.
-            Log::info('Initiating STK Push', ['url' => $url, 'payload' => [
-                'BusinessShortCode' => $this->businessShortCode,
-                'Timestamp' => $formattedTimestamp,
-                'TransactionType' => $payload['TransactionType'],
-                'Amount' => $payload['Amount'],
-                'PartyA' => $payload['PartyA'],
-                'CallBackURL' => $payload['CallBackURL'],
-                'AccountReference' => $payload['AccountReference'],
-                'TransactionDesc' => $payload['TransactionDesc'],
-            ]]);
-
             $curl = curl_init();
             curl_setopt_array($curl, [
                 CURLOPT_URL => $url,
@@ -164,20 +161,18 @@ trait Mpesa
 
             $response = curl_exec($curl);
             if ($response === false) {
-                $error = curl_error($curl);
-                Log::error('Curl error during STK Push', ['error' => $error]);
-                throw new Exception('Curl error during STK Push: ' . $error);
+                throw new Exception('Curl error during STK Push: ' . curl_error($curl));
             }
 
             $decodedResponse = json_decode($response, true);
-            Log::info('STK Push response', ['response' => $decodedResponse]);
 
             return $decodedResponse;
         } catch (\Exception $e) {
-            Log::error('STK Push failed', ['message' => $e->getMessage()]);
             throw $e;
         } finally {
-            if ($curl) curl_close($curl);
+            if (isset($curl)) {
+                curl_close($curl);
+            }
         }
     }
 

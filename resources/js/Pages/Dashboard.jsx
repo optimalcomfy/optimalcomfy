@@ -540,7 +540,7 @@ const Dashboard = () => {
         {(roleId !== 4) && (
         <div className="flex flex-col flex-1 justify-start gap-4">
           <UserProfileCard />
-          {(roleId === 1 || roleId === 2) && <FinancialSummary />}
+          <FinancialSummary />
           {/* Overdraft Summary - Only show for admin/management roles */}
           {(roleId === 1) && overdraftData.length > 0 && <OverdraftSummary />}
         </div>)}

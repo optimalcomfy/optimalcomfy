@@ -763,8 +763,8 @@ class HomeController extends Controller
             "propertyBookingTotal" => $propertyBookingTotal,
             "carBookingTotal" => $carBookingTotal,
             "totalEarnings" => $propertyBookingTotal + $carBookingTotal,
-            "pendingPayouts" => $pendingPayouts - $repaymentAmount,
-            "availableBalance" => $availablePayouts - $repaymentAmount,
+            "pendingPayouts" => ($pendingPayouts + $user->pending_balance) - $repaymentAmount,
+            "availableBalance" => ($availablePayouts + $user->balance) - $repaymentAmount,
             "monthlyEarnings" => $monthlyEarnings,
             "recentTransactions" => $recentTransactions,
             'hostsWithOverdrafts'=> $hostsWithOverdrafts,
@@ -874,7 +874,7 @@ class HomeController extends Controller
 
         $isAdmin = $user->role_id === 1 || $user->role_id === "1";
 
-        $propertyBookingTotal = Booking::where("status", "Paid")
+        $propertyBookingTotal = Booking::where("status", "paid")
             ->whereNull("external_booking")
             ->whereHas("user")
             ->whereHas("property", function ($query) use ($user, $isAdmin) {
@@ -887,7 +887,8 @@ class HomeController extends Controller
             ->get()
             ->sum('payments_sum_amount');
 
-        $availablePropertyBookingTotal = Booking::where("status", "Paid")
+
+        $availablePropertyBookingTotal = Booking::where("status", "paid")
             ->whereNull("external_booking")
             ->whereNotNull("checked_in")
             ->whereHas("user")
@@ -900,17 +901,18 @@ class HomeController extends Controller
             ->get()
             ->sum('payments_sum_amount');
 
+
         $carBookingTotal = CarBooking::where("status", "paid")
         ->whereNull("external_booking")
         ->whereHas("car", function ($query) use ($user) {
-            $query->where("user_id", $user->id);
+            $query->where("user_id","=", $user->id);
         })
         ->withSum('payments', 'amount')
         ->get()
         ->sum('payments_sum_amount');
 
 
-        $availableCarBookingTotal = CarBooking::where("status", "Paid")
+        $availableCarBookingTotal = CarBooking::where("status", "paid")
             ->whereNull("external_booking")
             ->whereNotNull("checked_in")
             ->whereHas("car", function ($query) use ($user) {
@@ -938,7 +940,7 @@ class HomeController extends Controller
                         $query->where("user_id", $user->id);
                     }
                 })
-                ->whereHas('payments') // Only include bookings with payments
+                ->whereHas('payments')
                 ->with(["property", "user", "payments"])
                 ->latest()
                 ->take(5)
@@ -1016,9 +1018,9 @@ class HomeController extends Controller
             "propertyBookingTotal" => $propertyBookingTotal * $p,
             "carBookingTotal" => $carBookingTotal,
             "totalEarnings" => ($propertyBookingTotal * $p) + ($carBookingTotal * $p),
-            "pendingPayouts" => $pendingPayouts - $repaymentAmount,
+            "pendingPayouts" => ($pendingPayouts + $user->pending_balance + $user->balance) - $repaymentAmount,
             "repaymentAmount" => $repaymentAmount,
-            "availableBalance" => $availablePayouts - $repaymentAmount,
+            "availableBalance" => ($availablePayouts + $user->balance) - $repaymentAmount,
             "recentTransactions" => $recentTransactions,
             "averagePropertyBookingValue" =>
                 $propertiesCount > 0

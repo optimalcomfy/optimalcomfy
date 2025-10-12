@@ -335,14 +335,48 @@ class CarBookingController extends Controller
             $merchantRequestID = $callbackData['Body']['stkCallback']['MerchantRequestID'] ?? null;
             $checkoutRequestID = $callbackData['Body']['stkCallback']['CheckoutRequestID'] ?? null;
 
-            // Get the additional data passed in the callback URL
-            $callbackParams = json_decode($request->query('data'), true);
+            // PROPERLY decode the callback parameters
+            $callbackParams = [];
+            $encodedData = $request->query('data');
+
+            if ($encodedData) {
+                // First URL decode, then JSON decode
+                $decodedData = urldecode($encodedData);
+                $callbackParams = json_decode($decodedData, true);
+
+                // If that fails, try direct JSON decode (for backward compatibility)
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $callbackParams = json_decode($encodedData, true);
+                }
+            }
+
+            // DEBUG: Log the decoding process
+            \Log::info('Callback params decoding', [
+                'encoded_data' => $encodedData,
+                'decoded_data' => $decodedData ?? null,
+                'callback_params' => $callbackParams,
+                'json_last_error' => json_last_error_msg()
+            ]);
+
+            // Get booking_id from properly decoded params
+            $bookingId = $callbackParams['booking_id'] ?? null;
+
+            if (!$bookingId) {
+                \Log::error('Booking ID not found in callback params', [
+                    'callback_params' => $callbackParams,
+                    'query_params' => $request->query()
+                ]);
+                return response()->json(['message' => 'Booking ID not found'], 404);
+            }
 
             // Find the related booking
-            $booking = CarBooking::with('car.user')->find($callbackParams['booking_id'] ?? null);
+            $booking = CarBooking::with('car.user')->find($bookingId);
 
             if (!$booking) {
-                \Log::error('Booking not found for callback', ['callbackParams' => $callbackParams]);
+                \Log::error('Booking not found in database', [
+                    'booking_id' => $bookingId,
+                    'callback_params' => $callbackParams
+                ]);
                 return response()->json(['message' => 'Booking not found'], 404);
             }
 
@@ -355,7 +389,7 @@ class CarBookingController extends Controller
                 'phone' => $callbackParams['phone'] ?? null,
                 'checkout_request_id' => $checkoutRequestID,
                 'merchant_request_id' => $merchantRequestID,
-                'booking_type' => $callbackParams['booking_type'] ?? 'car',
+                'booking_type' => 'car',
                 'status' => $resultCode === 0 ? 'completed' : 'failed',
                 'failure_reason' => $resultCode !== 0 ? $resultDesc : null,
             ];
@@ -418,7 +452,10 @@ class CarBookingController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Car booking callback error: ' . $e->getMessage());
+            \Log::error('Car booking callback error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'ResultCode' => 1,
                 'ResultDesc' => 'Error processing callback'

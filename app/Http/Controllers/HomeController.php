@@ -479,6 +479,8 @@ class HomeController extends Controller
             ->where("id", "=", $input["car_id"])
             ->first();
 
+        $company = Company::first();
+
         return Inertia::render("CarBooking", [
             "canLogin" => Route::has("login"),
             "canRegister" => Route::has("register"),
@@ -486,12 +488,14 @@ class HomeController extends Controller
             "phpVersion" => PHP_VERSION,
             "flash" => session("flash"),
             "car" => $car,
+            "company"=> $company
         ]);
     }
 
     public function propertyBooking(Request $request)
     {
         $input = $request->all();
+        $company = Company::first();
         $property = Property::with([
             "bookings",
             "initialGallery",
@@ -510,6 +514,7 @@ class HomeController extends Controller
             "phpVersion" => PHP_VERSION,
             "flash" => session("flash"),
             "property" => $property,
+            "company"=> $company
         ]);
     }
 

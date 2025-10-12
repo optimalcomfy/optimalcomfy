@@ -4,7 +4,7 @@ import { Link, Head, router, usePage } from "@inertiajs/react";
 import Swal from 'sweetalert2';
 
 const PropertyBookingForm = () => {
-  const { flash, pagination, property, auth } = usePage().props;
+  const { flash, pagination, property, auth, company } = usePage().props;
   const url = usePage().url;
   const params = new URLSearchParams(url.split('?')[1]);
 
@@ -18,6 +18,15 @@ const PropertyBookingForm = () => {
   const [selectedVariation, setSelectedVariation] = useState(
     variationId ? property.variations.find(v => v.id == variationId) : null
   );
+
+  const [referralData, setReferralData] = useState({
+    isValid: false,
+    isLoading: false,
+    error: '',
+    discountAmount: 0,
+    referredByUserName: ''
+  });
+
   const [data, setData] = useState({
     property_id: property.id,
     check_in_date: checkInDate || '',
@@ -38,6 +47,7 @@ const PropertyBookingForm = () => {
     address: '',
     city: '',
     country: '',
+    referral_code: '',
     emergency_contact: '',
     contact_phone: '',
     message: '',
@@ -50,6 +60,23 @@ const PropertyBookingForm = () => {
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const locationRef = useRef(null);
+
+  // Calculate pricing - moved to the top to avoid reference errors
+  const calculateDays = (check_in_date, check_out_date) => {
+    if (check_in_date && check_out_date) {
+      const checkInDate = new Date(check_in_date);
+      const checkOutDate = new Date(check_out_date);
+      const timeDifference = checkOutDate - checkInDate;
+      return Math.max(1, Math.ceil(timeDifference / (1000 * 3600 * 24)));
+    }
+    return 0;
+  };
+
+  const nights = calculateDays(data.check_in_date, data.check_out_date);
+  const pricePerNight = selectedVariation ? selectedVariation.platform_price : property.platform_price;
+  const subtotal = nights * pricePerNight;
+  const totalPrice = subtotal;
+  const finalPrice = totalPrice - referralData.discountAmount;
 
   // Function to check if a date range is booked for a specific variation (or standard)
   const isRangeBooked = (startDate, endDate, variationId = null) => {
@@ -95,16 +122,6 @@ const PropertyBookingForm = () => {
       ...prev,
       [key]: value
     }));
-  };
-
-  const calculateDays = (check_in_date, check_out_date) => {
-    if (check_in_date && check_out_date) {
-      const checkInDate = new Date(check_in_date);
-      const checkOutDate = new Date(check_out_date);
-      const timeDifference = checkOutDate - checkInDate;
-      return Math.max(1, Math.ceil(timeDifference / (1000 * 3600 * 24)));
-    }
-    return 0;
   };
 
   const handleDateChange = (e) => {
@@ -180,6 +197,95 @@ const PropertyBookingForm = () => {
     setShowLocationSuggestions(false);
   };
 
+  // Validate referral code - FIXED VERSION
+  const validateReferralCode = async (code) => {
+    if (!code || code.trim().length < 3) {
+      setReferralData({
+        isValid: false,
+        isLoading: false,
+        error: '',
+        discountAmount: 0,
+        referredByUserName: ''
+      });
+      return;
+    }
+
+    const trimmedCode = code.trim().toUpperCase();
+
+    setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
+
+    try {
+      console.log('Validating referral code:', trimmedCode);
+      console.log('Company data:', company);
+      console.log('Total price:', totalPrice);
+
+      const response = await fetch(`/validate-referral?code=${encodeURIComponent(trimmedCode)}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      console.log('Referral validation result:', result);
+
+      // Check if the response has the expected structure
+      if (result.valid === true && result.user && result.user.name) {
+        // Check if company and booking_referral_percentage exist
+        const referralPercentage = company?.booking_referral_percentage || 0;
+        console.log('Referral percentage:', referralPercentage);
+
+        const discountAmount = (totalPrice * referralPercentage) / 100;
+
+        setReferralData({
+          isValid: true,
+          isLoading: false,
+          error: '',
+          discountAmount: discountAmount,
+          referredByUserName: result.user.name
+        });
+
+        console.log('Discount applied:', discountAmount);
+      } else {
+        setReferralData({
+          isValid: false,
+          isLoading: false,
+          error: result.message || 'Invalid referral code',
+          discountAmount: 0,
+          referredByUserName: ''
+        });
+      }
+    } catch (error) {
+      console.error('Referral validation error:', error);
+      setReferralData({
+        isValid: false,
+        isLoading: false,
+        error: 'Unable to validate referral code. Please try again.',
+        discountAmount: 0,
+        referredByUserName: ''
+      });
+    }
+  };
+
+  // Auto-validate referral code when it changes
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (data.referral_code) {
+        validateReferralCode(data.referral_code);
+      } else {
+        setReferralData({
+          isValid: false,
+          isLoading: false,
+          error: '',
+          discountAmount: 0,
+          referredByUserName: ''
+        });
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [data.referral_code, totalPrice]);
+
   // Location search effect
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -246,7 +352,7 @@ const PropertyBookingForm = () => {
     e.preventDefault();
     setProcessing(true);
 
-    if (!data.check_in_date || !data.check_out_date || data.nights <= 0) {
+    if (!data.check_in_date || !data.check_out_date || nights <= 0) {
       showErrorAlert('Please select valid check-in and check-out dates');
       setProcessing(false);
       return;
@@ -259,10 +365,19 @@ const PropertyBookingForm = () => {
         updateData('user_id', userId);
       }
 
-      // Create booking
-      router.post(route('bookings.store'), data, {
-        onSuccess: () => {
+      // Include referral discount in booking data
+      const bookingData = {
+        ...data,
+        referral_discount: referralData.discountAmount,
+        final_price: finalPrice
+      };
 
+      console.log('Submitting booking data:', bookingData);
+
+      // Create booking
+      router.post(route('bookings.store'), bookingData, {
+        onSuccess: () => {
+          // Handle success
         },
         onError: (errors) => {
           console.error('Booking creation failed:', errors);
@@ -287,12 +402,6 @@ const PropertyBookingForm = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  // Calculate pricing
-  const nights = calculateDays(data.check_in_date, data.check_out_date);
-  const pricePerNight = selectedVariation ? selectedVariation.platform_price : property.platform_price;
-  const subtotal = nights * pricePerNight;
-  const totalPrice = subtotal;
 
   const StepIndicator = ({ step, currentStep, title, completed = false }) => (
     <div className="flex items-center gap-3 mb-6">
@@ -535,6 +644,36 @@ const PropertyBookingForm = () => {
                 />
 
                 <div className="space-y-6">
+                  {/* Referral Code Section */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Referral Code (Optional)</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Enter referral code"
+                        value={data.referral_code}
+                        onChange={(e) => updateData('referral_code', e.target.value.toUpperCase())}
+                        className="w-full p-3 rounded-lg border border-gray-300"
+                      />
+                      {referralData.isLoading && (
+                        <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin" />
+                      )}
+                      {referralData.isValid && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500">
+                          ✓
+                        </div>
+                      )}
+                    </div>
+                    {referralData.error && (
+                      <p className="text-red-500 text-sm mt-1">{referralData.error}</p>
+                    )}
+                    {referralData.isValid && (
+                      <p className="text-green-600 text-sm mt-1">
+                        ✅ Valid referral code from {referralData.referredByUserName}! You get {company?.booking_referral_percentage || 0}% discount (KES {referralData.discountAmount.toLocaleString()})
+                      </p>
+                    )}
+                  </div>
+
                   <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                     <div className="flex items-center gap-3 text-blue-800">
                       <Shield className="w-5 h-5" />
@@ -673,11 +812,19 @@ const PropertyBookingForm = () => {
                       </span>
                       <span className="text-sm">KES {subtotal.toLocaleString()}</span>
                     </div>
+
+                    {/* Referral Discount */}
+                    {referralData.isValid && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Referral Discount ({company?.booking_referral_percentage || 0}%)</span>
+                        <span>- KES {referralData.discountAmount.toLocaleString()}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                     <span className="font-semibold">Total</span>
-                    <span className="font-semibold text-lg">KES {totalPrice.toLocaleString()}</span>
+                    <span className="font-semibold text-lg">KES {finalPrice.toLocaleString()}</span>
                   </div>
                 </div>
               )}

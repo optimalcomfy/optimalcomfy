@@ -48,7 +48,7 @@ use App\Http\Controllers\RefundController;
 use App\Http\Controllers\CarRefundController;
 
 use App\Models\Property;
-
+use App\Models\User;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -198,9 +198,31 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/{user}/verify', [UserController::class, 'verify'])->name('users.verify');
     Route::post('/{user}/unverify', [UserController::class, 'unverify'])->name('users.unverify');
+
+    Route::get('/validate-referral', function (Request $request) {
+        $code = $request->query('code');
+
+        if (!$code) {
+            return response()->json(['valid' => false]);
+        }
+
+        $user = User::where('referral_code', $code)->first();
+
+        if ($user) {
+            return response()->json([
+                'valid' => true,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email
+                ]
+            ]);
+        }
+
+        return response()->json(['valid' => false]);
+    });
 });
 
-// Route to initiate the payment (usually triggered by a logged-in user)
 Route::middleware('auth')->post('/pesapal/initiate', [PesapalController::class, 'initiatePayment'])->name('pesapal.initiate');
 
 

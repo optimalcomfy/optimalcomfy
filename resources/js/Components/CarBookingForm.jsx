@@ -5,7 +5,7 @@ import { Link, Head, router, usePage, useForm } from "@inertiajs/react";
 import './CarBookingForm.css'
 
 const CarBookingForm = () => {
-  const { flash, car, auth } = usePage().props;
+  const { flash, car, auth, company } = usePage().props;
   const url = usePage().url;
   const params = new URLSearchParams(url.split('?')[1]);
 
@@ -18,21 +18,29 @@ const CarBookingForm = () => {
     dropoff_location: '',
     start_date: checkInDate,
     car_id: car.id,
-    end_date: checkOutDate, 
+    end_date: checkOutDate,
     name: '',
     email: '',
     phone: '',
     password: '',
     message: '',
-    is_registered: false
+    is_registered: false,
+    referral_code: ''
   });
 
   // Location suggestions state
   const [pickupSuggestions, setPickupSuggestions] = useState(['Nairobi CBD', 'JKIA Airport', 'Westlands', 'Karen', 'Kilimani']);
   const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
-  
+
   const pickupRef = useRef(null);
-  const dropoffRef = useRef(null);
+
+  const [referralData, setReferralData] = useState({
+    isValid: false,
+    isLoading: false,
+    error: '',
+    discountAmount: 0,
+    referredByUserName: ''
+  });
 
   const calculateDays = () => {
     const start = new Date(data.start_date);
@@ -43,6 +51,7 @@ const CarBookingForm = () => {
 
   const days = calculateDays();
   const totalPrice = days * car.platform_price;
+  const finalPrice = totalPrice - referralData.discountAmount;
 
   const handleLocationSelect = (location, field) => {
     setData(field, location);
@@ -59,6 +68,77 @@ const CarBookingForm = () => {
     }
   };
 
+  // Validate referral code
+  const validateReferralCode = async (code) => {
+    if (!code || code.length < 3) {
+      setReferralData({
+        isValid: false,
+        isLoading: false,
+        error: '',
+        discountAmount: 0,
+        referredByUserName: ''
+      });
+      return;
+    }
+
+    setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
+
+    try {
+      const response = await fetch(`/validate-referral?code=${encodeURIComponent(code)}`);
+
+      if (!response.ok) throw new Error('Failed to validate referral code');
+
+      const result = await response.json();
+
+      if (result.valid) {
+        const discountAmount = (totalPrice * company.booking_referral_percentage) / 100;
+
+        setReferralData({
+          isValid: true,
+          isLoading: false,
+          error: '',
+          discountAmount: discountAmount,
+          referredByUserName: result.user.name
+        });
+      } else {
+        setReferralData({
+          isValid: false,
+          isLoading: false,
+          error: 'Invalid referral code',
+          discountAmount: 0,
+          referredByUserName: ''
+        });
+      }
+    } catch (error) {
+      setReferralData({
+        isValid: false,
+        isLoading: false,
+        error: 'Error validating referral code',
+        discountAmount: 0,
+        referredByUserName: ''
+      });
+    }
+  };
+
+  // Auto-validate referral code when it changes
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (data.referral_code) {
+        validateReferralCode(data.referral_code);
+      } else {
+        setReferralData({
+          isValid: false,
+          isLoading: false,
+          error: '',
+          discountAmount: 0,
+          referredByUserName: ''
+        });
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [data.referral_code, totalPrice]);
+
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (data.pickup_location.length < 3) {
@@ -66,8 +146,6 @@ const CarBookingForm = () => {
         return;
       }
       try {
- 
-        // Ensure this endpoint exists and returns an array of strings
         const res = await fetch(`/locations?query=${encodeURIComponent(data.pickup_location)}`);
         if (!res.ok) throw new Error('Failed to fetch suggestions');
         const suggestions = await res.json();
@@ -75,7 +153,6 @@ const CarBookingForm = () => {
       } catch (err) {
         console.error("Error fetching dropoff locations:", err);
         setPickupSuggestions([]);
-      } finally {
       }
     };
 
@@ -89,11 +166,11 @@ const CarBookingForm = () => {
     }
   };
 
-    useEffect(()=>{
-      if(auth.user) {
-        setCurrentStep(2)
-      }
-    },[auth])
+  useEffect(()=>{
+    if(auth.user) {
+      setCurrentStep(2)
+    }
+  },[auth])
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -114,11 +191,14 @@ const CarBookingForm = () => {
     }
 
     try {
-      const bookingData = { ...data }; 
+      const bookingData = {
+        ...data,
+        referral_discount: referralData.discountAmount,
+        final_price: finalPrice
+      };
 
       let userId = auth.user?.id;
-
-      bookingData.user_id = userId; 
+      bookingData.user_id = userId;
 
       post(route('car-bookings.store'), {
         data: bookingData,
@@ -141,9 +221,6 @@ const CarBookingForm = () => {
       if (pickupRef.current && !pickupRef.current.contains(event.target)) {
         setShowPickupSuggestions(false);
       }
-      if (dropoffRef.current && !dropoffRef.current.contains(event.target)) {
-        setShowDropoffSuggestions(false);
-      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -153,11 +230,11 @@ const CarBookingForm = () => {
   return (
     <div className="w-full bg-gray-50 min-h-screen">
       <div className="grid grid-cols-1 lg:grid-cols-3 justify-center gap-6">
-        
+
         {/* Left Column - Booking Form */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg shadow-sm p-2 lg:p-6">
-            
+
             {/* Header */}
             <div className="flex items-center gap-4 mb-6">
               <h1 className="text-2xl font-semibold text-left">Request to book a ride</h1>
@@ -175,7 +252,7 @@ const CarBookingForm = () => {
                 {currentStep === 1 ? (
                   <div className="text-sm text-gray-600">Required</div>
                 ) : (
-                  <button 
+                  <button
                     onClick={() => setCurrentStep(1)}
                     className="px-4 py-2 bg-peachDark text-white rounded-lg hover:bg-pink-600 transition-colors"
                   >
@@ -211,8 +288,6 @@ const CarBookingForm = () => {
                       </label>
                     </div>}
 
-
-
                     {auth.user &&
                       <div className='flex flex-col'>
                         <div className='flex gap-4'><p>Name:</p> <p>{auth.user?.name}</p></div>
@@ -225,9 +300,9 @@ const CarBookingForm = () => {
                       {data.is_registered === true ?
                       <Link
                         type="button"
-                        href={route('cr-login', { 
-                          car_id: car.id, 
-                          check_in_date: checkInDate, 
+                        href={route('cr-login', {
+                          car_id: car.id,
+                          check_in_date: checkInDate,
                           check_out_date: checkOutDate
                         })}
                       >
@@ -238,9 +313,9 @@ const CarBookingForm = () => {
                       :
                       <Link
                         type="button"
-                        href={route('cr-register', { 
-                          car_id: car.id, 
-                          check_in_date: checkInDate, 
+                        href={route('cr-register', {
+                          car_id: car.id,
+                          check_in_date: checkInDate,
                           check_out_date: checkOutDate
                         })}
                       >
@@ -267,7 +342,7 @@ const CarBookingForm = () => {
                 {currentStep === 2 ? (
                   <div className="text-sm text-gray-600">In progress</div>
                 ) : currentStep > 2 ? (
-                  <button 
+                  <button
                     onClick={() => setCurrentStep(2)}
                     className="px-4 py-2 bg-peachDark text-white rounded-lg hover:bg-pink-600 transition-colors"
                   >
@@ -322,7 +397,7 @@ const CarBookingForm = () => {
                           className="w-full pl-10 p-3 rounded-lg"
                         />
                         {data.pickup_location && (
-                          <X 
+                          <X
                             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer w-5 h-5"
                             onClick={() => setData('pickup_location', '')}
                           />
@@ -382,6 +457,36 @@ const CarBookingForm = () => {
               {currentStep === 3 && (
                 <div className="mt-4 p-4 border rounded-lg bg-gray-50">
                   <div className="space-y-4">
+                    {/* Referral Code Section */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Referral Code (Optional)</label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Enter referral code"
+                          value={data.referral_code}
+                          onChange={(e) => setData('referral_code', e.target.value.toUpperCase())}
+                          className="w-full p-3 rounded-lg border border-gray-300"
+                        />
+                        {referralData.isLoading && (
+                          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin" />
+                        )}
+                        {referralData.isValid && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500">
+                            ✓
+                          </div>
+                        )}
+                      </div>
+                      {referralData.error && (
+                        <p className="text-red-500 text-sm mt-1">{referralData.error}</p>
+                      )}
+                      {referralData.isValid && (
+                        <p className="text-green-600 text-sm mt-1">
+                          ✅ Valid referral code from {referralData.referredByUserName}! You get {company.booking_referral_percentage}% discount (KSh {referralData.discountAmount.toLocaleString()})
+                        </p>
+                      )}
+                    </div>
+
                     <div>
                       <h3 className="font-medium mb-2">Booking Summary</h3>
                       <div className="text-sm text-gray-600 space-y-1">
@@ -392,7 +497,6 @@ const CarBookingForm = () => {
                         {data.message && <p><strong>Requests:</strong> {data.message}</p>}
                       </div>
                     </div>
-
 
                     <div className="mb-4">
                       <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
@@ -412,18 +516,13 @@ const CarBookingForm = () => {
                           maxLength="9"
                           required
                           inputMode="numeric"
-                          value={data.phone.replace(/^254/, '')} // Remove 254 prefix if it exists
+                          value={data.phone.replace(/^254/, '')}
                           onChange={(e) => {
-                            // Remove any non-digit characters
                             const value = e.target.value.replace(/\D/g, '');
-                            
-                            // Update state with full phone number (254 prefix + entered digits)
                             setData({
                               ...data,
                               phone: '254' + value
                             });
-                            
-                            // Update the input value (without the prefix)
                             e.target.value = value;
                           }}
                         />
@@ -455,12 +554,12 @@ const CarBookingForm = () => {
         {/* Right Column - Car Details */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
-            
+
             {/* Car Image and Details */}
             <div className="mb-4">
               <img
-                src={car.initial_gallery && car.initial_gallery.length > 0 
-                            ? `/storage/${car.initial_gallery[0].image}` 
+                src={car.initial_gallery && car.initial_gallery.length > 0
+                            ? `/storage/${car.initial_gallery[0].image}`
                             : `/cars/images/cars/placeholder.jpg`}
                  alt={`${car.brand} ${car.model}`}
                 className="w-full h-48 object-cover rounded-lg mb-4"
@@ -473,7 +572,7 @@ const CarBookingForm = () => {
             <div className="border-t pt-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="font-medium">Trip details</span>
-                <button 
+                <button
                   onClick={() => setCurrentStep(2)}
                   className="text-sm text-peachDark hover:underline"
                 >
@@ -492,10 +591,19 @@ const CarBookingForm = () => {
                   <span>KSh {car.platform_price.toLocaleString()} x {days} days</span>
                   <span>KSh {totalPrice.toLocaleString()}</span>
                 </div>
+
+                {/* Referral Discount */}
+                {referralData.isValid && (
+                  <div className="flex justify-between text-sm mb-2 text-green-600">
+                    <span>Referral Discount ({company.booking_referral_percentage}%)</span>
+                    <span>- KSh {referralData.discountAmount.toLocaleString()}</span>
+                  </div>
+                )}
+
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between font-medium">
                     <span>Total KSh</span>
-                    <span>KSh {totalPrice.toLocaleString()}</span>
+                    <span>KSh {finalPrice.toLocaleString()}</span>
                   </div>
                 </div>
                 <button className="text-sm text-peachDark hover:underline mt-2">

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Models\Property;
 use App\Models\Car;
+use App\Models\Company;
 use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
@@ -30,7 +31,7 @@ class AuthenticatedSessionController extends Controller
     public function customerRideCreate(Request $request): Response
     {
         $input = $request->all();
-        
+
         $car = Car::with(["bookings", "initialGallery", "carFeatures"])
         ->where("id", "=", $input["car_id"])
         ->first();
@@ -45,7 +46,7 @@ class AuthenticatedSessionController extends Controller
     public function customerCreate(Request $request): Response
     {
         $input = $request->all();
-        
+
         $property = Property::with([
             "bookings",
             "initialGallery",
@@ -93,8 +94,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $company = Company::first();
+
         return Inertia::render('PropertyBooking', [
             'property' => $property,
+            'company'=> $company,
             'auth' => [
                 'user' => $request->user() ? [
                     'id' => $request->user()->id,
@@ -117,8 +121,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $company = Company::first();
+
         return Inertia::render('CarBooking', [
             'car' => $car,
+            'company'=> $company,
             'auth' => [
                 'user' => $request->user() ? [
                     'id' => $request->user()->id,

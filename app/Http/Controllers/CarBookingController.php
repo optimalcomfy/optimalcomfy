@@ -285,6 +285,7 @@ class CarBookingController extends Controller
 
             $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
 
+            $finalAmount = ceil($finalAmount);
 
             $callbackData = [
                 'phone' => $request->phone,

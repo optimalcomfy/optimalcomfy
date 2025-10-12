@@ -245,6 +245,7 @@ class CarBookingController extends Controller
     public function store(StoreCarBookingRequest $request, SmsService $smsService)
     {
         $validatedData = $request->validated();
+
         $user = Auth::user();
         $validatedData['user_id'] = $user->id;
 
@@ -282,16 +283,17 @@ class CarBookingController extends Controller
 
             $company = Company::first();
 
+            $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
+
+
             $callbackData = [
                 'phone' => $request->phone,
-                'amount' => $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price,
+                'amount' => $finalAmount,
                 'booking_id' => $booking->id,
                 'booking_type' => 'car'
             ];
 
             $callbackUrl = $callbackBase . '?data=' . urlencode(json_encode($callbackData));
-
-            $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
 
             $this->STKPush(
                 'Paybill',

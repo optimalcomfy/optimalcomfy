@@ -9,6 +9,7 @@ use App\Models\CarBooking;
 use App\Models\User;
 use App\Models\Property;
 use App\Models\Payment;
+use App\Models\Company;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -269,7 +270,8 @@ class BookingController extends Controller
             'check_out_date' => $request->check_out_date,
             'total_price' => $request->total_price,
             'status' => 'pending',
-            'variation_id' => $request->variation_id
+            'variation_id' => $request->variation_id,
+            'referral_code' => $request->referral_code
         ]);
 
         try {
@@ -279,9 +281,11 @@ class BookingController extends Controller
             $callbackBase = config('services.mpesa.callback_url')
                 ?? secure_url('/api/mpesa/stk/callback');
 
+            $company = Company::first();
+
             $callbackData = [
                 'phone' => $request->phone,
-                'amount' => $booking->total_price,
+                'amount' => $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price,
                 'booking_id' => $booking->id,
                 'booking_type' => 'property'
             ];

@@ -8,6 +8,7 @@ use App\Models\CarBooking;
 use App\Models\Car;
 use App\Models\User;
 use App\Models\Payment;
+use App\Models\Company;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -278,9 +279,11 @@ class CarBookingController extends Controller
             $callbackBase = env('MPESA_RIDE_CALLBACK_URL')
                 ?? secure_url('/api/mpesa/ride/stk/callback');
 
+            $company = Company::first();
+
             $callbackData = [
                 'phone' => $request->phone,
-                'amount' => $booking->total_price,
+                'amount' => $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price,
                 'booking_id' => $booking->id,
                 'booking_type' => 'car'
             ];

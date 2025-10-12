@@ -15,12 +15,16 @@ export default function RidePaymentPending({ auth, laravelVersion, phpVersion })
     const toast = useRef(null);
 
     // Calculate final amount based on referral discount
-    const calculateFinalAmount = (booking) => {
+    const calculateFinalAmount = (booking, company) => {
         if (booking?.referral_code) {
-            const discountAmount = booking.total_price * (booking.booking_referral_percentage / 100);
-            return booking.total_price - discountAmount;
+            const totalPrice = parseFloat(booking.total_price) || 0;
+            const referralPercentage = parseFloat(company?.booking_referral_percentage) || 0;
+
+            const discountAmount = totalPrice * (referralPercentage / 100);
+            return totalPrice - discountAmount;
         }
-        return booking.total_price;
+
+        return parseFloat(booking?.total_price) || 0;
     };
 
     const finalAmount = calculateFinalAmount(booking);

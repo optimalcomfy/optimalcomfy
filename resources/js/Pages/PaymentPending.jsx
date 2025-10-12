@@ -15,14 +15,15 @@ export default function PaymentPending({ auth, laravelVersion, phpVersion }) {
     const toast = useRef(null);
 
     // Calculate final amount based on referral discount
-    const calculateFinalAmount = () => {
-        if (booking.referral_code && booking.referral_discount > 0) {
-            return booking.total_price - booking.referral_discount;
+    const calculateFinalAmount = (booking) => {
+        if (booking?.referral_code) {
+            const discountAmount = booking.total_price * (booking.booking_referral_percentage / 100);
+            return booking.total_price - discountAmount;
         }
         return booking.total_price;
     };
 
-    const finalAmount = calculateFinalAmount();
+    const finalAmount = calculateFinalAmount(booking);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-KE', {
@@ -105,10 +106,10 @@ export default function PaymentPending({ auth, laravelVersion, phpVersion }) {
                                         </div>
 
                                         {/* Show referral discount if applicable */}
-                                        {booking.referral_code && booking.referral_discount > 0 && (
+                                        {booking.referral_code && (
                                             <div className="flex justify-between text-green-600">
                                                 <span>Referral Discount ({company?.booking_referral_percentage || 0}%):</span>
-                                                <span>- {formatCurrency(booking.referral_discount)}</span>
+                                                <span>- {formatCurrency(booking.total_price * (company?.booking_referral_percentage || 0) / 100)}</span>
                                             </div>
                                         )}
 

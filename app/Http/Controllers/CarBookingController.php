@@ -425,8 +425,11 @@ class CarBookingController extends Controller
 
     public function paymentPending(CarBooking $booking, Request $request)
     {
+        $company = Company::first();
+
         return Inertia::render('RidePaymentPending', [
             'booking' => $booking,
+            'company' => $company,
             'message' => $request->message ?? 'Payment is being processed.'
         ]);
     }

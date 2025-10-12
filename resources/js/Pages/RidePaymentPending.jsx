@@ -9,10 +9,20 @@ import { Toast } from 'primereact/toast';
 import { useRef } from 'react';
 
 export default function RidePaymentPending({ auth, laravelVersion, phpVersion }) {
-    const { booking: initialBooking, message } = usePage().props;
+    const { booking: initialBooking, message, company } = usePage().props;
     const [booking, setBooking] = useState(initialBooking);
     const [isLoading, setIsLoading] = useState(false);
     const toast = useRef(null);
+
+    // Calculate final amount based on referral discount
+    const calculateFinalAmount = () => {
+        if (booking.referral_code && booking.referral_discount > 0) {
+            return booking.total_price - booking.referral_discount;
+        }
+        return booking.total_price;
+    };
+
+    const finalAmount = calculateFinalAmount();
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-KE', {
@@ -26,11 +36,11 @@ export default function RidePaymentPending({ auth, laravelVersion, phpVersion })
         try {
             const response = await fetch(route('ride.payment.status', { booking: booking.id }));
             const data = await response.json();
-            
+
             if (!response.ok) throw new Error('Failed to check payment status');
-            
+
             setBooking(prev => ({ ...prev, ...data }));
-            
+
             if (data.paid) {
                 toast.current.show({
                     severity: 'success',
@@ -58,11 +68,11 @@ export default function RidePaymentPending({ auth, laravelVersion, phpVersion })
 
     useEffect(() => {
         checkPaymentStatus();
-        
+
         const interval = setInterval(() => {
             checkPaymentStatus();
         }, 15000);
-        
+
         return () => clearInterval(interval);
     }, []);
 
@@ -72,7 +82,7 @@ export default function RidePaymentPending({ auth, laravelVersion, phpVersion })
                 <Head title="Payment Pending" />
                 <HomeLayout>
                     <Toast ref={toast} position="top-right" />
-                    
+
                     <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
                         <div className="bg-white shadow rounded-lg p-6">
                             {message && (
@@ -82,13 +92,44 @@ export default function RidePaymentPending({ auth, laravelVersion, phpVersion })
                             )}
 
                             <h1 className="text-2xl font-bold mb-4">Payment Pending</h1>
-                            
+
                             <div className="space-y-4">
-                                <div>
-                                    <span className="font-semibold">Amount:</span>
-                                    <span> {formatCurrency(booking.total_price)}</span>
+                                {/* Price Breakdown */}
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <h3 className="font-semibold mb-3">Payment Summary</h3>
+
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <span>Original Amount:</span>
+                                            <span>{formatCurrency(booking.total_price)}</span>
+                                        </div>
+
+                                        {/* Show referral discount if applicable */}
+                                        {booking.referral_code && booking.referral_discount > 0 && (
+                                            <div className="flex justify-between text-green-600">
+                                                <span>Referral Discount ({company?.booking_referral_percentage || 0}%):</span>
+                                                <span>- {formatCurrency(booking.referral_discount)}</span>
+                                            </div>
+                                        )}
+
+                                        <div className="border-t pt-2 mt-2">
+                                            <div className="flex justify-between font-bold text-lg">
+                                                <span>Final Amount:</span>
+                                                <span>{formatCurrency(finalAmount)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Referral information */}
+                                    {booking.referral_code && (
+                                        <div className="mt-3 p-2 bg-green-50 rounded border border-green-200">
+                                            <p className="text-sm text-green-700">
+                                                ✅ Referral code applied: <strong>{booking.referral_code}</strong>
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
-                                
+
                                 <div className="flex items-center">
                                     <span className="font-semibold">Status:</span>
                                     <span className={`px-2 py-1 rounded ml-2 ${
@@ -100,7 +141,7 @@ export default function RidePaymentPending({ auth, laravelVersion, phpVersion })
                                     </span>
                                     {isLoading && <ProgressSpinner style={{width: '20px', height: '20px'}} className="ml-2" />}
                                 </div>
-                                
+
                                 <div>
                                     <span className="font-semibold">Last Updated:</span>
                                     <span> {new Date(booking.updated_at).toLocaleString()}</span>
@@ -109,11 +150,12 @@ export default function RidePaymentPending({ auth, laravelVersion, phpVersion })
 
                             <div className="mt-6 p-4 bg-gray-50 rounded">
                                 <p className="mb-2">Please complete the M-Pesa payment on your phone.</p>
+                                <p className="font-semibold text-lg mb-2">Amount to pay: {formatCurrency(finalAmount)}</p>
                                 <p>Status will auto-refresh every 15 seconds.</p>
                             </div>
 
                             <div className="mt-6 flex justify-between">
-                                <button 
+                                <button
                                     onClick={checkPaymentStatus}
                                     disabled={isLoading}
                                     className="px-4 py-2 bg-[#ffd975] hover:text-white rounded hover:bg-blue-700 disabled:bg-blue-300 flex items-center gap-2"

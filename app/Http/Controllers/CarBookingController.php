@@ -291,9 +291,11 @@ class CarBookingController extends Controller
 
             $callbackUrl = $callbackBase . '?data=' . urlencode(json_encode($callbackData));
 
+            $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
+
             $this->STKPush(
                 'Paybill',
-                $booking->total_price,
+                $finalAmount,
                 $request->phone,
                 $callbackUrl,
                 'reference',

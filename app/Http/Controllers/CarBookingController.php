@@ -270,6 +270,7 @@ class CarBookingController extends Controller
             'dropoff_location'=> $request->pickup_location,
             'status'          => 'pending',
             'special_requests'=> $request->special_requests,
+            'referral_code'=> $request->referral_code
         ]);
 
         try {

@@ -258,6 +258,7 @@ class BookingController extends Controller
             'check_out_date' => 'required|date|after:check_in_date',
             'total_price' => 'required|numeric|min:1',
             'variation_id' => 'nullable',
+            'referral_code' => 'nullable',
             'phone' => 'required|string'
         ]);
 

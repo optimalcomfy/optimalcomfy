@@ -8,6 +8,7 @@ use App\Models\CarBooking;
 use App\Models\Car;
 use App\Models\User;
 use App\Models\Payment;
+use App\Models\Refund;
 use App\Models\Company;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ use App\Mail\BookingConfirmation;
 use App\Mail\CarBookingConfirmation;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\CancelledCarBooking;
+use App\Mail\RefundNotification;
 
 use Illuminate\Http\JsonResponse;
 
@@ -184,6 +186,52 @@ class CarBookingController extends Controller
         });
 
         return response()->json($exportData);
+    }
+
+    // Add refund handling method
+    public function handleRefund(Request $request, CarBooking $carBooking, SmsService $smsService)
+    {
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'reason' => 'required_if:action,reject|max:255',
+            'refund_amount' => 'required_if:action,approve|numeric|min:0|max:'.$carBooking->total_price,
+        ]);
+
+        if ($request->action === 'approve') {
+            $carBooking->update([
+                'refund_approval' => 'approved',
+                'refund_amount' => $request->refund_amount,
+                'non_refund_reason' => null,
+            ]);
+
+            Refund::create([
+                "amount" => $request->refund_amount,
+                "booking_id" => null,
+                "car_booking_id" => $carBooking->id,
+            ]);
+
+            // Send SMS notification for refund approval
+            $this->sendCarRefundSms($carBooking, 'approved', $request->refund_amount, $smsService);
+
+            Mail::to($carBooking->user->email)
+                ->send(new RefundNotification($carBooking, 'approved'));
+
+            return redirect()->back()->with('success', 'Refund approved successfully.');
+        } else {
+            $carBooking->update([
+                'refund_approval' => 'rejected',
+                'non_refund_reason' => $request->reason,
+                'refund_amount' => 0,
+            ]);
+
+            // Send SMS notification for refund rejection
+            $this->sendCarRefundSms($carBooking, 'rejected', 0, $smsService, $request->reason);
+
+            Mail::to($carBooking->user->email)
+                ->send(new RefundNotification($carBooking, 'rejected', $request->reason));
+
+            return redirect()->back()->with('success', 'Refund rejected successfully.');
+        }
     }
 
     public function cancel(Request $request, SmsService $smsService)
@@ -733,6 +781,29 @@ class CarBookingController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Car cancellation SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    // Add refund SMS method for car bookings
+    private function sendCarRefundSms(CarBooking $booking, string $status, float $amount = 0, SmsService $smsService, string $reason = '')
+    {
+        try {
+            $user = $booking->user;
+            $car = $booking->car;
+
+            if ($status === 'approved') {
+                $message = "Hello {$user->name}, your refund request for car booking #{$booking->number} ({$car->name}) has been approved. Amount: KES {$amount}. Refund will be processed within 3-5 business days.";
+            } else {
+                $message = "Hello {$user->name}, your refund request for car booking #{$booking->number} ({$car->name}) has been rejected.";
+                if (!empty($reason)) {
+                    $message .= " Reason: {$reason}";
+                }
+            }
+
+            $smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            \Log::error('Car refund SMS failed: ' . $e->getMessage());
         }
     }
 }

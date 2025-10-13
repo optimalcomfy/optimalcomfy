@@ -5,7 +5,7 @@ import { FaCalendarAlt, FaMapMarkerAlt, FaEye, FaUser, FaHome, FaMoneyBillWave, 
 import Swal from 'sweetalert2';
 
 const BookingShow = () => {
-  const { booking, auth, errors } = usePage().props;
+  const { booking, auth, errors, max_refundable_amount } = usePage().props;
   const roleId = parseInt(auth.user?.role_id);
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -161,7 +161,7 @@ const BookingShow = () => {
 
   const bookingStatus = getBookingStatus();
 
-    const handleCancelBooking = () => {
+  const handleCancelBooking = () => {
     Swal.fire({
       title: 'Cancel Booking',
       html: `
@@ -187,7 +187,7 @@ const BookingShow = () => {
       if (result.isConfirmed) {
         router.put(route('stay-bookings.cancel', booking.id), {
           cancel_reason: result.value,
-          id:booking.id,
+          id: booking.id,
           preserveScroll: true,
           onSuccess: () => {
             Swal.fire(
@@ -208,25 +208,71 @@ const BookingShow = () => {
     });
   };
 
-
   const handleRefund = () => {
+    const maxRefundable = parseFloat(max_refundable_amount);
+    const isNonRefundable = maxRefundable === 0;
+    const isPartiallyRefundable = maxRefundable > 0 && maxRefundable < booking.total_price;
+
     Swal.fire({
       title: 'Process Refund Request',
       html: `
         <div style="text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <!-- Refund Information Banner -->
+          ${isNonRefundable ? `
+            <div style="
+              background: #fef2f2;
+              border: 1px solid #fecaca;
+              border-radius: 8px;
+              padding: 16px;
+              margin-bottom: 20px;
+              color: #dc2626;
+            ">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Non-refundable</strong>
+              </div>
+              <p style="margin: 8px 0 0 0; font-size: 14px;">
+                ${booking.checked_out ?
+                  'This booking cannot be refunded as the stay has already been completed.' :
+                  booking.checked_in ?
+                  'This booking cannot be refunded as more than 50% of the stay has been completed.' :
+                  'This booking cannot be refunded as cancellation is within 24 hours of check-in.'
+                }
+              </p>
+            </div>
+          ` : isPartiallyRefundable ? `
+            <div style="
+              background: #fffbeb;
+              border: 1px solid #fed7aa;
+              border-radius: 8px;
+              padding: 16px;
+              margin-bottom: 20px;
+              color: #ea580c;
+            ">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-info-circle"></i>
+                <strong>Partial Refund Available</strong>
+              </div>
+              <p style="margin: 8px 0 0 0; font-size: 14px;">
+                Only partial refund is available based on the remaining nights of the stay.
+              </p>
+            </div>
+          ` : ''}
+
           <!-- Action Selection Card -->
           <div style="
-            background: #f8fafc; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 12px; 
-            padding: 20px; 
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 24px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            ${isNonRefundable ? 'opacity: 0.6; pointer-events: none;' : ''}
           ">
             <h4 style="
-              margin: 0 0 16px 0; 
-              color: #334155; 
-              font-size: 16px; 
+              margin: 0 0 16px 0;
+              color: #334155;
+              font-size: 16px;
               font-weight: 600;
               display: flex;
               align-items: center;
@@ -234,28 +280,29 @@ const BookingShow = () => {
               <i class="fas fa-tasks" style="color: #6366f1; margin-right: 8px; font-size: 14px;"></i>
               Select Action
             </h4>
-            
+
             <div style="display: flex; flex-direction: column; gap: 12px;">
               <label style="
-                display: flex; 
-                align-items: center; 
-                padding: 12px 16px; 
-                background: white; 
-                border: 2px solid #10b981; 
-                border-radius: 8px; 
-                cursor: pointer;
+                display: flex;
+                align-items: center;
+                padding: 12px 16px;
+                background: white;
+                border: 2px solid #10b981;
+                border-radius: 8px;
+                cursor: ${isNonRefundable ? 'not-allowed' : 'pointer'};
                 transition: all 0.2s ease;
                 font-weight: 500;
                 color: #065f46;
+                ${isNonRefundable ? 'opacity: 0.6;' : ''}
               " for="approveRefund">
-                <input 
-                  type="radio" 
-                  id="approveRefund" 
-                  name="refundAction" 
-                  value="approve" 
-                  checked 
+                <input
+                  type="radio"
+                  id="approveRefund"
+                  name="refundAction"
+                  value="approve"
+                  ${isNonRefundable ? 'disabled' : 'checked'}
                   style="
-                    margin-right: 12px; 
+                    margin-right: 12px;
                     transform: scale(1.2);
                     accent-color: #10b981;
                   "
@@ -263,26 +310,27 @@ const BookingShow = () => {
                 <i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>
                 Approve Refund
               </label>
-              
+
               <label style="
-                display: flex; 
-                align-items: center; 
-                padding: 12px 16px; 
-                background: white; 
-                border: 2px solid #e5e7eb; 
-                border-radius: 8px; 
+                display: flex;
+                align-items: center;
+                padding: 12px 16px;
+                background: white;
+                border: 2px solid #e5e7eb;
+                border-radius: 8px;
                 cursor: pointer;
                 transition: all 0.2s ease;
                 font-weight: 500;
                 color: #6b7280;
               " for="rejectRefund">
-                <input 
-                  type="radio" 
-                  id="rejectRefund" 
-                  name="refundAction" 
-                  value="reject" 
+                <input
+                  type="radio"
+                  id="rejectRefund"
+                  name="refundAction"
+                  value="reject"
+                  ${isNonRefundable ? 'checked' : ''}
                   style="
-                    margin-right: 12px; 
+                    margin-right: 12px;
                     transform: scale(1.2);
                     accent-color: #ef4444;
                   "
@@ -292,77 +340,81 @@ const BookingShow = () => {
               </label>
             </div>
           </div>
-          
+
           <!-- Refund Amount Section -->
           <div id="refundAmountGroup" style="
-            background: white; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 12px; 
-            padding: 20px; 
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 16px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            ${isNonRefundable ? 'display: none;' : ''}
           ">
             <h4 style="
-              margin: 0 0 16px 0; 
-              color: #334155; 
-              font-size: 16px; 
+              margin: 0 0 16px 0;
+              color: #334155;
+              font-size: 16px;
               font-weight: 600;
               display: flex;
               align-items: center;
             ">
               Refund Amount
             </h4>
-            
+
             <div style="position: relative;">
-              <input 
-                type="number" 
-                id="refundAmount" 
+              <input
+                type="number"
+                id="refundAmount"
                 style="
-                  width: 100%; 
-                  padding: 12px 12px 12px 28px; 
-                  border: 2px solid #e5e7eb; 
-                  border-radius: 8px; 
+                  width: 100%;
+                  padding: 12px 12px 12px 28px;
+                  border: 2px solid #e5e7eb;
+                  border-radius: 8px;
                   font-size: 16px;
                   font-weight: 600;
                   color: #374151;
                   background: #f9fafb;
                   transition: all 0.2s ease;
                   box-sizing: border-box;
-                " 
-                min="0" 
-                max="${booking.total_price}" 
-                value="${booking.total_price}"
+                  ${isNonRefundable ? 'background: #f3f4f6; color: #9ca3af;' : ''}
+                "
+                min="0"
+                max="${maxRefundable}"
+                value="${maxRefundable}"
                 step="0.01"
                 placeholder="0.00"
+                ${isNonRefundable ? 'disabled' : ''}
               >
             </div>
-            
+
             <div style="
-              margin-top: 8px; 
-              font-size: 13px; 
+              margin-top: 8px;
+              font-size: 13px;
               color: #6b7280;
               display: flex;
               align-items: center;
             ">
               <i class="fas fa-info-circle" style="margin-right: 6px; color: #3b82f6;"></i>
-              Maximum refundable amount: ${booking.total_price}
+              Maximum refundable amount: KES ${maxRefundable.toFixed(2)}
+              ${isPartiallyRefundable ? ' (Partial refund based on remaining nights)' : ''}
             </div>
           </div>
-          
+
           <!-- Rejection Reason Section -->
           <div id="rejectReasonGroup" style="
-            background: white; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 12px; 
-            padding: 20px; 
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 16px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            display: none;
+            display: ${isNonRefundable ? 'block' : 'none'};
           ">
             <h4 style="
-              margin: 0 0 16px 0; 
-              color: #334155; 
-              font-size: 16px; 
+              margin: 0 0 16px 0;
+              color: #334155;
+              font-size: 16px;
               font-weight: 600;
               display: flex;
               align-items: center;
@@ -370,16 +422,16 @@ const BookingShow = () => {
               <i class="fas fa-comment-alt" style="color: #ef4444; margin-right: 8px; font-size: 14px;"></i>
               Reason for Rejection
             </h4>
-            
-            <textarea 
-              id="rejectReason" 
+
+            <textarea
+              id="rejectReason"
               rows="4"
               placeholder="Please provide a detailed reason for rejecting this refund request..."
               style="
-                width: 100%; 
-                padding: 12px; 
-                border: 2px solid #e5e7eb; 
-                border-radius: 8px; 
+                width: 100%;
+                padding: 12px;
+                border: 2px solid #e5e7eb;
+                border-radius: 8px;
                 font-size: 14px;
                 font-family: inherit;
                 color: #374151;
@@ -390,10 +442,10 @@ const BookingShow = () => {
                 box-sizing: border-box;
               "
             ></textarea>
-            
+
             <div style="
-              margin-top: 8px; 
-              font-size: 13px; 
+              margin-top: 8px;
+              font-size: 13px;
               color: #6b7280;
               display: flex;
               align-items: center;
@@ -406,9 +458,11 @@ const BookingShow = () => {
       `,
       width: 520,
       showCancelButton: true,
-      confirmButtonText: '<i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Submit Request',
+      confirmButtonText: isNonRefundable ?
+        '<i class="fas fa-ban" style="margin-right: 8px;"></i>Reject Refund' :
+        '<i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Submit Request',
       cancelButtonText: '<i class="fas fa-times" style="margin-right: 8px;"></i>Cancel',
-      confirmButtonColor: '#3b82f6',
+      confirmButtonColor: isNonRefundable ? '#ef4444' : '#3b82f6',
       cancelButtonColor: '#6b7280',
       customClass: {
         popup: 'professional-refund-modal',
@@ -420,21 +474,21 @@ const BookingShow = () => {
         const action = document.querySelector('input[name="refundAction"]:checked').value;
         const amount = document.getElementById('refundAmount')?.value;
         const reason = document.getElementById('rejectReason')?.value;
-        
+
         if (action === 'reject' && !reason?.trim()) {
           Swal.showValidationMessage(
             '<i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>Please provide a reason for rejection'
           );
           return false;
         }
-        
-        if (action === 'approve' && (!amount || parseFloat(amount) <= 0 || parseFloat(amount) > parseFloat(booking.total_price))) {
+
+        if (action === 'approve' && (!amount || parseFloat(amount) <= 0 || parseFloat(amount) > maxRefundable)) {
           Swal.showValidationMessage(
-            '<i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>Please enter a valid refund amount'
+            `<i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>Refund amount must be between 0 and ${maxRefundable.toFixed(2)}`
           );
           return false;
         }
-        
+
         return { action, amount, reason };
       },
       didOpen: () => {
@@ -444,7 +498,7 @@ const BookingShow = () => {
           .professional-refund-modal {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
           }
-          
+
           .professional-confirm-btn, .professional-cancel-btn {
             padding: 12px 24px !important;
             border-radius: 8px !important;
@@ -454,52 +508,58 @@ const BookingShow = () => {
             border: none !important;
             cursor: pointer !important;
           }
-          
+
           .professional-confirm-btn {
-            background: #3b82f6 !important;
+            background: ${isNonRefundable ? '#ef4444' : '#3b82f6'} !important;
             color: white !important;
           }
-          
+
           .professional-confirm-btn:hover {
-            background: #2563eb !important;
+            background: ${isNonRefundable ? '#dc2626' : '#2563eb'} !important;
             transform: translateY(-1px) !important;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+            box-shadow: 0 4px 12px rgba(${isNonRefundable ? '239, 68, 68' : '59, 130, 246'}, 0.4) !important;
           }
-          
+
           .professional-cancel-btn {
             background: #6b7280 !important;
             color: white !important;
           }
-          
+
           .professional-cancel-btn:hover {
             background: #4b5563 !important;
             transform: translateY(-1px) !important;
           }
-          
+
           input[type="number"]:focus, textarea:focus {
             outline: none !important;
             border-color: #3b82f6 !important;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
           }
-          
+
           label:has(input[type="radio"]:checked) {
             border-color: #10b981 !important;
             background: #ecfdf5 !important;
             color: #065f46 !important;
           }
-          
+
           label:has(input[name="refundAction"][value="reject"]:checked) {
             border-color: #ef4444 !important;
             background: #fef2f2 !important;
             color: #991b1b !important;
           }
+
+          input:disabled, textarea:disabled {
+            background: #f3f4f6 !important;
+            color: #9ca3af !important;
+            cursor: not-allowed !important;
+          }
         `;
         document.head.appendChild(style);
-        
+
         const refundActionRadios = document.querySelectorAll('input[name="refundAction"]');
         const refundAmountGroup = document.getElementById('refundAmountGroup');
         const rejectReasonGroup = document.getElementById('rejectReasonGroup');
-        
+
         refundActionRadios.forEach(radio => {
           radio.addEventListener('change', (e) => {
             if (e.target.value === 'approve') {
@@ -515,7 +575,7 @@ const BookingShow = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         const { action, amount, reason } = result.value;
-        
+
         // Show loading state
         Swal.fire({
           title: 'Processing...',
@@ -524,7 +584,7 @@ const BookingShow = () => {
           allowOutsideClick: false,
           allowEscapeKey: false,
         });
-        
+
         router.post(route('bookings.handle-refund', booking.id), {
           action,
           refund_amount: action === 'approve' ? amount : 0,
@@ -541,7 +601,7 @@ const BookingShow = () => {
                   <p style="font-size: 16px; margin: 0;">
                     Refund request has been <strong>${action === 'approve' ? 'approved' : 'rejected'}</strong>
                   </p>
-                  ${action === 'approve' ? `<p style="color: #6b7280; margin: 8px 0 0 0;">Amount: $${amount}</p>` : ''}
+                  ${action === 'approve' ? `<p style="color: #6b7280; margin: 8px 0 0 0;">Amount: KES ${parseFloat(amount).toFixed(2)}</p>` : ''}
                 </div>
               `,
               confirmButtonText: 'Continue',
@@ -553,6 +613,12 @@ const BookingShow = () => {
             });
           },
           onError: (errors) => {
+            let errorMessage = 'There was an error processing the refund request';
+
+            if (errors.refund_amount) {
+              errorMessage = errors.refund_amount;
+            }
+
             Swal.fire({
               icon: 'error',
               title: 'Error!',
@@ -560,7 +626,7 @@ const BookingShow = () => {
                 <div style="text-align: center; color: #374151;">
                   <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 48px; margin-bottom: 16px;"></i>
                   <p style="font-size: 16px; margin: 0;">
-                    There was an error processing the refund request
+                    ${errorMessage}
                   </p>
                   <p style="color: #6b7280; margin: 8px 0 0 0; font-size: 14px;">
                     Please try again or contact support if the issue persists
@@ -612,7 +678,7 @@ const BookingShow = () => {
               </div>
               <div className="ml-3">
                 <p className="text-sm">
-                  <span className="font-medium">{booking.property.property_name}</span> - 
+                  <span className="font-medium">{booking.property.property_name}</span> -
                   Status: <span className="font-bold capitalize">{bookingStatus}</span>
                 </p>
                 {(booking.checkin_verification_code || booking.checkout_verification_code) && (
@@ -629,7 +695,7 @@ const BookingShow = () => {
                   onClick={handleCheckIn}
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                 >
-                  <FaSignInAlt className="mr-2" /> 
+                  <FaSignInAlt className="mr-2" />
                   {booking.checkin_verification_code ? 'Verify Check In' : 'Check In'}
                 </button>
               )}
@@ -638,7 +704,7 @@ const BookingShow = () => {
                   onClick={handleCheckOut}
                   className="flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
                 >
-                  <FaSignOutAlt className="mr-2" /> 
+                  <FaSignOutAlt className="mr-2" />
                   {booking.checkout_verification_code ? 'Verify Check Out' : 'Check Out'}
                 </button>
               )}
@@ -653,9 +719,9 @@ const BookingShow = () => {
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="md:flex">
                 <div className="md:flex-shrink-0 md:w-1/3">
-                  <img 
-                    className="h-48 w-full object-cover md:h-full" 
-                    src={`/storage/${booking.property.initial_gallery[0]?.image}` || '/images/default-property.jpg'} 
+                  <img
+                    className="h-48 w-full object-cover md:h-full"
+                    src={`/storage/${booking.property.initial_gallery[0]?.image}` || '/images/default-property.jpg'}
                     alt={booking.property.property_name}
                   />
                 </div>
@@ -673,20 +739,20 @@ const BookingShow = () => {
                   <div className="mt-4 grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-500">Check-in</p>
-                      <p className="font-medium">{new Date(booking.check_in_date).toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric' 
+                      <p className="font-medium">{new Date(booking.check_in_date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
                       })}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Check-out</p>
-                      <p className="font-medium">{new Date(booking.check_out_date).toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric' 
+                      <p className="font-medium">{new Date(booking.check_out_date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
                       })}</p>
                     </div>
                   </div>
@@ -773,7 +839,7 @@ const BookingShow = () => {
                   <p className="text-sm text-gray-500">Key location</p>
                   <p className="font-medium">{booking.property.key_location}</p>
                 </div>
-                                <div>
+                <div>
                   <p className="text-sm text-gray-500">Apartment name</p>
                   <p className="font-medium">{booking.property.apartment_name}</p>
                 </div>
@@ -911,24 +977,24 @@ const BookingShow = () => {
 
               {errors.cancel_reason &&
               <div className="mt-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md flex items-start">
-                <svg 
-                  className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
                 <span>{errors.cancel_reason}</span>
               </div>}
 
               {!booking.checked_out && booking.status !== 'Cancelled' && booking.status !== 'failed' && (
-                  <button 
+                  <button
                     onClick={handleCancelBooking}
                     className="px-8 py-2 w-full flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-md transition duration-150"
                   >
@@ -946,13 +1012,37 @@ const BookingShow = () => {
                   {booking.cancel_reason}
                 </p>
 
-                {roleId === 1 && (
-                  <button 
+                {roleId === 1 && booking.refund_approval === null && (
+                  <button
                     onClick={handleRefund}
                     className="px-8 py-2 w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-150"
                   >
                     Process Refund
                   </button>
+                )}
+
+                {booking.refund_approval === 'approved' && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <FaCheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-green-800 font-medium">Refund Approved</span>
+                    </div>
+                    <p className="text-green-700 text-sm mt-1">
+                      Amount: KES {parseFloat(booking.refund_amount).toFixed(2)}
+                    </p>
+                  </div>
+                )}
+
+                {booking.refund_approval === 'rejected' && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <FaTimes className="h-5 w-5 text-red-500 mr-2" />
+                      <span className="text-red-800 font-medium">Refund Rejected</span>
+                    </div>
+                    <p className="text-red-700 text-sm mt-1">
+                      Reason: {booking.non_refund_reason}
+                    </p>
+                  </div>
                 )}
               </div>
             )}

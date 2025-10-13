@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreBookingRequest;
-use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
 use App\Models\CarBooking;
 use App\Models\User;
 use App\Models\Property;
 use App\Models\Payment;
+use App\Models\Refund;
 use App\Models\Company;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
@@ -18,15 +17,12 @@ use App\Http\Controllers\PesapalController;
 use App\Http\Controllers\MpesaStkController;
 use App\Services\MpesaStkService;
 use App\Traits\Mpesa;
-
 use App\Mail\BookingConfirmation;
 use App\Mail\CarBookingConfirmation;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RefundNotification;
-
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
-
 use App\Mail\CheckInVerification;
 use App\Mail\CheckOutVerification;
 use App\Mail\BookingCancelled;
@@ -213,24 +209,54 @@ class BookingController extends Controller
 
     public function handleRefund(Request $request, Booking $booking, SmsService $smsService)
     {
+        // Calculate maximum refundable amount
+        $maxRefundable = $booking->max_refundable_amount;
+
         $request->validate([
             'action' => 'required|in:approve,reject',
-            'reason' => 'required_if:action,reject|max:255',
-            'refund_amount' => 'required_if:action,approve|numeric|min:0|max:'.$booking->total_price,
+            'reason' => 'required_if:action,reject|max:500',
+            'refund_amount' => [
+                'required_if:action,approve',
+                'numeric',
+                'min:0',
+                'max:' . $maxRefundable,
+            ],
+        ], [
+            'refund_amount.max' => 'Refund amount cannot exceed the maximum refundable amount of KES ' . number_format($maxRefundable, 2),
         ]);
 
+        // Double-check the amount server-side (important security measure)
+        if ($request->action === 'approve' && $request->refund_amount > $maxRefundable) {
+            return redirect()->back()->withErrors([
+                'refund_amount' => 'Refund amount cannot exceed the maximum refundable amount of KES ' . number_format($maxRefundable, 2)
+            ]);
+        }
+
         if ($request->action === 'approve') {
+            // Check if refund amount is reasonable
+            if ($request->refund_amount <= 0) {
+                return redirect()->back()->withErrors([
+                    'refund_amount' => 'Refund amount must be greater than 0'
+                ]);
+            }
+
             $booking->update([
                 'refund_approval' => 'approved',
                 'refund_amount' => $request->refund_amount,
                 'non_refund_reason' => null,
             ]);
 
+            Refund::create([
+                "amount" => $request->refund_amount,
+                "booking_id" => $booking->id,
+                "car_booking_id" => null,
+            ]);
+
             // Send SMS notification for refund approval
             $this->sendRefundSms($booking, 'approved', $request->refund_amount, $smsService);
 
             Mail::to($booking->user->email)
-            ->send(new RefundNotification($booking, 'approved'));
+                ->send(new RefundNotification($booking, 'approved'));
 
             return redirect()->back()->with('success', 'Refund approved successfully.');
         } else {
@@ -244,7 +270,7 @@ class BookingController extends Controller
             $this->sendRefundSms($booking, 'rejected', 0, $smsService, $request->reason);
 
             Mail::to($booking->user->email)
-            ->send(new RefundNotification($booking, 'rejected', $request->reason));
+                ->send(new RefundNotification($booking, 'rejected', $request->reason));
 
             return redirect()->back()->with('success', 'Refund rejected successfully.');
         }
@@ -447,7 +473,6 @@ class BookingController extends Controller
 
     public function paymentPending(Booking $booking, Request $request)
     {
-
         $company = Company::first();
 
         return Inertia::render('PaymentPending', [
@@ -509,6 +534,10 @@ class BookingController extends Controller
         } else {
             $booking = Booking::where('number', $request->number)->first();
 
+            if (!$booking) {
+                return back()->withErrors(['number' => 'Booking not found.']);
+            }
+
             return Inertia::render('RistayPass', [
                 'booking' => $booking->load([
                     'user',
@@ -520,23 +549,23 @@ class BookingController extends Controller
                 ]),
             ]);
         }
-
-        if (!$booking) {
-            return back()->withErrors(['number' => 'Booking not found.']);
-        }
     }
 
     public function show(Booking $booking)
     {
+        $booking->load([
+            'user',
+            'property.propertyAmenities',
+            'property.propertyFeatures',
+            'property.initialGallery',
+            'property.PropertyServices',
+            'property.user',
+            'refunds'
+        ]);
+
         return Inertia::render('Bookings/Show', [
-            'booking' => $booking->load([
-                'user',
-                'property.propertyAmenities',
-                'property.propertyFeatures',
-                'property.initialGallery',
-                'property.PropertyServices',
-                'property.user',
-            ]),
+            'booking' => $booking,
+            'max_refundable_amount' => $booking->max_refundable_amount,
         ]);
     }
 

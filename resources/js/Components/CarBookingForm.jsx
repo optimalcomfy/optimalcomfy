@@ -52,6 +52,8 @@ const CarBookingForm = () => {
 
   const days = calculateDays();
   const totalPrice = days * car.platform_price;
+
+
   const finalPrice = totalPrice - referralData.discountAmount;
 
   const handleLocationSelect = (location, field) => {

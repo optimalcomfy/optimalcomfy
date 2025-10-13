@@ -27,7 +27,7 @@ export default function PaymentPending({ auth, laravelVersion, phpVersion }) {
         return parseFloat(booking?.total_price) || 0;
     }
 
-    const finalAmount = calculateFinalAmount(booking);
+    const finalAmount = calculateFinalAmount(booking, company);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-KE', {

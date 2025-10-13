@@ -21,13 +21,15 @@ export default function RidePaymentPending({ auth, laravelVersion, phpVersion })
             const referralPercentage = parseFloat(company?.booking_referral_percentage) || 0;
 
             const discountAmount = totalPrice * (referralPercentage / 100);
+
+
             return totalPrice - discountAmount;
         }
 
         return parseFloat(booking?.total_price) || 0;
     };
 
-    const finalAmount = calculateFinalAmount(booking);
+    const finalAmount = calculateFinalAmount(booking, company);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-KE', {

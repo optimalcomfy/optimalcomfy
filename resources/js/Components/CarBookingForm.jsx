@@ -25,7 +25,8 @@ const CarBookingForm = () => {
     password: '',
     message: '',
     is_registered: false,
-    referral_code: ''
+    referral_code: '',
+    total_price: 0,
   });
 
   // Location suggestions state
@@ -172,49 +173,49 @@ const CarBookingForm = () => {
     }
   },[auth])
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-    if (!data.start_date || !data.end_date) {
-      alert('Please select valid pickup and return dates');
-      return;
-    }
-
-    if (!data.car_id) {
-      alert('Please select a vehicle');
-      return;
-    }
-
-    if (!data.pickup_location) {
-      alert('Please select pickup and dropoff locations');
-      return;
-    }
-
-    try {
-      const bookingData = {
-        ...data,
-        referral_discount: referralData.discountAmount,
-        final_price: finalPrice
-      };
-
-      let userId = auth.user?.id;
-      bookingData.user_id = userId;
-
-      post(route('car-bookings.store'), {
-        data: bookingData,
-        onSuccess: () => {
-          // Handle success
-        },
-        onError: (formErrors) => {
-            alert(formErrors.message || 'Booking failed. Please check the form and try again.');
+        if (!data.start_date || !data.end_date) {
+            alert('Please select valid pickup and return dates');
+            return;
         }
-      });
 
-    } catch (error) {
-      console.error("Handle submit error:", error);
-      alert(error.response?.data?.message || 'An unexpected error occurred. Please try again.');
-    }
-  };
+        if (!data.car_id) {
+            alert('Please select a vehicle');
+            return;
+        }
+
+        if (!data.pickup_location) {
+            alert('Please select pickup and dropoff locations');
+            return;
+        }
+
+        try {
+            const bookingData = {
+                ...data,
+                referral_discount: referralData.discountAmount,
+                total_price: totalPrice,
+                user_id: auth.user?.id
+            };
+
+            console.log(bookingData);
+
+            // Use router.post instead of form.post
+            router.post(route('car-bookings.store'), bookingData, {
+                onSuccess: () => {
+                    // Handle success
+                },
+                onError: (formErrors) => {
+                    alert(formErrors.message || 'Booking failed. Please check the form and try again.');
+                }
+            });
+
+        } catch (error) {
+            console.error("Handle submit error:", error);
+            alert(error.response?.data?.message || 'An unexpected error occurred. Please try again.');
+        }
+    };
 
   useEffect(() => {
     const handleClickOutside = (event) => {

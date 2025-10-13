@@ -259,14 +259,13 @@ class CarBookingController extends Controller
         // Ensure at least 1 day
         $days = max($days, 1);
 
-        $totalPrice = $car->price_per_day * $days;
 
         $booking = CarBooking::create([
             'user_id'         => $user->id,
             'car_id'          => $request->car_id,
             'start_date'      => $request->start_date,
             'end_date'        => $request->end_date,
-            'total_price'     => $totalPrice,
+            'total_price'     => $request->total_price,
             'pickup_location' => $request->pickup_location,
             'dropoff_location'=> $request->pickup_location,
             'status'          => 'pending',

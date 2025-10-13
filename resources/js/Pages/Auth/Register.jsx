@@ -44,6 +44,7 @@ export default function Register() {
     const [showSelfieModal, setShowSelfieModal] = useState(false);
     const [isCapturing, setIsCapturing] = useState(false);
     const [capturedImage, setCapturedImage] = useState(null);
+    const [cameraReady, setCameraReady] = useState(false);
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const streamRef = useRef(null);
@@ -74,6 +75,28 @@ export default function Register() {
     const startCamera = async () => {
         try {
             setIsCapturing(true);
+            setShowSelfieModal(true);
+            setCameraReady(false);
+
+        } catch (error) {
+            console.error('Error preparing camera:', error);
+            toast.error('Unable to prepare camera. Please try again.');
+            setIsCapturing(false);
+            setShowSelfieModal(false);
+        }
+    };
+
+    // Initialize camera when modal opens
+    const initializeCamera = async () => {
+        if (!videoRef.current) {
+            console.error('Video element not available');
+            toast.error('Camera initialization failed. Please try again.');
+            setIsCapturing(false);
+            setShowSelfieModal(false);
+            return;
+        }
+
+        try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     width: { ideal: 1280 },
@@ -81,19 +104,37 @@ export default function Register() {
                     facingMode: 'user'
                 }
             });
+
             streamRef.current = stream;
             videoRef.current.srcObject = stream;
-            setShowSelfieModal(true);
+
+            // Wait for video to be ready
+            videoRef.current.onloadedmetadata = () => {
+                setCameraReady(true);
+            };
+
         } catch (error) {
             console.error('Error accessing camera:', error);
             toast.error('Unable to access camera. Please check permissions.');
             setIsCapturing(false);
+            setShowSelfieModal(false);
         }
     };
 
     const captureSelfie = () => {
+        if (!cameraReady) {
+            toast.error('Camera is not ready yet. Please wait.');
+            return;
+        }
+
         const video = videoRef.current;
         const canvas = canvasRef.current;
+
+        if (!video || !canvas || video.readyState !== 4) {
+            toast.error('Camera not ready. Please try again.');
+            return;
+        }
+
         const context = canvas.getContext('2d');
 
         // Set canvas dimensions to match video
@@ -105,13 +146,18 @@ export default function Register() {
 
         // Convert canvas to blob and create file
         canvas.toBlob((blob) => {
-            const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
-            setData('profile_picture', file);
-            setCapturedImage(canvas.toDataURL('image/jpeg'));
-            stopCamera();
-            setShowSelfieModal(false);
-            toast.success('Selfie captured successfully!');
-        }, 'image/jpeg', 0.9);
+            if (blob) {
+                const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+                setData('profile_picture', file);
+                setCapturedImage(canvas.toDataURL('image/jpeg'));
+                stopCamera();
+                setShowSelfieModal(false);
+                setCameraReady(false);
+                toast.success('Selfie captured successfully!');
+            } else {
+                toast.error('Failed to capture image. Please try again.');
+            }
+        }, 'image/jpeg', 0.8);
     };
 
     const stopCamera = () => {
@@ -120,12 +166,7 @@ export default function Register() {
             streamRef.current = null;
         }
         setIsCapturing(false);
-    };
-
-    const retakeSelfie = () => {
-        setCapturedImage(null);
-        setData('profile_picture', null);
-        startCamera();
+        setCameraReady(false);
     };
 
     const handleFileUpload = (e) => {
@@ -153,7 +194,7 @@ export default function Register() {
         setCapturedImage(null);
     };
 
-    // Clean up camera on unmount
+    // Clean up camera on unmount or when modal closes
     useEffect(() => {
         return () => {
             if (streamRef.current) {
@@ -161,6 +202,18 @@ export default function Register() {
             }
         };
     }, []);
+
+    // Initialize camera when modal opens
+    useEffect(() => {
+        if (showSelfieModal) {
+            // Use requestAnimationFrame for better performance
+            const timer = requestAnimationFrame(() => {
+                initializeCamera();
+            });
+
+            return () => cancelAnimationFrame(timer);
+        }
+    }, [showSelfieModal]);
 
     const canSubmit = data.agree_terms && data.confirm_age;
 
@@ -204,6 +257,7 @@ export default function Register() {
             <HomeLayout>
             <div className="min-h-screen flex flex-col items-center justify-center px-4 text-xl py-10">
                 <Head title="Register - Ristay" />
+                <ToastContainer />
 
                 {/* Selfie Capture Modal */}
                 {showSelfieModal && (
@@ -216,27 +270,42 @@ export default function Register() {
                                     ref={videoRef}
                                     autoPlay
                                     playsInline
+                                    muted
                                     className="w-full h-64 bg-gray-200 rounded"
                                 />
                                 <canvas
                                     ref={canvasRef}
                                     className="hidden"
                                 />
+
+                                {!cameraReady && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-gray-200 rounded">
+                                        <div className="text-center">
+                                            <p className="text-sm text-gray-600 mt-2">Initializing camera...</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex justify-center gap-4 mt-4">
                                 <button
                                     type="button"
                                     onClick={captureSelfie}
-                                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                    disabled={!cameraReady}
+                                    className={`px-4 py-2 rounded transition ${
+                                        cameraReady
+                                            ? 'bg-green-500 text-white hover:bg-green-600'
+                                            : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                    }`}
                                 >
-                                    Capture
+                                    {cameraReady ? 'Capture' : 'Loading...'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => {
                                         stopCamera();
                                         setShowSelfieModal(false);
+                                        setCameraReady(false);
                                     }}
                                     className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
                                 >
@@ -245,7 +314,10 @@ export default function Register() {
                             </div>
 
                             <p className="text-sm text-gray-600 mt-2 text-center">
-                                Position your face in the frame and click Capture
+                                {cameraReady
+                                    ? 'Position your face in the frame and click Capture'
+                                    : 'Please wait while we initialize your camera...'
+                                }
                             </p>
                         </div>
                     </div>
@@ -503,7 +575,7 @@ export default function Register() {
                                                 <div className="flex items-center gap-4">
                                                     <div className="relative">
                                                         <img
-                                                            src={capturedImage || URL.createObjectURL(data.profile_picture)}
+                                                            src={capturedImage || (data.profile_picture ? URL.createObjectURL(data.profile_picture) : '')}
                                                             alt="Profile preview"
                                                             className="w-20 h-20 rounded-full object-cover border-2 border-peachDark"
                                                         />
@@ -516,7 +588,7 @@ export default function Register() {
                                                         </button>
                                                     </div>
                                                     <span className="text-sm text-gray-600">
-                                                        {capturedImage ? 'Selfie captured' : data.profile_picture.name}
+                                                        {capturedImage ? 'Selfie captured' : data.profile_picture?.name}
                                                     </span>
                                                 </div>
                                             )}
@@ -545,7 +617,7 @@ export default function Register() {
                                                         onClick={startCamera}
                                                         className="w-full p-2 border border-peachDark text-peachDark rounded hover:bg-peachDark hover:text-white transition"
                                                     >
-                                                        {isCapturing ? 'Capturing...' : 'Take Selfie'}
+                                                        {isCapturing ? 'Opening Camera...' : 'Take Selfie'}
                                                     </button>
                                                 </div>
                                             </div>

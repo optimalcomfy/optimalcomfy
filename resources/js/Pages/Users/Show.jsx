@@ -99,13 +99,13 @@ const Show = ({ user }) => {
               <p className="opacity-90 capitalize">{roleMap[user.role_id] || 'User'} Profile</p>
             </div>
             {user.ristay_verified == "1" ? (
-              <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1 rounded-full">
+              <div className="flex items-center gap-2 bg-green-500 px-3 py-1 rounded-full">
                 <FiCheckCircle className="text-green-300" />
-                <span className="text-green-200 font-medium">Ristay Verified</span>
+                <span className="text-white font-medium">Ristay Verified</span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1 rounded-full">
-                <span className="text-yellow-200 font-medium">Not Verified</span>
+              <div className="flex items-center gap-2 bg-[#f36722] px-3 py-1 rounded-full">
+                <span className="text-white font-medium">Not Verified</span>
               </div>
             )}
           </div>

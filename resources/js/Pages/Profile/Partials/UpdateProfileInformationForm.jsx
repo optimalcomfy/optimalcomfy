@@ -12,7 +12,7 @@ import { Avatar } from "primereact/avatar";
 export default function UpdateProfileInformation({ mustVerifyEmail, status, className = '' }) {
     const user = usePage().props.auth.user;
     const fileUploadRef = useRef(null);
-    
+
     const countries = [
         { name: 'United States', code: 'US' },
         { name: 'Canada', code: 'CA' },
@@ -52,7 +52,7 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
         const file = e.target.files[0];
         if (file) {
             setData(field, file);
-            
+
             // Create preview
             const reader = new FileReader();
             reader.onload = (event) => {
@@ -67,7 +67,7 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
 
     const submit = (e) => {
         e.preventDefault();
-        
+
         const formData = new FormData();
         Object.keys(data).forEach(key => {
             if (data[key] !== null) {
@@ -95,26 +95,26 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
                 <div className="flex flex-col items-center mb-6">
                     <div className="relative mb-4">
                         {preview.profile ? (
-                            <Avatar 
-                                image={preview.profile} 
-                                size="xlarge" 
-                                shape="circle" 
+                            <Avatar
+                                image={preview.profile}
+                                size="xlarge"
+                                shape="circle"
                                 className="w-32 h-32 border-2 border-primary"
                             />
                         ) : (
-                            <Avatar 
-                                icon="pi pi-user" 
-                                size="xlarge" 
-                                shape="circle" 
+                            <Avatar
+                                icon="pi pi-user"
+                                size="xlarge"
+                                shape="circle"
                                 className="w-32 h-32 bg-gray-200 border-2 border-primary"
                             />
                         )}
                     </div>
-                    <label className="btn btn-primary cursor-pointer">
+                    <label className="btn btn-primary cursor-pointer text-white" style={{backgroundColor: "#f36722"}}>
                         <span>Upload Profile Picture</span>
-                        <input 
-                            type="file" 
-                            className="hidden" 
+                        <input
+                            type="file"
+                            className="hidden"
                             accept="image/*"
                             onChange={(e) => handleFileUpload(e, 'profile_picture')}
                         />
@@ -271,9 +271,9 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
                     <label className="block text-900 font-medium mb-2">ID Verification</label>
                     {preview.id ? (
                         <div className="mb-3">
-                            <img 
-                                src={preview.id} 
-                                alt="ID Verification" 
+                            <img
+                                src={preview.id}
+                                alt="ID Verification"
                                 className="max-w-full h-auto border rounded-md"
                             />
                         </div>
@@ -282,9 +282,9 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
                     )}
                     <label className="btn btn-outline-primary cursor-pointer">
                         <span>{preview.id ? 'Update ID' : 'Upload ID Verification'}</span>
-                        <input 
-                            type="file" 
-                            className="hidden" 
+                        <input
+                            type="file"
+                            className="hidden"
                             accept="image/*,.pdf"
                             onChange={(e) => handleFileUpload(e, 'id_verification')}
                         />

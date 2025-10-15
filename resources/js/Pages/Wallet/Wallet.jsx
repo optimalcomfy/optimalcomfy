@@ -5,7 +5,7 @@ import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, Arrow
 import Swal from "sweetalert2";
 
 const Wallet = ({ user }) => {
-    const { flash, availableBalance, recentTransactions, pendingPayouts, totalEarnings } = usePage().props;
+    const { flash, availableBalance, recentTransactions, pendingPayouts, totalEarnings, auth } = usePage().props;
     const [balanceVisible, setBalanceVisible] = useState(true);
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -15,7 +15,7 @@ const Wallet = ({ user }) => {
     const [isResending, setIsResending] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
     const [isProcessing, setIsProcessing] = useState(false);
-
+    const roleId = parseInt(auth.user?.role_id);
     const toggleBalanceVisibility = () => {
         setBalanceVisible(!balanceVisible);
     };
@@ -340,6 +340,7 @@ const Wallet = ({ user }) => {
 
                         {/* Quick Stats */}
                         <div className="stats-grid">
+                            {roleId === 2 &&
                             <div className="stat-card">
                                 <div className="stat-icon-wrapper green">
                                     <DollarSign size={20} />
@@ -352,7 +353,7 @@ const Wallet = ({ user }) => {
                                         Latest Payment Received
                                     </div>
                                 </div>
-                            </div>
+                            </div>}
 
                             <div className="stat-card">
                                 <div className="stat-icon-wrapper blue">
@@ -406,6 +407,10 @@ const Wallet = ({ user }) => {
                                                     <div className="transaction-guest">
                                                         Guest: {transaction.guest}
                                                     </div>
+                                                    {transaction.referral_code &&
+                                                    <div className="transaction-guest">
+                                                        This is a referred booking!
+                                                    </div>}
                                                     <div className="transaction-date">
                                                         {new Date(transaction.date).toLocaleDateString('en-US', {
                                                             weekday: 'short',
@@ -416,8 +421,12 @@ const Wallet = ({ user }) => {
                                                     </div>
                                                 </div>
                                                 <div className="transaction-amount">
+                                                    {roleId === 2 &&
                                                     <div className="amount-value">
                                                         {formatCurrency(transaction.net_amount)}
+                                                    </div>}
+                                                    <div className="amount-value">
+                                                        Referral amount: {formatCurrency(transaction.referral_amount)}
                                                     </div>
                                                     <div className={`status-badge ${transaction.status === 'Paid' ? 'paid' : 'pending'}`}>
                                                         {transaction.status === 'Paid' ? 'Completed' : 'Processing'}

@@ -927,6 +927,8 @@ class HomeController extends Controller
         $company = Company::first();
         $p = 1 - $company->percentage / 100;
 
+        $rP = $company->referral_percentage / 100;
+
         $pendingPayouts = ($propertyBookingTotal + $carBookingTotal) * $p;
 
         $availablePayouts = ($availablePropertyBookingTotal + $availableCarBookingTotal) * $p;
@@ -937,7 +939,8 @@ class HomeController extends Controller
                 ->whereHas("user")
                 ->whereHas("property", function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
-                        $query->where("user_id", $user->id);
+                        $query->where("user_id", $user->id)
+                        ->orWhere("referral_code","=", $user->referral_code);
                     }
                 })
                 ->whereHas('payments')
@@ -945,7 +948,7 @@ class HomeController extends Controller
                 ->latest()
                 ->take(5)
                 ->get()
-                ->map(function ($booking) use ($p) {
+                ->map(function ($booking) use ($p, $rP) {
                     $totalPayments = $booking->payments->sum('amount');
                     $days = Carbon::parse($booking->check_in_date)->diffInDays(Carbon::parse($booking->check_out_date));
 
@@ -956,10 +959,12 @@ class HomeController extends Controller
                         "platform_price" => $booking->property->platform_price,
                         "platform_charges" => $booking->property->platform_charges,
                         "net_amount" => $totalPayments * $p,
+                        "referral_amount" => round($totalPayments * $rP),
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
                         "status" => "completed",
                         "days" => $days,
+                        "referral_code"=> $booking->referral_code
                     ];
                 }),
 
@@ -968,7 +973,8 @@ class HomeController extends Controller
                 ->whereHas("user")
                 ->whereHas("car", function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
-                        $query->where("user_id", $user->id);
+                        $query->where("user_id", $user->id)
+                         ->orWhere("referral_code","=", $user->referral_code);
                     }
                 })
                 ->whereHas('payments')
@@ -976,7 +982,7 @@ class HomeController extends Controller
                 ->latest()
                 ->take(5)
                 ->get()
-                ->map(function ($booking) use ($p) {
+                ->map(function ($booking) use ($p, $rP) {
                     $totalPayments = $booking->payments->sum('amount');
                     $days = Carbon::parse($booking->start_date)->diffInDays(Carbon::parse($booking->end_date));
 
@@ -989,8 +995,10 @@ class HomeController extends Controller
                         "net_amount" => $totalPayments * $p,
                         "guest" => $booking->user->name,
                         "date" => $booking->created_at,
+                        "referral_amount" => round($totalPayments * $rP),
                         "status" => "completed",
                         "days" => $days,
+                        "referral_code"=> $booking->referral_code
                     ];
                 }),
         ])

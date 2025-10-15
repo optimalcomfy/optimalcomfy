@@ -314,9 +314,16 @@ const Dashboard = () => {
             />
             <div>
               <h3 className="text-xl font-bold">{auth.user.name}</h3>
-              <p className="text-sm text-gray-500">
-                {auth.user.user_type === 'host' ? 'Property Host' : 'Traveler'} • {auth.user.current_location}
+              {parseInt(auth.user?.role_id) !== 1 ?
+                <p className="text-sm text-gray-500">
+                    {auth.user.user_type === 'host' ? 'Property Host' : 'Traveler'} • {auth.user.current_location}
+                </p>
+                :
+               <p className="text-sm text-gray-500">
+                Super Admin • {auth.user.current_location}
               </p>
+              }
+
               <div className="flex gap-2 mt-2">
                 <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
                   {auth.user.nationality}

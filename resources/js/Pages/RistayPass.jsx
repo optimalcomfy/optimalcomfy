@@ -37,18 +37,17 @@ const RistayPass = () => {
     cleaner: booking.property.cleaner
   });
 
-  // Generate QR Code data - you can customize this URL structure
+  // Generate QR Code data
   const generateQRData = () => {
-    // Option 1: Link to booking verification page
     const baseUrl = window.location.origin;
     return `${baseUrl}/bookings/${booking.id}`;
   };
 
-  // Print functionality
+  // Print functionality - optimized for single page
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     const passElement = passRef.current;
-    
+
     if (passElement && printWindow) {
       const printContent = `
         <!DOCTYPE html>
@@ -57,87 +56,110 @@ const RistayPass = () => {
           <title>Ristay Gate Pass</title>
           <style>
             @page {
-              size: 80mm auto;
-              margin: 5mm;
+              size: A4 portrait;
+              margin: 10mm;
             }
             body {
-              font-family: Arial, sans-serif;
+              font-family: 'Arial', sans-serif;
               margin: 0;
-              padding: 10px;
-              width: 70mm;
+              padding: 15px;
               font-size: 12px;
-              line-height: 1.4;
+              line-height: 1.3;
+              color: #333;
             }
             .header {
               text-align: center;
               margin-bottom: 15px;
-              border-bottom: 2px solid #0f766e;
-              padding-bottom: 10px;
+              border-bottom: 3px solid #0f766e;
+              padding-bottom: 15px;
             }
             .logo {
               background-color: #f97316;
               color: white;
-              width: 30px;
-              height: 30px;
-              border-radius: 6px;
+              width: 40px;
+              height: 40px;
+              border-radius: 8px;
               display: inline-flex;
               align-items: center;
               justify-content: center;
               font-weight: bold;
-              font-size: 16px;
-              margin-bottom: 5px;
+              font-size: 20px;
+              margin-bottom: 8px;
             }
             .title {
-              font-size: 16px;
+              font-size: 20px;
               font-weight: bold;
               color: #0f766e;
-              margin: 5px 0;
+              margin: 8px 0;
+            }
+            .subtitle {
+              font-size: 14px;
+              color: #6b7280;
+            }
+            .content {
+              display: flex;
+              gap: 20px;
+              margin: 20px 0;
+            }
+            .qr-section {
+              flex: 1;
+              text-align: center;
             }
             .qr-container {
-              text-align: center;
-              margin: 15px 0;
-              padding: 10px;
-              background-color: #f3f4f6;
+              background-color: #f8fafc;
+              padding: 15px;
               border-radius: 8px;
+              margin-bottom: 15px;
             }
-            .qr-code {
-              margin: 0 auto;
+            .details-section {
+              flex: 2;
             }
-            .details {
-              margin-top: 15px;
+            .details-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 10px;
             }
-            .detail-row {
-              display: flex;
-              justify-content: space-between;
+            .detail-item {
               margin-bottom: 8px;
-              border-bottom: 1px dotted #ccc;
-              padding-bottom: 4px;
+              padding-bottom: 6px;
+              border-bottom: 1px dotted #e5e7eb;
             }
             .label {
               color: #6b7280;
               font-weight: 500;
+              font-size: 11px;
             }
             .value {
               font-weight: 600;
-              text-align: right;
-              max-width: 60%;
-              word-wrap: break-word;
+              font-size: 11px;
+            }
+            .full-width {
+              grid-column: 1 / -1;
             }
             .footer {
               text-align: center;
-              margin-top: 15px;
-              padding-top: 10px;
-              border-top: 1px solid #e5e7eb;
+              margin-top: 25px;
+              padding-top: 15px;
+              border-top: 2px solid #e5e7eb;
               font-size: 10px;
               color: #6b7280;
             }
-            .important {
-              background-color: #fef3c7;
-              padding: 8px;
-              border-radius: 4px;
-              margin-top: 10px;
-              font-size: 10px;
+            .important-note {
+              background-color: #fffbeb;
+              border: 1px solid #f59e0b;
+              padding: 12px;
+              border-radius: 6px;
+              margin-top: 15px;
+              font-size: 11px;
               text-align: center;
+            }
+            @media print {
+              body {
+                padding: 0;
+              }
+              .content {
+                page-break-inside: avoid;
+              }
             }
           </style>
         </head>
@@ -145,57 +167,76 @@ const RistayPass = () => {
           <div class="header">
             <div class="logo">R</div>
             <div class="title">RISTAY GATE PASS</div>
+            <div class="subtitle">Your Digital Access Card</div>
           </div>
-          
-          <div class="qr-container">
-            <div class="qr-code">
-              ${passElement.querySelector('.qr-code-container').innerHTML}
+
+          <div class="content">
+            <div class="qr-section">
+              <div class="qr-container">
+                ${passElement.querySelector('.qr-code-container').innerHTML}
+              </div>
+              <div style="font-size: 10px; color: #6b7280; margin-top: 8px;">
+                Scan for verification
+              </div>
+            </div>
+
+            <div class="details-section">
+              <div class="details-grid">
+                <div class="detail-item full-width">
+                  <div class="label">GUEST NAME</div>
+                  <div class="value">${passData.guestName}</div>
+                </div>
+
+                <div class="detail-item">
+                  <div class="label">PROPERTY</div>
+                  <div class="value">${passData.propertyName}</div>
+                </div>
+
+                <div class="detail-item">
+                  <div class="label">CONFIRMATION CODE</div>
+                  <div class="value">${passData.confirmationCode}</div>
+                </div>
+
+                <div class="detail-item">
+                  <div class="label">CHECK-IN</div>
+                  <div class="value">${passData.checkIn}</div>
+                </div>
+
+                <div class="detail-item">
+                  <div class="label">CHECK-OUT</div>
+                  <div class="value">${passData.checkOut}</div>
+                </div>
+
+                <div class="detail-item full-width">
+                  <div class="label">LOCATION</div>
+                  <div class="value">${passData.location}</div>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <div class="details">
-            <div class="detail-row">
-              <span class="label">Guest:</span>
-              <span class="value">${passData.guestName}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Property:</span>
-              <span class="value">${passData.propertyName}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Location:</span>
-              <span class="value">${passData.location}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Check-in:</span>
-              <span class="value">${passData.checkIn}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Check-out:</span>
-              <span class="value">${passData.checkOut}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Code:</span>
-              <span class="value">${passData.confirmationCode}</span>
-            </div>
+
+          <div class="important-note">
+            <strong>Important:</strong> Present this pass at the gate for entry verification.
+            Keep this pass with you during your entire stay.
           </div>
-          
-          <div class="important">
-            Present this pass at the gate for entry verification
-          </div>
-          
+
           <div class="footer">
-            Generated on ${new Date().toLocaleDateString()}<br>
-            Ristay - Your Home Away From Home
+            Generated on ${new Date().toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}<br>
+            <strong>Ristay</strong> - Your Home Away From Home
           </div>
         </body>
         </html>
       `;
-      
+
       printWindow.document.write(printContent);
       printWindow.document.close();
-      
-      // Wait for content to load then print
+
       printWindow.onload = () => {
         setTimeout(() => {
           printWindow.print();
@@ -205,96 +246,102 @@ const RistayPass = () => {
     }
   };
 
-  // Download functionality - using html2canvas and jsPDF
+  // Download functionality - optimized for single page
   const handleDownload = async () => {
     try {
-      // Import libraries dynamically
       const html2canvas = (await import('html2canvas')).default;
       const jsPDF = (await import('jspdf')).default;
 
       if (passRef.current) {
-        // Clone the element and remove buttons
+        // Clone and prepare element for capture
         const clonedElement = passRef.current.cloneNode(true);
-        
-        // Remove buttons and back button from cloned element
+
+        // Remove interactive elements
         const buttonsContainer = clonedElement.querySelector('.buttons-container');
         const backButton = clonedElement.querySelector('.back-button');
         if (buttonsContainer) buttonsContainer.remove();
         if (backButton) backButton.remove();
-        
-        // Temporarily add cloned element to DOM for capture
+
+        // Add styles for PDF
+        clonedElement.style.width = '210mm';
+        clonedElement.style.padding = '20px';
+        clonedElement.style.backgroundColor = '#ffffff';
+
+        // Temporarily add to DOM
         clonedElement.style.position = 'absolute';
         clonedElement.style.left = '-9999px';
+        clonedElement.style.top = '0';
         document.body.appendChild(clonedElement);
 
         const canvas = await html2canvas(clonedElement, {
           scale: 2,
           useCORS: true,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          width: clonedElement.scrollWidth,
+          height: clonedElement.scrollHeight,
+          windowWidth: clonedElement.scrollWidth,
+          windowHeight: clonedElement.scrollHeight
         });
-        
-        // Remove cloned element
+
+        // Clean up
         document.body.removeChild(clonedElement);
-        
+
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        
-        const imgWidth = 210;
-        const pageHeight = 295;
+        const pdf = new jsPDF('p', 'mm', 'a5');
+        const pdfWidth = 150;
+        const pdfHeight = 180;
+
+        // Calculate dimensions to fit on single page
+        const imgWidth = pdfWidth - 20; // 10mm margin on each side
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        
-        let position = 0;
-        
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-        
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
-        }
-        
+
+        // Center vertically if content is smaller than page
+        const yPosition = imgHeight < pdfHeight ? (pdfHeight - imgHeight) / 2 : 0;
+
+        pdf.addImage(imgData, 'PNG', 10, yPosition, imgWidth, imgHeight);
         pdf.save(`ristay-pass-${passData.confirmationCode}.pdf`);
       }
     } catch (error) {
       console.error('Download failed:', error);
-      // Fallback: open print dialog
-      alert('Download failed. Please use the print option instead.');
+      // Fallback to print
+      alert('Download failed. Using print option instead.');
       handlePrint();
     }
   };
 
-  // Alternative download as image
+  // Alternative download as image - optimized
   const handleDownloadImage = async () => {
     try {
       const html2canvas = (await import('html2canvas')).default;
-      
+
       if (passRef.current) {
-        // Clone the element and remove buttons
         const clonedElement = passRef.current.cloneNode(true);
-        
-        // Remove buttons and back button from cloned element
+
+        // Remove interactive elements
         const buttonsContainer = clonedElement.querySelector('.buttons-container');
         const backButton = clonedElement.querySelector('.back-button');
         if (buttonsContainer) buttonsContainer.remove();
         if (backButton) backButton.remove();
-        
-        // Temporarily add cloned element to DOM for capture
+
+        // Optimize for image capture
+        clonedElement.style.width = '800px';
+        clonedElement.style.padding = '40px';
+        clonedElement.style.backgroundColor = '#ffffff';
+
         clonedElement.style.position = 'absolute';
         clonedElement.style.left = '-9999px';
         document.body.appendChild(clonedElement);
-        
+
         const canvas = await html2canvas(clonedElement, {
           scale: 2,
           useCORS: true,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          width: clonedElement.scrollWidth,
+          height: clonedElement.scrollHeight
         });
-        
-        // Remove cloned element
+
         document.body.removeChild(clonedElement);
-        
+
         const link = document.createElement('a');
         link.download = `ristay-pass-${passData.confirmationCode}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -302,10 +349,11 @@ const RistayPass = () => {
       }
     } catch (error) {
       console.error('Image download failed:', error);
-      alert('Download failed. Please try again or use the print option.');
+      alert('Image download failed. Please try the PDF option.');
     }
   };
 
+  // Rest of your component views remain the same...
   const MainDashboard = () => (
     <div className="p-4">
       <Head title="Ristay Pass" />
@@ -427,7 +475,7 @@ const RistayPass = () => {
         </div>
 
         <div className="bg-gray-100 h-48 rounded-xl mb-6 flex items-center justify-center qr-code-container">
-          <QRCodeSVG 
+          <QRCodeSVG
             value={generateQRData()}
             size={128}
             level="M"
@@ -458,8 +506,6 @@ const RistayPass = () => {
           </button>
         </div>
       </div>
-
-      {/* Remove the old print styles as we're now using a new window for printing */}
     </div>
   );
 

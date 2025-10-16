@@ -158,7 +158,7 @@ class BookingController extends Controller
         // Role-based filtering
         if ($user->role_id == 2) {
             $query->whereHas('property', function ($q) use ($user) {
-                $q->where('company_id', $user->company_id);
+                $q->where('user_id', $user->id);
             });
         } elseif ($user->role_id == 3) {
             $query->where('user_id', $user->id);
@@ -175,6 +175,7 @@ class BookingController extends Controller
             return [
                 'number' => $booking->number,
                 'guest_name' => optional($booking->user)->name,
+                'host_price'=> $booking->host_price,
                 'property_name' => optional($booking->property)->property_name,
                 'check_in_date' => $booking->check_in_date,
                 'check_out_date' => $booking->check_out_date,

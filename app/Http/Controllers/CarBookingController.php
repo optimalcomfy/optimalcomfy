@@ -154,7 +154,7 @@ class CarBookingController extends Controller
 
         if ($user->role_id == 2) {
             $query->whereHas('car', function ($q) use ($user) {
-                $q->where('company_id', $user->company_id);
+                $q->where('user_id', $user->id);
             });
         } elseif ($user->role_id == 3) {
             $query->where('user_id', $user->id);
@@ -170,6 +170,7 @@ class CarBookingController extends Controller
 
             return [
                 'number' => $booking->number,
+                'host_price'=> $booking->host_price,
                 'guest_name' => optional($booking->user)->name,
                 'car_name' => optional($booking->car)->name,
                 'license_plate' => optional($booking->car)->license_plate,

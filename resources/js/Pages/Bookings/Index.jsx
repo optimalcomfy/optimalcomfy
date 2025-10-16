@@ -166,7 +166,7 @@ const BookingsIndex = () => {
           const checkIn = new Date(data.check_in_date);
           const checkOut = new Date(data.check_out_date);
           const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-          const totalPrice = data.total_price;
+          const totalPrice = data.host_price;
 
           return [
             index + 1,
@@ -242,7 +242,7 @@ const BookingsIndex = () => {
           const checkIn = new Date(data.check_in_date);
           const checkOut = new Date(data.check_out_date);
           const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-          const totalPrice = data.total_price;
+          const totalPrice = data.host_price;
 
           return {
             "#": index + 1,

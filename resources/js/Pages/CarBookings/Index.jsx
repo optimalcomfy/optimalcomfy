@@ -163,7 +163,7 @@ const CarBookingsIndex = () => {
           const startDate = new Date(data.start_date);
           const endDate = new Date(data.end_date);
           const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-          const totalPrice = data.total_price;
+          const totalPrice = data.host_price;
 
           return [
             index + 1,
@@ -241,7 +241,7 @@ const CarBookingsIndex = () => {
           const startDate = new Date(data.start_date);
           const endDate = new Date(data.end_date);
           const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-          const totalPrice = data.total_price;
+          const totalPrice = data.host_price;
 
           return {
             "#": index + 1,

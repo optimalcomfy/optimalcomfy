@@ -429,7 +429,7 @@ const Wallet = ({ user }) => {
                                                         Referral amount: {formatCurrency(transaction.referral_amount)}
                                                     </div>
                                                     <div className={`status-badge ${transaction.status === 'Paid' ? 'paid' : 'pending'}`}>
-                                                        {transaction.status === 'Paid' ? 'Completed' : 'Processing'}
+                                                        {transaction.status === 'completed' ? 'Completed' : 'Processing'}
                                                     </div>
                                                 </div>
                                             </div>

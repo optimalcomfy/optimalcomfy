@@ -245,7 +245,7 @@ const Wallet = ({ user }) => {
 
                                             <div className="input-group">
                                                 <label className="input-label">
-                                                    Amount to Withdraw
+                                                    Amount to Withdraw (Above KES 100)
                                                 </label>
                                                 <div className="input-wrapper">
                                                     <span className="currency-prefix">KES</span>

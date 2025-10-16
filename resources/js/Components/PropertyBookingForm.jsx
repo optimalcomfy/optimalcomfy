@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 
 const PropertyBookingForm = ({ property }) => {
   const [selectedVariation, setSelectedVariation] = useState(null);
-  
+
   const { data, setData, errors } = useForm({
     property_id: property.id,
     check_in_date: '',
@@ -14,29 +14,29 @@ const PropertyBookingForm = ({ property }) => {
     variation_id: null
   });
 
-  // 
+  //
 
   // Function to check if a date range is booked for a specific variation (or standard)
   const isRangeBooked = (startDate, endDate, variationId = null) => {
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
-    
+
     const end = new Date(endDate);
     end.setHours(0, 0, 0, 0);
-    
+
     return property.bookings.some(booking => {
       // Skip if we're checking for standard and this booking is for a variation
       if (variationId === null && booking.variation_id !== null) return false;
-      
+
       // Skip if we're checking for a variation and this booking is for standard or a different variation
       if (variationId !== null && booking.variation_id !== variationId) return false;
-      
+
       const bookingStart = new Date(booking.check_in_date);
       bookingStart.setHours(0, 0, 0, 0);
-      
+
       const bookingEnd = new Date(booking.check_out_date);
       bookingEnd.setHours(0, 0, 0, 0);
-      
+
       return (
         (start >= bookingStart && start < bookingEnd) || // Start date is within a booking
         (end > bookingStart && end <= bookingEnd) ||    // End date is within a booking
@@ -48,18 +48,18 @@ const PropertyBookingForm = ({ property }) => {
   // Function to get the minimum available check-out date
   const getMinCheckoutDate = (checkInDate) => {
     if (!checkInDate) return new Date().toISOString().split('T')[0];
-    
+
     const checkIn = new Date(checkInDate);
     checkIn.setHours(0, 0, 0, 0);
-    
+
     // Find the next day after check-in that's not booked for the selected variation
     let nextDay = new Date(checkIn);
     nextDay.setDate(nextDay.getDate() + 1);
-    
+
     while (isRangeBooked(checkInDate, nextDay.toISOString().split('T')[0], data.variation_id)) {
       nextDay.setDate(nextDay.getDate() + 1);
     }
-    
+
     return nextDay.toISOString().split('T')[0];
   };
 
@@ -84,11 +84,11 @@ const PropertyBookingForm = ({ property }) => {
 
   const handleDateChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === 'check_in_date') {
       // Check if this date is booked for the selected variation (or standard)
       if (isRangeBooked(value, value, data.variation_id)) {
-        const message = data.variation_id 
+        const message = data.variation_id
           ? 'This date is already booked for the selected room type. Please choose different dates.'
           : 'This date is already booked for the standard room. Please choose different dates.';
         showErrorAlert(message);
@@ -97,7 +97,7 @@ const PropertyBookingForm = ({ property }) => {
 
       // If changing check-in date and we have a check-out date, validate the range
       if (data.check_out_date && isRangeBooked(value, data.check_out_date, data.variation_id)) {
-        const message = data.variation_id 
+        const message = data.variation_id
           ? 'The selected dates overlap with an existing booking for this room type.'
           : 'The selected dates overlap with an existing booking for the standard room.';
         showErrorAlert(message);
@@ -124,7 +124,7 @@ const PropertyBookingForm = ({ property }) => {
 
       // Check for booking conflicts for the selected variation (or standard)
       if (isRangeBooked(data.check_in_date, value, data.variation_id)) {
-        const message = data.variation_id 
+        const message = data.variation_id
           ? 'The selected dates overlap with an existing booking for this room type.'
           : 'The selected dates overlap with an existing booking for the standard room.';
         showErrorAlert(message);
@@ -137,26 +137,26 @@ const PropertyBookingForm = ({ property }) => {
 
   const handleVariationChange = (variation) => {
     const newVariationId = variation?.id || null;
-    
+
     // Check if current selected dates are available for the new variation
     if (data.check_in_date && data.check_out_date) {
       if (isRangeBooked(data.check_in_date, data.check_out_date, newVariationId)) {
-        const message = variation 
+        const message = variation
           ? 'The currently selected dates are not available for this room type. Please choose different dates.'
           : 'The currently selected dates are not available for the standard room. Please choose different dates.';
         showErrorAlert(message);
         return;
       }
     }
-    
+
     setSelectedVariation(variation);
     setData('variation_id', newVariationId);
-    
+
     // Recalculate total price if dates are already selected
     if (data.check_in_date && data.check_out_date) {
       const nights = calculateDays(data.check_in_date, data.check_out_date);
       const basePrice = nights * (variation ? variation.platform_price : property.platform_price);
-      
+
       setData(prev => ({
         ...prev,
         nights: nights,
@@ -178,7 +178,7 @@ const PropertyBookingForm = ({ property }) => {
       const nights = calculateDays(data.check_in_date, data.check_out_date);
       const pricePerNight = selectedVariation ? selectedVariation.platform_price : property.platform_price;
       const basePrice = nights * pricePerNight;
-      
+
       setData(prev => ({
         ...prev,
         nights: nights,
@@ -218,7 +218,7 @@ const PropertyBookingForm = ({ property }) => {
                   Select Room Type
                 </label>
                 <div className="grid grid-cols-1 gap-2">
-                  <div 
+                  <div
                     className={`p-3 border rounded-lg cursor-pointer ${!selectedVariation ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}
                     onClick={() => handleVariationChange(null)}
                   >
@@ -231,9 +231,9 @@ const PropertyBookingForm = ({ property }) => {
                       </span>
                     </div>
                   </div>
-                  
+
                   {property.variations.map((variation) => (
-                    <div 
+                    <div
                       key={variation.id}
                       className={`p-3 border rounded-lg cursor-pointer ${selectedVariation?.id === variation.id ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}
                       onClick={() => handleVariationChange(variation)}
@@ -256,7 +256,7 @@ const PropertyBookingForm = ({ property }) => {
             <div className="date-selection mb-4">
               <div className="flex flex-col lg:flex-row border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                 {/* Check-in Date */}
-                <div 
+                <div
                   className="border-r flex-1 border-gray-300 dark:border-gray-600 p-3 cursor-pointer"
                   onClick={() => handleDivClick('check_in_date')}
                 >
@@ -268,7 +268,7 @@ const PropertyBookingForm = ({ property }) => {
                       type="date"
                       id="check_in_date"
                       name="check_in_date"
-                      className="w-full border-none bg-transparent text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-0 pointer-events-none"
+                      className="w-full border-none bg-transparent text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-0"
                       value={data.check_in_date}
                       onChange={handleDateChange}
                       min={new Date().toISOString().split('T')[0]}
@@ -277,9 +277,9 @@ const PropertyBookingForm = ({ property }) => {
                     />
                   </div>
                 </div>
-                
+
                 {/* Check-out Date */}
-                <div 
+                <div
                   className="p-3 flex-1 cursor-pointer"
                   onClick={() => handleDivClick('check_out_date')}
                 >
@@ -291,7 +291,7 @@ const PropertyBookingForm = ({ property }) => {
                       type="date"
                       id="check_out_date"
                       name="check_out_date"
-                      className="w-full border-none bg-transparent text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-0 pointer-events-none"
+                      className="w-full border-none bg-transparent text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-0"
                       value={data.check_out_date}
                       onChange={handleDateChange}
                       min={getMinCheckoutDate(data.check_in_date)}
@@ -309,9 +309,9 @@ const PropertyBookingForm = ({ property }) => {
               <>
                 <Link
                   type="button"
-                  href={route('property-booking', { 
-                    property_id: property.id, 
-                    check_in_date: data.check_in_date, 
+                  href={route('property-booking', {
+                    property_id: property.id,
+                    check_in_date: data.check_in_date,
                     check_out_date: data.check_out_date,
                     variation_id: selectedVariation?.id || null
                   })}
@@ -325,7 +325,7 @@ const PropertyBookingForm = ({ property }) => {
                 </span>
               </>
             )}
-            
+
             {/* Price Breakdown */}
             {data.nights > 0 && (
               <>
@@ -339,7 +339,7 @@ const PropertyBookingForm = ({ property }) => {
                 </div>
                 <hr className="border-gray-200 dark:border-gray-600 mb-4" />
                 <h4 className="total flex justify-between items-center text-lg font-bold text-gray-900 dark:text-white">
-                  Total 
+                  Total
                   <span>KES {data.total_price}</span>
                 </h4>
               </>
@@ -373,7 +373,7 @@ const PropertyBookingForm = ({ property }) => {
                   Select Room Type
                 </label>
                 <div className="grid grid-cols-1 gap-2">
-                  <div 
+                  <div
                     className={`p-3 border rounded-lg cursor-pointer ${!selectedVariation ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}
                     onClick={() => handleVariationChange(null)}
                   >
@@ -386,9 +386,9 @@ const PropertyBookingForm = ({ property }) => {
                       </span>
                     </div>
                   </div>
-                  
+
                   {property.variations.map((variation) => (
-                    <div 
+                    <div
                       key={variation.id}
                       className={`p-3 border rounded-lg cursor-pointer ${selectedVariation?.id === variation.id ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}
                       onClick={() => handleVariationChange(variation)}
@@ -411,7 +411,7 @@ const PropertyBookingForm = ({ property }) => {
             <div className="date-selection mb-4">
               <div className="flex flex-col lg:flex-row border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                 {/* Check-in Date */}
-                <div 
+                <div
                   className="border-b lg:border-r border-gray-300 dark:border-gray-600 p-3 cursor-pointer"
                   onClick={() => handleDivClick('check_in_date')}
                 >
@@ -423,7 +423,7 @@ const PropertyBookingForm = ({ property }) => {
                       type="date"
                       id="check_in_date"
                       name="check_in_date"
-                      className="w-full border-none bg-transparent text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-0 pointer-events-none"
+                      className="w-full border-none bg-transparent text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-0"
                       value={data.check_in_date}
                       onChange={handleDateChange}
                       min={new Date().toISOString().split('T')[0]}
@@ -432,9 +432,9 @@ const PropertyBookingForm = ({ property }) => {
                     />
                   </div>
                 </div>
-                
+
                 {/* Check-out Date */}
-                <div 
+                <div
                   className="p-3 cursor-pointer"
                   onClick={() => handleDivClick('check_out_date')}
                 >
@@ -446,7 +446,7 @@ const PropertyBookingForm = ({ property }) => {
                       type="date"
                       id="check_out_date"
                       name="check_out_date"
-                      className="w-full border-none bg-transparent text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-0 pointer-events-none"
+                      className="w-full border-none bg-transparent text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-0"
                       value={data.check_out_date}
                       onChange={handleDateChange}
                       min={getMinCheckoutDate(data.check_in_date)}
@@ -464,9 +464,9 @@ const PropertyBookingForm = ({ property }) => {
               <>
                 <Link
                   type="button"
-                  href={route('property-booking', { 
-                    property_id: property.id, 
-                    check_in_date: data.check_in_date, 
+                  href={route('property-booking', {
+                    property_id: property.id,
+                    check_in_date: data.check_in_date,
                     check_out_date: data.check_out_date,
                     variation_id: selectedVariation?.id || null
                   })}
@@ -480,7 +480,7 @@ const PropertyBookingForm = ({ property }) => {
                 </span>
               </>
             )}
-            
+
             {/* Price Breakdown */}
             {data.nights > 0 && (
               <>
@@ -494,7 +494,7 @@ const PropertyBookingForm = ({ property }) => {
                 </div>
                 <hr className="border-gray-200 dark:border-gray-600 mb-4" />
                 <h4 className="total flex justify-between items-center text-lg font-bold text-gray-900 dark:text-white">
-                  Total 
+                  Total
                   <span>KES {data.total_price}</span>
                 </h4>
               </>

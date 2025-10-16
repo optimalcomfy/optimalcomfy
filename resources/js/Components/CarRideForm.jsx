@@ -17,14 +17,14 @@ const CarRideForm = ({ car }) => {
   const isDateBooked = (date) => {
     const dateToCheck = new Date(date);
     dateToCheck.setHours(0, 0, 0, 0);
-    
+
     return car.bookings.some(booking => {
       const start = new Date(booking.start_date);
       start.setHours(0, 0, 0, 0);
-      
+
       const end = new Date(booking.end_date);
       end.setHours(0, 0, 0, 0);
-      
+
       return dateToCheck >= start && dateToCheck <= end;
     });
   };
@@ -41,17 +41,17 @@ const CarRideForm = ({ car }) => {
   const isRangeBooked = (startDate, endDate) => {
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
-    
+
     const end = new Date(endDate);
     end.setHours(0, 0, 0, 0);
-    
+
     return car.bookings.some(booking => {
       const bookingStart = new Date(booking.start_date);
       bookingStart.setHours(0, 0, 0, 0);
-      
+
       const bookingEnd = new Date(booking.end_date);
       bookingEnd.setHours(0, 0, 0, 0);
-      
+
       return (
         (start >= bookingStart && start <= bookingEnd) || // Start date is within a booking
         (end >= bookingStart && end <= bookingEnd) ||    // End date is within a booking
@@ -63,18 +63,18 @@ const CarRideForm = ({ car }) => {
   // Function to get the minimum available check-out date
   const getMinCheckoutDate = (checkInDate) => {
     if (!checkInDate) return new Date().toISOString().split('T')[0];
-    
+
     const checkIn = new Date(checkInDate);
     checkIn.setHours(0, 0, 0, 0);
-    
+
     // Find the next day after check-in that's not booked
     let nextDay = new Date(checkIn);
     nextDay.setDate(nextDay.getDate() + 1);
-    
+
     while (isDateBooked(nextDay.toISOString().split('T')[0])) {
       nextDay.setDate(nextDay.getDate() + 1);
     }
-    
+
     return nextDay.toISOString().split('T')[0];
   };
 
@@ -136,7 +136,7 @@ const CarRideForm = ({ car }) => {
     if (data.check_in_date && data.check_out_date) {
       const days = calculateDays(data.check_in_date, data.check_out_date);
       const basePrice = days * (car.platform_price || 0);
-      
+
       setData(prev => ({
         ...prev,
         days: days,
@@ -158,11 +158,11 @@ const CarRideForm = ({ car }) => {
     const dates = [];
     const start = new Date(booking.start_date);
     const end = new Date(booking.end_date);
-    
+
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       dates.push(new Date(d).toISOString().split('T')[0]);
     }
-    
+
     return dates;
   });
 
@@ -200,7 +200,7 @@ const CarRideForm = ({ car }) => {
                     />
                   </div>
                 </div>
-                
+
                 {/* Check-out Date */}
                 <div className="p-3" onClick={() => handleDivClick('check_out_date')}>
                   <div className="flex flex-col">
@@ -222,7 +222,7 @@ const CarRideForm = ({ car }) => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Display validation errors */}
               {errors.check_in_date && <div className="text-red-500 text-sm mt-1">{errors.check_in_date}</div>}
               {errors.check_out_date && <div className="text-red-500 text-sm mt-1">{errors.check_out_date}</div>}
@@ -233,10 +233,10 @@ const CarRideForm = ({ car }) => {
               <>
                 <Link
                   type="button"
-                  href={route('car-booking', { 
-                    car_id: car.id, 
-                    check_in_date: data.check_in_date, 
-                    check_out_date: data.check_out_date  
+                  href={route('car-booking', {
+                    car_id: car.id,
+                    check_in_date: data.check_in_date,
+                    check_out_date: data.check_out_date
                   })}
                   className="btn btn--pink w-full text-center py-3 px-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-lg transition-all duration-200 mb-4"
                 >
@@ -248,7 +248,7 @@ const CarRideForm = ({ car }) => {
                 </span>
               </>
             )}
-            
+
             {/* Price Breakdown */}
             {data.days > 0 && (
               <>
@@ -262,7 +262,7 @@ const CarRideForm = ({ car }) => {
                 </div>
                 <hr className="border-gray-200 dark:border-gray-600 mb-4" />
                 <h4 className="total flex justify-between items-center text-lg font-bold text-gray-900 dark:text-white">
-                  Total 
+                  Total
                   <span>KES {data.total_price}</span>
                 </h4>
               </>
@@ -311,7 +311,7 @@ const CarRideForm = ({ car }) => {
                     />
                   </div>
                 </div>
-                
+
                 {/* Check-out Date */}
                 <div className="p-3">
                   <div className="flex flex-col">
@@ -333,7 +333,7 @@ const CarRideForm = ({ car }) => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Display validation errors */}
               {errors.check_in_date && <div className="text-red-500 text-sm mt-1">{errors.check_in_date}</div>}
               {errors.check_out_date && <div className="text-red-500 text-sm mt-1">{errors.check_out_date}</div>}
@@ -344,10 +344,10 @@ const CarRideForm = ({ car }) => {
               <>
                 <Link
                   type="button"
-                  href={route('car-booking', { 
-                    car_id: car.id, 
-                    check_in_date: data.check_in_date, 
-                    check_out_date: data.check_out_date  
+                  href={route('car-booking', {
+                    car_id: car.id,
+                    check_in_date: data.check_in_date,
+                    check_out_date: data.check_out_date
                   })}
                   className="btn btn--pink w-full text-center py-3 px-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-lg transition-all duration-200 mb-4"
                 >
@@ -359,7 +359,7 @@ const CarRideForm = ({ car }) => {
                 </span>
               </>
             )}
-            
+
             {/* Price Breakdown */}
             {data.days > 0 && (
               <>
@@ -373,7 +373,7 @@ const CarRideForm = ({ car }) => {
                 </div>
                 <hr className="border-gray-200 dark:border-gray-600 mb-4" />
                 <h4 className="total flex justify-between items-center text-lg font-bold text-gray-900 dark:text-white">
-                  Total 
+                  Total
                   <span>KES {data.total_price}</span>
                 </h4>
               </>

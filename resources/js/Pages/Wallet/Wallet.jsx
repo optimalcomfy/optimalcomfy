@@ -29,7 +29,15 @@ const Wallet = ({ user }) => {
 
     // Initiate withdrawal
     const initiateWithdrawal = () => {
-        if (!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > currentBalance) {
+        const amount = parseFloat(withdrawAmount);
+
+        // Check if amount is less than 100 shillings
+        if (amount < 100) {
+            Swal.fire('Error', 'Minimum withdrawal amount is 100 shillings', 'error');
+            return;
+        }
+
+        if (!withdrawAmount || amount <= 0 || amount > currentBalance) {
             Swal.fire('Error', 'Please enter a valid amount', 'error');
             return;
         }
@@ -270,7 +278,13 @@ const Wallet = ({ user }) => {
                                                 </button>
                                                 <button
                                                     onClick={initiateWithdrawal}
-                                                    disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > currentBalance || isProcessing}
+                                                    disabled={
+                                                        !withdrawAmount ||
+                                                        parseFloat(withdrawAmount) <= 0 ||
+                                                        parseFloat(withdrawAmount) < 100 ||
+                                                        parseFloat(withdrawAmount) > currentBalance ||
+                                                        isProcessing
+                                                    }
                                                     className="confirm-button"
                                                 >
                                                     {isProcessing ? 'Sending Code...' : 'Send Verification Code'}

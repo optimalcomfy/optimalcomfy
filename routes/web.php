@@ -46,6 +46,7 @@ use App\Http\Controllers\VariationController;
 use App\Http\Controllers\MpesaStkController;
 use App\Http\Controllers\RefundController;
 use App\Http\Controllers\CarRefundController;
+use Illuminate\Support\Facades\Auth;
 
 use App\Models\Property;
 use App\Models\User;
@@ -201,20 +202,29 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/validate-referral', function (Request $request) {
         $code = $request->query('code');
+        $currentUser = Auth::user();
 
         if (!$code) {
             return response()->json(['valid' => false]);
         }
 
-        $user = User::where('referral_code', $code)->first();
+        // Check if the referral code belongs to the current user
+        if ($currentUser && $currentUser->referral_code === $code) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'You cannot use your own referral code'
+            ]);
+        }
 
-        if ($user) {
+        $referralUser = User::where('referral_code', $code)->first();
+
+        if ($referralUser) {
             return response()->json([
                 'valid' => true,
                 'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email
+                    'id' => $referralUser->id,
+                    'name' => $referralUser->name,
+                    'email' => $referralUser->email
                 ]
             ]);
         }

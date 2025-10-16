@@ -867,8 +867,7 @@ const BookingShow = () => {
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{nights} night{nights !== 1 ? 's' : ''} × {booking.host_price}</span>
-                  <span className="font-medium">KES {parseFloat(booking.host_price) * nights}</span>
+                  <span className="text-gray-600">{nights} night{nights !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="flex justify-between border-t pt-2 font-bold text-lg">
                   <span>Total</span>

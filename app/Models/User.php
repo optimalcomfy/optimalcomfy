@@ -140,35 +140,65 @@ class User extends Authenticatable
         $this->save();
     }
 
+    /**
+     * Get completed car bookings (checked in AND checked out)
+     */
     public function carBookings(){
         return $this->hasMany('App\Models\CarBooking', 'referral_code', 'referral_code')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
-            ->whereNotNull("checked_in");
+                    ->whereNotNull("checked_in")
+                    ->whereNotNull("checked_out"); // Added this condition
     }
 
+    /**
+     * Get completed bookings (checked in AND checked out)
+     */
     public function bookings(){
         return $this->hasMany('App\Models\Booking', 'referral_code', 'referral_code')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
-            ->whereNotNull("checked_in");
+                    ->whereNotNull("checked_in")
+                    ->whereNotNull("checked_out"); // Added this condition
     }
 
     /**
-     * Get pending car bookings where checkin is null
+     * Get pending car bookings where checkin is done but checkout is null (ongoing rentals)
      */
     public function pendingCarBookings(){
         return $this->hasMany('App\Models\CarBooking', 'referral_code', 'referral_code')
+                    ->whereNull("external_booking")
+                    ->where("status", "paid")
+                    ->whereNotNull("checked_in")
+                    ->whereNull("checked_out"); // Changed to check for ongoing rentals
+    }
+
+    /**
+     * Get pending bookings where checkin is done but checkout is null (ongoing stays)
+     */
+    public function pendingBookings(){
+        return $this->hasMany('App\Models\Booking', 'referral_code', 'referral_code')
+                    ->whereNull("external_booking")
+                    ->where("status", "paid")
+                    ->whereNotNull("checked_in")
+                    ->whereNull("checked_out"); // Changed to check for ongoing stays
+    }
+
+    /**
+     * Get upcoming bookings (not checked in yet)
+     */
+    public function upcomingBookings(){
+        return $this->hasMany('App\Models\Booking', 'referral_code', 'referral_code')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
                     ->whereNull("checked_in");
     }
 
     /**
-     * Get pending bookings where checkin is null
+     * Get upcoming car bookings (not checked in yet)
      */
-    public function pendingBookings(){
-        return $this->hasMany('App\Models\Booking', 'referral_code', 'referral_code')
+    public function upcomingCarBookings(){
+        return $this->hasMany('App\Models\CarBooking', 'referral_code', 'referral_code')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
                     ->whereNull("checked_in");
@@ -209,27 +239,27 @@ class User extends Authenticatable
 
         $referralPercentage = $company->referral_percentage;
 
-        // Calculate earnings from regular bookings
-        $bookings = $this->bookings;
+        // Calculate earnings from COMPLETED bookings (both checked in AND checked out)
+        $bookings = $this->bookings()->get();
         foreach ($bookings as $booking) {
             $bookingTotal = $booking->total_price ?? 0;
             $earnings = ($bookingTotal * $referralPercentage) / 100;
             $totalEarnings += $earnings;
         }
 
-        // Calculate earnings from car bookings
-        $carBookings = $this->carBookings;
+        // Calculate earnings from COMPLETED car bookings (both checked in AND checked out)
+        $carBookings = $this->carBookings()->get();
         foreach ($carBookings as $carBooking) {
-            $carBookingTotal = $carBooking->total_price ?? $carBooking->total_price ?? 0;
+            $carBookingTotal = $carBooking->total_price ?? 0;
             $earnings = ($carBookingTotal * $referralPercentage) / 100;
             $totalEarnings += $earnings;
         }
 
-        return $totalEarnings;
+        return round($totalEarnings, 2);
     }
 
     /**
-     * Get pending balance from bookings where checkin is null
+     * Get pending balance from ONGOING bookings (checked in but not checked out)
      */
     public function getPendingBalanceAttribute()
     {
@@ -244,23 +274,56 @@ class User extends Authenticatable
 
         $referralPercentage = $company->referral_percentage;
 
-        // Calculate pending earnings from regular bookings (checkin is null)
-        $pendingBookings = $this->pendingBookings;
+        // Calculate pending earnings from ONGOING bookings (checked in but not checked out)
+        $pendingBookings = $this->pendingBookings()->get();
         foreach ($pendingBookings as $booking) {
             $bookingTotal = $booking->total_price ?? 0;
             $earnings = ($bookingTotal * $referralPercentage) / 100;
             $totalPendingEarnings += $earnings;
         }
 
-        // Calculate pending earnings from car bookings (checkin is null)
-        $pendingCarBookings = $this->pendingCarBookings;
+        // Calculate pending earnings from ONGOING car bookings (checked in but not checked out)
+        $pendingCarBookings = $this->pendingCarBookings()->get();
         foreach ($pendingCarBookings as $carBooking) {
-            $carBookingTotal = $carBooking->total_price ?? $carBooking->price ?? 0;
+            $carBookingTotal = $carBooking->total_price ?? 0;
             $earnings = ($carBookingTotal * $referralPercentage) / 100;
             $totalPendingEarnings += $earnings;
         }
 
-        return $totalPendingEarnings;
+        return round($totalPendingEarnings, 2);
+    }
+
+    /**
+     * Get upcoming balance from bookings that haven't started yet
+     */
+    public function getUpcomingBalanceAttribute()
+    {
+        $totalUpcomingEarnings = 0;
+
+        $company = $this->getFirstCompanyWithReferralPercentage();
+        if (!$company || !$company->referral_percentage) {
+            return $totalUpcomingEarnings;
+        }
+
+        $referralPercentage = $company->referral_percentage;
+
+        // Calculate upcoming earnings from bookings that haven't started
+        $upcomingBookings = $this->upcomingBookings()->get();
+        foreach ($upcomingBookings as $booking) {
+            $bookingTotal = $booking->total_price ?? 0;
+            $earnings = ($bookingTotal * $referralPercentage) / 100;
+            $totalUpcomingEarnings += $earnings;
+        }
+
+        // Calculate upcoming earnings from car bookings that haven't started
+        $upcomingCarBookings = $this->upcomingCarBookings()->get();
+        foreach ($upcomingCarBookings as $carBooking) {
+            $carBookingTotal = $carBooking->total_price ?? 0;
+            $earnings = ($carBookingTotal * $referralPercentage) / 100;
+            $totalUpcomingEarnings += $earnings;
+        }
+
+        return round($totalUpcomingEarnings, 2);
     }
 
     /**
@@ -268,7 +331,7 @@ class User extends Authenticatable
      */
     public function getTotalRepaymentsAttribute()
     {
-        return $this->repayments->sum('amount');
+        return round($this->repayments()->sum('amount'), 2);
     }
 
     /**
@@ -279,7 +342,8 @@ class User extends Authenticatable
         $earnings = $this->earnings_from_referral;
         $repayments = $this->total_repayments;
 
-        return $earnings - $repayments;
+        $balance = $earnings - $repayments;
+        return round(max(0, $balance), 2); // Ensure balance doesn't go negative
     }
 
     /**
@@ -297,6 +361,9 @@ class User extends Authenticatable
                 'pending_balance' => 0,
                 'pending_booking_earnings' => 0,
                 'pending_car_booking_earnings' => 0,
+                'upcoming_balance' => 0,
+                'upcoming_booking_earnings' => 0,
+                'upcoming_car_booking_earnings' => 0,
                 'total_repayments' => 0,
                 'balance' => 0,
                 'referral_percentage' => 0,
@@ -305,79 +372,98 @@ class User extends Authenticatable
         }
 
         $referralPercentage = $company->referral_percentage;
+
+        // Use the relationship queries to ensure consistency
+        $bookings = $this->bookings()->get();
+        $carBookings = $this->carBookings()->get();
+        $pendingBookings = $this->pendingBookings()->get();
+        $pendingCarBookings = $this->pendingCarBookings()->get();
+        $upcomingBookings = $this->upcomingBookings()->get();
+        $upcomingCarBookings = $this->upcomingCarBookings()->get();
+
         $bookingEarnings = 0;
         $carBookingEarnings = 0;
         $pendingBookingEarnings = 0;
         $pendingCarBookingEarnings = 0;
+        $upcomingBookingEarnings = 0;
+        $upcomingCarBookingEarnings = 0;
 
-        // Calculate earnings from regular bookings (checked in)
-        $bookings = $this->bookings;
         foreach ($bookings as $booking) {
             $bookingTotal = $booking->total_price ?? 0;
-            $earnings = ($bookingTotal * $referralPercentage) / 100;
-            $bookingEarnings += $earnings;
+            $bookingEarnings += ($bookingTotal * $referralPercentage) / 100;
         }
 
-        // Calculate earnings from car bookings (checked in)
-        $carBookings = $this->carBookings;
         foreach ($carBookings as $carBooking) {
-            $carBookingTotal = $carBooking->total_price ?? $carBooking->price ?? 0;
-            $earnings = ($carBookingTotal * $referralPercentage) / 100;
-            $carBookingEarnings += $earnings;
+            $carBookingTotal = $carBooking->total_price ?? 0;
+            $carBookingEarnings += ($carBookingTotal * $referralPercentage) / 100;
         }
 
-        // Calculate pending earnings from regular bookings (checkin is null)
-        $pendingBookings = $this->pendingBookings;
         foreach ($pendingBookings as $booking) {
             $bookingTotal = $booking->total_price ?? 0;
-            $earnings = ($bookingTotal * $referralPercentage) / 100;
-            $pendingBookingEarnings += $earnings;
+            $pendingBookingEarnings += ($bookingTotal * $referralPercentage) / 100;
         }
 
-        // Calculate pending earnings from car bookings (checkin is null)
-        $pendingCarBookings = $this->pendingCarBookings;
         foreach ($pendingCarBookings as $carBooking) {
-            $carBookingTotal = $carBooking->total_price ?? $carBooking->price ?? 0;
-            $earnings = ($carBookingTotal * $referralPercentage) / 100;
-            $pendingCarBookingEarnings += $earnings;
+            $carBookingTotal = $carBooking->total_price ?? 0;
+            $pendingCarBookingEarnings += ($carBookingTotal * $referralPercentage) / 100;
+        }
+
+        foreach ($upcomingBookings as $booking) {
+            $bookingTotal = $booking->total_price ?? 0;
+            $upcomingBookingEarnings += ($bookingTotal * $referralPercentage) / 100;
+        }
+
+        foreach ($upcomingCarBookings as $carBooking) {
+            $carBookingTotal = $carBooking->total_price ?? 0;
+            $upcomingCarBookingEarnings += ($carBookingTotal * $referralPercentage) / 100;
         }
 
         $totalEarnings = $bookingEarnings + $carBookingEarnings;
         $totalPendingEarnings = $pendingBookingEarnings + $pendingCarBookingEarnings;
+        $totalUpcomingEarnings = $upcomingBookingEarnings + $upcomingCarBookingEarnings;
         $totalRepayments = $this->total_repayments;
-        $balance = $totalEarnings - $totalRepayments;
+        $balance = max(0, $totalEarnings - $totalRepayments);
 
         return [
-            'total_earnings' => $totalEarnings,
-            'booking_earnings' => $bookingEarnings,
-            'car_booking_earnings' => $carBookingEarnings,
-            'pending_balance' => $totalPendingEarnings,
-            'pending_booking_earnings' => $pendingBookingEarnings,
-            'pending_car_booking_earnings' => $pendingCarBookingEarnings,
-            'total_repayments' => $totalRepayments,
-            'balance' => $balance,
+            'total_earnings' => round($totalEarnings, 2),
+            'booking_earnings' => round($bookingEarnings, 2),
+            'car_booking_earnings' => round($carBookingEarnings, 2),
+            'pending_balance' => round($totalPendingEarnings, 2),
+            'pending_booking_earnings' => round($pendingBookingEarnings, 2),
+            'pending_car_booking_earnings' => round($pendingCarBookingEarnings, 2),
+            'upcoming_balance' => round($totalUpcomingEarnings, 2),
+            'upcoming_booking_earnings' => round($upcomingBookingEarnings, 2),
+            'upcoming_car_booking_earnings' => round($upcomingCarBookingEarnings, 2),
+            'total_repayments' => round($totalRepayments, 2),
+            'balance' => round($balance, 2),
             'referral_percentage' => $referralPercentage,
             'company' => $company->name,
             'total_bookings_count' => $bookings->count(),
             'total_car_bookings_count' => $carBookings->count(),
             'pending_bookings_count' => $pendingBookings->count(),
             'pending_car_bookings_count' => $pendingCarBookings->count(),
+            'upcoming_bookings_count' => $upcomingBookings->count(),
+            'upcoming_car_bookings_count' => $upcomingCarBookings->count(),
             'total_repayments_count' => $this->repayments->count()
         ];
     }
 
     /**
-     * Get financial summary including pending balance
+     * Get financial summary including all balance types
      */
     public function getFinancialSummary()
     {
+        $detailedEarnings = $this->getDetailedReferralEarnings();
+
         return [
-            'earnings_from_referrals' => $this->earnings_from_referral,
-            'pending_balance' => $this->pending_balance,
-            'total_repayments' => $this->total_repayments,
-            'balance' => $this->balance,
-            'available_for_withdrawal' => max(0, $this->balance), // Only positive balance
-            'total_potential_earnings' => $this->earnings_from_referral + $this->pending_balance
+            'earnings_from_referrals' => $detailedEarnings['total_earnings'],
+            'pending_balance' => $detailedEarnings['pending_balance'],
+            'upcoming_balance' => $detailedEarnings['upcoming_balance'],
+            'total_repayments' => $detailedEarnings['total_repayments'],
+            'balance' => $detailedEarnings['balance'],
+            'available_for_withdrawal' => max(0, $detailedEarnings['balance']),
+            'total_potential_earnings' => $detailedEarnings['total_earnings'] + $detailedEarnings['pending_balance'] + $detailedEarnings['upcoming_balance'],
+            'referral_percentage' => $detailedEarnings['referral_percentage']
         ];
     }
 
@@ -406,10 +492,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Get total potential earnings (current balance + pending balance)
+     * Get total potential earnings (all types of earnings)
      */
     public function getTotalPotentialEarnings()
     {
-        return $this->earnings_from_referral + $this->pending_balance;
+        $detailed = $this->getDetailedReferralEarnings();
+        return $detailed['total_earnings'] + $detailed['pending_balance'] + $detailed['upcoming_balance'];
     }
 }

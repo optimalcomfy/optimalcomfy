@@ -547,10 +547,11 @@ class HomeController extends Controller
         $isAdmin = $user->role_id === 1 || $user->role_id === "1";
 
         $company = Company::first();
-        $p = 1 - $company->percentage / 100;
+        $platformPercentage = $company->percentage / 100;
+        $hostPercentage = 1 - $platformPercentage;
 
-        // Calculate total revenue from property bookings using payment amounts
-        $propertyBookingTotal = Booking::where("status", "Paid")
+        // PROPERTY BOOKINGS CALCULATIONS
+        $propertyBookings = Booking::whereIn("status", ["Paid", "paid"])
             ->whereNull("external_booking")
             ->whereHas("user")
             ->whereHas("property", function ($query) use ($user, $isAdmin) {
@@ -559,54 +560,43 @@ class HomeController extends Controller
                 }
             })
             ->whereHas('payments')
-            ->withSum('payments', 'amount')
-            ->get()
-            ->sum('payments_sum_amount') * $p;
+            ->with(['payments', 'property'])
+            ->get();
 
-        $availablePropertyBookingTotal = Booking::where("status", "Paid")
-            ->whereNull("external_booking")
+        $propertyBookingTotal = $propertyBookings->sum(function ($booking) use ($hostPercentage) {
+            return $booking->payments->sum('amount') * $hostPercentage;
+        });
+
+        $availablePropertyBookingTotal = $propertyBookings
             ->whereNotNull("checked_in")
+            ->sum(function ($booking) use ($hostPercentage) {
+                return $booking->payments->sum('amount') * $hostPercentage;
+            });
+
+        // CAR BOOKINGS CALCULATIONS
+        $carBookings = CarBooking::whereIn("status", ["Paid", "paid"])
+            ->whereNull("external_booking")
             ->whereHas("user")
-            ->whereHas("property", function ($query) use ($user, $isAdmin) {
-                if (!$isAdmin) {
-                    $query->where("user_id", $user->id);
-                }
-            })
-            ->whereHas('payments')
-            ->withSum('payments', 'amount')
-            ->get()
-            ->sum('payments_sum_amount') * $p;
-
-        // Calculate total revenue from car bookings using payment amounts
-        $carBookingTotal = CarBooking::where("status", "Paid")
-            ->whereNull("external_booking")
             ->whereHas("car", function ($query) use ($user, $isAdmin) {
                 if (!$isAdmin) {
                     $query->where("user_id", $user->id);
                 }
             })
             ->whereHas('payments')
-            ->withSum('payments', 'amount')
-            ->get()
-            ->sum('payments_sum_amount') * $p;
+            ->with(['payments', 'car'])
+            ->get();
 
-        // Available car bookings (checked-in only)
-        $availableCarBookingTotal = CarBooking::where("status", "Paid")
-            ->whereNull("external_booking")
+        $carBookingTotal = $carBookings->sum(function ($booking) use ($hostPercentage) {
+            return $booking->payments->sum('amount') * $hostPercentage;
+        });
+
+        $availableCarBookingTotal = $carBookings
             ->whereNotNull("checked_in")
-            ->whereHas("car", function ($query) use ($user, $isAdmin) {
-                if (!$isAdmin) {
-                    $query->where("user_id", $user->id);
-                }
-            })
-            ->whereHas('payments')
-            ->withSum('payments', 'amount')
-            ->get()
-            ->sum('payments_sum_amount') * $p;
+            ->sum(function ($booking) use ($hostPercentage) {
+                return $booking->payments->sum('amount') * $hostPercentage;
+            });
 
-        $availablePayouts = $availablePropertyBookingTotal + $availableCarBookingTotal;
-
-        // Count user's cars and properties
+        // COUNTS
         $carsCount = $isAdmin
             ? Car::count()
             : Car::where("user_id", $user->id)->count();
@@ -614,92 +604,80 @@ class HomeController extends Controller
             ? Property::count()
             : Property::where("user_id", $user->id)->count();
 
-        // Calculate pending payouts
-        $pendingPayouts = $propertyBookingTotal + $carBookingTotal;
+        // EARNINGS CALCULATIONS
+        $totalEarnings = $propertyBookingTotal + $carBookingTotal;
+        $availablePayouts = $availablePropertyBookingTotal + $availableCarBookingTotal;
 
-        // Recent transactions using payment amounts
+        // PENDING PAYOUTS (bookings that are paid but not yet checked in)
+        $pendingPayouts = ($propertyBookingTotal - $availablePropertyBookingTotal) +
+                        ($carBookingTotal - $availableCarBookingTotal);
+
+        // REPAYMENT AMOUNT
+        $repaymentAmount = Repayment::when(!$isAdmin, function ($query) use ($user) {
+            return $query->where('user_id', $user->id);
+        })
+        ->where('status', 'Approved')
+        ->sum('amount');
+
+        // RECENT TRANSACTIONS
         $recentTransactions = collect([
-            // Property bookings
-            ...Booking::where("status", "Paid")
-                ->whereNull("external_booking")
-                ->whereHas("user")
-                ->whereHas("property", function ($query) use ($user, $isAdmin) {
-                    if (!$isAdmin) {
-                        $query->where("user_id", $user->id);
-                    }
-                })
-                ->whereHas('payments')
-                ->with(["property", "user", "payments"])
-                ->latest()
+            ...$propertyBookings
                 ->take(5)
-                ->get()
-                ->map(function ($booking) use ($p) {
+                ->map(function ($booking) use ($hostPercentage) {
                     $totalPayments = $booking->payments->sum('amount');
                     $days = Carbon::parse($booking->check_in_date)->diffInDays(Carbon::parse($booking->check_out_date));
 
                     return [
                         "type" => "property",
-                        "title" => $booking->property->title,
+                        "title" => $booking->property->property_name ?? 'N/A',
                         "amount" => $totalPayments,
-                        "platform_price" => $booking->property->platform_price,
-                        "platform_charges" => $booking->property->platform_charges,
-                        "net_amount" => $totalPayments * $p,
-                        "guest" => $booking->user->name,
+                        "platform_price" => $booking->property->platform_price ?? 0,
+                        "platform_charges" => $booking->property->platform_charges ?? 0,
+                        "net_amount" => $totalPayments * $hostPercentage,
+                        "guest" => $booking->user->name ?? 'Unknown',
                         "date" => $booking->created_at,
-                        "status" => "completed",
+                        "status" => $booking->checked_in ? "completed" : "pending",
                         "days" => $days,
                     ];
                 }),
 
-            // Car bookings
-            ...CarBooking::where("status", "Paid")
-                ->whereNull("external_booking")
-                ->whereHas("user")
-                ->whereHas("car", function ($query) use ($user, $isAdmin) {
-                    if (!$isAdmin) {
-                        $query->where("user_id", $user->id);
-                    }
-                })
-                ->whereHas('payments')
-                ->with(["car", "user", "payments"])
-                ->latest()
+            ...$carBookings
                 ->take(5)
-                ->get()
-                ->map(function ($booking) use ($p) {
+                ->map(function ($booking) use ($hostPercentage) {
                     $totalPayments = $booking->payments->sum('amount');
                     $days = Carbon::parse($booking->start_date)->diffInDays(Carbon::parse($booking->end_date));
 
                     return [
                         "type" => "car",
-                        "title" => $booking->car->make . " " . $booking->car->model,
+                        "title" => ($booking->car->make ?? '') . " " . ($booking->car->model ?? ''),
                         "amount" => $totalPayments,
-                        "platform_price" => $booking->car->platform_price,
-                        "platform_charges" => $booking->car->platform_charges,
-                        "net_amount" => $totalPayments * $p,
-                        "guest" => $booking->user->name,
+                        "platform_price" => $booking->car->platform_price ?? 0,
+                        "platform_charges" => $booking->car->platform_charges ?? 0,
+                        "net_amount" => $totalPayments * $hostPercentage,
+                        "guest" => $booking->user->name ?? 'Unknown',
                         "date" => $booking->created_at,
-                        "status" => "completed",
+                        "status" => $booking->checked_in ? "completed" : "pending",
                         "days" => $days,
                     ];
                 }),
         ])
-            ->sortByDesc("date")
-            ->take(10)
-            ->values()
-            ->all();
+        ->sortByDesc("date")
+        ->take(10)
+        ->values()
+        ->all();
 
-        // Monthly earnings using payment amounts
+        // MONTHLY EARNINGS - FIXED VERSION
         $monthlyEarnings = [];
 
         for ($i = 11; $i >= 0; $i--) {
             $month = now()->subMonths($i);
-            $monthStart = $month->copy()->startOfMonth()->toDateString();
-            $monthEnd = $month->copy()->endOfMonth()->toDateString();
+            $monthStart = $month->copy()->startOfMonth();
+            $monthEnd = $month->copy()->endOfMonth();
 
-            // Property Earnings using payment amounts
-            $propertyEarnings = Booking::where("status", "Paid")
+            // Property Earnings - based on booking creation date and payment amounts
+            $propertyEarnings = Booking::whereIn("status", ["Paid", "paid"])
                 ->whereNull("external_booking")
-                ->whereBetween("check_in_date", [$monthStart, $monthEnd])
+                ->whereBetween("created_at", [$monthStart, $monthEnd])
                 ->whereHas("user")
                 ->whereHas("property", function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
@@ -707,28 +685,27 @@ class HomeController extends Controller
                     }
                 })
                 ->whereHas('payments')
-                ->with(['property', 'payments'])
+                ->with(['payments'])
                 ->get()
-                ->sum(function ($booking) use ($p) {
-                    $totalPayments = $booking->payments->sum('amount');
-                    return $totalPayments * $p;
+                ->sum(function ($booking) use ($hostPercentage) {
+                    return $booking->payments->sum('amount') * $hostPercentage;
                 });
 
-            // Car Earnings using payment amounts
-            $carEarnings = CarBooking::where("status", "Paid")
+            // Car Earnings - based on booking creation date and payment amounts
+            $carEarnings = CarBooking::whereIn("status", ["Paid", "paid"])
                 ->whereNull("external_booking")
-                ->whereBetween("start_date", [$monthStart, $monthEnd])
+                ->whereBetween("created_at", [$monthStart, $monthEnd])
+                ->whereHas("user")
                 ->whereHas("car", function ($query) use ($user, $isAdmin) {
                     if (!$isAdmin) {
                         $query->where("user_id", $user->id);
                     }
                 })
                 ->whereHas('payments')
-                ->with(['car', 'payments'])
+                ->with(['payments'])
                 ->get()
-                ->sum(function ($booking) use ($p) {
-                    $totalPayments = $booking->payments->sum('amount');
-                    return $totalPayments * $p;
+                ->sum(function ($booking) use ($hostPercentage) {
+                    return $booking->payments->sum('amount') * $hostPercentage;
                 });
 
             $monthlyEarnings[] = [
@@ -739,16 +716,28 @@ class HomeController extends Controller
             ];
         }
 
-        $repaymentAmount = Repayment::when($user->role_id != 1, function ($query) use ($user) {
-            return $query->where('user_id', $user->id);
-        })
-        ->where('status', 'Approved')
-        ->sum('amount');
-
-         $hostsWithOverdrafts = [];
+        $hostsWithOverdrafts = [];
         if ($isAdmin) {
             $hostsWithOverdrafts = $this->getHostsWithOverdrafts();
         }
+
+        // TOTAL BOOKINGS COUNT
+        $totalBookingsCount = Booking::whereNull("external_booking")
+            ->whereHas("user")
+            ->whereHas("property", function ($query) use ($user, $isAdmin) {
+                if (!$isAdmin) {
+                    $query->where("user_id", $user->id);
+                }
+            })
+            ->count() +
+            CarBooking::whereNull("external_booking")
+            ->whereHas("user")
+            ->whereHas("car", function ($query) use ($user, $isAdmin) {
+                if (!$isAdmin) {
+                    $query->where("user_id", $user->id);
+                }
+            })
+            ->count();
 
         return Inertia::render("Dashboard", [
             "canLogin" => Route::has("login"),
@@ -762,44 +751,25 @@ class HomeController extends Controller
             "propertiesCount" => $propertiesCount,
             "propertyBookingTotal" => $propertyBookingTotal,
             "carBookingTotal" => $carBookingTotal,
-            "totalEarnings" => $propertyBookingTotal + $carBookingTotal,
-            "pendingPayouts" => ($pendingPayouts + $user->pending_balance) - $repaymentAmount,
+            "totalEarnings" => $totalEarnings,
+            "pendingPayouts" => $pendingPayouts + $user->pending_balance,
             "availableBalance" => ($availablePayouts + $user->balance) - $repaymentAmount,
             "monthlyEarnings" => $monthlyEarnings,
             "recentTransactions" => $recentTransactions,
-            'hostsWithOverdrafts'=> $hostsWithOverdrafts,
+            'hostsWithOverdrafts' => $hostsWithOverdrafts,
 
-            // Performance metrics (excluding external bookings)
-            "averagePropertyBookingValue" =>
-                $propertiesCount > 0
-                    ? $propertyBookingTotal / max($propertiesCount, 1)
-                    : 0,
-            "averageCarBookingValue" =>
-                $carsCount > 0 ? $carBookingTotal / max($carsCount, 1) : 0,
-            "totalBookingsCount" =>
-                Booking::whereNull("external_booking")
-                    ->whereHas("user")
-                    ->whereHas("property", function ($query) use ($user, $isAdmin) {
-                        if (!$isAdmin) {
-                            $query->where("user_id", $user->id);
-                        }
-                    })
-                    ->count() +
-                CarBooking::whereNull("external_booking")
-                    ->whereHas("user")
-                    ->whereHas("car", function ($query) use ($user, $isAdmin) {
-                        if (!$isAdmin) {
-                            $query->where("user_id", $user->id);
-                        }
-                    })
-                    ->count(),
+            // Performance metrics
+            "averagePropertyBookingValue" => $propertiesCount > 0 ? $propertyBookingTotal / $propertiesCount : 0,
+            "averageCarBookingValue" => $carsCount > 0 ? $carBookingTotal / $carsCount : 0,
+            "totalBookingsCount" => $totalBookingsCount,
         ]);
     }
 
     private function getHostsWithOverdrafts()
     {
         $company = Company::first();
-        $p = 1 - $company->percentage / 100;
+        $platformPercentage = $company->percentage / 100;
+        $hostPercentage = 1 - $platformPercentage;
 
         // Get all hosts (users who are not admins)
         $hosts = User::where('role_id', '!=', 1)->get();
@@ -807,8 +777,8 @@ class HomeController extends Controller
         $hostsWithOverdrafts = [];
 
         foreach ($hosts as $host) {
-            // Calculate available payouts for this host
-            $availablePropertyBookingTotal = Booking::where("status", "Paid")
+            // Calculate total earnings from checked-in bookings
+            $availablePropertyEarnings = Booking::whereIn("status", ["Paid", "paid"])
                 ->whereNull("external_booking")
                 ->whereNotNull("checked_in")
                 ->whereHas("user")
@@ -816,30 +786,34 @@ class HomeController extends Controller
                     $query->where("user_id", $host->id);
                 })
                 ->whereHas('payments')
-                ->withSum('payments', 'amount')
+                ->with(['payments'])
                 ->get()
-                ->sum('payments_sum_amount') * $p;
+                ->sum(function ($booking) use ($hostPercentage) {
+                    return $booking->payments->sum('amount') * $hostPercentage;
+                });
 
-            $availableCarBookingTotal = CarBooking::where("status", "Paid")
+            $availableCarEarnings = CarBooking::whereIn("status", ["Paid", "paid"])
                 ->whereNull("external_booking")
                 ->whereNotNull("checked_in")
                 ->whereHas("car", function ($query) use ($host) {
                     $query->where("user_id", $host->id);
                 })
                 ->whereHas('payments')
-                ->withSum('payments', 'amount')
+                ->with(['payments'])
                 ->get()
-                ->sum('payments_sum_amount') * $p;
+                ->sum(function ($booking) use ($hostPercentage) {
+                    return $booking->payments->sum('amount') * $hostPercentage;
+                });
 
-            $availablePayouts = $availablePropertyBookingTotal + $availableCarBookingTotal;
+            $totalAvailableEarnings = $availablePropertyEarnings + $availableCarEarnings;
 
             // Calculate repayments for this host
             $repaymentAmount = Repayment::where('user_id', $host->id)
                 ->where('status', 'Approved')
                 ->sum('amount');
 
-            // Calculate available balance
-            $availableBalance = $availablePayouts - $repaymentAmount;
+            // Calculate available balance (earnings + user balance - repayments)
+            $availableBalance = ($totalAvailableEarnings + $host->balance) - $repaymentAmount;
 
             // Check if host is in overdraft
             $isInOverdraft = $availableBalance < 0;
@@ -856,6 +830,9 @@ class HomeController extends Controller
                     'overdraft_enabled' => $host->overdraft_enabled,
                     'properties_count' => Property::where('user_id', $host->id)->count(),
                     'cars_count' => Car::where('user_id', $host->id)->count(),
+                    'total_earnings' => $totalAvailableEarnings,
+                    'user_balance' => $host->balance,
+                    'repayment_amount' => $repaymentAmount,
                 ];
             }
         }
@@ -871,10 +848,16 @@ class HomeController extends Controller
     public function hostWallet(Request $request)
     {
         $user = Auth::user();
-
         $isAdmin = $user->role_id === 1 || $user->role_id === "1";
 
-        $propertyBookingTotal = Booking::where("status", "paid")
+        // Get company percentages
+        $company = Company::first();
+        $platformPercentage = $company->percentage / 100; // Platform commission percentage
+        $referralPercentage = $company->referral_percentage / 100; // Referral commission percentage
+        $hostPercentage = 1 - $platformPercentage; // Host percentage after platform commission
+
+        // PROPERTY BOOKINGS CALCULATIONS
+        $propertyBookings = Booking::whereIn("status", ["Paid", "paid"])
             ->whereNull("external_booking")
             ->whereHas("user")
             ->whereHas("property", function ($query) use ($user, $isAdmin) {
@@ -883,122 +866,118 @@ class HomeController extends Controller
                 }
             })
             ->whereHas('payments')
-            ->withSum('payments', 'amount')
-            ->get()
-            ->sum('payments_sum_amount');
+            ->with(['payments', 'property'])
+            ->get();
 
+        // Calculate property booking totals
+        $propertyBookingTotal = $propertyBookings->sum(function ($booking) {
+            return $booking->payments->sum('amount');
+        });
 
-        $availablePropertyBookingTotal = Booking::where("status", "paid")
-            ->whereNull("external_booking")
+        $availablePropertyBookingTotal = $propertyBookings
             ->whereNotNull("checked_in")
+            ->sum(function ($booking) {
+                return $booking->payments->sum('amount');
+            });
+
+        // CAR BOOKINGS CALCULATIONS
+        $carBookings = CarBooking::whereIn("status", ["Paid", "paid"])
+            ->whereNull("external_booking")
             ->whereHas("user")
-            ->whereHas("property", function ($query) use ($user, $isAdmin) {
+            ->whereHas("car", function ($query) use ($user, $isAdmin) {
                 if (!$isAdmin) {
                     $query->where("user_id", $user->id);
                 }
             })
-            ->withSum('payments', 'amount')
-            ->get()
-            ->sum('payments_sum_amount');
+            ->whereHas('payments')
+            ->with(['payments', 'car'])
+            ->get();
 
+        $carBookingTotal = $carBookings->sum(function ($booking) {
+            return $booking->payments->sum('amount');
+        });
 
-        $carBookingTotal = CarBooking::where("status", "paid")
-        ->whereNull("external_booking")
-        ->whereHas("car", function ($query) use ($user) {
-            $query->where("user_id","=", $user->id);
-        })
-        ->withSum('payments', 'amount')
-        ->get()
-        ->sum('payments_sum_amount');
-
-
-        $availableCarBookingTotal = CarBooking::where("status", "paid")
-            ->whereNull("external_booking")
+        $availableCarBookingTotal = $carBookings
             ->whereNotNull("checked_in")
-            ->whereHas("car", function ($query) use ($user) {
-                $query->where("user_id", $user->id);
-            })
-            ->withSum('payments', 'amount')
-            ->get()
-            ->sum('payments_sum_amount');
+            ->sum(function ($booking) {
+                return $booking->payments->sum('amount');
+            });
 
-        $carsCount = Car::where("user_id", "=", $user->id)->count();
-        $propertiesCount = Property::where("user_id", "=", $user->id)->count();
-        $company = Company::first();
-        $p = 1 - $company->percentage / 100;
+        // COUNTS
+        $carsCount = Car::where("user_id", $user->id)->count();
+        $propertiesCount = Property::where("user_id", $user->id)->count();
 
-        $rP = $company->referral_percentage / 100;
+        // EARNINGS CALCULATIONS
+        $totalPropertyEarnings = $propertyBookingTotal * $hostPercentage;
+        $totalCarEarnings = $carBookingTotal * $hostPercentage;
+        $totalEarnings = $totalPropertyEarnings + $totalCarEarnings;
 
-        $pendingPayouts = ($propertyBookingTotal + $carBookingTotal) * $p;
+        // AVAILABLE BALANCE (checked-in bookings only)
+        $availablePropertyEarnings = $availablePropertyBookingTotal * $hostPercentage;
+        $availableCarEarnings = $availableCarBookingTotal * $hostPercentage;
+        $totalAvailableEarnings = $availablePropertyEarnings + $availableCarEarnings;
 
-        $availablePayouts = ($availablePropertyBookingTotal + $availableCarBookingTotal) * $p;
+        // REPAYMENT AMOUNT
+        $repaymentAmount = Repayment::when($user->role_id != 1, function ($query) use ($user) {
+            return $query->where('user_id', $user->id);
+        })
+        ->where('status', 'Approved')
+        ->sum('amount');
 
+        // PENDING PAYOUTS (all paid bookings - available for payout after check-in)
+        $pendingPayoutsProperty = ($propertyBookingTotal - $availablePropertyBookingTotal) * $hostPercentage;
+        $pendingPayoutsCar = ($carBookingTotal - $availableCarBookingTotal) * $hostPercentage;
+        $totalPendingPayouts = $pendingPayoutsProperty + $pendingPayoutsCar;
+
+        // RECENT TRANSACTIONS
         $recentTransactions = collect([
-            ...Booking::where("status", "Paid")
-                ->whereNull("external_booking")
-                ->whereHas("user")
-                ->whereHas("property", function ($query) use ($user, $isAdmin) {
-                    if (!$isAdmin) {
-                        $query->where("user_id", $user->id)
-                        ->orWhere("referral_code","=", $user->referral_code);
-                    }
-                })
-                ->whereHas('payments')
-                ->with(["property", "user", "payments"])
-                ->latest()
+            ...$propertyBookings
                 ->take(5)
-                ->get()
-                ->map(function ($booking) use ($p, $rP) {
+                ->map(function ($booking) use ($hostPercentage, $referralPercentage) {
                     $totalPayments = $booking->payments->sum('amount');
                     $days = Carbon::parse($booking->check_in_date)->diffInDays(Carbon::parse($booking->check_out_date));
 
+                    // Calculate referral amount only if referral code matches
+                    $referralAmount = $booking->referral_code ? round($totalPayments * $referralPercentage) : 0;
+
                     return [
                         "type" => "property",
-                        "title" => $booking->property->title,
+                        "title" => $booking->property->property_name ?? 'N/A',
                         "amount" => $totalPayments,
-                        "platform_price" => $booking->property->platform_price,
-                        "platform_charges" => $booking->property->platform_charges,
-                        "net_amount" => $totalPayments * $p,
-                        "referral_amount" => round($totalPayments * $rP),
-                        "guest" => $booking->user->name,
+                        "platform_price" => $booking->property->platform_price ?? 0,
+                        "platform_charges" => $booking->property->platform_charges ?? 0,
+                        "net_amount" => $totalPayments * $hostPercentage,
+                        "referral_amount" => $referralAmount,
+                        "guest" => $booking->user->name ?? 'Unknown',
                         "date" => $booking->created_at,
-                        "status" => "completed",
+                        "status" => $booking->checked_in ? "completed" : "pending",
                         "days" => $days,
-                        "referral_code"=> $booking->referral_code
+                        "referral_code" => $booking->referral_code
                     ];
                 }),
 
-            ...CarBooking::where("status", "Paid")
-                ->whereNull("external_booking")
-                ->whereHas("user")
-                ->whereHas("car", function ($query) use ($user, $isAdmin) {
-                    if (!$isAdmin) {
-                        $query->where("user_id", $user->id)
-                         ->orWhere("referral_code","=", $user->referral_code);
-                    }
-                })
-                ->whereHas('payments')
-                ->with(["car", "user", "payments"])
-                ->latest()
+            ...$carBookings
                 ->take(5)
-                ->get()
-                ->map(function ($booking) use ($p, $rP) {
+                ->map(function ($booking) use ($hostPercentage, $referralPercentage) {
                     $totalPayments = $booking->payments->sum('amount');
                     $days = Carbon::parse($booking->start_date)->diffInDays(Carbon::parse($booking->end_date));
 
+                    // Calculate referral amount only if referral code matches
+                    $referralAmount = $booking->referral_code ? round($totalPayments * $referralPercentage) : 0;
+
                     return [
                         "type" => "car",
-                        "title" => $booking->car->make . " " . $booking->car->model,
+                        "title" => ($booking->car->make ?? '') . " " . ($booking->car->model ?? ''),
                         "amount" => $totalPayments,
-                        "platform_price" => $booking->car->platform_price,
-                        "platform_charges" => $booking->car->platform_charges,
-                        "net_amount" => $totalPayments * $p,
-                        "guest" => $booking->user->name,
+                        "platform_price" => $booking->car->platform_price ?? 0,
+                        "platform_charges" => $booking->car->platform_charges ?? 0,
+                        "net_amount" => $totalPayments * $hostPercentage,
+                        "guest" => $booking->user->name ?? 'Unknown',
                         "date" => $booking->created_at,
-                        "referral_amount" => round($totalPayments * $rP),
-                        "status" => "completed",
+                        "referral_amount" => $referralAmount,
+                        "status" => $booking->checked_in ? "completed" : "pending",
                         "days" => $days,
-                        "referral_code"=> $booking->referral_code
+                        "referral_code" => $booking->referral_code
                     ];
                 }),
         ])
@@ -1007,12 +986,21 @@ class HomeController extends Controller
         ->values()
         ->all();
 
-
-        $repaymentAmount = Repayment::when($user->role_id != 1, function ($query) use ($user) {
-            return $query->where('user_id', $user->id);
-        })
-        ->where('status', 'Approved')
-        ->sum('amount');
+        // FINAL CALCULATIONS
+        $totalBookingsCount = Booking::whereNull("external_booking")
+            ->whereHas("property", function ($query) use ($user, $isAdmin) {
+                if (!$isAdmin) {
+                    $query->where("user_id", $user->id);
+                }
+            })
+            ->count() +
+            CarBooking::whereNull("external_booking")
+            ->whereHas("car", function ($query) use ($user, $isAdmin) {
+                if (!$isAdmin) {
+                    $query->where("user_id", $user->id);
+                }
+            })
+            ->count();
 
 
         return Inertia::render("Wallet/Wallet", [
@@ -1023,30 +1011,16 @@ class HomeController extends Controller
             "flash" => session("flash"),
             "carsCount" => $carsCount,
             "propertiesCount" => $propertiesCount,
-            "propertyBookingTotal" => $propertyBookingTotal * $p,
-            "carBookingTotal" => $carBookingTotal,
-            "totalEarnings" => ($propertyBookingTotal * $p) + ($carBookingTotal * $p),
-            "pendingPayouts" => ($pendingPayouts + $user->pending_balance + $user->balance) - $repaymentAmount,
+            "propertyBookingTotal" => $totalPropertyEarnings,
+            "carBookingTotal" => $totalCarEarnings,
+            "totalEarnings" => $totalEarnings,
+            "pendingPayouts" => $totalPendingPayouts + $user->pending_balance,
             "repaymentAmount" => $repaymentAmount,
-            "availableBalance" => ($availablePayouts + $user->balance) - $repaymentAmount,
+            "availableBalance" => ($totalAvailableEarnings + $user->balance) - $repaymentAmount,
             "recentTransactions" => $recentTransactions,
-            "averagePropertyBookingValue" =>
-                $propertiesCount > 0
-                    ? $propertyBookingTotal / max($propertiesCount, 1)
-                    : 0,
-            "averageCarBookingValue" =>
-                $carsCount > 0 ? $carBookingTotal / max($carsCount, 1) : 0,
-            "totalBookingsCount" =>
-                Booking::whereNull("external_booking")
-                    ->whereHas("property", function ($query) use ($user) {
-                        $query->where("user_id", $user->id);
-                    })
-                    ->count() +
-                CarBooking::whereNull("external_booking")
-                    ->whereHas("car", function ($query) use ($user) {
-                        $query->where("user_id", $user->id);
-                    })
-                    ->count(),
+            "averagePropertyBookingValue" => $propertiesCount > 0 ? $totalPropertyEarnings / $propertiesCount : 0,
+            "averageCarBookingValue" => $carsCount > 0 ? $totalCarEarnings / $carsCount : 0,
+            "totalBookingsCount" => $totalBookingsCount,
         ]);
     }
 

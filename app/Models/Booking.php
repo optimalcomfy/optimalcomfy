@@ -35,7 +35,14 @@ class Booking extends Model
         'referral_code'
     ];
 
-    protected $appends = ['stay_status', 'max_refundable_amount'];
+    protected $appends = [
+        'stay_status',
+        'max_refundable_amount',
+        'platform_fee',
+        'host_price',
+        'refund_platform_fee',
+        'host_refund_amount'
+    ];
 
     protected $casts = [
         'check_in_date' => 'datetime',
@@ -119,6 +126,83 @@ class Booking extends Model
         return $this->total_price;
     }
 
+    /**
+     * Get platform fee percentage from company settings
+     */
+    public function getPlatformFeePercentage()
+    {
+        $company = Company::first();
+        return $company ? ($company->percentage ?? 10) : 10; // Default to 10% if not set
+    }
+
+    /**
+     * Calculate platform fee amount
+     */
+    public function getPlatformFeeAttribute()
+    {
+        $feePercentage = $this->getPlatformFeePercentage();
+        return round(($this->total_price * $feePercentage) / 100, 2);
+    }
+
+    /**
+     * Calculate host price after platform fee deduction
+     */
+    public function getHostPriceAttribute()
+    {
+        return round($this->total_price - $this->platform_fee, 2);
+    }
+
+    /**
+     * Calculate platform fee for refund amount
+     */
+    public function getRefundPlatformFeeAttribute()
+    {
+        if (!$this->refund_amount || $this->refund_amount <= 0) {
+            return 0;
+        }
+
+        $feePercentage = $this->getPlatformFeePercentage();
+        return round(($this->refund_amount * $feePercentage) / 100, 2);
+    }
+
+    /**
+     * Calculate host refund amount after platform fee deduction
+     */
+    public function getHostRefundAmountAttribute()
+    {
+        if (!$this->refund_amount || $this->refund_amount <= 0) {
+            return 0;
+        }
+
+        return round($this->refund_amount - $this->refund_platform_fee, 2);
+    }
+
+    /**
+     * Calculate host price for a specific amount (useful for partial calculations)
+     */
+    public function calculateHostPriceForAmount($amount)
+    {
+        $feePercentage = $this->getPlatformFeePercentage();
+        $platformFee = round(($amount * $feePercentage) / 100, 2);
+        return round($amount - $platformFee, 2);
+    }
+
+    /**
+     * Get detailed price breakdown
+     */
+    public function getPriceBreakdownAttribute()
+    {
+        return [
+            'total_price' => $this->total_price,
+            'platform_fee_percentage' => $this->getPlatformFeePercentage(),
+            'platform_fee' => $this->platform_fee,
+            'host_price' => $this->host_price,
+            'refund_amount' => $this->refund_amount,
+            'refund_platform_fee' => $this->refund_platform_fee,
+            'host_refund_amount' => $this->host_refund_amount,
+        ];
+    }
+
     public static function generateUniqueNumber()
     {
         do {
@@ -146,6 +230,12 @@ class Booking extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class, 'booking_id')
+                    ->where('booking_type', 'property');
+    }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class, 'booking_id')
                     ->where('booking_type', 'property');
     }
 

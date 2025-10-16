@@ -4,7 +4,7 @@ import Layout from "@/Layouts/layout/layout.jsx";
 import Swal from 'sweetalert2';
 import { Filter, X, FileText, FileSpreadsheet, Calendar, Loader2 } from 'lucide-react';
 import { jsPDF } from "jspdf";
-import "jspdf-autotable"; 
+import "jspdf-autotable";
 import * as XLSX from 'xlsx';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
@@ -28,7 +28,7 @@ const BookingsIndex = () => {
   const searchParams = new URLSearchParams(new URL(url, window.location.origin).search);
   const status = searchParams.get('status');
 
-  const statusHeader = status 
+  const statusHeader = status
   ? status.replace(/_/g, ' ')
          .split(' ')
          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -54,7 +54,7 @@ const BookingsIndex = () => {
     setSearchTerm(e.target.value);
     setLoading(true);
 
-    router.get(route('bookings.index'), { 
+    router.get(route('bookings.index'), {
       search: e.target.value,
       status: status ? status : null,
       ...getDateParams()
@@ -75,7 +75,7 @@ const BookingsIndex = () => {
     setLoading(true);
     setDateFilterActive(true);
     setDatePickerOpen(false);
-    
+
     router.get(route('bookings.index'), {
       search: searchTerm,
       status: status ? status : null,
@@ -89,7 +89,7 @@ const BookingsIndex = () => {
   const clearDateFilter = () => {
     setDateFilterActive(false);
     setLoading(true);
-    
+
     router.get(route('bookings.index'), {
       search: searchTerm,
       status: status ? status : null
@@ -119,10 +119,10 @@ const BookingsIndex = () => {
 
     try {
       const response = await axios.get(route('bookings.exportData'), {
-          params: exportFilters 
+          params: exportFilters
       });
 
-      const allData = response.data; 
+      const allData = response.data;
 
       if (!Array.isArray(allData)) {
          throw new Error("Invalid data received from server.");
@@ -135,7 +135,7 @@ const BookingsIndex = () => {
       }
 
       const logoImg = new Image();
-      logoImg.src = '/image/logo/logo.png'; 
+      logoImg.src = '/image/logo/logo.png';
 
       logoImg.onload = () => {
         const doc = new jsPDF();
@@ -144,7 +144,7 @@ const BookingsIndex = () => {
           year: 'numeric', month: 'long', day: 'numeric'
         });
 
-        let dateRangeText = "Date Range: Current Month"; 
+        let dateRangeText = "Date Range: Current Month";
         if (exportFilters.start_date && exportFilters.end_date) {
             try {
                  dateRangeText = `Date Range: ${format(new Date(exportFilters.start_date + 'T00:00:00'), 'MMM dd, yyyy')} - ${format(new Date(exportFilters.end_date + 'T00:00:00'), 'MMM dd, yyyy')}`;
@@ -158,7 +158,7 @@ const BookingsIndex = () => {
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(dateRangeText, pageWidth / 2, 43, { align: 'center' }); 
+        doc.text(dateRangeText, pageWidth / 2, 43, { align: 'center' });
         doc.text(`Generated on: ${today}`, pageWidth / 2, 50, { align: 'center' });
 
         const columns = ["#", "Booking Number", "Guest Name", "Property", "Check-in", "Check-out", "Nights", "Total Price", "Status", "External Booking"];
@@ -185,7 +185,7 @@ const BookingsIndex = () => {
         doc.autoTable({
           head: [columns],
           body: rows,
-          startY: 58, 
+          startY: 58,
           margin: { top: 58, bottom: 20 },
           styles: { fontSize: 9, cellPadding: 2 },
           headStyles: { fillColor: [241, 104, 36], textColor: 255, halign: 'center' },
@@ -264,7 +264,7 @@ const BookingsIndex = () => {
               hour12: true,
             })
           };
-        }));        
+        }));
 
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Bookings');
@@ -317,10 +317,10 @@ const BookingsIndex = () => {
 
   const getPaginatedUrl = (url) => {
     if (!url) return null;
-    
+
     const urlObj = new URL(url);
     const params = new URLSearchParams(urlObj.search);
-    
+
     // Add search term if it exists
     if (searchTerm) {
       params.set('search', searchTerm);
@@ -328,13 +328,13 @@ const BookingsIndex = () => {
 
     if (status) {
     params.set('status', status)}
-    
+
     // Add date filters if they're active
     if (dateFilterActive) {
       params.set('start_date', format(dateRange[0].startDate, 'yyyy-MM-dd'));
       params.set('end_date', format(dateRange[0].endDate, 'yyyy-MM-dd'));
     }
-    
+
     // Reconstruct the URL with all parameters
     urlObj.search = params.toString();
     return urlObj.toString();
@@ -347,7 +347,7 @@ const BookingsIndex = () => {
       <div className="w-full">
         {/* Mobile Filters Toggle */}
         <div className="lg:hidden mb-4">
-          <button 
+          <button
             onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
             className="inline-flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
@@ -365,24 +365,24 @@ const BookingsIndex = () => {
 
         {/* Top Section - Responsive */}
         <div className={`
-          ${mobileFiltersOpen ? 'block' : 'hidden'} 
+          ${mobileFiltersOpen ? 'block' : 'hidden'}
           lg:block bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4
         `}>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <h1 className="text-2xl capitalize font-semibold text-gray-900 w-full sm:w-auto my-auto">
               { statusHeader } Bookings
             </h1>
-            
+
             <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">
               {roleId === 2 &&
-                <Link 
-                  href={route('bookings.create')} 
+                <Link
+                  href={route('bookings.create')}
                   className="inline-flex items-center px-4 py-2 bg-peachDark text-white rounded-md hover:bg-peachDarker transition-colors"
                 >
                   Add an external booking
                 </Link>
               }
-              
+
               <button
                 onClick={generatePDF}
                 disabled={pagination.data?.length === 0}
@@ -397,7 +397,7 @@ const BookingsIndex = () => {
                     {pdfLoading ? 'Generating...' : 'PDF (All)'}
                   </span>
               </button>
-              
+
               <button
                 onClick={generateExcel}
                 disabled={pagination.data?.length === 0}
@@ -427,21 +427,21 @@ const BookingsIndex = () => {
               />
               {loading && <p className="text-sm text-gray-500 mt-2">Searching...</p>}
             </div>
-            
+
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setDatePickerOpen(!datePickerOpen)}
                 className="w-full flex items-center justify-between px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50"
               >
                 <span>
-                  {dateFilterActive 
+                  {dateFilterActive
                     ? `${format(dateRange[0].startDate, 'MMM dd, yyyy')} - ${format(dateRange[0].endDate, 'MMM dd, yyyy')}`
                     : 'Date Range Filter'
                   }
                 </span>
                 <Calendar className="w-5 h-5 text-gray-500" />
               </button>
-              
+
               {dateFilterActive && (
                 <button
                   onClick={clearDateFilter}
@@ -450,7 +450,7 @@ const BookingsIndex = () => {
                   <X className="w-5 h-5" />
                 </button>
               )}
-              
+
               {datePickerOpen && (
                 <div className="absolute mt-2 z-10 bg-white rounded-lg shadow-lg border border-gray-200 p-4">
                   <DateRange
@@ -479,7 +479,7 @@ const BookingsIndex = () => {
             </div>
           </div>
         </div>
-      
+
         {/* Flash Message */}
         {flash?.success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-900">
@@ -495,7 +495,7 @@ const BookingsIndex = () => {
               <strong className="font-semibold">Date Filter: </strong>
               {format(dateRange[0].startDate, 'MMMM dd, yyyy')} to {format(dateRange[0].endDate, 'MMMM dd, yyyy')}
             </span>
-            <button 
+            <button
               onClick={clearDateFilter}
               className="text-blue-600 hover:text-blue-800"
             >
@@ -534,9 +534,9 @@ const BookingsIndex = () => {
                     <td className="px-6 py-4 whitespace-wrap">{booking.property?.property_name || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-wrap">{formatDate(booking.check_in_date)}</td>
                     <td className="px-6 py-4 whitespace-wrap">{formatDate(booking.check_out_date)}</td>
-                    <td className="px-6 py-4 whitespace-wrap">KES {parseFloat(booking.property.platform_price) * nights}</td>
+                    <td className="px-6 py-4 whitespace-wrap">KES {parseFloat(booking.host_price)}</td>
                     <td className="px-6 py-4 whitespace-wrap">
-                      <span 
+                      <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                           booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
                           booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :

@@ -135,7 +135,7 @@ const Wallet = ({ user }) => {
     const nextPayout = pendingPayouts;
 
     // Calculate pending amount (total earnings minus available balance)
-    const pendingAmount = pendingPayouts - availableBalance;
+    const pendingAmount = pendingPayouts;
 
     return (
         <Layout>

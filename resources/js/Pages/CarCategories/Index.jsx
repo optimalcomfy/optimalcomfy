@@ -47,10 +47,10 @@ const Indexcategories = () => {
 
   return (
     <Layout>
-      <div className="w-full">
+      <div className="w-full flex flex-col">
         {/* Mobile Filters Toggle */}
         <div className="lg:hidden mb-4">
-          <button 
+          <button
             onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
             className="inline-flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
@@ -66,24 +66,23 @@ const Indexcategories = () => {
           </button>
         </div>
 
+        <Link
+            href={route('car-categories.create')}
+            className="inline-flex ml-auto my-4 items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+            >
+            <Plus className="w-5 h-5 mr-2" />
+            Add New Category
+            </Link>
+
         {/* Top Section - Responsive */}
         <div className={`
-          ${mobileFiltersOpen ? 'block' : 'hidden'} 
+          ${mobileFiltersOpen ? 'block' : 'hidden'}
           lg:block bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4
         `}>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <h1 className="text-2xl font-semibold text-gray-900 w-full sm:w-auto my-auto">
               Ride Categories
             </h1>
-            <div className="w-full sm:w-auto">
-              <Link 
-                href={route('car-categories.create')}
-                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Add New Category
-              </Link>
-            </div>
           </div>
 
           {/* Search Input */}

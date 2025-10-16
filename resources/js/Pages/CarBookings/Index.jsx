@@ -345,7 +345,7 @@ const CarBookingsIndex = () => {
     <Layout>
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className="w-full">
+      <div className="w-full flex flex-col">
         {/* Mobile Filters Toggle */}
         <div className="lg:hidden mb-4">
           <button
@@ -364,6 +364,15 @@ const CarBookingsIndex = () => {
           </button>
         </div>
 
+        {roleId === 2 &&
+            <Link
+                href={route('car-bookings.create')}
+                className="inline-flex ml-auto my-4 items-center px-4 py-2 bg-peachDark text-white rounded-md hover:bg-peachDarker transition-colors"
+            >
+                Add an external booking
+            </Link>
+            }
+
         {/* Top Section - Responsive */}
         <div className={`
           ${mobileFiltersOpen ? 'block' : 'hidden'}
@@ -375,14 +384,6 @@ const CarBookingsIndex = () => {
             </h1>
 
             <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">
-              {roleId === 2 &&
-                <Link
-                  href={route('car-bookings.create')}
-                  className="inline-flex items-center px-4 py-2 bg-peachDark text-white rounded-md hover:bg-peachDarker transition-colors"
-                >
-                  Add an external booking
-                </Link>
-              }
 
               <button
                 onClick={generatePDF}

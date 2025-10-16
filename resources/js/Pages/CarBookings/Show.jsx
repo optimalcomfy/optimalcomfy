@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 const CarBookingShow = () => {
   const { carBooking: booking, auth, errors } = usePage().props;
   const roleId = parseInt(auth.user?.role_id);
-  
+
   // Calculate number of days
   const startDate = new Date(booking.start_date);
   const endDate = new Date(booking.end_date);
@@ -220,17 +220,17 @@ const CarBookingShow = () => {
         <div style="text-align: left; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
           <!-- Action Selection Card -->
           <div style="
-            background: #f8fafc; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 12px; 
-            padding: 20px; 
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 24px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           ">
             <h4 style="
-              margin: 0 0 16px 0; 
-              color: #334155; 
-              font-size: 16px; 
+              margin: 0 0 16px 0;
+              color: #334155;
+              font-size: 16px;
               font-weight: 600;
               display: flex;
               align-items: center;
@@ -238,28 +238,28 @@ const CarBookingShow = () => {
               <i class="fas fa-tasks" style="color: #6366f1; margin-right: 8px; font-size: 14px;"></i>
               Select Action
             </h4>
-            
+
             <div style="display: flex; flex-direction: column; gap: 12px;">
               <label style="
-                display: flex; 
-                align-items: center; 
-                padding: 12px 16px; 
-                background: white; 
-                border: 2px solid #10b981; 
-                border-radius: 8px; 
+                display: flex;
+                align-items: center;
+                padding: 12px 16px;
+                background: white;
+                border: 2px solid #10b981;
+                border-radius: 8px;
                 cursor: pointer;
                 transition: all 0.2s ease;
                 font-weight: 500;
                 color: #065f46;
               " for="approveRefund">
-                <input 
-                  type="radio" 
-                  id="approveRefund" 
-                  name="refundAction" 
-                  value="approve" 
-                  checked 
+                <input
+                  type="radio"
+                  id="approveRefund"
+                  name="refundAction"
+                  value="approve"
+                  checked
                   style="
-                    margin-right: 12px; 
+                    margin-right: 12px;
                     transform: scale(1.2);
                     accent-color: #10b981;
                   "
@@ -267,26 +267,26 @@ const CarBookingShow = () => {
                 <i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>
                 Approve Refund
               </label>
-              
+
               <label style="
-                display: flex; 
-                align-items: center; 
-                padding: 12px 16px; 
-                background: white; 
-                border: 2px solid #e5e7eb; 
-                border-radius: 8px; 
+                display: flex;
+                align-items: center;
+                padding: 12px 16px;
+                background: white;
+                border: 2px solid #e5e7eb;
+                border-radius: 8px;
                 cursor: pointer;
                 transition: all 0.2s ease;
                 font-weight: 500;
                 color: #6b7280;
               " for="rejectRefund">
-                <input 
-                  type="radio" 
-                  id="rejectRefund" 
-                  name="refundAction" 
-                  value="reject" 
+                <input
+                  type="radio"
+                  id="rejectRefund"
+                  name="refundAction"
+                  value="reject"
                   style="
-                    margin-right: 12px; 
+                    margin-right: 12px;
                     transform: scale(1.2);
                     accent-color: #ef4444;
                   "
@@ -296,77 +296,77 @@ const CarBookingShow = () => {
               </label>
             </div>
           </div>
-          
+
           <!-- Refund Amount Section -->
           <div id="refundAmountGroup" style="
-            background: white; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 12px; 
-            padding: 20px; 
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 16px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           ">
             <h4 style="
-              margin: 0 0 16px 0; 
-              color: #334155; 
-              font-size: 16px; 
+              margin: 0 0 16px 0;
+              color: #334155;
+              font-size: 16px;
               font-weight: 600;
               display: flex;
               align-items: center;
             ">
               Refund Amount
             </h4>
-            
+
             <div style="position: relative;">
-              <input 
-                type="number" 
-                id="refundAmount" 
+              <input
+                type="number"
+                id="refundAmount"
                 style="
-                  width: 100%; 
-                  padding: 12px 12px 12px 28px; 
-                  border: 2px solid #e5e7eb; 
-                  border-radius: 8px; 
+                  width: 100%;
+                  padding: 12px 12px 12px 28px;
+                  border: 2px solid #e5e7eb;
+                  border-radius: 8px;
                   font-size: 16px;
                   font-weight: 600;
                   color: #374151;
                   background: #f9fafb;
                   transition: all 0.2s ease;
                   box-sizing: border-box;
-                " 
-                min="0" 
-                max="${booking.car.platform_price * days}" 
-                value="${booking.car.platform_price * days}"
+                "
+                min="0"
+                max="${booking.host_price * days}"
+                value="${booking.host_price * days}"
                 step="0.01"
                 placeholder="0.00"
               >
             </div>
-            
+
             <div style="
-              margin-top: 8px; 
-              font-size: 13px; 
+              margin-top: 8px;
+              font-size: 13px;
               color: #6b7280;
               display: flex;
               align-items: center;
             ">
               <i class="fas fa-info-circle" style="margin-right: 6px; color: #3b82f6;"></i>
-              Maximum refundable amount: KES ${booking.car.platform_price * days}
+              Maximum refundable amount: KES ${booking.host_price * days}
             </div>
           </div>
-          
+
           <!-- Rejection Reason Section -->
           <div id="rejectReasonGroup" style="
-            background: white; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 12px; 
-            padding: 20px; 
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 16px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             display: none;
           ">
             <h4 style="
-              margin: 0 0 16px 0; 
-              color: #334155; 
-              font-size: 16px; 
+              margin: 0 0 16px 0;
+              color: #334155;
+              font-size: 16px;
               font-weight: 600;
               display: flex;
               align-items: center;
@@ -374,16 +374,16 @@ const CarBookingShow = () => {
               <i class="fas fa-comment-alt" style="color: #ef4444; margin-right: 8px; font-size: 14px;"></i>
               Reason for Rejection
             </h4>
-            
-            <textarea 
-              id="rejectReason" 
+
+            <textarea
+              id="rejectReason"
               rows="4"
               placeholder="Please provide a detailed reason for rejecting this refund request..."
               style="
-                width: 100%; 
-                padding: 12px; 
-                border: 2px solid #e5e7eb; 
-                border-radius: 8px; 
+                width: 100%;
+                padding: 12px;
+                border: 2px solid #e5e7eb;
+                border-radius: 8px;
                 font-size: 14px;
                 font-family: inherit;
                 color: #374151;
@@ -394,10 +394,10 @@ const CarBookingShow = () => {
                 box-sizing: border-box;
               "
             ></textarea>
-            
+
             <div style="
-              margin-top: 8px; 
-              font-size: 13px; 
+              margin-top: 8px;
+              font-size: 13px;
               color: #6b7280;
               display: flex;
               align-items: center;
@@ -424,21 +424,21 @@ const CarBookingShow = () => {
         const action = document.querySelector('input[name="refundAction"]:checked').value;
         const amount = document.getElementById('refundAmount')?.value;
         const reason = document.getElementById('rejectReason')?.value;
-        
+
         if (action === 'reject' && !reason?.trim()) {
           Swal.showValidationMessage(
             '<i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>Please provide a reason for rejection'
           );
           return false;
         }
-        
-        if (action === 'approve' && (!amount || parseFloat(amount) <= 0 || parseFloat(amount) > parseFloat(booking.car.platform_price * days))) {
+
+        if (action === 'approve' && (!amount || parseFloat(amount) <= 0 || parseFloat(amount) > parseFloat(booking.host_price * days))) {
           Swal.showValidationMessage(
             '<i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>Please enter a valid refund amount'
           );
           return false;
         }
-        
+
         return { action, amount, reason };
       },
       didOpen: () => {
@@ -448,7 +448,7 @@ const CarBookingShow = () => {
           .professional-refund-modal {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
           }
-          
+
           .professional-confirm-btn, .professional-cancel-btn {
             padding: 12px 24px !important;
             border-radius: 8px !important;
@@ -458,40 +458,40 @@ const CarBookingShow = () => {
             border: none !important;
             cursor: pointer !important;
           }
-          
+
           .professional-confirm-btn {
             background: #3b82f6 !important;
             color: white !important;
           }
-          
+
           .professional-confirm-btn:hover {
             background: #2563eb !important;
             transform: translateY(-1px) !important;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
           }
-          
+
           .professional-cancel-btn {
             background: #6b7280 !important;
             color: white !important;
           }
-          
+
           .professional-cancel-btn:hover {
             background: #4b5563 !important;
             transform: translateY(-1px) !important;
           }
-          
+
           input[type="number"]:focus, textarea:focus {
             outline: none !important;
             border-color: #3b82f6 !important;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
           }
-          
+
           label:has(input[type="radio"]:checked) {
             border-color: #10b981 !important;
             background: #ecfdf5 !important;
             color: #065f46 !important;
           }
-          
+
           label:has(input[name="refundAction"][value="reject"]:checked) {
             border-color: #ef4444 !important;
             background: #fef2f2 !important;
@@ -499,11 +499,11 @@ const CarBookingShow = () => {
           }
         `;
         document.head.appendChild(style);
-        
+
         const refundActionRadios = document.querySelectorAll('input[name="refundAction"]');
         const refundAmountGroup = document.getElementById('refundAmountGroup');
         const rejectReasonGroup = document.getElementById('rejectReasonGroup');
-        
+
         refundActionRadios.forEach(radio => {
           radio.addEventListener('change', (e) => {
             if (e.target.value === 'approve') {
@@ -519,7 +519,7 @@ const CarBookingShow = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         const { action, amount, reason } = result.value;
-        
+
         // Show loading state
         Swal.fire({
           title: 'Processing...',
@@ -528,7 +528,7 @@ const CarBookingShow = () => {
           allowOutsideClick: false,
           allowEscapeKey: false,
         });
-        
+
         router.post(route('car-bookings.handle-refund', booking.id), {
           action,
           refund_amount: action === 'approve' ? amount : 0,
@@ -616,7 +616,7 @@ const CarBookingShow = () => {
               </div>
               <div className="ml-3">
                 <p className="text-sm">
-                  <span className="font-medium">{booking.car.name}</span> - 
+                  <span className="font-medium">{booking.car.name}</span> -
                   Status: <span className="font-bold capitalize">{bookingStatus}</span>
                 </p>
                 {(booking.checkin_verification_code || booking.checkout_verification_code) && (
@@ -633,7 +633,7 @@ const CarBookingShow = () => {
                   onClick={handleCheckIn}
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                 >
-                  <FaSignInAlt className="mr-2" /> 
+                  <FaSignInAlt className="mr-2" />
                   {booking.checkin_verification_code ? 'Verify Check In' : 'Check In'}
                 </button>
               )}
@@ -642,7 +642,7 @@ const CarBookingShow = () => {
                   onClick={handleCheckOut}
                   className="flex items-center px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
                 >
-                  <FaSignOutAlt className="mr-2" /> 
+                  <FaSignOutAlt className="mr-2" />
                   {booking.checkout_verification_code ? 'Verify Check Out' : 'Check Out'}
                 </button>
               )}
@@ -657,9 +657,9 @@ const CarBookingShow = () => {
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="md:flex">
                 <div className="md:flex-shrink-0 md:w-1/3">
-                  <img 
-                    className="h-48 w-full object-cover md:h-full" 
-                    src={`/storage/${booking.car?.initial_gallery?.[0]?.image}` || '/images/default-car.jpg'} 
+                  <img
+                    className="h-48 w-full object-cover md:h-full"
+                    src={`/storage/${booking.car?.initial_gallery?.[0]?.image}` || '/images/default-car.jpg'}
                     alt={booking.car.name}
                   />
                 </div>
@@ -677,20 +677,20 @@ const CarBookingShow = () => {
                   <div className="mt-4 grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-500">Pickup Date</p>
-                      <p className="font-medium">{new Date(booking.start_date).toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric' 
+                      <p className="font-medium">{new Date(booking.start_date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
                       })}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Dropoff Date</p>
-                      <p className="font-medium">{new Date(booking.end_date).toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric' 
+                      <p className="font-medium">{new Date(booking.end_date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
                       })}</p>
                     </div>
                     <div>
@@ -784,12 +784,11 @@ const CarBookingShow = () => {
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{days} day{days !== 1 ? 's' : ''} × {booking.car.platform_price}</span>
-                  <span className="font-medium">KES {parseFloat(booking.car.platform_price) * days}</span>
+                  <span className="text-gray-600">{days} day{days !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="flex justify-between border-t pt-2 font-bold text-lg">
                   <span>Total</span>
-                  <span>KES {parseFloat(booking.car.platform_price) * days}</span>
+                  <span>KES {parseFloat(booking.host_price)}</span>
                 </div>
               </div>
 
@@ -894,17 +893,17 @@ const CarBookingShow = () => {
 
               {errors.cancel_reason &&
               <div className="mt-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md flex items-start">
-                <svg 
-                  className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
                 <span>{errors.cancel_reason}</span>
@@ -915,7 +914,7 @@ const CarBookingShow = () => {
                 <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                   {booking.refund_approval ? 'Refund Status' : 'This booking has been cancelled'}
                 </h3>
-                
+
                 {booking.cancel_reason && (
                   <p className="text-sm text-gray-600 mb-3">
                     {booking.cancel_reason}
@@ -923,20 +922,20 @@ const CarBookingShow = () => {
                 )}
 
                 {!booking.checked_out && booking.status !== 'Cancelled' && booking.status !== 'failed' && (
-                    <button 
+                    <button
                       onClick={handleCancelBooking}
                       className="px-8 py-2 w-full flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-md transition duration-150"
                     >
                       Cancel Booking
                     </button>
                 )}
-                
+
                 {booking.refund_approval === 'approved' ? (
                   <div className="bg-green-50 text-green-800 p-3 rounded-md">
                     <p className="font-medium">Refund Approved</p>
                     <p>Amount: KES {booking.refund_amount}</p>
                     <p className="text-sm mt-1">
-                      Status: {booking.refund_status === 'completed' ? 
+                      Status: {booking.refund_status === 'completed' ?
                         'Completed' : 'Processing - Please allow 1-3 business days'}
                     </p>
                   </div>
@@ -947,7 +946,7 @@ const CarBookingShow = () => {
                   </div>
                 ) : (
                   roleId === 1 && (
-                    <button 
+                    <button
                       onClick={handleRefund}
                       className="px-8 py-2 w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-150"
                     >

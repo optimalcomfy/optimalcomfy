@@ -45,6 +45,14 @@ const AppMenu = () => {
             ]
         },
         {
+            label: 'Markup Management',
+            items: [
+                { label: 'My Markups', icon: 'pi pi-fw pi-tags', to: route('markup.index'), roles: [2] },
+                { label: 'Browse Properties', icon: 'pi pi-fw pi-home', to: route('markup.browse.properties'), roles: [2] },
+                { label: 'Browse Cars', icon: 'pi pi-fw pi-car', to: route('markup.browse.cars'), roles: [2] }
+            ]
+        },
+        {
             label: 'Payments & Reviews',
             items: [
                 { label: 'Payments', icon: 'pi pi-fw pi-credit-card', to: route('payments.index'), roles: [1] },
@@ -56,7 +64,7 @@ const AppMenu = () => {
             items: [
                 { label: 'Company', icon: 'pi pi-fw pi-briefcase', to: route('companies.index'), roles: [1] }
             ]
-        },
+        }
     ];
 
     const filteredModel = model.map(section => ({

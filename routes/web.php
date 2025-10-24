@@ -46,10 +46,12 @@ use App\Http\Controllers\VariationController;
 use App\Http\Controllers\MpesaStkController;
 use App\Http\Controllers\RefundController;
 use App\Http\Controllers\CarRefundController;
+use App\Http\Controllers\MarkupBookingController;
 use Illuminate\Support\Facades\Auth;
 
 use App\Models\Property;
 use App\Models\User;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -231,6 +233,7 @@ Route::middleware('auth')->group(function () {
 
         return response()->json(['valid' => false]);
     });
+
 });
 
 Route::middleware('auth')->post('/pesapal/initiate', [PesapalController::class, 'initiatePayment'])->name('pesapal.initiate');
@@ -279,5 +282,23 @@ Route::get('/test-ristay-sender', function () {
     return response()->json($result);
 });
 
+
+Route::middleware(['auth'])->group(function () {
+    // Markup management routes
+    Route::get('/my-markups', [MarkupBookingController::class, 'index'])->name('markup.index');
+    Route::get('/user/markups', [MarkupBookingController::class, 'getUserMarkups'])->name('markup.user.markups');
+    Route::post('/markups', [MarkupBookingController::class, 'addMarkup'])->name('markup.add');
+    Route::delete('/markups/{markupId}', [MarkupBookingController::class, 'removeMarkup'])->name('markup.remove');
+    Route::get('/markup-stats', [MarkupBookingController::class, 'getMarkupStats'])->name('markup.stats');
+
+    // Browse routes
+    Route::get('/markup/browse/properties', [MarkupBookingController::class, 'browseProperties'])->name('markup.browse.properties');
+    Route::get('/markup/browse/cars', [MarkupBookingController::class, 'browseCars'])->name('markup.browse.cars');
+});
+
+// Markup booking routes
+Route::get('/markup-booking/{token}', [MarkupBookingController::class, 'showMarkupBooking'])->name('markup.booking.show');
+Route::post('/markup-booking/{token}', [MarkupBookingController::class, 'processMarkupBooking'])->name('markup.booking.process');
+Route::get('/check-user-exists', [MarkupBookingController::class, 'checkUserExists']);
 
 require __DIR__.'/auth.php';

@@ -10,10 +10,11 @@ use App\Models\CarCategory;
 use App\Models\CarMedia;
 use App\Models\CarFeature;
 use App\Models\CarBooking;
+use App\Traits\HasMarkup;
 
 class Car extends Model
 {
-    use HasFactory;
+    use HasFactory, HasMarkup;
 
     protected $fillable = [
         'car_category_id',
@@ -96,16 +97,15 @@ class Car extends Model
 
     public function getPlatformPriceAttribute()
     {
-
         $company = Company::first();
-
         $platformPercentage = $company->percentage / 100;
 
+        $basePrice = $this->current_user_final_price;
 
-        $guestPrice = $this->amount * (1 + $platformPercentage);
-
-        return round($guestPrice, -2); // Round to 2 decimal places (currency format)
+        $guestPrice = $basePrice * (1 + $platformPercentage);
+        return round($guestPrice, -2);
     }
+
     /**
      * Accessor: Platform charges (Guest Price - Host Amount)
      * Example: For 5500→6400, charges = 900

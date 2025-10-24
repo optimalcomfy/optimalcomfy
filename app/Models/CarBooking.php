@@ -275,4 +275,22 @@ class CarBooking extends Model
     {
         return $this->belongsTo(User::class, 'cancelled_by_id');
     }
+
+    public function markup()
+    {
+        return $this->belongsTo(Markup::class);
+    }
+
+    public function getMarkupProfitAttribute()
+    {
+        if (!$this->markup_id) {
+            return 0;
+        }
+
+        $platformFeePercentage = $this->getPlatformFeePercentage();
+        $markupProfit = $this->markup->profit;
+        $platformFeeOnMarkup = ($markupProfit * $platformFeePercentage) / 100;
+
+        return $markupProfit - $platformFeeOnMarkup;
+    }
 }

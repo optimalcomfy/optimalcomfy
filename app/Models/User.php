@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
 use App\Models\Company;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -84,7 +85,7 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $appends = ['earnings_from_referral', 'balance', 'pending_balance'];
+    protected $appends = ['earnings_from_referral', 'balance', 'pending_balance', 'can_add_markup'];
 
     /**
      * Boot function from Laravel model events
@@ -498,5 +499,47 @@ class User extends Authenticatable
     {
         $detailed = $this->getDetailedReferralEarnings();
         return $detailed['total_earnings'] + $detailed['pending_balance'] + $detailed['upcoming_balance'];
+    }
+
+    /**
+     * Check if user is a host
+     */
+    public function isHost()
+    {
+        return in_array($this->role_id, [2]); // Role ID 2 is host
+    }
+
+    /**
+     * Check if user can add markup (must be host - can markup any property/car)
+     */
+    public function canAddMarkup()
+    {
+        return $this->isHost();
+    }
+
+    /**
+     * Accessor for can_add_markup
+     */
+    public function getCanAddMarkupAttribute()
+    {
+        return $this->canAddMarkup();
+    }
+
+    public function hostedProperties()
+    {
+        return $this->hasMany(Property::class, 'user_id');
+    }
+
+    public function hostedCars()
+    {
+        return $this->hasMany(Car::class, 'user_id');
+    }
+
+    /**
+     * Get all markups created by this user
+     */
+    public function markups()
+    {
+        return $this->hasMany(Markup::class);
     }
 }

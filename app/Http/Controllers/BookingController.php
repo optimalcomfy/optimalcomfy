@@ -476,19 +476,42 @@ class BookingController extends Controller
     {
         $company = Company::first();
 
+        // Check if this is a markup booking and calculate the correct display amount
+        $displayAmount = $booking->total_price;
+
+        // If it's a markup booking, use the markup final amount
+        if ($booking->markup_id && $booking->markup) {
+            $checkIn = Carbon::parse($booking->check_in_date);
+            $checkOut = Carbon::parse($booking->check_out_date);
+            $nights = max(1, $checkOut->diffInDays($checkIn));
+            $displayAmount = $booking->markup->final_amount * $nights;
+        }
+
         return Inertia::render('PaymentPending', [
             'booking' => $booking,
             'company' => $company,
+            'displayAmount' => $displayAmount,
             'message' => $request->message ?? 'Payment is being processed.'
         ]);
     }
 
     public function paymentStatus(Booking $booking)
     {
+        // Check if this is a markup booking and calculate the correct display amount
+        $displayAmount = $booking->total_price;
+
+        // If it's a markup booking, use the markup final amount
+        if ($booking->markup_id && $booking->markup) {
+            $checkIn = Carbon::parse($booking->check_in_date);
+            $checkOut = Carbon::parse($booking->check_out_date);
+            $nights = max(1, $checkOut->diffInDays($checkIn));
+            $displayAmount = $booking->markup->final_amount * $nights;
+        }
+
         return response()->json([
             'status' => $booking->status,
             'paid' => $booking->status === 'paid',
-            'amount' => $booking->total_price,
+            'amount' => $displayAmount,
             'last_updated' => $booking->updated_at->toISOString()
         ]);
     }

@@ -269,4 +269,23 @@ class Booking extends Model
         $checkOut = Carbon::parse($this->check_out_date);
         return $checkOut->diffInDays($checkIn);
     }
+
+
+    public function markup()
+    {
+        return $this->belongsTo(Markup::class);
+    }
+
+    public function getMarkupProfitAttribute()
+    {
+        if (!$this->markup_id) {
+            return 0;
+        }
+
+        $platformFeePercentage = $this->getPlatformFeePercentage();
+        $markupProfit = $this->markup->profit;
+        $platformFeeOnMarkup = ($markupProfit * $platformFeePercentage) / 100;
+
+        return $markupProfit - $platformFeeOnMarkup;
+    }
 }

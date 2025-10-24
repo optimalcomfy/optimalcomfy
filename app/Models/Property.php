@@ -11,10 +11,11 @@ use App\Models\PropertyGallery;
 use App\Models\PropertyAmenity;
 use App\Models\PropertyFeature;
 use App\Models\PropertyService;
+use App\Traits\HasMarkup;
 
 class Property extends Model
 {
-    use HasFactory;
+    use HasFactory, HasMarkup;
 
     protected $fillable = [
         'property_name',
@@ -89,28 +90,18 @@ class Property extends Model
         return $this->hasMany(PropertyService::class);
     }
 
-    /**
-     * Accessor: Platform price (Guest Price)
-     * Special case: Returns 6400 when host amount is 5500
-     * Otherwise calculates: Guest Price = Host Price / (1 - Platform Percentage)
-     */
+
     public function getPlatformPriceAttribute()
     {
-
         $company = Company::first();
-
         $platformPercentage = $company->percentage / 100;
 
+        $basePrice = $this->current_user_final_price;
 
-        $guestPrice = $this->amount * (1 + $platformPercentage);
-
-        return round($guestPrice, -2); // Round to 2 decimal places (currency format)
+        $guestPrice = $basePrice * (1 + $platformPercentage);
+        return round($guestPrice, -2);
     }
 
-    /**
-     * Accessor: Platform charges (Guest Price - Host Amount)
-     * Example: For 5500→6400, charges = 900
-     */
     public function getPlatformChargesAttribute()
     {
         return round($this->platform_price - $this->amount, -2);

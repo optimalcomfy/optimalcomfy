@@ -9,17 +9,22 @@ import { Toast } from 'primereact/toast';
 import { useRef } from 'react';
 
 export default function PaymentPending({ auth, laravelVersion, phpVersion }) {
-    const { booking: initialBooking, message, company } = usePage().props;
+    const { booking: initialBooking, message, company, displayAmount } = usePage().props;
     const [booking, setBooking] = useState(initialBooking);
     const [isLoading, setIsLoading] = useState(false);
     const toast = useRef(null);
 
-    // Calculate final amount based on referral discount
-    const calculateFinalAmount = (booking, company) => {
+    // Use displayAmount from backend if available, otherwise calculate
+    const getFinalAmount = () => {
+        // If displayAmount is provided from backend (for markup bookings), use it
+        if (displayAmount !== undefined) {
+            return displayAmount;
+        }
+
+        // Otherwise, calculate based on referral discount for regular bookings
         if (booking?.referral_code) {
             const totalPrice = parseFloat(booking.total_price) || 0;
             const referralPercentage = parseFloat(company?.booking_referral_percentage) || 0;
-
             const discountAmount = totalPrice * (referralPercentage / 100);
             return totalPrice - discountAmount;
         }
@@ -27,12 +32,13 @@ export default function PaymentPending({ auth, laravelVersion, phpVersion }) {
         return parseFloat(booking?.total_price) || 0;
     }
 
-    const finalAmount = calculateFinalAmount(booking, company);
+    const finalAmount = getFinalAmount();
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-KE', {
             style: 'currency',
-            currency: 'KES'
+            currency: 'KES',
+            minimumFractionDigits: 0,
         }).format(amount);
     };
 
@@ -81,6 +87,9 @@ export default function PaymentPending({ auth, laravelVersion, phpVersion }) {
         return () => clearInterval(interval);
     }, []);
 
+    // Check if this is a markup booking (has markup_id)
+    const isMarkupBooking = booking?.markup_id;
+
     return (
         <PrimeReactProvider>
             <LayoutProvider>
@@ -104,10 +113,13 @@ export default function PaymentPending({ auth, laravelVersion, phpVersion }) {
                                     <h3 className="font-semibold mb-3">Payment Summary</h3>
 
                                     <div className="space-y-2">
-                                        <div className="flex justify-between">
-                                            <span>Original Amount:</span>
-                                            <span>{formatCurrency(booking.total_price)}</span>
-                                        </div>
+                                        {/* Show original amount only for non-markup bookings */}
+                                        {!isMarkupBooking && (
+                                            <div className="flex justify-between">
+                                                <span>Original Amount:</span>
+                                                <span>{formatCurrency(booking.total_price)}</span>
+                                            </div>
+                                        )}
 
                                         {/* Show referral discount if applicable */}
                                         {booking.referral_code && (
@@ -130,6 +142,15 @@ export default function PaymentPending({ auth, laravelVersion, phpVersion }) {
                                         <div className="mt-3 p-2 bg-green-50 rounded border border-green-200">
                                             <p className="text-sm text-green-700">
                                                 ✅ Referral code applied: <strong>{booking.referral_code}</strong>
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Markup booking notice */}
+                                    {isMarkupBooking && (
+                                        <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
+                                            <p className="text-sm text-blue-700">
+                                                💰 Special rate applied through host markup
                                             </p>
                                         </div>
                                     )}

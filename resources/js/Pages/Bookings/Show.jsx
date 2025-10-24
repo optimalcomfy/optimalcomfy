@@ -871,7 +871,10 @@ const BookingShow = () => {
                 </div>
                 <div className="flex justify-between border-t pt-2 font-bold text-lg">
                   <span>Total</span>
+                  {roleId === 2 ?
                   <span>KES {parseFloat(booking.host_price)}</span>
+                  :
+                  <span>KES {parseFloat(booking.total_price)}</span>}
                 </div>
               </div>
 

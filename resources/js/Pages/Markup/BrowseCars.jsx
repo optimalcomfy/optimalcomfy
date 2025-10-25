@@ -5,6 +5,7 @@ import { Plus, Search, Filter, Car, DollarSign, MapPin, Eye, Users, Fuel, Calend
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AddMarkupModal from '@/Components/AddMarkupModal';
+import './browse-properties.css'; // Using the same CSS file
 
 const BrowseCars = () => {
     const { auth, cars, pagination, filters: initialFilters } = usePage().props;
@@ -89,10 +90,10 @@ const BrowseCars = () => {
     if (!auth.user?.can_add_markup) {
         return (
             <Layout>
-                <div className="max-w-4xl mx-auto py-8">
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                        <h2 className="text-lg font-semibold text-yellow-800 mb-2">Access Restricted</h2>
-                        <p className="text-yellow-700">
+                <div className="browse-properties-restricted">
+                    <div className="browse-properties-warning">
+                        <h2 className="browse-properties-warning-title">Access Restricted</h2>
+                        <p className="browse-properties-warning-text">
                             You need to be a verified host to add markups to listings.
                         </p>
                     </div>
@@ -106,19 +107,19 @@ const BrowseCars = () => {
             <Head title="Browse Cars for Markup" />
             <ToastContainer position="top-right" autoClose={3000} />
 
-            <div className="max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
+            <div className="browse-properties-container">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="browse-properties-header">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Browse Cars</h1>
-                            <p className="text-gray-600 mt-2">
+                            <h1 className="browse-properties-title">Browse Cars</h1>
+                            <p className="browse-properties-subtitle">
                                 Add your markup to any car and earn profit from rentals
                             </p>
                         </div>
                         <Link
                             href={route('markup.browse.properties')}
-                            className="mt-4 md:mt-0 inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                            className="browse-properties-browse-link"
                         >
                             Browse Properties Instead
                         </Link>
@@ -126,17 +127,18 @@ const BrowseCars = () => {
                 </div>
 
                 {/* Search and Filters */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                <div className="browse-properties-filters">
+                    <div className="browse-properties-search-grid">
                         {/* Search */}
                         <div className="lg:col-span-2">
-                            <div className="relative">
+                            <div className="browse-properties-search-input">
+                                <Search className="browse-properties-search-icon" />
                                 <input
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Search ..."
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="browse-properties-input"
                                 />
                             </div>
                         </div>
@@ -146,7 +148,7 @@ const BrowseCars = () => {
                             <select
                                 value={filters.brand}
                                 onChange={(e) => setFilters({ ...filters, brand: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="browse-properties-select"
                             >
                                 <option value="">All Brands</option>
                                 <option value="Toyota">Toyota</option>
@@ -165,7 +167,7 @@ const BrowseCars = () => {
                             <select
                                 value={filters.fuel_type}
                                 onChange={(e) => setFilters({ ...filters, fuel_type: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="browse-properties-select"
                             >
                                 <option value="">All Fuel Types</option>
                                 <option value="petrol">Petrol</option>
@@ -180,7 +182,7 @@ const BrowseCars = () => {
                             <select
                                 value={filters.transmission}
                                 onChange={(e) => setFilters({ ...filters, transmission: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="browse-properties-select"
                             >
                                 <option value="">All Transmissions</option>
                                 <option value="automatic">Automatic</option>
@@ -193,7 +195,7 @@ const BrowseCars = () => {
                         <div>
                             <button
                                 onClick={clearFilters}
-                                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                className="browse-properties-clear-btn"
                             >
                                 Clear Filters
                             </button>
@@ -201,90 +203,90 @@ const BrowseCars = () => {
                     </div>
 
                     {/* Price Range */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div className="browse-properties-price-grid">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Min Price (KES)</label>
-                            <input
-                                type="number"
-                                value={filters.minPrice}
-                                onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-                                placeholder="Min price per day"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                            <label className="browse-properties-price-label">Min Price (KES)</label>
+                            <div className="browse-properties-price-input-container">
+                                <DollarSign className="browse-properties-price-icon" />
+                                <input
+                                    type="number"
+                                    value={filters.minPrice}
+                                    onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
+                                    placeholder="Min price per day"
+                                    className="browse-properties-price-input"
+                                />
+                            </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Max Price (KES)</label>
-                            <input
-                                type="number"
-                                value={filters.maxPrice}
-                                onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-                                placeholder="Max price per day"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                            <label className="browse-properties-price-label">Max Price (KES)</label>
+                            <div className="browse-properties-price-input-container">
+                                <DollarSign className="browse-properties-price-icon" />
+                                <input
+                                    type="number"
+                                    value={filters.maxPrice}
+                                    onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
+                                    placeholder="Max price per day"
+                                    className="browse-properties-price-input"
+                                />
+                            </div>
                         </div>
-                        <div className="flex items-end">
+                        <div className="browse-properties-filter-buttons">
                             <button
                                 onClick={handleFilterChange}
                                 disabled={loading}
-                                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                                className="browse-properties-apply-btn"
                             >
-                                {loading ? (
-                                    <p>Loading ...</p>
-                                ) : null}
-                                Apply Filters
+                                {loading ? 'Loading ...' : 'Apply Filters'}
                             </button>
                         </div>
                     </div>
                 </div>
 
-
                 {/* Cars Grid */}
                 {!loading && (
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                         {cars?.length === 0 ? (
-                            <div className="text-center py-12">
-                                <Car className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">No cars found</h3>
-                                <p className="text-gray-500 mb-4">Try adjusting your search criteria</p>
+                            <div className="browse-properties-empty">
+                                <Car className="browse-properties-empty-icon" />
+                                <h3 className="browse-properties-empty-title">No cars found</h3>
+                                <p className="browse-properties-empty-text">Try adjusting your search criteria</p>
                                 <button
                                     onClick={clearFilters}
-                                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="browse-properties-browse-link mt-4"
                                 >
                                     Clear All Filters
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                            <div className="browse-properties-grid p-6">
                                 {cars?.map((car) => (
-                                    <div key={car.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                    <div key={car.id} className="browse-properties-card">
                                         {/* Car Image */}
-                                        <div className="relative">
+                                        <div className="browse-properties-image-container">
                                             <img
                                                 src={car.primary_image || '/images/car-placeholder.jpg'}
                                                 alt={car.name}
-                                                className="w-full h-48 object-cover"
+                                                className="browse-properties-image"
                                             />
                                             {hasExistingMarkup(car.id) && (
-                                                <div className="absolute top-3 right-3">
-                                                    <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full">
+                                                <div className="browse-properties-markup-badge">
+                                                    <span className="browse-properties-markup-active">
                                                         Your Markup Active
                                                     </span>
                                                 </div>
                                             )}
-                                            <div className="absolute bottom-3 left-3">
-                                                <span className="bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                                                    {car.year}
-                                                </span>
+                                            <div className="browse-properties-type-badge">
+                                                <span>{car.year}</span>
                                             </div>
                                         </div>
 
                                         {/* Car Info */}
-                                        <div className="p-4">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h3 className="font-semibold text-gray-900 text-lg">
+                                        <div className="browse-properties-info">
+                                            <div className="browse-properties-meta mb-2">
+                                                <h3 className="browse-properties-name">
                                                     {car.name}
                                                 </h3>
-                                                <span className="text-lg font-bold text-blue-600">
+                                                <span className="browse-properties-price">
                                                     KES {new Intl.NumberFormat('en-KE').format(car.amount)}
                                                     <span className="text-sm text-gray-500 font-normal">/day</span>
                                                 </span>
@@ -316,30 +318,31 @@ const BrowseCars = () => {
 
                                             {/* Location */}
                                             {car.location_address && (
-                                                <div className="flex items-center text-sm text-gray-600 mb-3">
-                                                    <MapPin className="w-4 h-4 mr-1" />
-                                                    <span className="truncate">{car.location_address}</span>
+                                                <div className="browse-properties-location mb-3">
+                                                    <MapPin className="browse-properties-location-icon" />
+                                                    <span className="browse-properties-location-text">{car.location_address}</span>
                                                 </div>
                                             )}
 
                                             {/* Host Info */}
-                                            <div className="border-t border-gray-200 pt-3 mt-3">
-                                                <p className="text-sm text-gray-600">
-                                                    <span className="font-medium">Owner:</span> {car.user?.name}
-                                                </p>
+                                            <div className="browse-properties-host-info">
+                                                <div className="browse-properties-host-row">
+                                                    <span className="browse-properties-host-label">Owner:</span>
+                                                    <span>{car.user?.name}</span>
+                                                </div>
                                             </div>
 
                                             {/* Actions */}
-                                            <div className="flex gap-2 mt-4">
+                                            <div className="browse-properties-actions">
                                                 <button
                                                     onClick={() => handleAddMarkup(car)}
-                                                    className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                                    className={`browse-properties-markup-btn ${
                                                         hasExistingMarkup(car.id)
-                                                            ? 'bg-green-600 text-white hover:bg-green-700'
-                                                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                                                            ? 'browse-properties-markup-btn-success'
+                                                            : 'browse-properties-markup-btn-primary'
                                                     }`}
                                                 >
-                                                    <Plus className="w-4 h-4 mr-1" />
+                                                    <Plus className="browse-properties-markup-btn-icon" />
                                                     {hasExistingMarkup(car.id) ? 'Update Markup' : 'Add Markup'}
                                                 </button>
                                             </div>
@@ -353,19 +356,19 @@ const BrowseCars = () => {
 
                 {/* Pagination */}
                 {pagination && pagination.total > pagination.per_page && (
-                    <div className="mt-6 flex justify-center">
-                        <div className="flex items-center gap-2">
+                    <div className="browse-properties-pagination">
+                        <div className="browse-properties-pagination-links">
                             {/* Previous Page */}
                             {pagination.prev_page_url ? (
                                 <Link
                                     href={pagination.prev_page_url}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="browse-properties-pagination-btn browse-properties-pagination-btn-inactive"
                                     preserveState
                                 >
                                     Previous
                                 </Link>
                             ) : (
-                                <span className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed">
+                                <span className="browse-properties-pagination-btn browse-properties-pagination-btn-disabled">
                                     Previous
                                 </span>
                             )}
@@ -376,10 +379,10 @@ const BrowseCars = () => {
                                     {link.url ? (
                                         <Link
                                             href={link.url}
-                                            className={`px-4 py-2 rounded-lg ${
+                                            className={`browse-properties-pagination-btn ${
                                                 link.active
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-white text-blue-600 border border-blue-600 hover:bg-blue-50'
+                                                    ? 'browse-properties-pagination-btn-active'
+                                                    : 'browse-properties-pagination-btn-inactive'
                                             }`}
                                             preserveState
                                         >
@@ -387,10 +390,10 @@ const BrowseCars = () => {
                                         </Link>
                                     ) : (
                                         <span
-                                            className={`px-4 py-2 rounded-lg ${
+                                            className={`browse-properties-pagination-btn ${
                                                 link.active
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-white text-gray-400'
+                                                    ? 'browse-properties-pagination-btn-active'
+                                                    : 'browse-properties-pagination-btn-disabled'
                                             }`}
                                         >
                                             {link.label.replace('&laquo;', '').replace('&raquo;', '')}
@@ -403,16 +406,22 @@ const BrowseCars = () => {
                             {pagination.next_page_url ? (
                                 <Link
                                     href={pagination.next_page_url}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="browse-properties-pagination-btn browse-properties-pagination-btn-inactive"
                                     preserveState
                                 >
                                     Next
                                 </Link>
                             ) : (
-                                <span className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed">
+                                <span className="browse-properties-pagination-btn browse-properties-pagination-btn-disabled">
                                     Next
                                 </span>
                             )}
+                        </div>
+
+                        {/* Page Info */}
+                        <div className="browse-properties-page-info">
+                            Page {pagination.current_page} of {pagination.last_page} •
+                            Total {pagination.total} cars
                         </div>
                     </div>
                 )}

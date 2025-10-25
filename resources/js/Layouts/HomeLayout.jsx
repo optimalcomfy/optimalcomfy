@@ -1,5 +1,7 @@
+// Layouts/HomeLayout.jsx
 import Footer from "@/Components/Footer";
 import Header from "@/Components/Header";
+import BackButton from "@/Components/BackButton";
 import './HomeLayout.css'
 
 export default function HomeLayout({ children }) {
@@ -10,6 +12,7 @@ export default function HomeLayout({ children }) {
                 {children}
             </div>
             <Footer />
+            <BackButton />
         </div>
     );
 }

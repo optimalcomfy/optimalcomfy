@@ -10,6 +10,7 @@ import AppFooter from "@/Layouts/layout/AppFooter.jsx";
 import AppSidebar from "@/Layouts/layout/AppSidebar.jsx";
 import AppTopbar from "@/Layouts/layout/AppTopbar.jsx";
 import AppConfig from "@/Layouts/layout/AppConfig.jsx";
+import BackButton from "@/Components/BackButton"; // Import BackButton
 import { LayoutContext } from "./context/layoutcontext";
 import { PrimeReactContext } from "primereact/api";
 
@@ -18,27 +19,27 @@ const Layout = ({ children }) => {
     const { setRipple } = useContext(PrimeReactContext);
     const topbarRef = useRef(null);
     const sidebarRef = useRef(null);
-    
+
 
     const pathname = route().current();
 
     useEffect(() => {
         const reloadCSS = () => {
             const cssLinks = document.querySelectorAll('link[rel="stylesheet"]');
-        
+
             cssLinks.forEach((link) => {
                 const newLink = document.createElement("link");
                 newLink.rel = "stylesheet";
                 newLink.href = link.href.split("?")[0] + "?v=" + new Date().getTime();
-                newLink.onload = () => link.remove(); 
-        
+                newLink.onload = () => link.remove();
+
                 document.head.appendChild(newLink);
             });
         };
-        
+
 
         reloadCSS();
-    
+
     }, [pathname]);
 
     useEffect(() => {
@@ -172,6 +173,7 @@ const Layout = ({ children }) => {
                     <AppFooter />
                 </div>
                 <AppConfig />
+                <BackButton />
                 <div className="layout-mask"></div>
             </div>
         </React.Fragment>

@@ -58,3 +58,7 @@ body {
 body {
   overflow: auto !important;
 }
+
+.z1500 {
+    z-index: 1500 !important;
+}

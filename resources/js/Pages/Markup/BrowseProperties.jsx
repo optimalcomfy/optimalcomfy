@@ -318,18 +318,6 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
                                             </span>
                                         </div>
 
-                                        {/* Platform Price */}
-                                        <div className="browse-properties-platform-info">
-                                            <div className="browse-properties-platform-row">
-                                                <span className="browse-properties-platform-label">Platform Price:</span>
-                                                <span className="browse-properties-platform-value">KES {new Intl.NumberFormat('en-KE').format(property.platform_price)}</span>
-                                            </div>
-                                            <div className="browse-properties-platform-row">
-                                                <span className="browse-properties-platform-label">Platform Charges:</span>
-                                                <span className="browse-properties-platform-value">KES {new Intl.NumberFormat('en-KE').format(property.platform_charges)}</span>
-                                            </div>
-                                        </div>
-
                                         {/* Host Info */}
                                         <div className="browse-properties-host-info">
                                             <div className="browse-properties-host-row">

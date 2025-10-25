@@ -4,7 +4,7 @@ import '../../css/style.css'
 import '../../css/plugins.min.css'
 
 function Footer() {
-    
+
   return (
     <>
     <div className="relative  bg-[#0E3C46] text-white pt-[90px]">
@@ -31,7 +31,7 @@ function Footer() {
             <Link href={route('home')}>
               <img
                 className="footer__logo max-w-[160px]"
-                src="/image/logo/logo2.png"
+                src="/image/logo/logo.png"
                 alt="footer logo"
               />
             </Link>

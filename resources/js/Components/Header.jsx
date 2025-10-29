@@ -15,6 +15,8 @@ function Header() {
   const dropdownRef2 = useRef(null);
   const mobileMenuRef = useRef(null);
   const { url } = usePage();
+  const {auth} = usePage().props;
+
   const [isWhich] = useState(url.split('?')[0]);
 
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -31,7 +33,7 @@ function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollPosition = window.pageYOffset;
-      
+
       if (currentScrollPosition === 0) {
         // Only open if at the top of the page
         if (!isModalOpen && isMobile && (isWhich === '/' || isWhich === '/all-cars')) {
@@ -43,14 +45,14 @@ function Header() {
           setIsModalOpen(false);
         }
       }
-      
+
       setLastScrollPosition(currentScrollPosition);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollPosition, isModalOpen, isMobile]);
-  
+
 
   const toggleProfileDropdown = () => {
     setProfileDropdownOpen(!profileDropdownOpen);
@@ -129,8 +131,8 @@ function Header() {
               />
             </Link>
 
-            <button 
-              className="mobile-menu-toggle" 
+            <button
+              className="mobile-menu-toggle"
               onClick={toggleMobileMenu}
               aria-label="Toggle menu"
             >
@@ -138,23 +140,23 @@ function Header() {
             </button>
           </div>
         </div>
-        
+
         {/* Mobile Menu */}
-        <div 
+        <div
           className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}
           ref={mobileMenuRef}
         >
           <div className="mobile-menu-content">
             <div className="mobile-menu-header">
-              <button 
-                className="mobile-menu-close" 
+              <button
+                className="mobile-menu-close"
                 onClick={toggleMobileMenu}
                 aria-label="Close menu"
               >
                 <i className="fa-solid fa-times"></i>
               </button>
             </div>
-            
+
             <div className="mobile-nav">
               <ul className="mobile-nav-list">
                 <li className="mobile-nav-item">
@@ -178,8 +180,8 @@ function Header() {
                   </Link>
                 </li>
                 <li className="mobile-nav-item">
-                  <Link 
-                    href={route('login')} 
+                  <Link
+                    href={route('login')}
                     className="mobile-nav-link"
                     onClick={toggleMobileMenu}
                   >
@@ -188,7 +190,7 @@ function Header() {
                   </Link>
                 </li>
               </ul>
-              
+
               <div className="mobile-search-container">
                 {(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking') &&
                   <SearchBar mobile={true} />
@@ -197,17 +199,17 @@ function Header() {
                   <RideForm mobile={true} />
                 }
               </div>
-              
+
               <div className="mobile-auth-buttons">
-                <Link 
-                  href={route('login')} 
+                <Link
+                  href={route('login')}
                   className="mobile-auth-button login"
                   onClick={toggleMobileMenu}
                 >
                   Log in
                 </Link>
-                <Link 
-                  href={route('register')} 
+                <Link
+                  href={route('register')}
                   className="mobile-auth-button signup"
                   onClick={toggleMobileMenu}
                 >
@@ -260,41 +262,55 @@ function Header() {
               </div>
               <div className="header-right">
                 <div className="header-right-content">
-                    <p className="airbnb-text">List your property</p>
-                    <div 
+                    {parseInt(auth.user?.role_id) === 2  ?
+                    <Link
+                    href={route('list-property')}
+                    onClick={toggleMobileMenu}
+                    className="airbnb-text">
+                        List your property
+                    </Link>
+                    :
+                   <Link
+                    href={route('login')}
+                    onClick={toggleMobileMenu}
+                    className="airbnb-text">
+                        List your property
+                    </Link>}
+
+                    <div
                       className="profile-menu-button"
                       onClick={toggleProfileDropdown2}
                       ref={dropdownRef2}
                     >
                         <i className="fa-solid fa-bars"></i>
                         <p className="profile-avatar">E</p>
-                        
+
                         {profileDropdownOpen2 && (
                           <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
-                            <Link 
-                              href={route('login')} 
+                            <Link
+                              href={route('login')}
                               className="dropdown-item"
                               onClick={handleDropdownClick2}
                             >
                               Log in
                             </Link>
-                            <Link 
-                              href={route('register')} 
+                            <Link
+                              href={route('register')}
                               className="dropdown-item"
                               onClick={handleDropdownClick2}
                             >
                               Sign up
                             </Link>
                             <hr className="dropdown-divider" />
-                            <Link 
-                              href={route('all-properties')} 
+                            <Link
+                              href={route('all-properties')}
                               className="dropdown-item"
                               onClick={handleDropdownClick2}
                             >
                               Book a stay
                             </Link>
-                            <Link 
-                              href={route('all-cars')} 
+                            <Link
+                              href={route('all-cars')}
                               className="dropdown-item"
                               onClick={handleDropdownClick2}
                             >
@@ -308,11 +324,11 @@ function Header() {
           </div>
         </div>
       </div>
-      
+
       <div className='text-center d-none d-lg-block pt-2'>
           <h4 className='rideH2'>Let's ride and let's stay - <br /> the Ristay way </h4>
       </div>
-      
+
       <div className={`header-main ${isScrolled ? 'header-scrolled' : ''} d-none d-lg-block`}>
           <div className="header-container relative">
           <div className="header-grid">
@@ -342,44 +358,44 @@ function Header() {
                 </>
                 }
               </div>
-              
+
               <div className={`header-right mopper ${isScrolled ? 'mopper-scrolled' : ''}`}>
                 <div className="header-right-content">
                     <p className="airbnb-text">List your property</p>
-                    <div 
+                    <div
                       className="profile-menu-button absolute lg:relative top-8 lg:top-0"
                       onClick={toggleProfileDropdown}
                       ref={dropdownRef}
                     >
                         <i className="fa-solid fa-bars"></i>
                         <p className="profile-avatar">E</p>
-                        
+
                         {profileDropdownOpen && (
                           <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
-                            <Link 
-                              href={route('login')} 
+                            <Link
+                              href={route('login')}
                               className="dropdown-item"
                               onClick={handleDropdownClick}
                             >
                               Log in
                             </Link>
-                            <Link 
-                              href={route('register')} 
+                            <Link
+                              href={route('register')}
                               className="dropdown-item"
                               onClick={handleDropdownClick}
                             >
                               Sign up
                             </Link>
                             <hr className="dropdown-divider" />
-                            <Link 
-                              href={route('all-properties')} 
+                            <Link
+                              href={route('all-properties')}
                               className="dropdown-item"
                               onClick={handleDropdownClick}
                             >
                               Book a stay
                             </Link>
-                            <Link 
-                              href={route('all-cars')} 
+                            <Link
+                              href={route('all-cars')}
                               className="dropdown-item"
                               onClick={handleDropdownClick}
                             >

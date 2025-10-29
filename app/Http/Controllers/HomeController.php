@@ -1332,4 +1332,15 @@ class HomeController extends Controller
             "job" => $job,
         ]);
     }
+
+
+    public function listProperty(){
+          return Inertia::render("ListProperty", [
+            "canLogin" => Route::has("login"),
+            "canRegister" => Route::has("register"),
+            "laravelVersion" => Application::VERSION,
+            "phpVersion" => PHP_VERSION,
+            "flash" => session("flash"),
+        ]);
+    }
 }

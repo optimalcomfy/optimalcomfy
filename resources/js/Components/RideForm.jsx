@@ -11,8 +11,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import 'react-date-range/dist/styles.css'; // main style file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 
-const DesktopSearchBar = ({ 
-  formData, 
+const DesktopSearchBar = ({
+  formData,
   handleLocationClick,
   handleDateClick,
   handleTimeClick,
@@ -27,11 +27,11 @@ const DesktopSearchBar = ({
           name="location"
           value={formData.location}
           onClick={handleLocationClick}
-          placeholder="Enter city or airport"
+          placeholder="Where to Ristay?"
           className="inputType formForm cursor-pointer"
           readOnly
         />
-        
+
         {formData.location && (
           <X
             className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
@@ -110,14 +110,14 @@ const MobileSearchModal = ({
       <div className="modal-overlay" onClick={closeModal}></div>
       <div className="modal-content" ref={modalRef}>
         <div className="modal-header flex justify-between my-2 border-b border-gray-200">
-          <Link 
-            href={route('home')} 
+          <Link
+            href={route('home')}
             className={`modal-title px-4 py-2 text-lg font-medium ${(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking' || isWhich === '/privacy-policy' || isWhich === '/host-calendar-policy' || isWhich === '/terms-and-conditions') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
           >
             Search stays
           </Link>
-          <Link 
-            href={route('all-cars')} 
+          <Link
+            href={route('all-cars')}
             className={`modal-title px-4 py-2 text-lg font-medium ${route().current('all-cars') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
           >
             Search Rides
@@ -137,18 +137,18 @@ const MobileSearchModal = ({
                   name="location"
                   value={formData.location}
                   onClick={handleLocationClick}
-                  placeholder="Enter city or airport"
+                  placeholder="Where to Ristay?"
                   className="rounded-md w-full cursor-pointer"
                   readOnly
                 />
                 {formData.location && (
-                  <X 
+                  <X
                     className="clear-icon absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
                     size={18}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleLocationClick();
-                    }} 
+                    }}
                   />
                 )}
               </div>
@@ -209,8 +209,8 @@ const MobileSearchModal = ({
             </div>
           </div>
           <div className="modal-footer flex justify-end my-2 gap-8">
-            <button 
-              className="submit-search-btn w-full flex items-center justify-center gap-2 bg-[#0d3c46] text-white px-4 py-1 rounded-md" 
+            <button
+              className="submit-search-btn w-full flex items-center justify-center gap-2 bg-[#0d3c46] text-white px-4 py-1 rounded-md"
               onClick={handleSubmit}
             >
               Search Rides <Search className="" size={16} />
@@ -258,14 +258,14 @@ export default function RideForm() {
         setIsModalOpen(false);
       }
     };
-    
+
     window.addEventListener('popstate', handleRouteChange);
     return () => window.removeEventListener('popstate', handleRouteChange);
   }, [isMobile]);
 
   const fetchLocationSuggestions = async (query) => {
     if (query.length < 2) return [];
-    
+
     try {
       const res = await fetch(`/locations?query=${encodeURIComponent(query)}`);
       const data = await res.json();
@@ -285,17 +285,17 @@ export default function RideForm() {
       html: `
         <div id="car-location-search" style="text-align: left;">
           <div style="position: relative; margin-bottom: 20px;">
-            <input 
-              id="location-search-input" 
-              type="text" 
-              placeholder="Enter city or airport" 
+            <input
+              id="location-search-input"
+              type="text"
+              placeholder="Where to Ristay?"
               value="${searchQuery}"
               style="
-                width: 100%; 
-                padding: 16px 20px; 
-                border: 2px solid #DDDDDD; 
-                border-radius: 12px; 
-                font-size: 16px; 
+                width: 100%;
+                padding: 16px 20px;
+                border: 2px solid #DDDDDD;
+                border-radius: 12px;
+                font-size: 16px;
                 font-weight: 400;
                 outline: none;
                 transition: border-color 0.2s ease;
@@ -305,7 +305,7 @@ export default function RideForm() {
               <div style="width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #0d3c46; border-radius: 50%; animation: spin 1s linear infinite;"></div>
             </div>
           </div>
-          
+
           <div id="suggestions-container" style="max-height: 300px; overflow-y: auto;">
             <div id="recent-searches" style="margin-bottom: 24px;">
               <h4 style="font-size: 14px; font-weight: 600; color: #222222; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px;">Popular pickup locations</h4>
@@ -337,24 +337,24 @@ export default function RideForm() {
                 </div>
               </div>
             </div>
-            
+
             <div id="search-results" style="display: none;">
               <h4 style="font-size: 14px; font-weight: 600; color: #222222; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px;">Search results</h4>
               <div id="results-list"></div>
             </div>
           </div>
         </div>
-        
+
         <style>
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
           }
-          
+
           .suggestion-item:hover {
             background-color: #F7F7F7 !important;
           }
-          
+
           #location-search-input:focus {
             border-color: #0d3c46 !important;
             box-shadow: 0 0 0 2px rgba(13, 60, 70, 0.1) !important;
@@ -399,18 +399,18 @@ export default function RideForm() {
 
         input.addEventListener('input', async (e) => {
           const query = e.target.value;
-          
+
           if (timeoutId) clearTimeout(timeoutId);
-          
+
           if (query.length >= 2) {
             searchLoading.style.display = 'block';
             recentSearches.style.display = 'none';
-            
+
             timeoutId = setTimeout(async () => {
               try {
                 const suggestions = await fetchLocationSuggestions(query);
                 searchLoading.style.display = 'none';
-                
+
                 if (suggestions.length > 0) {
                   resultsList.innerHTML = suggestions.map(location => `
                     <div class="suggestion-item" data-location="${location}" style="display: flex; align-items: center; padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: background-color 0.2s ease;">
@@ -448,7 +448,7 @@ export default function RideForm() {
   const handleDateClick = async (dateType) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     // Prepare initial range
     const initialRange = {
       startDate: formData.checkIn ? new Date(formData.checkIn) : today,
@@ -460,13 +460,13 @@ export default function RideForm() {
     const container = document.createElement('div');
     container.style.width = '100%';
     container.style.padding = '10px 0';
-    
+
     // Create a wrapper for the DateRange to control its size
     const wrapper = document.createElement('div');
     wrapper.style.width = '100%';
     wrapper.style.maxWidth = '600px';
     wrapper.style.margin = '0 auto';
-    
+
     container.appendChild(wrapper);
 
     const { value: result } = await Swal.fire({
@@ -515,7 +515,7 @@ export default function RideForm() {
 
     if (result) {
       const { startDate, endDate } = initialRange;
-      
+
       if (dateType === 'checkIn') {
         setFormData(prev => ({
           ...prev,
@@ -553,8 +553,8 @@ export default function RideForm() {
       html: `
         <div style="max-height: 300px; overflow-y: auto; margin-top: 16px;">
           ${timeOptions.map(time => `
-            <div 
-              class="time-option ${formData[timeType] === time ? 'selected' : ''}" 
+            <div
+              class="time-option ${formData[timeType] === time ? 'selected' : ''}"
               data-time="${time}"
               style="
                 padding: 12px 16px;
@@ -615,7 +615,7 @@ export default function RideForm() {
       });
       return;
     }
-    
+
     if (!checkIn || !checkOut) {
       Swal.fire({
         icon: 'warning',
@@ -659,21 +659,21 @@ export default function RideForm() {
                 <div style="color: #717171; font-size: 14px;">Pickup Location</div>
               </div>
             </div>
-            
+
             <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
               <div style="flex: 1; margin-right: 12px;">
                 <div style="font-size: 12px; color: #717171; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px;">Pick-up</div>
                 <div style="font-weight: 600; color: #222222; font-size: 16px;">${format(new Date(checkIn), 'MMM d, yyyy')}</div>
                 <div style="color: #717171; font-size: 14px;">${pickupTime}</div>
               </div>
-              
+
               <div style="flex: 1; margin-left: 12px;">
                 <div style="font-size: 12px; color: #717171; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px;">Drop-off</div>
                 <div style="font-weight: 600; color: #222222; font-size: 16px;">${format(new Date(checkOut), 'MMM d, yyyy')}</div>
                 <div style="color: #717171; font-size: 14px;">${formData.dropoffTime || '08:00 PM'}</div>
               </div>
             </div>
-            
+
             <div style="padding-top: 16px; border-top: 1px solid #EBEBEB;">
               <div style="font-size: 12px; color: #717171; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px;">Rental Duration</div>
               <div style="font-weight: 600; color: #222222; font-size: 16px;">${durationDays} days (${durationHours} hours)</div>
@@ -706,7 +706,7 @@ export default function RideForm() {
             <h3 style="font-size: 24px; font-weight: 600; color: #222222; margin: 0 0 12px 0;">Searching for cars</h3>
             <p style="font-size: 16px; color: #717171; margin: 0;">Finding the perfect vehicle in ${location}...</p>
           </div>
-          
+
           <style>
             @keyframes spin {
               0% { transform: rotate(0deg); }
@@ -735,11 +735,11 @@ export default function RideForm() {
           dropoffTime: formData.dropoffTime || '08:00 PM',
           searchMode: 'cars',
         });
-        
+
         setTimeout(() => {
           Swal.close();
         }, 1500);
-        
+
       } catch (error) {
         Swal.fire({
           icon: 'error',
@@ -768,32 +768,32 @@ export default function RideForm() {
           border-radius: 16px !important;
           font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
         }
-        
+
         .car-calendar-popup .swal2-popup {
           border-radius: 16px !important;
           font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
         }
-        
+
         .car-time-popup .swal2-popup {
           border-radius: 16px !important;
           font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
         }
-        
+
         .car-confirm-popup .swal2-popup {
           border-radius: 16px !important;
           font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
         }
-        
+
         .car-loading-popup .swal2-popup {
           border-radius: 16px !important;
           font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
         }
-        
+
         .car-error-popup .swal2-popup {
           border-radius: 16px !important;
           font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
         }
-        
+
         .car-confirm-btn {
           background-color: #0d3c46 !important;
           border: none !important;
@@ -802,7 +802,7 @@ export default function RideForm() {
           padding: 14px 24px !important;
           font-size: 16px !important;
         }
-        
+
         .car-cancel-btn {
           background-color: transparent !important;
           border: 1px solid #DDDDDD !important;
@@ -812,41 +812,41 @@ export default function RideForm() {
           padding: 14px 24px !important;
           font-size: 16px !important;
         }
-        
+
         .swal2-title {
           font-size: 22px !important;
           font-weight: 600 !important;
           color: #222222 !important;
         }
-        
+
         .swal2-container-date-range {
           z-index: 99999 !important;
         }
-        
+
         .rdrDefinedRangesWrapper {
           display: none;
         }
-        
+
         .rdrDateDisplayWrapper {
           background-color: #f7855e;
         }
-        
+
         .rdrDateDisplayItem input {
           color: white;
         }
-        
+
         .rdrDayToday .rdrDayNumber span:after {
           background-color: #0d3c46;
         }
-        
+
         .rdrDayHovered {
           border-color: #0d3c46;
         }
-        
+
         .rdrDayActive {
           background-color: #0d3c46;
         }
-        
+
         .rdrInRange {
           background-color: rgba(13, 60, 70, 0.1);
         }
@@ -866,7 +866,7 @@ export default function RideForm() {
         }
 
       `}</style>
-      
+
       {!isMobile ? (
         <DesktopSearchBar
           formData={formData}

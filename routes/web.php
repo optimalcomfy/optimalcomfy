@@ -70,6 +70,7 @@ Route::post('/send-comment', [ProfileController::class, 'sendComment'])->name('p
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/welcome', [HomeController::class, 'index'])->name('welcome');
+Route::get('/list-property', [HomeController::class, 'listProperty'])->name('list-property');
 Route::get('/properties/load-more', [HomeController::class, 'loadMore'])->name('properties.load-more');
 Route::get('/restaurant', [HomeController::class, 'restaurant'])->name('restaurant');
 Route::get('/activity', [HomeController::class, 'activity'])->name('activity');

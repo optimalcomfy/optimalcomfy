@@ -7,7 +7,7 @@ import { GoogleMap, useLoadScript, MarkerF } from "@react-google-maps/api";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import '../../css/main';
-import "./PropertiesCustom.css"; 
+import "./PropertiesCustom.css";
 import Product from "@/Components/Product";
 import './Welcome.css'
 
@@ -51,7 +51,66 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
     };
   }, [visibleCount, properties.length, loading]);
 
-  const center = useMemo(() => ({ lat: -1.2921, lng: 36.8219 }), []);
+  // Calculate map center and bounds based on properties
+  const { center, bounds, zoom } = useMemo(() => {
+    if (!properties || properties.length === 0) {
+      return {
+        center: { lat: -1.2921, lng: 36.8219 }, // Default to Nairobi
+        bounds: null,
+        zoom: 7
+      };
+    }
+
+    // If only one property, center on that property with a closer zoom
+    if (properties.length === 1) {
+      const property = properties[0];
+      return {
+        center: {
+          lat: parseFloat(property.latitude),
+          lng: parseFloat(property.longitude)
+        },
+        bounds: null,
+        zoom: 12
+      };
+    }
+
+    // Calculate bounds for multiple properties
+    const latitudes = properties.map(p => parseFloat(p.latitude));
+    const longitudes = properties.map(p => parseFloat(p.longitude));
+
+    const minLat = Math.min(...latitudes);
+    const maxLat = Math.max(...latitudes);
+    const minLng = Math.min(...longitudes);
+    const maxLng = Math.max(...longitudes);
+
+    const center = {
+      lat: (minLat + maxLat) / 2,
+      lng: (minLng + maxLng) / 2
+    };
+
+    const bounds = {
+      north: maxLat,
+      south: minLat,
+      east: maxLng,
+      west: minLng
+    };
+
+    // Calculate appropriate zoom level based on the bounds
+    const latRange = maxLat - minLat;
+    const lngRange = maxLng - minLng;
+    const maxRange = Math.max(latRange, lngRange);
+
+    let zoomLevel;
+    if (maxRange < 0.01) zoomLevel = 14;
+    else if (maxRange < 0.05) zoomLevel = 13;
+    else if (maxRange < 0.1) zoomLevel = 12;
+    else if (maxRange < 0.5) zoomLevel = 11;
+    else if (maxRange < 1) zoomLevel = 10;
+    else if (maxRange < 2) zoomLevel = 9;
+    else zoomLevel = 8;
+
+    return { center, bounds, zoom: zoomLevel };
+  }, [properties]);
 
   const mapOptions = useMemo(
     () => ({
@@ -86,12 +145,15 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
   };
 
   const formatPrice = (price) => {
+    // Round to nearest hundred
+    const roundedPrice = Math.round(price / 100) * 100;
+
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',
       currency: 'KES',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(price).replace('KES', 'KES ');
+    }).format(roundedPrice).replace('KES', 'KES ');
   };
 
   const handlePropertyHover = useCallback((propertyId) => {
@@ -134,7 +196,7 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
 
                   <div className="product-grid padding-container">
                     {visibleProperties.map((property) => (
-                      <div 
+                      <div
                         key={property.id}
                         onMouseEnter={() => handlePropertyHover(property.id)}
                         onMouseLeave={() => handlePropertyHover(null)}
@@ -143,19 +205,19 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                       >
                         <div className="">
                           <div className={`property-card ${selectedProperty === property.id ? 'selected' : ''}`}>
-                            <Product {...property} />
+                            <Product {...property} formatPrice={formatPrice} />
                           </div>
                         </div>
                       </div>
                     ))}
-                    
+
                     {/* Loading indicator and trigger element */}
                     {loading && (
                       <div className="loading-indicator">
                         Loading more properties...
                       </div>
                     )}
-                    
+
                     {/* This element triggers loading when it comes into view */}
                     {visibleCount < properties.length && (
                       <div ref={containerRef} className="load-more-trigger" style={{ height: '1px' }} />
@@ -168,7 +230,7 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
               <div className="w-full lg:w-[45%] relative">
                 {/* Mobile Toggle Button */}
                 <div className="lg:hidden bg-white border-t border-gray-200 p-4">
-                  <button 
+                  <button
                     className="mobile-map-toggle"
                     onClick={toggleMobileMap}
                     aria-label="Toggle map view"
@@ -186,7 +248,7 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                     <div className="h-full flex flex-col">
                       <div className="mobile-map-header">
                         <h2 className="text-lg font-semibold">Map</h2>
-                        <button 
+                        <button
                           onClick={toggleMobileMap}
                           className="mobile-map-close"
                           aria-label="Close map"
@@ -196,13 +258,13 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                           </svg>
                         </button>
                       </div>
-                      
+
                       <div className="flex-1">
                         {isLoaded ? (
                           <GoogleMap
                             mapContainerStyle={mapContainerStyle}
                             center={center}
-                            zoom={10}
+                            zoom={zoom}
                             options={mapOptions}
                           >
                             {properties.map((property) => (
@@ -214,10 +276,10 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                                 }}
                                 icon={{
                                   path: "M-12,-24 L12,-24 L12,-8 C12,-3.58 8.42,0 4,0 L-4,0 C-8.42,0 -12,-3.58 -12,-8 L-12,-24 Z",
-                                  fillColor: selectedProperty === property.id ? '#F26722' : 
+                                  fillColor: selectedProperty === property.id ? '#F26722' :
                                             hoveredProperty === property.id ? '#F26722' : '#FFFFFF',
                                   fillOpacity: 1,
-                                  strokeColor: selectedProperty === property.id || hoveredProperty === property.id ? 
+                                  strokeColor: selectedProperty === property.id || hoveredProperty === property.id ?
                                              '#F26722' : '#B0B0B0',
                                   strokeWeight: 2,
                                   scale: 1,
@@ -225,7 +287,7 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                                 }}
                                 label={{
                                   text: formatPrice(property.price_per_night),
-                                  color: selectedProperty === property.id || hoveredProperty === property.id ? 
+                                  color: selectedProperty === property.id || hoveredProperty === property.id ?
                                          '#FFFFFF' : '#000000',
                                   fontWeight: '600',
                                   fontSize: '12px',
@@ -254,7 +316,7 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                       <GoogleMap
                         mapContainerStyle={mapContainerStyle}
                         center={center}
-                        zoom={7}
+                        zoom={zoom}
                         options={mapOptions}
                       >
                         {properties.map((property) => (
@@ -266,10 +328,10 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                             }}
                             icon={{
                               path: "M-20,-35 L20,-35 C25,-35 25,-25 20,-25 L4,-25 L0,0 L-4,-25 L-20,-25 C-25,-25 -25,-35 -20,-35 Z",
-                              fillColor: selectedProperty === property.id ? '#F26722' : 
+                              fillColor: selectedProperty === property.id ? '#F26722' :
                                         hoveredProperty === property.id ? '#F26722' : '#FFFFFF',
                               fillOpacity: 1,
-                              strokeColor: selectedProperty === property.id || hoveredProperty === property.id ? 
+                              strokeColor: selectedProperty === property.id || hoveredProperty === property.id ?
                                          '#F26722' : '#DDDDDD',
                               strokeWeight: 1.5,
                               scale: 1,
@@ -277,7 +339,7 @@ export default function Properties({ auth, laravelVersion, phpVersion }) {
                             }}
                             label={{
                               text: formatPrice(property.price_per_night),
-                              color: selectedProperty === property.id || hoveredProperty === property.id ? 
+                              color: selectedProperty === property.id || hoveredProperty === property.id ?
                                      '#FFFFFF' : '#222222',
                               fontWeight: '600',
                               fontSize: '13px',

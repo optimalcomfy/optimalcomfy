@@ -196,24 +196,37 @@ class HomeController extends Controller
             }
         }
 
+        // 🚗 Filter out cars that are booked during the selected dates
         if ($request->filled(["checkIn", "checkOut"])) {
-            $checkIn = Carbon::parse($input["checkIn"]);
-            $checkOut = Carbon::parse($input["checkOut"]);
+            $checkIn = Carbon::parse($input["checkIn"])->startOfDay();
+            $checkOut = Carbon::parse($input["checkOut"])->endOfDay();
 
-            $query->whereDoesntHave("bookings", function ($bookingQuery) use (
-                $checkIn,
-                $checkOut
-            ) {
+            $query->whereDoesntHave("bookings", function ($bookingQuery) use ($checkIn, $checkOut) {
                 $bookingQuery->where(function ($q) use ($checkIn, $checkOut) {
-                    $q->where("start_date", "<", $checkOut)
-                        ->where("end_date", ">", $checkIn);
-                });
+                    $q->where(function ($innerQ) use ($checkIn, $checkOut) {
+                        // Booking starts during the selected period
+                        $innerQ->where('start_date', '>=', $checkIn)
+                            ->where('start_date', '<=', $checkOut);
+                    })->orWhere(function ($innerQ) use ($checkIn, $checkOut) {
+                        // Booking ends during the selected period
+                        $innerQ->where('end_date', '>=', $checkIn)
+                            ->where('end_date', '<=', $checkOut);
+                    })->orWhere(function ($innerQ) use ($checkIn, $checkOut) {
+                        // Booking spans the entire selected period
+                        $innerQ->where('start_date', '<=', $checkIn)
+                            ->where('end_date', '>=', $checkOut);
+                    })->orWhere(function ($innerQ) use ($checkIn, $checkOut) {
+                        // Selected period spans the entire booking
+                        $innerQ->where('start_date', '>=', $checkIn)
+                            ->where('end_date', '<=', $checkOut);
+                    });
+                })->whereIn('status', ['paid', 'Paid', 'confirmed', 'Confirmed']);
             });
         }
 
-
+        // 📍 Location-based filtering with radius
         $query->when($latitude && $longitude, function ($query) use ($latitude, $longitude) {
-            $radius = 10;
+            $radius = 10; // 10km radius
 
             return $query->select('*', DB::raw("
                 (6371 * acos(
@@ -1209,7 +1222,6 @@ class HomeController extends Controller
         // 🌍 If location is provided, get coordinates
         if (!empty($input["location"])) {
             $location = $input["location"];
-
             $coordinates = $this->getCoordinatesFromLocation($location);
             if ($coordinates) {
                 $latitude = $coordinates['latitude'];
@@ -1217,25 +1229,39 @@ class HomeController extends Controller
             }
         }
 
-        // ✅ Availability Check
+        // ✅ Availability Check - Fixed version
         if ($request->filled(["checkIn", "checkOut"])) {
             $checkIn = Carbon::parse($input["checkIn"]);
             $checkOut = Carbon::parse($input["checkOut"]);
 
-            $query->whereDoesntHave("bookings", function ($bookingQuery) use (
-                $checkIn,
-                $checkOut
-            ) {
+            $query->whereDoesntHave("bookings", function ($bookingQuery) use ($checkIn, $checkOut) {
                 $bookingQuery->where(function ($q) use ($checkIn, $checkOut) {
                     $q->where("check_in_date", "<", $checkOut)
-                        ->where("check_out_date", ">", $checkIn);
+                    ->where("check_out_date", ">", $checkIn)
+                    ->whereIn('status', ['Paid', 'paid']); // Only consider paid bookings
                 });
+            });
+        }
+
+        // 👥 Guests Filter (adults + children)
+        if ($request->filled(["adults", "children"])) {
+            $adults = (int) $input["adults"];
+            $children = (int) $input["children"];
+            $totalGuests = $adults + $children;
+
+            $query->where(function ($q) use ($adults, $children, $totalGuests) {
+                // Filter by maximum capacity
+                $q->where(function ($subQ) use ($adults, $children, $totalGuests) {
+                    $subQ->where('max_adults', '>=', $adults)
+                        ->where('max_children', '>=', $children);
+                });
+
             });
         }
 
         // 📍 Distance Filter (only if lat/lng found)
         $query->when($latitude && $longitude, function ($query) use ($latitude, $longitude) {
-            $radius = 10;
+            $radius = 10; // km
 
             return $query->select('*', DB::raw("
                 (6371 * acos(
@@ -1246,7 +1272,7 @@ class HomeController extends Controller
                     sin(radians(latitude))
                 )) AS distance
             "))
-            ->having('distance', '<=', $radius) // ← Add this line
+            ->having('distance', '<=', $radius)
             ->orderBy('distance', 'ASC');
         });
 

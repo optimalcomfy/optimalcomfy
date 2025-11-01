@@ -61,8 +61,8 @@ const Product = (props) => {
 
         {/* Verification Badge */}
         {isVerified && (
-          <div className="absolute top-3 left-3 bg-green-500 px-2 font-bold py-1 rounded-full flex items-center gap-1 shadow-sm">
-            <small className="text-xs text-white">Verified</small>
+          <div className="absolute top-1 right-1 font-bold rounded-full flex items-center gap-1 shadow-sm">
+            <img src="/img/verfied.png" className="h-8" alt="" />
           </div>
         )}
 

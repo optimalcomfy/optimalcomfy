@@ -191,15 +191,6 @@ function Header() {
                 </li>
               </ul>
 
-              <div className="mobile-search-container">
-                {(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking') &&
-                  <SearchBar mobile={true} />
-                }
-                {(isWhich === '/all-cars' || isWhich === '/search-cars' || isWhich === '/rent-now' || isWhich === '/car-booking') &&
-                  <RideForm mobile={true} />
-                }
-              </div>
-
               <div className="mobile-auth-buttons">
                 <Link
                   href={route('login')}
@@ -328,6 +319,21 @@ function Header() {
       <div className='text-center d-none d-lg-block pt-2'>
           <h4 className='rideH2'>Let's ride and let's stay - <br /> the Ristay way </h4>
       </div>
+
+        <div className="modal-header lg:hidden flex justify-between my-2 border-b border-gray-200 px-4">
+            <Link
+            href={route('home')}
+            className={`modal-title px-4 py-2 text-lg font-medium ${(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking' || isWhich === '/privacy-policy' || isWhich === '/host-calendar-policy' || isWhich === '/terms-and-conditions') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
+            >
+            Search stays
+            </Link>
+            <Link
+            href={route('all-cars')}
+            className={`modal-title px-4 py-2 text-lg font-medium ${route().current('all-cars') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
+            >
+            Search Rides
+            </Link>
+        </div>
 
       <div className={`header-main ${isScrolled ? 'header-scrolled' : ''} d-none d-lg-block`}>
           <div className="header-container relative">

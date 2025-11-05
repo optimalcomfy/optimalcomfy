@@ -14,9 +14,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Services\MpesaStkService;
+use App\Http\Controllers\PesapalController;
+use App\Http\Controllers\MpesaStkController;
 use App\Services\PesapalService;
-use App\Services\SmsService;
+use App\Traits\Mpesa;
 use App\Mail\BookingConfirmation;
 use App\Mail\CarBookingConfirmation;
 use Illuminate\Support\Facades\Mail;
@@ -26,22 +27,12 @@ use Carbon\Carbon;
 use App\Mail\CheckInVerification;
 use App\Mail\CheckOutVerification;
 use App\Mail\BookingCancelled;
+use Illuminate\Pagination\LengthAwarePaginator;
+use App\Services\SmsService;
 
 class BookingController extends Controller
 {
-    protected $mpesaService;
-    protected $pesapalService;
-    protected $smsService;
-
-    public function __construct(
-        MpesaStkService $mpesaService,
-        PesapalService $pesapalService,
-        SmsService $smsService
-    ) {
-        $this->mpesaService = $mpesaService;
-        $this->pesapalService = $pesapalService;
-        $this->smsService = $smsService;
-    }
+    use Mpesa;
 
     public function index(Request $request)
     {
@@ -218,7 +209,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function handleRefund(Request $request, Booking $booking)
+    public function handleRefund(Request $request, Booking $booking, SmsService $smsService)
     {
         // Calculate maximum refundable amount
         $maxRefundable = $booking->max_refundable_amount;
@@ -264,7 +255,7 @@ class BookingController extends Controller
             ]);
 
             // Send SMS notification for refund approval
-            $this->sendRefundSms($booking, 'approved', $request->refund_amount);
+            $this->sendRefundSms($booking, 'approved', $request->refund_amount, $smsService);
 
             Mail::to($booking->user->email)
                 ->send(new RefundNotification($booking, 'approved'));
@@ -278,7 +269,7 @@ class BookingController extends Controller
             ]);
 
             // Send SMS notification for refund rejection
-            $this->sendRefundSms($booking, 'rejected', 0, $request->reason);
+            $this->sendRefundSms($booking, 'rejected', 0, $smsService, $request->reason);
 
             Mail::to($booking->user->email)
                 ->send(new RefundNotification($booking, 'rejected', $request->reason));
@@ -287,7 +278,7 @@ class BookingController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(Request $request, SmsService $smsService, PesapalService $pesapalService)
     {
         $request->validate([
             'property_id' => 'required|exists:properties,id',
@@ -316,7 +307,7 @@ class BookingController extends Controller
 
         try {
             // Send booking confirmation SMS
-            $this->sendBookingConfirmationSms($booking, 'pending');
+            $this->sendBookingConfirmationSms($booking, 'pending', $smsService);
 
             $company = Company::first();
 
@@ -327,7 +318,7 @@ class BookingController extends Controller
             if ($request->payment_method === 'mpesa') {
                 return $this->processMpesaPayment($booking, $request->phone, $finalAmount);
             } elseif ($request->payment_method === 'pesapal') {
-                return $this->processPesapalPayment($booking, $user, $finalAmount);
+                return $this->processPesapalPayment($booking, $user, $finalAmount, $pesapalService);
             }
 
         } catch (\Exception $e) {
@@ -345,46 +336,40 @@ class BookingController extends Controller
      */
     private function processMpesaPayment($booking, $phone, $amount)
     {
-        try {
-            $callbackBase = config('services.mpesa.callback_url') ?? secure_url('/api/mpesa/stk/callback');
+        $callbackBase = config('services.mpesa.callback_url') ?? secure_url('/api/mpesa/stk/callback');
 
-            $callbackData = [
-                'phone' => $phone,
-                'amount' => $amount,
-                'booking_id' => $booking->id,
-                'booking_type' => 'property'
-            ];
+        $callbackData = [
+            'phone' => $phone,
+            'amount' => $amount,
+            'booking_id' => $booking->id,
+            'booking_type' => 'property'
+        ];
 
-            $callbackUrl = $callbackBase . '?data=' . urlencode(json_encode($callbackData));
+        $callbackUrl = $callbackBase . '?data=' . urlencode(json_encode($callbackData));
 
-            // Use the injected service instead of trait
-            $this->mpesaService->STKPush(
-                'Paybill',
-                $amount,
-                $phone,
-                $callbackUrl,
-                'reference',
-                'Book Ristay'
-            );
+        $this->STKPush(
+            'Paybill',
+            $amount,
+            $phone,
+            $callbackUrl,
+            'reference',
+            'Book Ristay'
+        );
 
-            return redirect()->route('booking.payment.pending', [
-                'booking' => $booking->id,
-                'message' => 'Payment initiated. Please complete the M-Pesa payment on your phone.'
-            ]);
-        } catch (\Exception $e) {
-            Log::error('MPesa payment initiation failed: ' . $e->getMessage());
-            throw $e;
-        }
+        return redirect()->route('booking.payment.pending', [
+            'booking' => $booking->id,
+            'message' => 'Payment initiated. Please complete the M-Pesa payment on your phone.'
+        ]);
     }
 
     /**
      * Process Pesapal payment
      */
-    private function processPesapalPayment($booking, $user, $amount)
+    private function processPesapalPayment($booking, $user, $amount, $pesapalService)
     {
         try {
             // Get Pesapal token
-            $token = $this->pesapalService->getToken();
+            $token = $pesapalService->getToken();
 
             if (!$token) {
                 throw new \Exception('Failed to get Pesapal token. Please check your Pesapal credentials.');
@@ -416,7 +401,7 @@ class BookingController extends Controller
             ];
 
             // Submit order to Pesapal
-            $orderResponse = $this->pesapalService->makeOrder($token, $orderData);
+            $orderResponse = $pesapalService->makeOrder($token, $orderData);
 
             if (isset($orderResponse['order_tracking_id']) && isset($orderResponse['redirect_url'])) {
                 // Store Pesapal tracking ID in booking
@@ -450,7 +435,7 @@ class BookingController extends Controller
     /**
      * Handle Pesapal callback - This is called when user returns from Pesapal
      */
-    public function handlePesapalCallback(Request $request)
+    public function handlePesapalCallback(Request $request, SmsService $smsService)
     {
         try {
             $orderTrackingId = $request->input('OrderTrackingId');
@@ -496,7 +481,7 @@ class BookingController extends Controller
     /**
      * Handle Pesapal IPN (Instant Payment Notification) - This is the reliable status update
      */
-    public function handlePesapalNotification(Request $request)
+    public function handlePesapalNotification(Request $request, SmsService $smsService, PesapalService $pesapalService)
     {
         try {
             // Get the raw input for logging
@@ -507,7 +492,7 @@ class BookingController extends Controller
             Log::info('Pesapal IPN Received - Parsed', $ipnData);
 
             // Validate IPN data
-            if (!$this->pesapalService->validateIPN($ipnData)) {
+            if (!$pesapalService->validateIPN($ipnData)) {
                 Log::error('Pesapal IPN validation failed', $ipnData);
                 return response()->json(['error' => 'Invalid IPN data'], 400);
             }
@@ -535,11 +520,11 @@ class BookingController extends Controller
             switch ($orderNotificationType) {
                 case 'CHANGE':
                     $status = $ipnData['Status'] ?? null;
-                    $this->handlePaymentStatus($booking, $status, $ipnData);
+                    $this->handlePaymentStatus($booking, $status, $ipnData, $smsService);
                     break;
 
                 case 'CONFIRMED':
-                    $this->handleConfirmedPayment($booking, $ipnData);
+                    $this->handleConfirmedPayment($booking, $ipnData, $smsService);
                     break;
 
                 default:
@@ -564,7 +549,7 @@ class BookingController extends Controller
     /**
      * Handle payment status changes
      */
-    private function handlePaymentStatus($booking, $status, $ipnData)
+    private function handlePaymentStatus($booking, $status, $ipnData, $smsService)
     {
         Log::info('Handling Pesapal payment status', [
             'booking_id' => $booking->id,
@@ -575,12 +560,12 @@ class BookingController extends Controller
         switch ($status) {
             case 'COMPLETED':
             case 'SUCCESS':
-                $this->handleSuccessfulPayment($booking, $ipnData);
+                $this->handleSuccessfulPayment($booking, $ipnData, $smsService);
                 break;
 
             case 'FAILED':
             case 'INVALID':
-                $this->handleFailedPayment($booking, $ipnData);
+                $this->handleFailedPayment($booking, $ipnData, $smsService);
                 break;
 
             case 'PENDING':
@@ -599,7 +584,7 @@ class BookingController extends Controller
     /**
      * Handle successful payment
      */
-    private function handleSuccessfulPayment($booking, $ipnData)
+    private function handleSuccessfulPayment($booking, $ipnData, $smsService)
     {
         if ($booking->status === 'paid') {
             Log::info('Payment already processed', ['booking_id' => $booking->id]);
@@ -624,7 +609,7 @@ class BookingController extends Controller
 
         // Send confirmation emails and SMS
         $this->sendConfirmationEmails($booking);
-        $this->sendBookingConfirmationSms($booking, 'confirmed');
+        $this->sendBookingConfirmationSms($booking, 'confirmed', $smsService);
 
         Log::info('Pesapal payment completed successfully', [
             'booking_id' => $booking->id,
@@ -635,15 +620,15 @@ class BookingController extends Controller
     /**
      * Handle confirmed payment (alternative to status change)
      */
-    private function handleConfirmedPayment($booking, $ipnData)
+    private function handleConfirmedPayment($booking, $ipnData, $smsService)
     {
-        $this->handleSuccessfulPayment($booking, $ipnData);
+        $this->handleSuccessfulPayment($booking, $ipnData, $smsService);
     }
 
     /**
      * Handle failed payment
      */
-    private function handleFailedPayment($booking, $ipnData)
+    private function handleFailedPayment($booking, $ipnData, $smsService)
     {
         if ($booking->status === 'failed') {
             return;
@@ -664,7 +649,7 @@ class BookingController extends Controller
         ]);
 
         // Send failure notification
-        $this->sendPaymentFailureSms($booking, 'Payment failed via Pesapal');
+        $this->sendPaymentFailureSms($booking, 'Payment failed via Pesapal', $smsService);
 
         Log::warning('Pesapal payment failed', [
             'booking_id' => $booking->id,
@@ -734,7 +719,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function add(Request $request)
+    public function add(Request $request, SmsService $smsService)
     {
         $request->validate([
             'property_id' => 'required|exists:properties,id',
@@ -758,7 +743,7 @@ class BookingController extends Controller
         ]);
 
         // Send SMS for external booking
-        $this->sendBookingConfirmationSms($booking, 'external');
+        $this->sendBookingConfirmationSms($booking, 'external', $smsService);
 
         return redirect()->route('bookings.index')->with('success', 'Booking added successfully.');
     }
@@ -823,7 +808,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function update(Request $request, Booking $booking)
+    public function update(Request $request, Booking $booking, SmsService $smsService)
     {
         $validated = $request->validate([
             'checked_in' => 'nullable',
@@ -847,7 +832,7 @@ class BookingController extends Controller
                 $user = User::find($booking->user_id);
 
                 // Send check-in verification SMS
-                $this->smsService->sendSms(
+                $smsService->sendSms(
                     $user->phone,
                     "Hello {$user->name}, Your OTP for check-in verification is: {$booking->checkin_verification_code}"
                 );
@@ -865,7 +850,7 @@ class BookingController extends Controller
             $booking->save();
 
             // Send check-in confirmation SMS
-            $this->sendCheckInConfirmationSms($booking);
+            $this->sendCheckInConfirmationSms($booking, $smsService);
 
             return back()->with('success', 'Successfully checked in!');
         }
@@ -890,7 +875,7 @@ class BookingController extends Controller
                 $user = User::find($booking->user_id);
 
                 // Send check-out verification SMS
-                $this->smsService->sendSms(
+                $smsService->sendSms(
                     $user->phone,
                     "Hello {$user->name}, Your OTP for check-out verification is: {$booking->checkout_verification_code}"
                 );
@@ -908,7 +893,7 @@ class BookingController extends Controller
             $booking->save();
 
             // Send check-out confirmation SMS
-            $this->sendCheckOutConfirmationSms($booking);
+            $this->sendCheckOutConfirmationSms($booking, $smsService);
 
             return back()->with('success', 'Successfully checked out!');
         }
@@ -916,7 +901,7 @@ class BookingController extends Controller
         return back()->with('error', 'No valid action performed.');
     }
 
-    public function cancel(Request $request)
+    public function cancel(Request $request, SmsService $smsService)
     {
         $input = $request->all();
 
@@ -945,7 +930,7 @@ class BookingController extends Controller
             Mail::to($booking->property->user->email)->send(new BookingCancelled($booking, 'host'));
 
             // Send cancellation SMS to guest
-            $this->sendCancellationSms($booking);
+            $this->sendCancellationSms($booking, $smsService);
 
         } catch (\Exception $e) {
             Log::error('Cancellation email/SMS error: ' . $e->getMessage());
@@ -962,9 +947,158 @@ class BookingController extends Controller
     }
 
     /**
+     * SMS Notification Methods
+     */
+
+    private function sendBookingConfirmationSms(Booking $booking, string $type = 'confirmed', SmsService $smsService)
+    {
+        try {
+            $user = $booking->user;
+            $property = $booking->property;
+
+            $checkIn = Carbon::parse($booking->check_in_date)->format('M j, Y');
+            $checkOut = Carbon::parse($booking->check_out_date)->format('M j, Y');
+
+            switch ($type) {
+                case 'pending':
+                    $message = "Hello {$user->name}, your booking at {$property->property_name} is pending payment. Amount: KES {$booking->total_price}. Check-in: {$checkIn}";
+                    break;
+
+                case 'confirmed':
+                    $message = "Hello {$user->name}, your booking at {$property->property_name} is confirmed! Booking #{$booking->number}. Check-in: {$checkIn}, Check-out: {$checkOut}. Thank you for choosing Ristay!";
+                    break;
+
+                case 'external':
+                    $message = "Hello {$user->name}, your external booking at {$property->property_name} has been added. Check-in: {$checkIn}, Check-out: {$checkOut}";
+                    break;
+
+                default:
+                    $message = "Hello {$user->name}, your booking at {$property->property_name} has been updated. Status: {$booking->status}";
+            }
+
+            $smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            Log::error('Booking confirmation SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    private function sendPaymentFailureSms(Booking $booking, string $reason = '', SmsService $smsService)
+    {
+        try {
+            $user = $booking->user;
+            $property = $booking->property;
+
+            $message = "Hello {$user->name}, your payment for booking at {$property->property_name} failed. Please try again or contact support.";
+
+            if (!empty($reason)) {
+                $message .= " Reason: {$reason}";
+            }
+
+            $smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            Log::error('Payment failure SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    private function sendCheckInConfirmationSms(Booking $booking, SmsService $smsService)
+    {
+        try {
+            $user = $booking->user;
+            $property = $booking->property;
+
+            $message = "Hello {$user->name}, you have successfully checked in to {$property->property_name}. We hope you enjoy your stay!";
+
+            $smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            Log::error('Check-in confirmation SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    private function sendCheckOutConfirmationSms(Booking $booking, SmsService $smsService)
+    {
+        try {
+            $user = $booking->user;
+            $property = $booking->property;
+
+            $message = "Hello {$user->name}, thank you for staying at {$property->property_name}. We hope to see you again soon!";
+
+            $smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            Log::error('Check-out confirmation SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    private function sendCancellationSms(Booking $booking, SmsService $smsService)
+    {
+        try {
+            $user = $booking->user;
+            $property = $booking->property;
+
+            $message = "Hello {$user->name}, your booking at {$property->property_name} has been cancelled. We hope to host you in the future.";
+
+            $smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            Log::error('Cancellation SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    private function sendRefundSms(Booking $booking, string $status, float $amount = 0, SmsService $smsService, string $reason = '')
+    {
+        try {
+            $user = $booking->user;
+
+            if ($status === 'approved') {
+                $message = "Hello {$user->name}, your refund request for booking #{$booking->number} has been approved. Amount: KES {$amount}. Refund will be processed within 3-5 business days.";
+            } else {
+                $message = "Hello {$user->name}, your refund request for booking #{$booking->number} has been rejected.";
+                if (!empty($reason)) {
+                    $message .= " Reason: {$reason}";
+                }
+            }
+
+            $smsService->sendSms($user->phone, $message);
+
+        } catch (\Exception $e) {
+            Log::error('Refund SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    protected function sendConfirmationEmails(Booking $booking)
+    {
+        try {
+            if (is_string($booking->check_in_date)) {
+                $booking->check_in_date = \Carbon\Carbon::parse($booking->check_in_date);
+            }
+            if (is_string($booking->check_out_date)) {
+                $booking->check_out_date = \Carbon\Carbon::parse($booking->check_out_date);
+            }
+
+            Mail::to($booking->user->email)
+                ->send(new BookingConfirmation($booking, 'customer'));
+
+            // Send to host
+            if ($booking->property->user) {
+                Mail::to($booking->property->user->email)
+                    ->send(new BookingConfirmation($booking, 'host'));
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Email sending failed: ' . $e->getMessage(), [
+                'booking_id' => $booking->id,
+                'error' => $e
+            ]);
+        }
+    }
+
+    /**
      * Handle M-Pesa STK Push callback
      */
-    public function handleCallback(Request $request)
+    public function handleCallback(Request $request, SmsService $smsService)
     {
         try {
             // Parse callback data
@@ -1027,12 +1161,12 @@ class BookingController extends Controller
 
                 // Send confirmation emails and SMS
                 $this->sendConfirmationEmails($booking);
-                $this->sendBookingConfirmationSms($booking, 'confirmed');
+                $this->sendBookingConfirmationSms($booking, 'confirmed', $smsService);
 
             } else {
                 $booking->update(['status' => 'failed']);
                 // Send payment failure SMS
-                $this->sendPaymentFailureSms($booking, $resultDesc);
+                $this->sendPaymentFailureSms($booking, $resultDesc, $smsService);
                 Log::error('Payment failed', [
                     'booking_id' => $booking->id,
                     'error' => $resultDesc
@@ -1055,155 +1189,6 @@ class BookingController extends Controller
                 'ResultCode' => 1,
                 'ResultDesc' => 'Error processing callback'
             ], 500);
-        }
-    }
-
-    /**
-     * SMS Notification Methods
-     */
-
-    private function sendBookingConfirmationSms(Booking $booking, string $type = 'confirmed')
-    {
-        try {
-            $user = $booking->user;
-            $property = $booking->property;
-
-            $checkIn = Carbon::parse($booking->check_in_date)->format('M j, Y');
-            $checkOut = Carbon::parse($booking->check_out_date)->format('M j, Y');
-
-            switch ($type) {
-                case 'pending':
-                    $message = "Hello {$user->name}, your booking at {$property->property_name} is pending payment. Amount: KES {$booking->total_price}. Check-in: {$checkIn}";
-                    break;
-
-                case 'confirmed':
-                    $message = "Hello {$user->name}, your booking at {$property->property_name} is confirmed! Booking #{$booking->number}. Check-in: {$checkIn}, Check-out: {$checkOut}. Thank you for choosing Ristay!";
-                    break;
-
-                case 'external':
-                    $message = "Hello {$user->name}, your external booking at {$property->property_name} has been added. Check-in: {$checkIn}, Check-out: {$checkOut}";
-                    break;
-
-                default:
-                    $message = "Hello {$user->name}, your booking at {$property->property_name} has been updated. Status: {$booking->status}";
-            }
-
-            $this->smsService->sendSms($user->phone, $message);
-
-        } catch (\Exception $e) {
-            Log::error('Booking confirmation SMS failed: ' . $e->getMessage());
-        }
-    }
-
-    private function sendPaymentFailureSms(Booking $booking, string $reason = '')
-    {
-        try {
-            $user = $booking->user;
-            $property = $booking->property;
-
-            $message = "Hello {$user->name}, your payment for booking at {$property->property_name} failed. Please try again or contact support.";
-
-            if (!empty($reason)) {
-                $message .= " Reason: {$reason}";
-            }
-
-            $this->smsService->sendSms($user->phone, $message);
-
-        } catch (\Exception $e) {
-            Log::error('Payment failure SMS failed: ' . $e->getMessage());
-        }
-    }
-
-    private function sendCheckInConfirmationSms(Booking $booking)
-    {
-        try {
-            $user = $booking->user;
-            $property = $booking->property;
-
-            $message = "Hello {$user->name}, you have successfully checked in to {$property->property_name}. We hope you enjoy your stay!";
-
-            $this->smsService->sendSms($user->phone, $message);
-
-        } catch (\Exception $e) {
-            Log::error('Check-in confirmation SMS failed: ' . $e->getMessage());
-        }
-    }
-
-    private function sendCheckOutConfirmationSms(Booking $booking)
-    {
-        try {
-            $user = $booking->user;
-            $property = $booking->property;
-
-            $message = "Hello {$user->name}, thank you for staying at {$property->property_name}. We hope to see you again soon!";
-
-            $this->smsService->sendSms($user->phone, $message);
-
-        } catch (\Exception $e) {
-            Log::error('Check-out confirmation SMS failed: ' . $e->getMessage());
-        }
-    }
-
-    private function sendCancellationSms(Booking $booking)
-    {
-        try {
-            $user = $booking->user;
-            $property = $booking->property;
-
-            $message = "Hello {$user->name}, your booking at {$property->property_name} has been cancelled. We hope to host you in the future.";
-
-            $this->smsService->sendSms($user->phone, $message);
-
-        } catch (\Exception $e) {
-            Log::error('Cancellation SMS failed: ' . $e->getMessage());
-        }
-    }
-
-    private function sendRefundSms(Booking $booking, string $status, float $amount = 0, string $reason = '')
-    {
-        try {
-            $user = $booking->user;
-
-            if ($status === 'approved') {
-                $message = "Hello {$user->name}, your refund request for booking #{$booking->number} has been approved. Amount: KES {$amount}. Refund will be processed within 3-5 business days.";
-            } else {
-                $message = "Hello {$user->name}, your refund request for booking #{$booking->number} has been rejected.";
-                if (!empty($reason)) {
-                    $message .= " Reason: {$reason}";
-                }
-            }
-
-            $this->smsService->sendSms($user->phone, $message);
-
-        } catch (\Exception $e) {
-            Log::error('Refund SMS failed: ' . $e->getMessage());
-        }
-    }
-
-    protected function sendConfirmationEmails(Booking $booking)
-    {
-        try {
-            if (is_string($booking->check_in_date)) {
-                $booking->check_in_date = \Carbon\Carbon::parse($booking->check_in_date);
-            }
-            if (is_string($booking->check_out_date)) {
-                $booking->check_out_date = \Carbon\Carbon::parse($booking->check_out_date);
-            }
-
-            Mail::to($booking->user->email)
-                ->send(new BookingConfirmation($booking, 'customer'));
-
-            // Send to host
-            if ($booking->property->user) {
-                Mail::to($booking->property->user->email)
-                    ->send(new BookingConfirmation($booking, 'host'));
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Email sending failed: ' . $e->getMessage(), [
-                'booking_id' => $booking->id,
-                'error' => $e
-            ]);
         }
     }
 }

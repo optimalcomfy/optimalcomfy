@@ -21,8 +21,13 @@ trait Mpesa
     protected $resultURL;        // Common Result URL for asynchronous responses
     protected $queueTimeOutURL;  // Common Queue Timeout URL for asynchronous responses
 
-    public function __construct()
+    // Remove the constructor and replace with lazy initialization method
+    protected function initializeMpesa(): void
     {
+        if ($this->consumerKey !== null) {
+            return; // Already initialized
+        }
+
         $this->consumerKey = config('services.mpesa.consumer_key');
         $this->consumerSecret = config('services.mpesa.consumer_secret');
         $this->passkey = config('services.mpesa.passkey');
@@ -36,9 +41,13 @@ trait Mpesa
         $this->resultURL = config('services.mpesa.result_url');
         $this->queueTimeOutURL = config('services.mpesa.queue_timeout_url');
 
-        Log::info('MPesa trait initialized', [
-            'business_shortcode' => $this->businessShortCode,
-            'base_url' => $this->baseUrl,
+        Log::info('MPesa configuration loaded', [
+            'consumerKey' => $this->consumerKey ? 'SET' : 'MISSING',
+            'consumerSecret' => $this->consumerSecret ? 'SET' : 'MISSING',
+            'passkey' => $this->passkey ? 'SET' : 'MISSING',
+            'businessShortCode' => $this->businessShortCode,
+            'callbackUrl' => $this->callbackUrl,
+            'baseUrl' => $this->baseUrl,
             'has_initiator' => !empty($this->initiatorName),
             'has_security_credential' => !empty($this->securityCredential),
         ]);
@@ -54,11 +63,6 @@ trait Mpesa
             'passkey',
             'businessShortCode',
             'baseUrl',
-            // Add new required configs if they are mandatory for all operations
-            // 'initiatorName',
-            // 'securityCredential',
-            // 'resultURL',
-            // 'queueTimeOutURL',
         ];
 
         foreach ($required as $key) {
@@ -80,6 +84,7 @@ trait Mpesa
      */
     public function lipaNaMpesaPassword(?string $timestamp = null): string
     {
+        $this->initializeMpesa(); // Initialize here
         $timestampToUse = $timestamp ?? Carbon::rawParse('now')->format('YmdHis');
         $password = base64_encode($this->businessShortCode . $this->passkey . $timestampToUse);
 
@@ -93,6 +98,8 @@ trait Mpesa
 
     public function generateAccessToken(): string
     {
+        $this->initializeMpesa(); // Initialize here
+
         $credentials = base64_encode($this->consumerKey . ":" . $this->consumerSecret);
         $url = $this->baseUrl . "/oauth/v1/generate?grant_type=client_credentials";
 
@@ -157,6 +164,8 @@ trait Mpesa
 
     public function STKPush(string $type, string $amount, string $phone, string $callback, string $reference, string $narrative): array
     {
+        $this->initializeMpesa(); // Initialize here
+
         $url = $this->baseUrl . '/mpesa/stkpush/v1/processrequest';
         $originalPhone = $phone;
         $phone = '254' . substr($phone, -9);
@@ -247,6 +256,8 @@ trait Mpesa
 
     public function mpesaRegisterUrls(string $confirmationURL, string $validationURL): array
     {
+        $this->initializeMpesa(); // Initialize here
+
         Log::info('Registering MPesa URLs', [
             'confirmation_url' => $confirmationURL,
             'validation_url' => $validationURL,
@@ -319,6 +330,8 @@ trait Mpesa
      */
     public function b2cPayment(string $amount, string $partyB, string $remarks, string $commandID = 'BusinessPayment', ?string $occasion = null): array
     {
+        $this->initializeMpesa(); // Initialize here
+
         $url = $this->baseUrl . '/mpesa/b2c/v3/paymentrequest';
         $originalPartyB = $partyB;
         $partyB = '254' . substr($partyB, -9); // Sanitize phone number
@@ -424,6 +437,8 @@ trait Mpesa
         string $receiverIdentifierType = '4' // Default to Till Number
     ): array
     {
+        $this->initializeMpesa(); // Initialize here
+
         $url = $this->baseUrl . '/mpesa/b2b/v1/paymentrequest';
 
         Log::info('Initiating B2B Payment', [
@@ -515,6 +530,8 @@ trait Mpesa
      */
     public function STKPushQuery(string $checkoutRequestID): array
     {
+        $this->initializeMpesa(); // Initialize here
+
         $url = $this->baseUrl . '/mpesa/stkpushquery/v1/query';
 
         $currentTime = Carbon::rawParse('now');
@@ -598,6 +615,8 @@ trait Mpesa
      */
     public function reversal(string $transactionID, string $amount, string $remarks, ?string $occasion = null): array
     {
+        $this->initializeMpesa(); // Initialize here
+
         $url = $this->baseUrl . '/mpesa/reversal/v1/request';
 
         Log::info('Initiating Reversal request', [
@@ -697,6 +716,8 @@ trait Mpesa
         ?string $occasion = null
     ): array
     {
+        $this->initializeMpesa(); // Initialize here
+
         $url = $this->baseUrl . '/mpesa/transactionstatus/v1/query';
 
         Log::info('Initiating Transaction Status Query', [
@@ -785,6 +806,8 @@ trait Mpesa
      */
     public function accountBalance(string $commandID = 'AccountBalance', string $remarks = 'Account Balance Query'): array
     {
+        $this->initializeMpesa(); // Initialize here
+
         $url = $this->baseUrl . '/mpesa/accountbalance/v1/query';
 
         Log::info('Initiating Account Balance Query', [
@@ -869,6 +892,8 @@ trait Mpesa
 
     public function checkIdentity(string $partyA, string $remarks = 'Check Identity', string $commandID = 'CheckIdentity'): array
     {
+        $this->initializeMpesa(); // Initialize here
+
         $url = $this->baseUrl . '/mpesa/checkidentity/v1/processrequest';
         $originalPartyA = $partyA;
         $partyA = '254' . substr($partyA, -9); // Sanitize phone number

@@ -284,6 +284,12 @@ Route::get('/test-ristay-sender', function () {
 });
 
 
+Route::post('/pesapal/callback', [BookingController::class, 'handlePesapalCallback'])->name('pesapal.callback');
+Route::post('/api/pesapal/notification', [BookingController::class, 'handlePesapalNotification'])->name('pesapal.notification');
+Route::get('/booking/{booking}/payment/success', [BookingController::class, 'paymentSuccess'])->name('booking.payment.success');
+Route::get('/booking/{booking}/payment/cancelled', [BookingController::class, 'paymentCancelled'])->name('booking.payment.cancelled');
+
+
 Route::middleware(['auth'])->group(function () {
     // Markup management routes
     Route::get('/my-markups', [MarkupBookingController::class, 'index'])->name('markup.index');

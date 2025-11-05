@@ -52,6 +52,14 @@ return [
         'queue_timeout_url' => env('MPESA_QUEUE_TIMEOUT_URL'),
     ],
 
+    'pesapal' => [
+        'key' => env('PESAPAL_CONSUMER_KEY'),
+        'secret' => env('PESAPAL_CONSUMER_SECRET'),
+        'environment' => env('PESAPAL_ENVIRONMENT', 'production'),
+        'notification_url' => env('PESAPAL_NOTIFICATION_URL'),
+        'callback_url' => env('PESAPAL_CALLBACK_URL'),
+    ],
+
     'onfon' => [
         'api_url' => env('ONFON_API_URL', 'https://api.onfonmedia.co.ke/v1/sms/SendBulkSMS'),
         'api_key' => env('ONFON_API_KEY', '9lbRzN35WuE27HZO4XgMskU8rF6dnw0Lv1CecixjKhDJISPY'),

@@ -27,6 +27,8 @@ const PropertyBookingForm = () => {
     referredByUserName: ''
   });
 
+  const [paymentMethod, setPaymentMethod] = useState('mpesa'); // Default to M-Pesa
+
   const [data, setData] = useState({
     property_id: property.id,
     check_in_date: checkInDate || '',
@@ -365,11 +367,12 @@ const PropertyBookingForm = () => {
         updateData('user_id', userId);
       }
 
-      // Include referral discount in booking data
+      // Include referral discount and payment method in booking data
       const bookingData = {
         ...data,
         referral_discount: referralData.discountAmount,
-        final_price: finalPrice
+        final_price: finalPrice,
+        payment_method: paymentMethod
       };
 
       console.log('Submitting booking data:', bookingData);
@@ -488,16 +491,16 @@ const PropertyBookingForm = () => {
                             key={variation.id}
                             className={`p-3 border rounded-lg cursor-pointer ${selectedVariation?.id === variation.id ? 'border-orange-400 bg-orange-50' : 'border-gray-300 hover:border-gray-400'}`}
                             onClick={() => handleVariationChange(variation)}
-                          >
-                            <div className="flex justify-between items-center">
-                              <span className="font-medium">
-                                {variation.type}
-                              </span>
-                              <span>
-                                KES {variation.platform_price}
-                              </span>
-                            </div>
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">
+                              {variation.type}
+                            </span>
+                            <span>
+                              KES {variation.platform_price}
+                            </span>
                           </div>
+                        </div>
                         ))}
                       </div>
                     </div>
@@ -644,6 +647,42 @@ const PropertyBookingForm = () => {
                 />
 
                 <div className="space-y-6">
+                  {/* Payment Method Selection */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Payment Method</label>
+                    <div className="flex flex-col lg:flex-row gap-2">
+                    {/* M-Pesa Option */}
+                    <div
+                        className={`p-3 rounded-lg cursor-pointer transition-colors border ${
+                        paymentMethod === 'mpesa'
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 hover:bg-gray-50'
+                        }`}
+                        onClick={() => setPaymentMethod('mpesa')}
+                    >
+                        <div className="flex items-center gap-3">
+                        <img src="/image/mpesa.jpg" className="h-5" alt="M-Pesa" />
+                        <span className="font-medium">M-Pesa</span>
+                        </div>
+                    </div>
+
+                    {/* Pesapal Option */}
+                    <div
+                        className={`p-3 rounded-lg cursor-pointer transition-colors border ${
+                        paymentMethod === 'pesapal'
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 hover:bg-gray-50'
+                        }`}
+                        onClick={() => setPaymentMethod('pesapal')}
+                    >
+                        <div className="flex items-center gap-3">
+                        <img src="/image/pesapal.png" className="h-5" alt="Pesapal" />
+                        <span className="font-medium">Pesapal</span>
+                        </div>
+                    </div>
+                    </div>
+                  </div>
+
                   {/* Referral Code Section */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Referral Code (Optional)</label>
@@ -683,62 +722,85 @@ const PropertyBookingForm = () => {
                     </div>
                   </div>
 
-                  <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                        Phone Number
-                      </label>
-                      <div className="relative flex gap-1">
-                        <div className="border rounded-tl-lg px-1 border-gray-300 rounded-bl-lg inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-                          +254
+                  {paymentMethod === 'mpesa' && (
+                    <form onSubmit={handleSubmit}>
+                      <div className="mb-4">
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                          Phone Number
+                        </label>
+                        <div className="relative flex gap-1">
+                          <div className="border rounded-tl-lg px-1 border-gray-300 rounded-bl-lg inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                            +254
+                          </div>
+                          <input
+                            type="tel"
+                            id="phone"
+                            name="phone"
+                            className="pl-14 w-full px-4 py-3 rounded-tr-lg border-gray-300 rounded-br-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition-all"
+                            placeholder="712345678"
+                            pattern="[0-9]{9}"
+                            maxLength="9"
+                            required
+                            inputMode="numeric"
+                            value={data.phone.replace(/^254/, '')}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, '');
+
+                              setData({
+                                ...data,
+                                phone: '254' + value
+                              });
+                              e.target.value = value;
+                            }}
+                          />
                         </div>
-                        <input
-                          type="tel"
-                          id="phone"
-                          name="phone"
-                          className="pl-14 w-full px-4 py-3 rounded-tr-lg border-gray-300 rounded-br-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition-all"
-                          placeholder="712345678"
-                          pattern="[0-9]{9}"
-                          maxLength="9"
-                          required
-                          inputMode="numeric"
-                          value={data.phone.replace(/^254/, '')} // Remove 254 prefix if it exists
-                          onChange={(e) => {
-                            // Remove any non-digit characters
-                            const value = e.target.value.replace(/\D/g, '');
-
-                            // Update state with full phone number (254 prefix + entered digits)
-                            setData({
-                              ...data,
-                              phone: '254' + value
-                            });
-
-                            // Update the input value (without the prefix)
-                            e.target.value = value;
-                          }}
-                        />
+                        <p className="mt-1 text-xs text-gray-500">Enter your 9-digit phone number after 254</p>
                       </div>
-                      <p className="mt-1 text-xs text-gray-500">Enter your 9-digit phone number after 254</p>
-                    </div>
 
-                    <button
-                      type="submit"
-                      disabled={processing}
-                      className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {processing ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          Processing booking...
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="w-5 h-5" />
-                          Confirm and book
-                        </>
-                      )}
-                    </button>
-                  </form>
+                      <button
+                        type="submit"
+                        disabled={processing}
+                        className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {processing ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Processing booking...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="w-5 h-5" />
+                            Pay with M-Pesa
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  )}
+
+                  {paymentMethod === 'pesapal' && (
+                    <form onSubmit={handleSubmit}>
+                      <button
+                        type="submit"
+                        disabled={processing}
+                        className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {processing ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Redirecting to Pesapal...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="w-5 h-5" />
+                            Pay with Pesapal
+                          </>
+                        )}
+                      </button>
+                      <p className="text-sm text-gray-600 mt-2 text-center">
+                        You will be redirected to Pesapal to complete your payment securely.
+                      </p>
+                    </form>
+                  )}
                 </div>
               </div>
             )}

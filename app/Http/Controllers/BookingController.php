@@ -13,9 +13,11 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\PesapalController;
 use App\Http\Controllers\MpesaStkController;
 use App\Services\MpesaStkService;
+use App\Services\PesapalService;
 use App\Traits\Mpesa;
 use App\Mail\BookingConfirmation;
 use App\Mail\CarBookingConfirmation;
@@ -277,7 +279,7 @@ class BookingController extends Controller
         }
     }
 
-    public function store(Request $request, SmsService $smsService)
+    public function store(Request $request, SmsService $smsService, PesapalService $pesapalService)
     {
         $request->validate([
             'property_id' => 'required|exists:properties,id',
@@ -286,7 +288,8 @@ class BookingController extends Controller
             'total_price' => 'required|numeric|min:1',
             'variation_id' => 'nullable',
             'referral_code' => 'nullable',
-            'phone' => 'required|string'
+            'phone' => 'required|string',
+            'payment_method' => 'required|in:mpesa,pesapal'
         ]);
 
         $user = Auth::user();
@@ -299,47 +302,28 @@ class BookingController extends Controller
             'total_price' => $request->total_price,
             'status' => 'pending',
             'variation_id' => $request->variation_id,
-            'referral_code' => $request->referral_code
+            'referral_code' => $request->referral_code,
+            'payment_method' => $request->payment_method
         ]);
 
         try {
             // Send booking confirmation SMS
             $this->sendBookingConfirmationSms($booking, 'pending', $smsService);
 
-            $callbackBase = config('services.mpesa.callback_url')
-                ?? secure_url('/api/mpesa/stk/callback');
-
             $company = Company::first();
 
             $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
-
             $finalAmount = ceil($finalAmount);
 
-            $callbackData = [
-                'phone' => $request->phone,
-                'amount' => $finalAmount,
-                'booking_id' => $booking->id,
-                'booking_type' => 'property'
-            ];
-
-            $callbackUrl = $callbackBase . '?data=' . urlencode(json_encode($callbackData));
-
-            $this->STKPush(
-                'Paybill',
-                $finalAmount,
-                $request->phone,
-                $callbackUrl,
-                'reference',
-                'Book Ristay'
-            );
-
-            return redirect()->route('booking.payment.pending', [
-                'booking' => $booking->id,
-                'message' => 'Payment initiated. Please complete the M-Pesa payment on your phone.'
-            ]);
+            // Handle different payment methods
+            if ($request->payment_method === 'mpesa') {
+                return $this->processMpesaPayment($booking, $request->phone, $finalAmount);
+            } elseif ($request->payment_method === 'pesapal') {
+                return $this->processPesapalPayment($booking, $user, $finalAmount, $pesapalService);
+            }
 
         } catch (\Exception $e) {
-            \Log::error('M-Pesa payment initiation failed: ' . $e->getMessage());
+            Log::error('Payment initiation failed: ' . $e->getMessage());
             $booking->update(['status' => 'failed']);
 
             return back()
@@ -349,127 +333,329 @@ class BookingController extends Controller
     }
 
     /**
-     * Handle M-Pesa STK Push callback
+     * Process M-Pesa payment
      */
-    public function handleCallback(Request $request, SmsService $smsService)
+    private function processMpesaPayment($booking, $phone, $amount)
+    {
+        $callbackBase = config('services.mpesa.callback_url') ?? secure_url('/api/mpesa/stk/callback');
+
+        $callbackData = [
+            'phone' => $phone,
+            'amount' => $amount,
+            'booking_id' => $booking->id,
+            'booking_type' => 'property'
+        ];
+
+        $callbackUrl = $callbackBase . '?data=' . urlencode(json_encode($callbackData));
+
+        $this->STKPush(
+            'Paybill',
+            $amount,
+            $phone,
+            $callbackUrl,
+            'reference',
+            'Book Ristay'
+        );
+
+        return redirect()->route('booking.payment.pending', [
+            'booking' => $booking->id,
+            'message' => 'Payment initiated. Please complete the M-Pesa payment on your phone.'
+        ]);
+    }
+
+    /**
+     * Process Pesapal payment
+     */
+    private function processPesapalPayment($booking, $user, $amount, $pesapalService)
     {
         try {
-            // Parse callback data
-            $callbackData = $request->json()->all();
+            // Get Pesapal token
+            $token = $pesapalService->getToken();
 
-            // Extract transaction details
-            $resultCode = $callbackData['Body']['stkCallback']['ResultCode'] ?? null;
-            $resultDesc = $callbackData['Body']['stkCallback']['ResultDesc'] ?? null;
-            $merchantRequestID = $callbackData['Body']['stkCallback']['MerchantRequestID'] ?? null;
-            $checkoutRequestID = $callbackData['Body']['stkCallback']['CheckoutRequestID'] ?? null;
-
-            // Get additional callback parameters
-            $callbackParams = json_decode($request->query('data'), true);
-
-            // Find the booking with all necessary relationships
-            $booking = Booking::with(['user', 'property.user', 'payments'])
-                            ->find($callbackParams['booking_id'] ?? null);
-
-            if (!$booking) {
-                \Log::error('Booking not found', ['booking_id' => $callbackParams['booking_id'] ?? null]);
-                return response()->json(['message' => 'Booking not found'], 404);
+            if (!$token) {
+                throw new \Exception('Failed to get Pesapal token. Please check your Pesapal credentials.');
             }
 
-            // Prepare payment data
-            $paymentData = [
-                'user_id' => $booking->user_id,
-                'booking_id' => $booking->id,
-                'amount' => $callbackParams['amount'] ?? $booking->total_price,
-                'method' => 'mpesa',
-                'phone' => $callbackParams['phone'] ?? null,
-                'checkout_request_id' => $checkoutRequestID,
-                'merchant_request_id' => $merchantRequestID,
-                'booking_type' => $callbackParams['booking_type'] ?? 'property',
-                'status' => $resultCode === 0 ? 'completed' : 'failed',
-                'failure_reason' => $resultCode !== 0 ? $resultDesc : null,
+            // Prepare order data for live environment
+            $orderData = [
+                'id' => $booking->number,
+                'currency' => 'KES',
+                'amount' => $amount,
+                'description' => 'Booking for ' . $booking->property->property_name,
+                'callback_url' => route('pesapal.callback'),
+                'cancellation_url' => route('booking.payment.cancelled', ['booking' => $booking->id]),
+                'notification_id' => config('services.pesapal.notification_url'),
+                'billing_address' => [
+                    'email_address' => $user->email,
+                    'phone_number' => $user->phone,
+                    'country_code' => 'KE',
+                    'first_name' => $user->name,
+                    'middle_name' => '',
+                    'last_name' => '',
+                    'line_1' => 'Nairobi',
+                    'line_2' => '',
+                    'city' => 'Nairobi',
+                    'state' => 'Nairobi',
+                    'postal_code' => '00100',
+                    'zip_code' => '00100'
+                ]
             ];
 
-            // Process successful payment
-            if ($resultCode === 0) {
-                $callbackMetadata = $callbackData['Body']['stkCallback']['CallbackMetadata']['Item'] ?? [];
+            // Submit order to Pesapal
+            $orderResponse = $pesapalService->makeOrder($token, $orderData);
 
-                foreach ($callbackMetadata as $item) {
-                    switch ($item['Name']) {
-                        case 'MpesaReceiptNumber':
-                            $paymentData['mpesa_receipt'] = $item['Value'];
-                            break;
-                        case 'TransactionDate':
-                            $paymentData['transaction_date'] = date('Y-m-d H:i:s', strtotime($item['Value']));
-                            break;
-                        case 'Amount':
-                            $paymentData['amount'] = $item['Value'];
-                            break;
-                        case 'PhoneNumber':
-                            $paymentData['phone'] = $item['Value'];
-                            break;
-                    }
-                }
-
-                $booking->update(['status' => 'paid']);
-
-                // Send confirmation emails and SMS
-                $this->sendConfirmationEmails($booking);
-                $this->sendBookingConfirmationSms($booking, 'confirmed', $smsService);
-
-            } else {
-                $booking->update(['status' => 'failed']);
-                // Send payment failure SMS
-                $this->sendPaymentFailureSms($booking, $resultDesc, $smsService);
-                \Log::error('Payment failed', [
-                    'booking_id' => $booking->id,
-                    'error' => $resultDesc
+            if (isset($orderResponse['order_tracking_id']) && isset($orderResponse['redirect_url'])) {
+                // Store Pesapal tracking ID in booking
+                $booking->update([
+                    'pesapal_tracking_id' => $orderResponse['order_tracking_id']
                 ]);
+
+                Log::info('Pesapal payment initiated successfully', [
+                    'booking_id' => $booking->id,
+                    'tracking_id' => $orderResponse['order_tracking_id'],
+                    'redirect_url' => $orderResponse['redirect_url']
+                ]);
+
+                // Redirect to Pesapal payment page
+                return redirect()->away($orderResponse['redirect_url']);
+            } else {
+                $errorMessage = $orderResponse['error']['message'] ?? 'Unknown error occurred';
+                throw new \Exception('Failed to create Pesapal order: ' . $errorMessage);
             }
 
-            // Create payment record
-            Payment::create($paymentData);
-
-            return response()->json([
-                'ResultCode' => 0,
-                'ResultDesc' => 'Callback processed successfully'
-            ]);
-
         } catch (\Exception $e) {
-            \Log::error('Callback processing error: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
-            return response()->json([
-                'ResultCode' => 1,
-                'ResultDesc' => 'Error processing callback'
-            ], 500);
+            Log::error('Pesapal payment initiation failed: ' . $e->getMessage());
+
+            // Update booking status to failed
+            $booking->update(['status' => 'failed']);
+
+            throw $e;
         }
     }
 
-    protected function sendConfirmationEmails(Booking $booking)
+    /**
+     * Handle Pesapal callback - This is called when user returns from Pesapal
+     */
+    public function handlePesapalCallback(Request $request, SmsService $smsService)
     {
         try {
-            if (is_string($booking->check_in_date)) {
-                $booking->check_in_date = \Carbon\Carbon::parse($booking->check_in_date);
-            }
-            if (is_string($booking->check_out_date)) {
-                $booking->check_out_date = \Carbon\Carbon::parse($booking->check_out_date);
+            $orderTrackingId = $request->input('OrderTrackingId');
+            $orderMerchantReference = $request->input('OrderMerchantReference');
+
+            Log::info('Pesapal Callback Received', [
+                'order_tracking_id' => $orderTrackingId,
+                'order_merchant_reference' => $orderMerchantReference,
+                'all_params' => $request->all()
+            ]);
+
+            // Find booking by tracking ID or merchant reference
+            $booking = Booking::where('pesapal_tracking_id', $orderTrackingId)
+                            ->orWhere('number', $orderMerchantReference)
+                            ->first();
+
+            if (!$booking) {
+                Log::error('Booking not found for Pesapal callback', [
+                    'tracking_id' => $orderTrackingId,
+                    'merchant_reference' => $orderMerchantReference
+                ]);
+                return redirect()->route('booking.payment.cancelled')->with('error', 'Booking not found.');
             }
 
-            Mail::to($booking->user->email)
-                ->send(new BookingConfirmation($booking, 'customer'));
-
-            // Send to host
-            if ($booking->property->user) {
-                Mail::to($booking->property->user->email)
-                    ->send(new BookingConfirmation($booking, 'host'));
+            // For callback, we don't update status immediately - wait for IPN
+            // But we can check the current status
+            if ($booking->status === 'paid') {
+                return redirect()->route('booking.payment.success', ['booking' => $booking->id]);
             }
+
+            // If still pending, show pending page
+            return redirect()->route('booking.payment.pending', [
+                'booking' => $booking->id,
+                'message' => 'Payment is being processed. We will notify you once confirmed.'
+            ]);
 
         } catch (\Exception $e) {
-            \Log::error('Email sending failed: ' . $e->getMessage(), [
-                'booking_id' => $booking->id,
-                'error' => $e
-            ]);
+            Log::error('Pesapal callback processing error: ' . $e->getMessage());
+            return redirect()->route('booking.payment.cancelled')->with('error', 'Error processing payment.');
         }
+    }
+
+    /**
+     * Handle Pesapal IPN (Instant Payment Notification) - This is the reliable status update
+     */
+    public function handlePesapalNotification(Request $request, SmsService $smsService, PesapalService $pesapalService)
+    {
+        try {
+            // Get the raw input for logging
+            $rawInput = $request->getContent();
+            $ipnData = $request->all();
+
+            Log::info('Pesapal IPN Received - Raw', ['raw_data' => $rawInput]);
+            Log::info('Pesapal IPN Received - Parsed', $ipnData);
+
+            // Validate IPN data
+            if (!$pesapalService->validateIPN($ipnData)) {
+                Log::error('Pesapal IPN validation failed', $ipnData);
+                return response()->json(['error' => 'Invalid IPN data'], 400);
+            }
+
+            // Extract important fields from IPN
+            $orderTrackingId = $ipnData['OrderTrackingId'] ?? null;
+            $orderNotificationType = $ipnData['OrderNotificationType'] ?? null;
+            $orderMerchantReference = $ipnData['OrderMerchantReference'] ?? null;
+
+            // Find booking
+            $booking = Booking::where('pesapal_tracking_id', $orderTrackingId)
+                            ->orWhere('number', $orderMerchantReference)
+                            ->with(['user', 'property.user'])
+                            ->first();
+
+            if (!$booking) {
+                Log::error('Booking not found for Pesapal IPN', [
+                    'tracking_id' => $orderTrackingId,
+                    'merchant_reference' => $orderMerchantReference
+                ]);
+                return response()->json(['error' => 'Booking not found'], 404);
+            }
+
+            // Handle different notification types
+            switch ($orderNotificationType) {
+                case 'CHANGE':
+                    $status = $ipnData['Status'] ?? null;
+                    $this->handlePaymentStatus($booking, $status, $ipnData, $smsService);
+                    break;
+
+                case 'CONFIRMED':
+                    $this->handleConfirmedPayment($booking, $ipnData, $smsService);
+                    break;
+
+                default:
+                    Log::warning('Unknown Pesapal notification type', [
+                        'type' => $orderNotificationType,
+                        'booking_id' => $booking->id
+                    ]);
+            }
+
+            // Always return success to Pesapal
+            return response()->json(['status' => 'success']);
+
+        } catch (\Exception $e) {
+            Log::error('Pesapal IPN processing error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'ipn_data' => $ipnData ?? []
+            ]);
+            return response()->json(['error' => 'IPN processing failed'], 500);
+        }
+    }
+
+    /**
+     * Handle payment status changes
+     */
+    private function handlePaymentStatus($booking, $status, $ipnData, $smsService)
+    {
+        Log::info('Handling Pesapal payment status', [
+            'booking_id' => $booking->id,
+            'status' => $status,
+            'previous_status' => $booking->status
+        ]);
+
+        switch ($status) {
+            case 'COMPLETED':
+            case 'SUCCESS':
+                $this->handleSuccessfulPayment($booking, $ipnData, $smsService);
+                break;
+
+            case 'FAILED':
+            case 'INVALID':
+                $this->handleFailedPayment($booking, $ipnData, $smsService);
+                break;
+
+            case 'PENDING':
+                // Keep as pending, no action needed
+                Log::info('Payment still pending', ['booking_id' => $booking->id]);
+                break;
+
+            default:
+                Log::warning('Unknown payment status', [
+                    'booking_id' => $booking->id,
+                    'status' => $status
+                ]);
+        }
+    }
+
+    /**
+     * Handle successful payment
+     */
+    private function handleSuccessfulPayment($booking, $ipnData, $smsService)
+    {
+        if ($booking->status === 'paid') {
+            Log::info('Payment already processed', ['booking_id' => $booking->id]);
+            return;
+        }
+
+        // Update booking status
+        $booking->update(['status' => 'paid']);
+
+        // Create payment record
+        Payment::create([
+            'user_id' => $booking->user_id,
+            'booking_id' => $booking->id,
+            'amount' => $booking->total_price,
+            'method' => 'pesapal',
+            'status' => 'completed',
+            'pesapal_tracking_id' => $booking->pesapal_tracking_id,
+            'transaction_reference' => $ipnData['PaymentMethodReference'] ?? null,
+            'booking_type' => 'property',
+            'transaction_date' => now()
+        ]);
+
+        // Send confirmation emails and SMS
+        $this->sendConfirmationEmails($booking);
+        $this->sendBookingConfirmationSms($booking, 'confirmed', $smsService);
+
+        Log::info('Pesapal payment completed successfully', [
+            'booking_id' => $booking->id,
+            'tracking_id' => $booking->pesapal_tracking_id
+        ]);
+    }
+
+    /**
+     * Handle confirmed payment (alternative to status change)
+     */
+    private function handleConfirmedPayment($booking, $ipnData, $smsService)
+    {
+        $this->handleSuccessfulPayment($booking, $ipnData, $smsService);
+    }
+
+    /**
+     * Handle failed payment
+     */
+    private function handleFailedPayment($booking, $ipnData, $smsService)
+    {
+        if ($booking->status === 'failed') {
+            return;
+        }
+
+        $booking->update(['status' => 'failed']);
+
+        // Create failed payment record
+        Payment::create([
+            'user_id' => $booking->user_id,
+            'booking_id' => $booking->id,
+            'amount' => $booking->total_price,
+            'method' => 'pesapal',
+            'status' => 'failed',
+            'pesapal_tracking_id' => $booking->pesapal_tracking_id,
+            'failure_reason' => $ipnData['Description'] ?? 'Payment failed',
+            'booking_type' => 'property'
+        ]);
+
+        // Send failure notification
+        $this->sendPaymentFailureSms($booking, 'Payment failed via Pesapal', $smsService);
+
+        Log::warning('Pesapal payment failed', [
+            'booking_id' => $booking->id,
+            'tracking_id' => $booking->pesapal_tracking_id
+        ]);
     }
 
     public function paymentPending(Booking $booking, Request $request)
@@ -492,6 +678,24 @@ class BookingController extends Controller
             'company' => $company,
             'displayAmount' => $displayAmount,
             'message' => $request->message ?? 'Payment is being processed.'
+        ]);
+    }
+
+    public function paymentSuccess(Booking $booking)
+    {
+        return Inertia::render('PaymentSuccess', [
+            'booking' => $booking,
+            'message' => 'Payment completed successfully!'
+        ]);
+    }
+
+    public function paymentCancelled(Booking $booking)
+    {
+        $booking->update(['status' => 'cancelled']);
+
+        return Inertia::render('PaymentCancelled', [
+            'booking' => $booking,
+            'message' => 'Payment was cancelled. You can try again.'
         ]);
     }
 
@@ -730,7 +934,7 @@ class BookingController extends Controller
             $this->sendCancellationSms($booking, $smsService);
 
         } catch (\Exception $e) {
-            \Log::error('Cancellation email/SMS error: ' . $e->getMessage());
+            Log::error('Cancellation email/SMS error: ' . $e->getMessage());
         }
 
         return back()->with('success', 'Booking has been cancelled successfully.');
@@ -776,7 +980,7 @@ class BookingController extends Controller
             $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
-            \Log::error('Booking confirmation SMS failed: ' . $e->getMessage());
+            Log::error('Booking confirmation SMS failed: ' . $e->getMessage());
         }
     }
 
@@ -795,7 +999,7 @@ class BookingController extends Controller
             $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
-            \Log::error('Payment failure SMS failed: ' . $e->getMessage());
+            Log::error('Payment failure SMS failed: ' . $e->getMessage());
         }
     }
 
@@ -810,7 +1014,7 @@ class BookingController extends Controller
             $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
-            \Log::error('Check-in confirmation SMS failed: ' . $e->getMessage());
+            Log::error('Check-in confirmation SMS failed: ' . $e->getMessage());
         }
     }
 
@@ -825,7 +1029,7 @@ class BookingController extends Controller
             $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
-            \Log::error('Check-out confirmation SMS failed: ' . $e->getMessage());
+            Log::error('Check-out confirmation SMS failed: ' . $e->getMessage());
         }
     }
 
@@ -840,7 +1044,7 @@ class BookingController extends Controller
             $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
-            \Log::error('Cancellation SMS failed: ' . $e->getMessage());
+            Log::error('Cancellation SMS failed: ' . $e->getMessage());
         }
     }
 
@@ -861,7 +1065,131 @@ class BookingController extends Controller
             $smsService->sendSms($user->phone, $message);
 
         } catch (\Exception $e) {
-            \Log::error('Refund SMS failed: ' . $e->getMessage());
+            Log::error('Refund SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    protected function sendConfirmationEmails(Booking $booking)
+    {
+        try {
+            if (is_string($booking->check_in_date)) {
+                $booking->check_in_date = \Carbon\Carbon::parse($booking->check_in_date);
+            }
+            if (is_string($booking->check_out_date)) {
+                $booking->check_out_date = \Carbon\Carbon::parse($booking->check_out_date);
+            }
+
+            Mail::to($booking->user->email)
+                ->send(new BookingConfirmation($booking, 'customer'));
+
+            // Send to host
+            if ($booking->property->user) {
+                Mail::to($booking->property->user->email)
+                    ->send(new BookingConfirmation($booking, 'host'));
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Email sending failed: ' . $e->getMessage(), [
+                'booking_id' => $booking->id,
+                'error' => $e
+            ]);
+        }
+    }
+
+    /**
+     * Handle M-Pesa STK Push callback
+     */
+    public function handleCallback(Request $request, SmsService $smsService)
+    {
+        try {
+            // Parse callback data
+            $callbackData = $request->json()->all();
+
+            // Extract transaction details
+            $resultCode = $callbackData['Body']['stkCallback']['ResultCode'] ?? null;
+            $resultDesc = $callbackData['Body']['stkCallback']['ResultDesc'] ?? null;
+            $merchantRequestID = $callbackData['Body']['stkCallback']['MerchantRequestID'] ?? null;
+            $checkoutRequestID = $callbackData['Body']['stkCallback']['CheckoutRequestID'] ?? null;
+
+            // Get additional callback parameters
+            $callbackParams = json_decode($request->query('data'), true);
+
+            // Find the booking with all necessary relationships
+            $booking = Booking::with(['user', 'property.user', 'payments'])
+                            ->find($callbackParams['booking_id'] ?? null);
+
+            if (!$booking) {
+                Log::error('Booking not found', ['booking_id' => $callbackParams['booking_id'] ?? null]);
+                return response()->json(['message' => 'Booking not found'], 404);
+            }
+
+            // Prepare payment data
+            $paymentData = [
+                'user_id' => $booking->user_id,
+                'booking_id' => $booking->id,
+                'amount' => $callbackParams['amount'] ?? $booking->total_price,
+                'method' => 'mpesa',
+                'phone' => $callbackParams['phone'] ?? null,
+                'checkout_request_id' => $checkoutRequestID,
+                'merchant_request_id' => $merchantRequestID,
+                'booking_type' => $callbackParams['booking_type'] ?? 'property',
+                'status' => $resultCode === 0 ? 'completed' : 'failed',
+                'failure_reason' => $resultCode !== 0 ? $resultDesc : null,
+            ];
+
+            // Process successful payment
+            if ($resultCode === 0) {
+                $callbackMetadata = $callbackData['Body']['stkCallback']['CallbackMetadata']['Item'] ?? [];
+
+                foreach ($callbackMetadata as $item) {
+                    switch ($item['Name']) {
+                        case 'MpesaReceiptNumber':
+                            $paymentData['mpesa_receipt'] = $item['Value'];
+                            break;
+                        case 'TransactionDate':
+                            $paymentData['transaction_date'] = date('Y-m-d H:i:s', strtotime($item['Value']));
+                            break;
+                        case 'Amount':
+                            $paymentData['amount'] = $item['Value'];
+                            break;
+                        case 'PhoneNumber':
+                            $paymentData['phone'] = $item['Value'];
+                            break;
+                    }
+                }
+
+                $booking->update(['status' => 'paid']);
+
+                // Send confirmation emails and SMS
+                $this->sendConfirmationEmails($booking);
+                $this->sendBookingConfirmationSms($booking, 'confirmed', $smsService);
+
+            } else {
+                $booking->update(['status' => 'failed']);
+                // Send payment failure SMS
+                $this->sendPaymentFailureSms($booking, $resultDesc, $smsService);
+                Log::error('Payment failed', [
+                    'booking_id' => $booking->id,
+                    'error' => $resultDesc
+                ]);
+            }
+
+            // Create payment record
+            Payment::create($paymentData);
+
+            return response()->json([
+                'ResultCode' => 0,
+                'ResultDesc' => 'Callback processed successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Callback processing error: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            return response()->json([
+                'ResultCode' => 1,
+                'ResultDesc' => 'Error processing callback'
+            ], 500);
         }
     }
 }

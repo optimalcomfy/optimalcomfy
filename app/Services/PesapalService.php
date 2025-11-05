@@ -169,21 +169,27 @@ class PesapalService
     }
 
     /**
-     * EMERGENCY FALLBACK: Try alternative approach for IPN issues
+     * EMERGENCY FALLBACK: Try alternative approach for IPN issues but keep billing address
      */
     private function emergencyOrderCreation($token, $orderData)
     {
         try {
-            Log::info('Attempting emergency order creation without IPN');
+            Log::info('Attempting emergency order creation with minimal billing address');
 
-            // Try with minimal data
+            // Keep minimal data but include required billing address
             $minimalData = [
                 'id' => $orderData['id'],
                 'currency' => $orderData['currency'],
                 'amount' => $orderData['amount'],
                 'description' => $orderData['description'],
                 'callback_url' => $orderData['callback_url'],
-                // Explicitly skip billing_address and other optional fields
+                'billing_address' => [
+                    'email_address' => $orderData['billing_address']['email_address'] ?? 'user@example.com',
+                    'phone_number' => $orderData['billing_address']['phone_number'] ?? '254700000000',
+                    'country_code' => 'KE',
+                    'first_name' => $orderData['billing_address']['first_name'] ?? 'Customer',
+                    'last_name' => $orderData['billing_address']['last_name'] ?? '',
+                ]
             ];
 
             $response = Http::withToken($token)

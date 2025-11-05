@@ -361,43 +361,29 @@ class BookingController extends Controller
     }
 
     /**
-     * Process Pesapal payment - UPDATED VERSION
+     * Process Pesapal payment - SIMPLE WORKING VERSION
      */
     private function processPesapalPayment($booking, $user, $amount, $pesapalService)
     {
         try {
-            // Prepare order data WITHOUT any IPN references
-            $orderData = [
-                'id' => $booking->number,
-                'currency' => 'KES',
-                'amount' => $amount,
-                'description' => 'Booking for ' . $booking->property->property_name,
-                'callback_url' => route('pesapal.callback'),
-                'cancellation_url' => route('booking.payment.cancelled', ['booking' => $booking->id]),
-                // REMOVED: 'notification_id' => '39197dd7-4f16-470a-8953-db20f6108070',
-                'billing_address' => [
-                    'email_address' => $user->email,
-                    'phone_number' => $user->phone ?? '254700000000',
-                    'country_code' => 'KE',
-                    'first_name' => $user->name,
-                    'middle_name' => '',
-                    'last_name' => '',
-                    'line_1' => 'Nairobi',
-                    'line_2' => '',
-                    'city' => 'Nairobi',
-                    'state' => 'Nairobi',
-                    'postal_code' => '00100',
-                    'zip_code' => '00100'
-                ]
-            ];
-
-            Log::info('Submitting Pesapal order without IPN', [
+            Log::info('Using createWorkingOrder for Pesapal payment', [
                 'booking_id' => $booking->id,
-                'order_data' => $orderData
+                'amount' => $amount
             ]);
 
-            // Use the direct method that doesn't include IPN
-            $orderResponse = $pesapalService->createOrderDirect($orderData);
+            // Use the simple working method
+            $orderResponse = $pesapalService->createWorkingOrder(
+                $booking->number,
+                $amount,
+                'Booking for ' . $booking->property->property_name,
+                route('pesapal.callback'),
+                route('booking.payment.cancelled', ['booking' => $booking->id]),
+                [
+                    'email' => $user->email,
+                    'phone' => $user->phone ?? '254700000000',
+                    'name' => $user->name
+                ]
+            );
 
             Log::info('Pesapal Order Response Details', [
                 'booking_id' => $booking->id,

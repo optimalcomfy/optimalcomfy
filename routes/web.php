@@ -346,6 +346,30 @@ Route::get('/register-pesapal-ipn', function (PesapalService $pesapalService) {
     return response()->json(['error' => 'Failed to register IPN']);
 });
 
+
+Route::post('/pesapal/ipn', [App\Http\Controllers\BookingController::class, 'handlePesapalNotification'])
+    ->name('pesapal.ipn');
+
+// Temporary debug route (remove after testing)
+Route::get('/debug-pesapal-ipn', function (App\Services\PesapalService $pesapalService) {
+    try {
+        $ipnUrl = route('pesapal.ipn');
+        $ipnId = $pesapalService->ensureIPNRegistered($ipnUrl);
+
+        return response()->json([
+            'ipn_url' => $ipnUrl,
+            'ipn_id' => $ipnId,
+            'configuration' => $pesapalService->debugConfiguration(),
+            'success' => !empty($ipnId)
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'ipn_url' => $ipnUrl ?? 'Not set'
+        ], 500);
+    }
+})->name('debug.pesapal.ipn');
+
 // Markup booking routes
 Route::get('/markup-booking/{token}', [MarkupBookingController::class, 'showMarkupBooking'])->name('markup.booking.show');
 Route::post('/markup-booking/{token}', [MarkupBookingController::class, 'processMarkupBooking'])->name('markup.booking.process');

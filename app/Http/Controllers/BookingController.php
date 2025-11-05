@@ -366,14 +366,7 @@ class BookingController extends Controller
     private function processPesapalPayment($booking, $user, $amount, $pesapalService)
     {
         try {
-            // Get Pesapal token
-            $token = $pesapalService->getToken();
-
-            if (!$token) {
-                throw new \Exception('Failed to get Pesapal token. Please check your Pesapal credentials.');
-            }
-
-            // Prepare order data for live environment
+            // Use the direct order creation method that handles token management
             $orderData = [
                 'id' => $booking->number,
                 'currency' => 'KES',
@@ -381,7 +374,6 @@ class BookingController extends Controller
                 'description' => 'Booking for ' . $booking->property->property_name,
                 'callback_url' => route('pesapal.callback'),
                 'cancellation_url' => route('booking.payment.cancelled', ['booking' => $booking->id]),
-                // Remove notification_id or get the correct IPN ID from Pesapal dashboard
                 'billing_address' => [
                     'email_address' => $user->email,
                     'phone_number' => $user->phone ?? '254700000000',
@@ -398,8 +390,8 @@ class BookingController extends Controller
                 ]
             ];
 
-            // Submit order to Pesapal
-            $orderResponse = $pesapalService->makeOrder($token, $orderData);
+            // Use the direct order creation method
+            $orderResponse = $pesapalService->createOrder($orderData);
 
             Log::info('Pesapal Order Response Details', [
                 'booking_id' => $booking->id,

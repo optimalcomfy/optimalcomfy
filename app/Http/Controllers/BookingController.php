@@ -381,10 +381,10 @@ class BookingController extends Controller
                 'description' => 'Booking for ' . $booking->property->property_name,
                 'callback_url' => route('pesapal.callback'),
                 'cancellation_url' => route('booking.payment.cancelled', ['booking' => $booking->id]),
-                'notification_id' => config('services.pesapal.notification_url'),
+                // Remove notification_id or get the correct IPN ID from Pesapal dashboard
                 'billing_address' => [
                     'email_address' => $user->email,
-                    'phone_number' => $user->phone,
+                    'phone_number' => $user->phone ?? '254700000000',
                     'country_code' => 'KE',
                     'first_name' => $user->name,
                     'middle_name' => '',
@@ -401,6 +401,11 @@ class BookingController extends Controller
             // Submit order to Pesapal
             $orderResponse = $pesapalService->makeOrder($token, $orderData);
 
+            Log::info('Pesapal Order Response Details', [
+                'booking_id' => $booking->id,
+                'order_response' => $orderResponse
+            ]);
+
             if (isset($orderResponse['order_tracking_id']) && isset($orderResponse['redirect_url'])) {
                 // Store Pesapal tracking ID in booking
                 $booking->update([
@@ -416,8 +421,19 @@ class BookingController extends Controller
                 // Redirect to Pesapal payment page
                 return redirect()->away($orderResponse['redirect_url']);
             } else {
+                // More detailed error logging
+                $errorType = $orderResponse['error']['error_type'] ?? 'unknown_error';
+                $errorCode = $orderResponse['error']['code'] ?? 'unknown_code';
                 $errorMessage = $orderResponse['error']['message'] ?? 'Unknown error occurred';
-                throw new \Exception('Failed to create Pesapal order: ' . $errorMessage);
+
+                Log::error('Pesapal order creation failed', [
+                    'error_type' => $errorType,
+                    'error_code' => $errorCode,
+                    'error_message' => $errorMessage,
+                    'full_response' => $orderResponse
+                ]);
+
+                throw new \Exception("Pesapal Error [$errorCode]: $errorMessage");
             }
 
         } catch (\Exception $e) {

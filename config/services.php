@@ -57,7 +57,7 @@ return [
         'secret' => env('PESAPAL_CONSUMER_SECRET'),
         'environment' => env('PESAPAL_ENVIRONMENT', 'production'),
         'notification_url' => env('PESAPAL_NOTIFICATION_URL'),
-        'callback_url' => env('PESAPAL_CALLBACK_URL'),
+        'callback_url' => env('PESAPAL_CALLBACK_URL', 'https://ristay.co.ke/pesapal/callback'),
     ],
 
     'onfon' => [

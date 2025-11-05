@@ -399,7 +399,7 @@ class BookingController extends Controller
             }
 
             // Submit order to Pesapal
-            $orderResponse = $pesapalService->makeOrder($token, $orderData);
+            $orderResponse = $pesapalService->createOrderDirect($orderData);
 
             Log::info('Pesapal Order Response Details', [
                 'booking_id' => $booking->id,

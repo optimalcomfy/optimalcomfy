@@ -369,33 +369,22 @@ const PropertyBookingForm = () => {
         payment_method: 'pesapal'
       };
 
-      console.log('Submitting Pesapal booking data:', bookingData);
+      router.post(route('bookings.store'), bookingData, {
+        onSuccess: () => {
+            window.open(result.redirect_url, 'pesapal_payment', 'width=800,height=600,scrollbars=yes');
 
-      const response = await fetch(route('bookings.store'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-          'X-Requested-With': 'XMLHttpRequest'
+            Swal.fire({
+            icon: 'success',
+            title: 'Redirecting to Pesapal',
+            text: 'Please complete your payment in the new window.',
+            confirmButtonColor: '#f97316',
+            });
         },
-        body: JSON.stringify(bookingData)
+        onError: (errors) => {
+          console.error('Booking creation failed:', errors);
+          showErrorAlert('Booking creation failed. Please try again.');
+        }
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        // Open Pesapal in new window
-        window.open(result.redirect_url, 'pesapal_payment', 'width=800,height=600,scrollbars=yes');
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Redirecting to Pesapal',
-          text: 'Please complete your payment in the new window.',
-          confirmButtonColor: '#f97316',
-        });
-      } else {
-        showErrorAlert(result.error || 'Payment initiation failed. Please try again.');
-      }
     } catch (error) {
       console.error('Pesapal submission error:', error);
       showErrorAlert('An error occurred. Please try again.');

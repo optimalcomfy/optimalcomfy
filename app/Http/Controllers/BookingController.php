@@ -361,7 +361,7 @@ class BookingController extends Controller
     }
 
     /**
-     * Process Pesapal payment - UPDATED WITH IPN
+     * Process Pesapal payment - UPDATED WITH JSON RESPONSE
      */
     private function processPesapalPayment($booking, $user, $amount, $pesapalService)
     {
@@ -374,7 +374,7 @@ class BookingController extends Controller
                 'description' => 'Booking for ' . $booking->property->property_name,
                 'callback_url' => route('pesapal.callback'),
                 'cancellation_url' => route('booking.payment.cancelled', ['booking' => $booking->id]),
-                'notification_id' => 'c3c6a247-fe67-4c90-9258-db20defcc8dc', // Your registered IPN ID
+                'notification_id' => '181d6537-8cb7-4479-a9be-db205dee938e', // Updated IPN ID
                 'billing_address' => [
                     'email_address' => $user->email,
                     'phone_number' => $user->phone ?? '254700000000',
@@ -421,8 +421,13 @@ class BookingController extends Controller
                     'ipn_used' => true
                 ]);
 
-                // Redirect to Pesapal payment page
-                return redirect()->away($orderResponse['redirect_url']);
+                // Return JSON response for frontend to handle
+                return response()->json([
+                    'success' => true,
+                    'redirect_url' => $orderResponse['redirect_url'],
+                    'booking_id' => $booking->id,
+                    'message' => 'Payment initiated successfully'
+                ]);
             } else {
                 // More detailed error logging
                 $errorType = $orderResponse['error']['error_type'] ?? 'unknown_error';
@@ -436,7 +441,10 @@ class BookingController extends Controller
                     'full_response' => $orderResponse
                 ]);
 
-                throw new \Exception("Pesapal Error [$errorCode]: $errorMessage");
+                return response()->json([
+                    'success' => false,
+                    'error' => "Pesapal Error [$errorCode]: $errorMessage"
+                ], 400);
             }
 
         } catch (\Exception $e) {
@@ -445,7 +453,10 @@ class BookingController extends Controller
             // Update booking status to failed
             $booking->update(['status' => 'failed']);
 
-            throw $e;
+            return response()->json([
+                'success' => false,
+                'error' => 'Payment initiation failed: ' . $e->getMessage()
+            ], 500);
         }
     }
 

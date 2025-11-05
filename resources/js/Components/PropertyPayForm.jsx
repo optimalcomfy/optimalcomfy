@@ -350,7 +350,62 @@ const PropertyBookingForm = () => {
     }
   },[auth])
 
-  const handleSubmit = async (e) => {
+  // Handle Pesapal payment submission
+  const handlePesapalSubmit = async (e) => {
+    e.preventDefault();
+    setProcessing(true);
+
+    if (!data.check_in_date || !data.check_out_date || nights <= 0) {
+      showErrorAlert('Please select valid check-in and check-out dates');
+      setProcessing(false);
+      return;
+    }
+
+    try {
+      const bookingData = {
+        ...data,
+        referral_discount: referralData.discountAmount,
+        final_price: finalPrice,
+        payment_method: 'pesapal'
+      };
+
+      console.log('Submitting Pesapal booking data:', bookingData);
+
+      const response = await fetch(route('bookings.store'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(bookingData)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Open Pesapal in new window
+        window.open(result.redirect_url, 'pesapal_payment', 'width=800,height=600,scrollbars=yes');
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Redirecting to Pesapal',
+          text: 'Please complete your payment in the new window.',
+          confirmButtonColor: '#f97316',
+        });
+      } else {
+        showErrorAlert(result.error || 'Payment initiation failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Pesapal submission error:', error);
+      showErrorAlert('An error occurred. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Handle M-Pesa submission (existing Inertia approach)
+  const handleMpesaSubmit = async (e) => {
     e.preventDefault();
     setProcessing(true);
 
@@ -367,17 +422,16 @@ const PropertyBookingForm = () => {
         updateData('user_id', userId);
       }
 
-      // Include referral discount and payment method in booking data
       const bookingData = {
         ...data,
         referral_discount: referralData.discountAmount,
         final_price: finalPrice,
-        payment_method: paymentMethod
+        payment_method: 'mpesa'
       };
 
-      console.log('Submitting booking data:', bookingData);
+      console.log('Submitting M-Pesa booking data:', bookingData);
 
-      // Create booking
+      // Create booking using Inertia (for M-Pesa)
       router.post(route('bookings.store'), bookingData, {
         onSuccess: () => {
           // Handle success
@@ -723,7 +777,7 @@ const PropertyBookingForm = () => {
                   </div>
 
                   {paymentMethod === 'mpesa' && (
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={handleMpesaSubmit}>
                       <div className="mb-4">
                         <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                           Phone Number
@@ -778,7 +832,7 @@ const PropertyBookingForm = () => {
                   )}
 
                   {paymentMethod === 'pesapal' && (
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={handlePesapalSubmit}>
                       <button
                         type="submit"
                         disabled={processing}

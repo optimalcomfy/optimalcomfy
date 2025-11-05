@@ -51,7 +51,7 @@ use Illuminate\Support\Facades\Auth;
 
 use App\Models\Property;
 use App\Models\User;
-
+use App\Services\PesapalService;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -301,6 +301,49 @@ Route::middleware(['auth'])->group(function () {
     // Browse routes
     Route::get('/markup/browse/properties', [MarkupBookingController::class, 'browseProperties'])->name('markup.browse.properties');
     Route::get('/markup/browse/cars', [MarkupBookingController::class, 'browseCars'])->name('markup.browse.cars');
+});
+
+Route::get('/debug-pesapal', function (PesapalService $pesapalService) {
+    $token = $pesapalService->getToken(true);
+
+    if (!$token) {
+        return response()->json(['error' => 'Failed to get token']);
+    }
+
+    // Get registered IPNs
+    $ipns = $pesapalService->getRegisteredIPNs($token);
+
+    return response()->json([
+        'token_info' => $pesapalService->getTokenInfo(),
+        'registered_ipns' => $ipns,
+        'config' => [
+            'notification_url' => config('services.pesapal.notification_url'),
+            'callback_url' => config('services.pesapal.callback_url'),
+        ]
+    ]);
+});
+
+// Add this to your routes/web.php
+Route::get('/register-pesapal-ipn', function (PesapalService $pesapalService) {
+    $token = $pesapalService->getToken(true);
+
+    if (!$token) {
+        return response()->json(['error' => 'Failed to get token']);
+    }
+
+    $ipnUrl = config('services.pesapal.notification_url');
+    $ipnId = $pesapalService->registerIPN($token, $ipnUrl);
+
+    if ($ipnId) {
+        return response()->json([
+            'success' => true,
+            'ipn_id' => $ipnId,
+            'ipn_url' => $ipnUrl,
+            'message' => 'IPN registered successfully'
+        ]);
+    }
+
+    return response()->json(['error' => 'Failed to register IPN']);
 });
 
 // Markup booking routes

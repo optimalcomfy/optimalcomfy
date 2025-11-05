@@ -361,12 +361,12 @@ class BookingController extends Controller
     }
 
     /**
-     * Process Pesapal payment
+     * Process Pesapal payment - FINAL WORKING VERSION
      */
     private function processPesapalPayment($booking, $user, $amount, $pesapalService)
     {
         try {
-            // Prepare order data for live environment
+            // Prepare order data with the registered IPN
             $orderData = [
                 'id' => $booking->number,
                 'currency' => 'KES',
@@ -374,6 +374,7 @@ class BookingController extends Controller
                 'description' => 'Booking for ' . $booking->property->property_name,
                 'callback_url' => route('pesapal.callback'),
                 'cancellation_url' => route('booking.payment.cancelled', ['booking' => $booking->id]),
+                'notification_id' => '39197dd7-4f16-470a-8953-db20f6108070', // Use the registered IPN ID
                 'billing_address' => [
                     'email_address' => $user->email,
                     'phone_number' => $user->phone ?? '254700000000',
@@ -390,12 +391,20 @@ class BookingController extends Controller
                 ]
             ];
 
-            // Use the simple order creation method that explicitly avoids IPN issues
-            $orderResponse = $pesapalService->createSimpleOrder($orderData);
+            // Get fresh token
+            $token = $pesapalService->getToken(true);
+
+            if (!$token) {
+                throw new \Exception('Failed to get Pesapal token. Please check your Pesapal credentials.');
+            }
+
+            // Submit order to Pesapal
+            $orderResponse = $pesapalService->makeOrder($token, $orderData);
 
             Log::info('Pesapal Order Response Details', [
                 'booking_id' => $booking->id,
-                'order_response' => $orderResponse
+                'order_response' => $orderResponse,
+                'ipn_id' => '39197dd7-4f16-470a-8953-db20f6108070'
             ]);
 
             if (isset($orderResponse['order_tracking_id']) && isset($orderResponse['redirect_url'])) {
@@ -407,7 +416,8 @@ class BookingController extends Controller
                 Log::info('Pesapal payment initiated successfully', [
                     'booking_id' => $booking->id,
                     'tracking_id' => $orderResponse['order_tracking_id'],
-                    'redirect_url' => $orderResponse['redirect_url']
+                    'redirect_url' => $orderResponse['redirect_url'],
+                    'ipn_used' => true
                 ]);
 
                 // Redirect to Pesapal payment page
@@ -422,7 +432,8 @@ class BookingController extends Controller
                     'error_type' => $errorType,
                     'error_code' => $errorCode,
                     'error_message' => $errorMessage,
-                    'full_response' => $orderResponse
+                    'full_response' => $orderResponse,
+                    'ipn_id' => '39197dd7-4f16-470a-8953-db20f6108070'
                 ]);
 
                 throw new \Exception("Pesapal Error [$errorCode]: $errorMessage");

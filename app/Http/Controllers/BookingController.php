@@ -366,7 +366,7 @@ class BookingController extends Controller
     private function processPesapalPayment($booking, $user, $amount, $pesapalService)
     {
         try {
-            // Use the direct order creation method that handles token management
+            // Prepare order data for live environment
             $orderData = [
                 'id' => $booking->number,
                 'currency' => 'KES',
@@ -390,8 +390,8 @@ class BookingController extends Controller
                 ]
             ];
 
-            // Use the direct order creation method
-            $orderResponse = $pesapalService->createOrder($orderData);
+            // Use the simple order creation method that explicitly avoids IPN issues
+            $orderResponse = $pesapalService->createSimpleOrder($orderData);
 
             Log::info('Pesapal Order Response Details', [
                 'booking_id' => $booking->id,

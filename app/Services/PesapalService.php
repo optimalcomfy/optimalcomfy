@@ -108,12 +108,18 @@ class PesapalService
                 'currency' => $data['currency'] ?? 'KES'
             ]);
 
+            // Ensure we don't send notification_id if it's empty or invalid
+            $orderData = $data;
+            if (isset($orderData['notification_id']) && empty($orderData['notification_id'])) {
+                unset($orderData['notification_id']);
+            }
+
             $response = Http::withToken($token)
                 ->withHeaders([
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json',
                 ])
-                ->post($this->baseUrl . '/api/Transactions/SubmitOrderRequest', $data);
+                ->post($this->baseUrl . '/api/Transactions/SubmitOrderRequest', $orderData);
 
             Log::info('Pesapal Order Response', [
                 'status' => $response->status(),
@@ -123,6 +129,13 @@ class PesapalService
 
             if ($response->successful()) {
                 $orderResponse = $response->json();
+
+                // Check if the response contains an error despite 200 status
+                if (isset($orderResponse['error'])) {
+                    Log::error('Pesapal order creation returned error despite 200 status', $orderResponse);
+                    return $orderResponse;
+                }
+
                 Log::info('Pesapal Order Created Successfully', $orderResponse);
                 return $orderResponse;
             }
@@ -147,7 +160,8 @@ class PesapalService
             Log::error('Pesapal order creation failed', [
                 'status' => $response->status(),
                 'response' => $errorResponse,
-                'token_prefix' => substr($token, 0, 20) . '...'
+                'token_prefix' => substr($token, 0, 20) . '...',
+                'order_data' => $orderData
             ]);
 
             return $errorResponse;
@@ -163,6 +177,82 @@ class PesapalService
                     'message' => $e->getMessage()
                 ]
             ];
+        }
+    }
+
+    /**
+     * Register IPN URL with Pesapal and get the IPN ID
+     */
+    public function registerIPN($token, $ipnUrl)
+    {
+        try {
+            Log::info('Registering IPN URL with Pesapal', ['ipn_url' => $ipnUrl]);
+
+            $response = Http::withToken($token)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ])
+                ->post($this->baseUrl . '/api/URLSetup/RegisterIPN', [
+                    'url' => $ipnUrl,
+                    'ipn_notification_type' => 'POST'
+                ]);
+
+            Log::info('IPN Registration Response', [
+                'status' => $response->status(),
+                'successful' => $response->successful(),
+                'response_body' => $response->body()
+            ]);
+
+            if ($response->successful()) {
+                $ipnResponse = $response->json();
+                $ipnId = $ipnResponse['ipn_id'] ?? null;
+
+                if ($ipnId) {
+                    Log::info('IPN registered successfully', ['ipn_id' => $ipnId]);
+                    return $ipnId;
+                }
+            }
+
+            Log::error('IPN registration failed', [
+                'status' => $response->status(),
+                'response' => $response->body()
+            ]);
+
+            return null;
+
+        } catch (\Exception $e) {
+            Log::error('IPN registration error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get registered IPNs
+     */
+    public function getRegisteredIPNs($token)
+    {
+        try {
+            $response = Http::withToken($token)
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                ])
+                ->get($this->baseUrl . '/api/URLSetup/GetIpnList');
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('Failed to get registered IPNs', [
+                'status' => $response->status(),
+                'response' => $response->body()
+            ]);
+
+            return null;
+
+        } catch (\Exception $e) {
+            Log::error('Get IPNs error: ' . $e->getMessage());
+            return null;
         }
     }
 
@@ -245,64 +335,7 @@ class PesapalService
     }
 
     /**
-     * Validate if a token is still valid by making a test request
-     */
-    public function validateToken($token)
-    {
-        try {
-            Log::info('Validating Pesapal token');
-
-            $response = Http::withToken($token)
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                ])
-                ->get($this->baseUrl . '/api/Auth/ValidateToken');
-
-            $isValid = $response->successful();
-
-            Log::info('Pesapal token validation result', [
-                'is_valid' => $isValid,
-                'status' => $response->status()
-            ]);
-
-            return $isValid;
-
-        } catch (\Exception $e) {
-            Log::error('Token validation error: ' . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Get token information (debugging purposes)
-     */
-    public function getTokenInfo()
-    {
-        $token = Cache::get('pesapal_access_token');
-        $expiry = Cache::get('pesapal_token_expiry');
-
-        return [
-            'has_token' => !empty($token),
-            'token_prefix' => $token ? substr($token, 0, 20) . '...' : null,
-            'expires_at' => $expiry ? $expiry->toDateTimeString() : null,
-            'is_expired' => $expiry ? now()->gt($expiry) : true,
-            'minutes_remaining' => $expiry ? now()->diffInMinutes($expiry, false) : 0
-        ];
-    }
-
-    /**
-     * Clear cached token (useful for testing or when credentials change)
-     */
-    public function clearCachedToken()
-    {
-        Cache::forget('pesapal_access_token');
-        Cache::forget('pesapal_token_expiry');
-        Log::info('Pesapal cached tokens cleared');
-    }
-
-    /**
-     * Direct order creation with automatic token management
-     * This method handles token retrieval and order creation in one call
+     * Direct order creation with automatic token management and IPN handling
      */
     public function createOrder($orderData)
     {
@@ -320,6 +353,23 @@ class PesapalService
                 ];
             }
 
+            // Try to register IPN first if needed
+            $ipnUrl = config('services.pesapal.notification_url');
+            if ($ipnUrl) {
+                $ipnId = $this->registerIPN($token, $ipnUrl);
+                if ($ipnId) {
+                    $orderData['notification_id'] = $ipnId;
+                    Log::info('Using registered IPN ID for order', ['ipn_id' => $ipnId]);
+                } else {
+                    Log::warning('Failed to register IPN, proceeding without IPN');
+                    // Remove notification_id if it exists to avoid InvalidIpnId error
+                    unset($orderData['notification_id']);
+                }
+            } else {
+                // Ensure no notification_id is sent
+                unset($orderData['notification_id']);
+            }
+
             return $this->makeOrder($token, $orderData);
 
         } catch (\Exception $e) {
@@ -331,5 +381,49 @@ class PesapalService
                 ]
             ];
         }
+    }
+
+    /**
+     * Simple order creation without IPN (for testing)
+     */
+    public function createSimpleOrder($orderData)
+    {
+        try {
+            // Get a fresh token
+            $token = $this->getToken(true);
+
+            if (!$token) {
+                return [
+                    'error' => [
+                        'code' => 'TOKEN_ERROR',
+                        'message' => 'Failed to authenticate with Pesapal'
+                    ]
+                ];
+            }
+
+            // Explicitly remove notification_id to avoid IPN issues
+            unset($orderData['notification_id']);
+
+            return $this->makeOrder($token, $orderData);
+
+        } catch (\Exception $e) {
+            Log::error('Pesapal createSimpleOrder error: ' . $e->getMessage());
+            return [
+                'error' => [
+                    'code' => 'CREATE_ORDER_ERROR',
+                    'message' => $e->getMessage()
+                ]
+            ];
+        }
+    }
+
+    /**
+     * Clear cached token (useful for testing or when credentials change)
+     */
+    public function clearCachedToken()
+    {
+        Cache::forget('pesapal_access_token');
+        Cache::forget('pesapal_token_expiry');
+        Log::info('Pesapal cached tokens cleared');
     }
 }

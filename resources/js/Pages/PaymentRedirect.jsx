@@ -14,7 +14,6 @@ const PaymentRedirect = ({ success, redirect_url, booking_id, message, payment_m
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
             <Head title="Redirecting to Payment" />
             <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
                     Redirecting to Payment
                 </h2>

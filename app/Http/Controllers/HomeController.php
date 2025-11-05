@@ -30,13 +30,7 @@ class HomeController extends Controller
         $limit = 56;
 
         $properties = Property::with([
-            "bookings",
-            "variations",
             "initialGallery",
-            "propertyAmenities",
-            "propertyFeatures",
-            "PropertyServices",
-            "user"
         ])
         ->withCount(['bookings as bookings_count' => function($query) {
             $query->where('status', 'Paid');
@@ -106,10 +100,7 @@ class HomeController extends Controller
 
         // Query for location-based results
         $cars = Car::with([
-            "bookings",
-            "initialGallery",
-            "carFeatures",
-            "user"
+            "initialGallery"
         ])
         ->withCount(['bookings as bookings_count' => function($query) {
             $query->where('status', 'Paid');

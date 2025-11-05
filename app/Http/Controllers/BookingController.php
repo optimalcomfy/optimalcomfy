@@ -470,7 +470,8 @@ class BookingController extends Controller
             Log::info('Pesapal Callback Received', [
                 'order_tracking_id' => $orderTrackingId,
                 'order_merchant_reference' => $orderMerchantReference,
-                'all_params' => $request->all()
+                'all_params' => $request->all(),
+                'method' => $request->method() // Log the HTTP method
             ]);
 
             // Find booking by tracking ID or merchant reference
@@ -486,7 +487,7 @@ class BookingController extends Controller
                 return redirect()->route('booking.payment.cancelled')->with('error', 'Booking not found.');
             }
 
-            // For callback, we don't update status immediately - wait for IPN
+            // For GET callback, we don't update status immediately - wait for IPN
             // But we can check the current status
             if ($booking->status === 'paid') {
                 return redirect()->route('booking.payment.success', ['booking' => $booking->id]);

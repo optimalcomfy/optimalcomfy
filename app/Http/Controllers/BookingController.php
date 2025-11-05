@@ -361,7 +361,7 @@ class BookingController extends Controller
     }
 
     /**
-     * Process Pesapal payment - UPDATED WITH JSON RESPONSE
+     * Process Pesapal payment - FIXED VERSION
      */
     private function processPesapalPayment($booking, $user, $amount, $pesapalService)
     {
@@ -374,7 +374,7 @@ class BookingController extends Controller
                 'description' => 'Booking for ' . $booking->property->property_name,
                 'callback_url' => route('pesapal.callback'),
                 'cancellation_url' => route('booking.payment.cancelled', ['booking' => $booking->id]),
-                'notification_id' => '181d6537-8cb7-4479-a9be-db205dee938e', // Updated IPN ID
+                'notification_id' => '181d6537-8cb7-4479-a9be-db205dee938e',
                 'billing_address' => [
                     'email_address' => $user->email,
                     'phone_number' => $user->phone ?? '254700000000',
@@ -400,7 +400,6 @@ class BookingController extends Controller
                 ]
             ]);
 
-            // Use the direct method that now includes IPN
             $orderResponse = $pesapalService->createOrderDirect($orderData);
 
             Log::info('Pesapal Order Response Details', [
@@ -421,15 +420,16 @@ class BookingController extends Controller
                     'ipn_used' => true
                 ]);
 
-                // Return JSON response for frontend to handle
-                return response()->json([
+                // Return Inertia response instead of JSON
+                return Inertia::render('PaymentRedirect', [
                     'success' => true,
                     'redirect_url' => $orderResponse['redirect_url'],
                     'booking_id' => $booking->id,
-                    'message' => 'Payment initiated successfully'
+                    'message' => 'Payment initiated successfully',
+                    'payment_method' => 'pesapal'
                 ]);
+
             } else {
-                // More detailed error logging
                 $errorType = $orderResponse['error']['error_type'] ?? 'unknown_error';
                 $errorCode = $orderResponse['error']['code'] ?? 'unknown_code';
                 $errorMessage = $orderResponse['error']['message'] ?? 'Unknown error occurred';
@@ -441,22 +441,20 @@ class BookingController extends Controller
                     'full_response' => $orderResponse
                 ]);
 
-                return response()->json([
-                    'success' => false,
-                    'error' => "Pesapal Error [$errorCode]: $errorMessage"
-                ], 400);
+                // Return Inertia response for error
+                return back()->withErrors([
+                    'payment' => "Pesapal Error [$errorCode]: $errorMessage"
+                ]);
             }
 
         } catch (\Exception $e) {
             Log::error('Pesapal payment initiation failed: ' . $e->getMessage());
 
-            // Update booking status to failed
             $booking->update(['status' => 'failed']);
 
-            return response()->json([
-                'success' => false,
-                'error' => 'Payment initiation failed: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors([
+                'payment' => 'Payment initiation failed: ' . $e->getMessage()
+            ]);
         }
     }
 

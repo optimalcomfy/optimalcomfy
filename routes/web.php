@@ -5,7 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request; // Add this import
+use Illuminate\Http\Request;
 
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\EmployeeController;
@@ -52,6 +52,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Property;
 use App\Models\User;
 use App\Services\PesapalService;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -63,11 +64,9 @@ use App\Services\PesapalService;
 |
 */
 
-
 Route::post('/send-comment', [ProfileController::class, 'sendComment'])->name('profile.sendComment');
 
-
-
+// Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/welcome', [HomeController::class, 'index'])->name('welcome');
 Route::get('/list-property', [HomeController::class, 'listProperty'])->name('list-property');
@@ -91,164 +90,27 @@ Route::get('/privacy-policy', [HomeController::class, 'privacyPolicy'])->name('p
 Route::get('/terms-and-conditions', [HomeController::class, 'termsAndConditions'])->name('terms-and-conditions');
 
 Route::get('/joby/{job}', [HomeController::class, 'showJob'])->name('jobShow');
+Route::get('/locations', [LocationController::class, 'locations'])->name('locations');
 
-Route::get('/locations','App\Http\Controllers\LocationController@locations');
+// Pesapal Public Callback Routes
+Route::post('/pesapal/callback', [BookingController::class, 'handlePesapalCallback'])->name('pesapal.callback');
+Route::post('/pesapal/ipn', [BookingController::class, 'handlePesapalNotification'])->name('pesapal.ipn');
+Route::post('/pesapal/car-ipn', [CarBookingController::class, 'handleCarPesapalNotification'])->name('pesapal.car-ipn');
 
-Route::middleware('auth')->group(function () {
+// M-Pesa Public Callback Routes
+Route::post('/api/mpesa/stk/callback', [BookingController::class, 'handleCallback']);
+Route::post('/api/mpesa/ride/stk/callback', [CarBookingController::class, 'handleCallback']);
 
-    Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
+// Public Payment Status Routes
+Route::get('/booking/{booking}/payment-pending', [BookingController::class, 'paymentPending'])->name('booking.payment.pending');
+Route::get('/api/booking/{booking}/payment-status', [BookingController::class, 'paymentStatus'])->name('booking.payment.status');
+Route::get('/booking/{booking}/payment/success', [BookingController::class, 'paymentSuccess'])->name('booking.payment.success');
+Route::get('/booking/{booking}/payment/cancelled', [BookingController::class, 'paymentCancelled'])->name('booking.payment.cancelled');
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::post('/reload', [ProfileController::class, 'reload'])->name('profile.reload');
+Route::get('/ride/{booking}/payment-pending', [CarBookingController::class, 'paymentPending'])->name('ride.payment.pending');
+Route::get('/api/ride/{booking}/payment-status', [CarBookingController::class, 'paymentStatus'])->name('ride.payment.status');
 
-    Route::get('/wallet', [HomeController::class, 'hostWallet'])->name('wallet');
-
-    Route::resource('companies', CompanyController::class);
-    Route::get('/companies/list', [CompanyController::class, 'list'])->name('companies.list');
-
-
-    Route::resource('loans', LoanController::class);
-    Route::get('/loans/{loan}/approve', [LoanController::class, 'approve'])->name('loans.approval');
-    Route::post('/loans/{loan}/loanApproval', [LoanController::class, 'approveLoan'])->name('loans.approveLoan');
-    Route::post('/loans/bulk-update', [LoanController::class, 'bulkUpdate'])->name('loans.bulkUpdate');
-    Route::resource('loanProviders', LoanProviderController::class);
-    Route::resource('notifications', NotificationController::class);
-    Route::resource('repayments', RepaymentController::class);
-    Route::resource('users', UserController::class);
-    Route::resource('jobs', JobController::class);
-    Route::resource('applications', ApplicationController::class);
-
-    Route::post('/bookings/{booking}/handle-refund', [RefundController::class, 'handleRefund'])
-    ->name('bookings.handle-refund');
-
-    Route::post('/car-bookings/{car_booking}/refund', [CarRefundController::class, 'handleRefund'])
-    ->name('car-bookings.handle-refund');
-
-    Route::put('/stay-bookings-cancel', [BookingController::class, 'cancel'])
-    ->name('stay-bookings.cancel');
-
-    Route::get('/bookings/export-data', [BookingController::class, 'exportData'])
-        ->name('bookings.exportData');
-    Route::resource('bookings', BookingController::class);
-    Route::post('/bookings/add', [BookingController::class, 'add'])->name('bookings.add');
-
-    Route::resource('foods', FoodController::class);
-    Route::resource('foodOrders', FoodOrderController::class);
-
-    Route::get('/main-cars/export-data', [CarController::class, 'exportData'])->name('main-cars.exportData');
-    Route::resource('main-cars', CarController::class)->parameters([
-        'main-cars' => 'car'
-    ]);
-
-    Route::put('/car-bookings/{booking}/cancel', [CarBookingController::class, 'cancel'])
-    ->name('car-bookings.cancel');
-    Route::get('/car-bookings/export-data', [CarBookingController::class, 'exportData'])
-        ->name('car-bookings.exportData');
-    Route::resource('car-bookings', CarBookingController::class);
-    Route::post('/car-bookings/add', [CarBookingController::class, 'add'])->name('car-bookings.add');
-    Route::resource('car-categories', CarCategoryController::class);
-    Route::resource('carFeatures', CarFeatureController::class);
-    Route::resource('carMedias', CarMediaController::class);
-
-    Route::get('/api/car-media/by-car/{carId}', [CarMediaController::class, 'getByCar']);
-
-    Route::resource('foodOrderItems', FoodOrderItemController::class);
-    Route::get('/payments/export-data', [PaymentController::class, 'exportData'])->name('payments.exportData');
-    Route::resource('payments', PaymentController::class);
-    Route::resource('reviews', ReviewController::class);
-    Route::get('/properties/export-data', [PropertyController::class, 'exportData'])->name('properties.exportData');
-    Route::resource('properties', PropertyController::class);
-    Route::resource('services', ServiceController::class);
-    Route::resource('serviceBookings', ServiceBookingController::class);
-    Route::resource('propertyGalleries', PropertyGalleryController::class);
-    Route::resource('propertyVariations', VariationController::class);
-    Route::resource('propertyAmenities', PropertyAmenityController::class);
-    Route::resource('amenities', AmenityController::class);
-    Route::resource('propertyFeatures', PropertyFeatureController::class);
-    Route::resource('PropertyServices', PropertyServiceController::class);
-
-    // Add these within your auth middleware group in web.php
-    Route::post('/properties/gallery/store', [PropertyGalleryController::class, 'store'])->name('properties.gallery.store');
-    Route::delete('/properties/gallery/{propertyGallery}', [PropertyGalleryController::class, 'destroy'])->name('properties.gallery.destroy');
-    Route::get('/properties/{property}/gallery', [PropertyGalleryController::class, 'getByProperty'])->name('properties.gallery.byProperty');
-
-    Route::post('/properties/variation/store', [VariationController::class, 'store'])->name('properties.variation.store');
-    Route::delete('/properties/variation/{propertyVariation}', [VariationController::class, 'destroy'])->name('properties.variation.destroy');
-    Route::get('/properties/{variation}/variation', [VariationController::class, 'getByProperty'])->name('properties.variation.byProperty');
-
-    Route::post('/properties/amenities/store', [PropertyAmenityController::class, 'store'])->name('properties.amenities.store');
-    Route::delete('/properties/amenities/{propertyAmenity}', [PropertyAmenityController::class, 'destroy'])->name('properties.amenities.destroy');
-    Route::get('/properties/{property}/amenities', [PropertyAmenityController::class, 'getByProperty'])->name('properties.amenities.byProperty');
-
-    Route::post('/properties/services/store', [PropertyServiceController::class, 'store'])->name('properties.services.store');
-    Route::delete('/properties/services/{PropertyService}', [PropertyServiceController::class, 'destroy'])->name('properties.services.destroy');
-    Route::get('/properties/{property}/services', [PropertyServiceController::class, 'getByProperty'])->name('properties.services.byProperty');
-
-    Route::post('/properties/features/store', [PropertyFeatureController::class, 'store'])->name('properties.features.store');
-    Route::delete('/properties/features/{propertyFeature}', [PropertyFeatureController::class, 'destroy'])->name('properties.features.destroy');
-    Route::get('/properties/{property}/features', [PropertyFeatureController::class, 'getByProperty'])->name('properties.features.byProperty');
-
-    Route::post('/withdraw', [WithdrawalController::class, 'processDisbursement'])->name('withdraw');
-
-    Route::get('/withdrawal/waiting', [WithdrawalController::class, 'waitingPage'])->name('withdrawal.waiting');
-
-    Route::post('/withdraw/initiate', [WithdrawalController::class, 'initiateWithdrawal'])->name('withdraw.initiate');
-    Route::post('/withdraw/verify', [WithdrawalController::class, 'verifyAndWithdraw'])->name('withdraw.verify');
-    Route::post('/withdraw/resend-code', [WithdrawalController::class, 'resendVerificationCode'])->name('withdraw.resend-code');
-
-    Route::get('/books/lookup', [BookingController::class, 'lookup'])->name('bookings.lookup');
-
-    Route::post('/{user}/verify', [UserController::class, 'verify'])->name('users.verify');
-    Route::post('/{user}/unverify', [UserController::class, 'unverify'])->name('users.unverify');
-
-    Route::get('/validate-referral', function (Request $request) {
-        $code = $request->query('code');
-        $currentUser = Auth::user();
-
-        if (!$code) {
-            return response()->json(['valid' => false]);
-        }
-
-        // Check if the referral code belongs to the current user
-        if ($currentUser && $currentUser->referral_code === $code) {
-            return response()->json([
-                'valid' => false,
-                'message' => 'You cannot use your own referral code'
-            ]);
-        }
-
-        $referralUser = User::where('referral_code', $code)->first();
-
-        if ($referralUser) {
-            return response()->json([
-                'valid' => true,
-                'user' => [
-                    'id' => $referralUser->id,
-                    'name' => $referralUser->name,
-                    'email' => $referralUser->email
-                ]
-            ]);
-        }
-
-        return response()->json(['valid' => false]);
-    });
-
-});
-
-Route::middleware('auth')->post('/pesapal/initiate', [PesapalController::class, 'initiatePayment'])->name('pesapal.initiate');
-
-
-Route::resource('employees', EmployeeController::class);
-Route::get('/companies/{company}/employees', [EmployeeController::class, 'getEmployeesByCompany'])
-    ->name('company.employees');
-
-Route::get('/uikit/button', function () {
-    return Inertia::render('main/uikit/button/page');
-})->name('button');
-
-
+// Public Booking Routes
 Route::get('/booking/success', function () {
     return view('success');
 })->name('bookings.success');
@@ -257,23 +119,45 @@ Route::get('/booking/failed', function () {
     return view('failed');
 })->name('bookings.failed');
 
-Route::post('/mpesa/stk/initiate', [MpesaStkController::class, 'initiatePayment']);
+// Public Markup Booking Routes
+Route::get('/markup-booking/{token}', [MarkupBookingController::class, 'showMarkupBooking'])->name('markup.booking.show');
+Route::post('/markup-booking/{token}', [MarkupBookingController::class, 'processMarkupBooking'])->name('markup.booking.process');
+Route::get('/check-user-exists', [MarkupBookingController::class, 'checkUserExists']);
 
-Route::get('/booking/{booking}/payment-pending', [BookingController::class, 'paymentPending'])
-    ->name('booking.payment.pending');
+// Public Referral Validation
+Route::get('/validate-referral', function (Request $request) {
+    $code = $request->query('code');
+    $currentUser = Auth::user();
 
+    if (!$code) {
+        return response()->json(['valid' => false]);
+    }
 
-Route::get('/api/booking/{booking}/payment-status', [BookingController::class, 'paymentStatus'])
-    ->name('booking.payment.status');
+    // Check if the referral code belongs to the current user
+    if ($currentUser && $currentUser->referral_code === $code) {
+        return response()->json([
+            'valid' => false,
+            'message' => 'You cannot use your own referral code'
+        ]);
+    }
 
+    $referralUser = User::where('referral_code', $code)->first();
 
-Route::get('/ride/{booking}/payment-pending', [CarBookingController::class, 'paymentPending'])
-    ->name('ride.payment.pending');
+    if ($referralUser) {
+        return response()->json([
+            'valid' => true,
+            'user' => [
+                'id' => $referralUser->id,
+                'name' => $referralUser->name,
+                'email' => $referralUser->email
+            ]
+        ]);
+    }
 
+    return response()->json(['valid' => false]);
+});
 
-Route::get('/api/ride/{booking}/payment-status', [CarBookingController::class, 'paymentStatus'])
-    ->name('ride.payment.status');
-
+// Debug Routes (Remove in production)
 Route::get('/test-ristay-sender', function () {
     $smsService = app(App\Services\SmsService::class);
 
@@ -281,26 +165,6 @@ Route::get('/test-ristay-sender', function () {
 
     Log::info('RISTAY Sender Test Result', $result);
     return response()->json($result);
-});
-
-
-Route::post('/pesapal/callback', [BookingController::class, 'handlePesapalCallback'])->name('pesapal.callback');
-Route::post('/api/pesapal/notification', [BookingController::class, 'handlePesapalNotification'])->name('pesapal.notification');
-Route::get('/booking/{booking}/payment/success', [BookingController::class, 'paymentSuccess'])->name('booking.payment.success');
-Route::get('/booking/{booking}/payment/cancelled', [BookingController::class, 'paymentCancelled'])->name('booking.payment.cancelled');
-
-
-Route::middleware(['auth'])->group(function () {
-    // Markup management routes
-    Route::get('/my-markups', [MarkupBookingController::class, 'index'])->name('markup.index');
-    Route::get('/user/markups', [MarkupBookingController::class, 'getUserMarkups'])->name('markup.user.markups');
-    Route::post('/markups', [MarkupBookingController::class, 'addMarkup'])->name('markup.add');
-    Route::delete('/markups/{markupId}', [MarkupBookingController::class, 'removeMarkup'])->name('markup.remove');
-    Route::get('/markup-stats', [MarkupBookingController::class, 'getMarkupStats'])->name('markup.stats');
-
-    // Browse routes
-    Route::get('/markup/browse/properties', [MarkupBookingController::class, 'browseProperties'])->name('markup.browse.properties');
-    Route::get('/markup/browse/cars', [MarkupBookingController::class, 'browseCars'])->name('markup.browse.cars');
 });
 
 Route::get('/debug-pesapal', function (PesapalService $pesapalService) {
@@ -323,7 +187,6 @@ Route::get('/debug-pesapal', function (PesapalService $pesapalService) {
     ]);
 });
 
-// Add this to your routes/web.php
 Route::get('/register-pesapal-ipn', function (PesapalService $pesapalService) {
     $token = $pesapalService->getToken(true);
 
@@ -346,11 +209,6 @@ Route::get('/register-pesapal-ipn', function (PesapalService $pesapalService) {
     return response()->json(['error' => 'Failed to register IPN']);
 });
 
-
-Route::post('/pesapal/ipn', [App\Http\Controllers\BookingController::class, 'handlePesapalNotification'])
-    ->name('pesapal.ipn');
-
-// Temporary debug route (remove after testing)
 Route::get('/debug-pesapal-ipn', function (App\Services\PesapalService $pesapalService) {
     try {
         $ipnUrl = route('pesapal.ipn');
@@ -370,9 +228,141 @@ Route::get('/debug-pesapal-ipn', function (App\Services\PesapalService $pesapalS
     }
 })->name('debug.pesapal.ipn');
 
-// Markup booking routes
-Route::get('/markup-booking/{token}', [MarkupBookingController::class, 'showMarkupBooking'])->name('markup.booking.show');
-Route::post('/markup-booking/{token}', [MarkupBookingController::class, 'processMarkupBooking'])->name('markup.booking.process');
-Route::get('/check-user-exists', [MarkupBookingController::class, 'checkUserExists']);
+// Authenticated Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Dashboard & Profile
+    Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/reload', [ProfileController::class, 'reload'])->name('profile.reload');
+    Route::get('/wallet', [HomeController::class, 'hostWallet'])->name('wallet');
+
+    // Company & Employee Routes
+    Route::resource('companies', CompanyController::class);
+    Route::get('/companies/list', [CompanyController::class, 'list'])->name('companies.list');
+    Route::resource('employees', EmployeeController::class);
+    Route::get('/companies/{company}/employees', [EmployeeController::class, 'getEmployeesByCompany'])->name('company.employees');
+
+    // Loan Management
+    Route::resource('loans', LoanController::class);
+    Route::get('/loans/{loan}/approve', [LoanController::class, 'approve'])->name('loans.approval');
+    Route::post('/loans/{loan}/loanApproval', [LoanController::class, 'approveLoan'])->name('loans.approveLoan');
+    Route::post('/loans/bulk-update', [LoanController::class, 'bulkUpdate'])->name('loans.bulkUpdate');
+    Route::resource('loanProviders', LoanProviderController::class);
+    Route::resource('repayments', RepaymentController::class);
+
+    // User Management
+    Route::resource('users', UserController::class);
+    Route::post('/{user}/verify', [UserController::class, 'verify'])->name('users.verify');
+    Route::post('/{user}/unverify', [UserController::class, 'unverify'])->name('users.unverify');
+
+    // Job & Application Management
+    Route::resource('jobs', JobController::class);
+    Route::resource('applications', ApplicationController::class);
+
+    // Notification Management
+    Route::resource('notifications', NotificationController::class);
+
+    // Property Management
+    Route::get('/properties/export-data', [PropertyController::class, 'exportData'])->name('properties.exportData');
+    Route::resource('properties', PropertyController::class);
+
+    // Property Gallery
+    Route::post('/properties/gallery/store', [PropertyGalleryController::class, 'store'])->name('properties.gallery.store');
+    Route::delete('/properties/gallery/{propertyGallery}', [PropertyGalleryController::class, 'destroy'])->name('properties.gallery.destroy');
+    Route::get('/properties/{property}/gallery', [PropertyGalleryController::class, 'getByProperty'])->name('properties.gallery.byProperty');
+
+    // Property Variations
+    Route::resource('propertyVariations', VariationController::class);
+    Route::post('/properties/variation/store', [VariationController::class, 'store'])->name('properties.variation.store');
+    Route::delete('/properties/variation/{propertyVariation}', [VariationController::class, 'destroy'])->name('properties.variation.destroy');
+    Route::get('/properties/{variation}/variation', [VariationController::class, 'getByProperty'])->name('properties.variation.byProperty');
+
+    // Property Amenities
+    Route::resource('propertyAmenities', PropertyAmenityController::class);
+    Route::resource('amenities', AmenityController::class);
+    Route::post('/properties/amenities/store', [PropertyAmenityController::class, 'store'])->name('properties.amenities.store');
+    Route::delete('/properties/amenities/{propertyAmenity}', [PropertyAmenityController::class, 'destroy'])->name('properties.amenities.destroy');
+    Route::get('/properties/{property}/amenities', [PropertyAmenityController::class, 'getByProperty'])->name('properties.amenities.byProperty');
+
+    // Property Services
+    Route::resource('PropertyServices', PropertyServiceController::class);
+    Route::post('/properties/services/store', [PropertyServiceController::class, 'store'])->name('properties.services.store');
+    Route::delete('/properties/services/{PropertyService}', [PropertyServiceController::class, 'destroy'])->name('properties.services.destroy');
+    Route::get('/properties/{property}/services', [PropertyServiceController::class, 'getByProperty'])->name('properties.services.byProperty');
+
+    // Property Features
+    Route::resource('propertyFeatures', PropertyFeatureController::class);
+    Route::post('/properties/features/store', [PropertyFeatureController::class, 'store'])->name('properties.features.store');
+    Route::delete('/properties/features/{propertyFeature}', [PropertyFeatureController::class, 'destroy'])->name('properties.features.destroy');
+    Route::get('/properties/{property}/features', [PropertyFeatureController::class, 'getByProperty'])->name('properties.features.byProperty');
+
+    // Service Management
+    Route::resource('services', ServiceController::class);
+    Route::resource('serviceBookings', ServiceBookingController::class);
+
+    // Car Management
+    Route::get('/main-cars/export-data', [CarController::class, 'exportData'])->name('main-cars.exportData');
+    Route::resource('main-cars', CarController::class)->parameters([
+        'main-cars' => 'car'
+    ]);
+    Route::resource('car-categories', CarCategoryController::class);
+    Route::resource('carFeatures', CarFeatureController::class);
+    Route::resource('carMedias', CarMediaController::class);
+    Route::get('/api/car-media/by-car/{carId}', [CarMediaController::class, 'getByCar']);
+
+    // Booking Management
+    Route::get('/bookings/export-data', [BookingController::class, 'exportData'])->name('bookings.exportData');
+    Route::resource('bookings', BookingController::class);
+    Route::post('/bookings/add', [BookingController::class, 'add'])->name('bookings.add');
+    Route::put('/stay-bookings-cancel', [BookingController::class, 'cancel'])->name('stay-bookings.cancel');
+    Route::post('/bookings/{booking}/handle-refund', [RefundController::class, 'handleRefund'])->name('bookings.handle-refund');
+    Route::post('/bookings/lookup', [BookingController::class, 'lookup'])->name('bookings.lookup');
+
+    // Car Booking Management
+    Route::get('/car-bookings/export-data', [CarBookingController::class, 'exportData'])->name('car-bookings.exportData');
+    Route::resource('car-bookings', CarBookingController::class);
+    Route::post('/car-bookings/add', [CarBookingController::class, 'add'])->name('car-bookings.add');
+    Route::put('/car-bookings/{booking}/cancel', [CarBookingController::class, 'cancel'])->name('car-bookings.cancel');
+    Route::post('/car-bookings/{car_booking}/refund', [CarRefundController::class, 'handleRefund'])->name('car-bookings.handle-refund');
+
+    // Food & Order Management
+    Route::resource('foods', FoodController::class);
+    Route::resource('foodOrders', FoodOrderController::class);
+    Route::resource('foodOrderItems', FoodOrderItemController::class);
+
+    // Payment Management
+    Route::get('/payments/export-data', [PaymentController::class, 'exportData'])->name('payments.exportData');
+    Route::resource('payments', PaymentController::class);
+
+    // Review Management
+    Route::resource('reviews', ReviewController::class);
+
+    // Withdrawal Management
+    Route::post('/withdraw', [WithdrawalController::class, 'processDisbursement'])->name('withdraw');
+    Route::get('/withdrawal/waiting', [WithdrawalController::class, 'waitingPage'])->name('withdrawal.waiting');
+    Route::post('/withdraw/initiate', [WithdrawalController::class, 'initiateWithdrawal'])->name('withdraw.initiate');
+    Route::post('/withdraw/verify', [WithdrawalController::class, 'verifyAndWithdraw'])->name('withdraw.verify');
+    Route::post('/withdraw/resend-code', [WithdrawalController::class, 'resendVerificationCode'])->name('withdraw.resend-code');
+
+    // Payment Initiation
+    Route::post('/mpesa/stk/initiate', [MpesaStkController::class, 'initiatePayment']);
+    Route::post('/pesapal/initiate', [PesapalController::class, 'initiatePayment'])->name('pesapal.initiate');
+
+    // Markup Management
+    Route::get('/my-markups', [MarkupBookingController::class, 'index'])->name('markup.index');
+    Route::get('/user/markups', [MarkupBookingController::class, 'getUserMarkups'])->name('markup.user.markups');
+    Route::post('/markups', [MarkupBookingController::class, 'addMarkup'])->name('markup.add');
+    Route::delete('/markups/{markupId}', [MarkupBookingController::class, 'removeMarkup'])->name('markup.remove');
+    Route::get('/markup-stats', [MarkupBookingController::class, 'getMarkupStats'])->name('markup.stats');
+    Route::get('/markup/browse/properties', [MarkupBookingController::class, 'browseProperties'])->name('markup.browse.properties');
+    Route::get('/markup/browse/cars', [MarkupBookingController::class, 'browseCars'])->name('markup.browse.cars');
+});
+
+// UI Kit Routes
+Route::get('/uikit/button', function () {
+    return Inertia::render('main/uikit/button/page');
+})->name('button');
 
 require __DIR__.'/auth.php';

@@ -56,8 +56,9 @@ return [
         'key' => env('PESAPAL_CONSUMER_KEY'),
         'secret' => env('PESAPAL_CONSUMER_SECRET'),
         'environment' => env('PESAPAL_ENVIRONMENT', 'production'),
-        'notification_url' => env('PESAPAL_NOTIFICATION_URL'),
+        'notification_url' => env('PESAPAL_NOTIFICATION_URL', 'https://ristay.co.ke/pesapal/ipn'),
         'callback_url' => env('PESAPAL_CALLBACK_URL', 'https://ristay.co.ke/pesapal/callback'),
+        'ipn_id' => env('PESAPAL_IPN_ID'),
     ],
 
     'onfon' => [

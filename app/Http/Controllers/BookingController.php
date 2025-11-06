@@ -286,7 +286,8 @@ class BookingController extends Controller
             'check_out_date' => 'required|date|after:check_in_date',
             'total_price' => 'required|numeric|min:1',
             'variation_id' => 'nullable',
-            'referral_code' => 'nullable'
+            'referral_code' => 'nullable',
+            'payment_method' => 'required|in:mpesa,pesapal'
         ]);
 
         $user = Auth::user();
@@ -361,20 +362,20 @@ class BookingController extends Controller
     }
 
     /**
-     * Process Pesapal payment - FIXED VERSION
+     * Process Pesapal payment
      */
     private function processPesapalPayment($booking, $user, $amount, $pesapalService)
     {
         try {
-            // Prepare order data WITH the registered IPN
+            // Prepare order data
             $orderData = [
                 'id' => $booking->number,
                 'currency' => 'KES',
-                'amount' => 2,
+                'amount' => $amount,
                 'description' => 'Booking for ' . $booking->property->property_name,
                 'callback_url' => route('pesapal.callback'),
                 'cancellation_url' => route('booking.payment.cancelled', ['booking' => $booking->id]),
-                'notification_id' => '181d6537-8cb7-4479-a9be-db205dee938e',
+                'notification_id' => config('services.pesapal.ipn_id'),
                 'billing_address' => [
                     'email_address' => $user->email,
                     'phone_number' => $user->phone ?? '254700000000',
@@ -391,18 +392,14 @@ class BookingController extends Controller
                 ]
             ];
 
-            Log::info('Submitting Pesapal order with registered IPN', [
+            Log::info('Submitting Pesapal order', [
                 'booking_id' => $booking->id,
-                'order_data' => [
-                    'id' => $orderData['id'],
-                    'amount' => $orderData['amount'],
-                    'ipn_id' => $orderData['notification_id']
-                ]
+                'order_data' => $orderData
             ]);
 
             $orderResponse = $pesapalService->createOrderDirect($orderData);
 
-            Log::info('Pesapal Order Response Details', [
+            Log::info('Pesapal Order Response', [
                 'booking_id' => $booking->id,
                 'order_response' => $orderResponse
             ]);
@@ -416,8 +413,7 @@ class BookingController extends Controller
                 Log::info('Pesapal payment initiated successfully', [
                     'booking_id' => $booking->id,
                     'tracking_id' => $orderResponse['order_tracking_id'],
-                    'redirect_url' => $orderResponse['redirect_url'],
-                    'ipn_used' => true
+                    'redirect_url' => $orderResponse['redirect_url']
                 ]);
 
                 // Return Inertia response instead of JSON
@@ -470,8 +466,7 @@ class BookingController extends Controller
             Log::info('Pesapal Callback Received', [
                 'order_tracking_id' => $orderTrackingId,
                 'order_merchant_reference' => $orderMerchantReference,
-                'all_params' => $request->all(),
-                'method' => $request->method() // Log the HTTP method
+                'all_params' => $request->all()
             ]);
 
             // Find booking by tracking ID or merchant reference
@@ -488,7 +483,6 @@ class BookingController extends Controller
             }
 
             // For GET callback, we don't update status immediately - wait for IPN
-            // But we can check the current status
             if ($booking->status === 'paid') {
                 return redirect()->route('booking.payment.success', ['booking' => $booking->id]);
             }

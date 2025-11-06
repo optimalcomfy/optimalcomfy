@@ -79,7 +79,7 @@ class PesapalService
     }
 
     /**
-     * IMPROVED DIRECT SOLUTION: Create order with proper IPN handling
+     * Create order with proper IPN handling
      */
     public function createOrderDirect($orderData)
     {
@@ -99,12 +99,14 @@ class PesapalService
                 'description' => $orderData['description'] ?? 'Payment',
                 'callback_url' => $orderData['callback_url'],
                 'cancellation_url' => $orderData['cancellation_url'],
+                'notification_id' => $orderData['notification_id'] ?? config('services.pesapal.ipn_id'),
                 'billing_address' => $orderData['billing_address'] ?? []
             ];
 
-            Log::info('Creating Pesapal order (Improved Direct Method)', [
+            Log::info('Creating Pesapal order', [
                 'order_id' => $cleanOrderData['id'],
-                'amount' => $cleanOrderData['amount']
+                'amount' => $cleanOrderData['amount'],
+                'ipn_id' => $cleanOrderData['notification_id']
             ]);
 
             $response = Http::withToken($token)
@@ -115,7 +117,7 @@ class PesapalService
                 ->timeout(30)
                 ->post($this->baseUrl . '/api/Transactions/SubmitOrderRequest', $cleanOrderData);
 
-            Log::info('Pesapal Direct Order Response', [
+            Log::info('Pesapal Order Response', [
                 'status' => $response->status(),
                 'response_body' => $response->body()
             ]);
@@ -126,10 +128,11 @@ class PesapalService
                 if (isset($orderResponse['error'])) {
                     Log::error('Pesapal returned error in 200 response', $orderResponse);
 
-                    // If it's an IPN error, try with a registered IPN
+                    // If it's an IPN error, try without IPN
                     if (isset($orderResponse['error']['code']) && $orderResponse['error']['code'] === 'InvalidIpnId') {
-                        Log::warning('IPN error detected, trying with registered IPN');
-                        return $this->createOrderWithIPN($token, $cleanOrderData);
+                        Log::warning('IPN error detected, trying without IPN');
+                        unset($cleanOrderData['notification_id']);
+                        return $this->createOrderWithoutIPN($token, $cleanOrderData);
                     }
 
                     return $orderResponse;
@@ -166,90 +169,15 @@ class PesapalService
     }
 
     /**
-     * Create order with registered IPN
+     * Create order without IPN
      */
-    private function createOrderWithIPN($token, $orderData)
+    private function createOrderWithoutIPN($token, $orderData)
     {
         try {
-            // Get or register IPN
-            $ipnId = $this->ensureIPNRegistered();
-
-            if (!$ipnId) {
-                Log::error('No IPN available, cannot proceed with IPN-based order');
-                return [
-                    'error' => [
-                        'code' => 'NO_IPN_AVAILABLE',
-                        'message' => 'No valid IPN registered'
-                    ]
-                ];
-            }
-
-        // Add IPN to order data
-        $orderData['notification_id'] = $ipnId;
-
-        Log::info('Creating Pesapal order with IPN', [
-            'order_id' => $orderData['id'],
-            'ipn_id' => $ipnId
-        ]);
-
-        $response = Http::withToken($token)
-            ->withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ])
-            ->timeout(30)
-            ->post($this->baseUrl . '/api/Transactions/SubmitOrderRequest', $orderData);
-
-        Log::info('Pesapal IPN Order Response', [
-            'status' => $response->status(),
-            'response_body' => $response->body()
-        ]);
-
-        if ($response->successful()) {
-            $orderResponse = $response->json();
-
-            if (isset($orderResponse['order_tracking_id']) && isset($orderResponse['redirect_url'])) {
-                Log::info('Pesapal order with IPN created successfully');
-                return $orderResponse;
-            }
-        }
-
-        return $response->json();
-
-    } catch (\Exception $e) {
-        Log::error('Pesapal createOrderWithIPN error: ' . $e->getMessage());
-        return [
-            'error' => [
-                'code' => 'IPN_ORDER_ERROR',
-                'message' => $e->getMessage()
-            ]
-        ];
-    }
-}
-
-    /**
-     * EMERGENCY FALLBACK: Try alternative approach for IPN issues but keep billing address
-     */
-    private function emergencyOrderCreation($token, $orderData)
-    {
-        try {
-            Log::info('Attempting emergency order creation with minimal billing address');
-
-            // Keep minimal data but include required billing address
-            $minimalData = [
-                'id' => $orderData['id'],
-                'currency' => $orderData['currency'],
-                'amount' => $orderData['amount'],
-                'description' => $orderData['description'],
-                'callback_url' => $orderData['callback_url'],
-                'billing_address' => [
-                    'email_address' => $orderData['billing_address']['email_address'] ?? 'user@example.com',
-                    'phone_number' => $orderData['billing_address']['phone_number'] ?? '254700000000',
-                    'country_code' => 'KE',
-                    'first_name' => $orderData['billing_address']['first_name'] ?? 'Customer',
-                    'last_name' => $orderData['billing_address']['last_name'] ?? '',
-                ]
-            ];
+            Log::info('Creating Pesapal order without IPN', [
+                'order_id' => $orderData['id'],
+                'amount' => $orderData['amount']
+            ]);
 
             $response = Http::withToken($token)
                 ->withHeaders([
@@ -257,9 +185,9 @@ class PesapalService
                     'Accept' => 'application/json',
                 ])
                 ->timeout(30)
-                ->post($this->baseUrl . '/api/Transactions/SubmitOrderRequest', $minimalData);
+                ->post($this->baseUrl . '/api/Transactions/SubmitOrderRequest', $orderData);
 
-            Log::info('Emergency order creation response', [
+            Log::info('Pesapal Order Response (No IPN)', [
                 'status' => $response->status(),
                 'response_body' => $response->body()
             ]);
@@ -268,19 +196,18 @@ class PesapalService
                 $orderResponse = $response->json();
 
                 if (isset($orderResponse['order_tracking_id']) && isset($orderResponse['redirect_url'])) {
-                    Log::info('Emergency order creation successful');
+                    Log::info('Pesapal order without IPN created successfully');
                     return $orderResponse;
                 }
             }
 
-            Log::error('Emergency order creation failed');
             return $response->json();
 
         } catch (\Exception $e) {
-            Log::error('Emergency order creation error: ' . $e->getMessage());
+            Log::error('Pesapal createOrderWithoutIPN error: ' . $e->getMessage());
             return [
                 'error' => [
-                    'code' => 'EMERGENCY_ERROR',
+                    'code' => 'NO_IPN_ERROR',
                     'message' => $e->getMessage()
                 ]
             ];
@@ -288,185 +215,13 @@ class PesapalService
     }
 
     /**
-     * SIMPLE WORKING METHOD: Use this for immediate testing
+     * Get order status
      */
-    public function createWorkingOrder($bookingNumber, $amount, $description, $callbackUrl, $cancellationUrl, $userData)
-    {
-        $orderData = [
-            'id' => $bookingNumber,
-            'currency' => 'KES',
-            'amount' => $amount,
-            'description' => $description,
-            'callback_url' => $callbackUrl,
-            'cancellation_url' => $cancellationUrl,
-            'billing_address' => [
-                'email_address' => $userData['email'],
-                'phone_number' => $userData['phone'] ?? '254700000000',
-                'country_code' => 'KE',
-                'first_name' => $userData['name'],
-                'last_name' => '',
-                'line_1' => 'Nairobi',
-                'city' => 'Nairobi',
-                'postal_code' => '00100'
-            ]
-        ];
-
-        return $this->createOrderDirect($orderData);
-    }
-
-    /**
-     * Get registered IPNs from Pesapal
-     */
-    public function getRegisteredIPNs($token)
+    public function getOrderStatus($orderTrackingId)
     {
         try {
-            $response = Http::withToken($token)
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                ])
-                ->get($this->baseUrl . '/api/URLSetup/GetIpnList');
+            $token = $this->getToken();
 
-            if ($response->successful()) {
-                return $response->json();
-            }
-
-            Log::error('Failed to get registered IPNs', [
-                'status' => $response->status(),
-                'response' => $response->body()
-            ]);
-
-            return null;
-
-        } catch (\Exception $e) {
-            Log::error('Get IPNs error: ' . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Get token information for debugging
-     */
-    public function getTokenInfo()
-    {
-        $token = Cache::get('pesapal_access_token');
-        $expiry = Cache::get('pesapal_token_expiry');
-
-        return [
-            'has_token' => !empty($token),
-            'token_prefix' => $token ? substr($token, 0, 20) . '...' : null,
-            'expires_at' => $expiry ? $expiry->toDateTimeString() : null,
-            'is_expired' => $expiry ? now()->gt($expiry) : true,
-            'minutes_remaining' => $expiry ? now()->diffInMinutes($expiry, false) : 0
-        ];
-    }
-
-    /**
-     * Debug method to check Pesapal configuration
-     */
-    public function debugConfiguration()
-    {
-        return [
-            'environment' => $this->environment,
-            'base_url' => $this->baseUrl,
-            'has_consumer_key' => !empty($this->consumerKey),
-            'has_consumer_secret' => !empty($this->consumerSecret),
-            'token_info' => $this->getTokenInfo()
-        ];
-    }
-
-    /**
-     * Register IPN URL with Pesapal
-     */
-    public function registerIPN($token, $ipnUrl)
-    {
-        try {
-            Log::info('Registering IPN URL with Pesapal', ['ipn_url' => $ipnUrl]);
-
-            $response = Http::withToken($token)
-                ->withHeaders([
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ])
-                ->post($this->baseUrl . '/api/URLSetup/RegisterIPN', [
-                    'url' => $ipnUrl,
-                    'ipn_notification_type' => 'POST'
-                ]);
-
-            Log::info('IPN Registration Response', [
-                'status' => $response->status(),
-                'successful' => $response->successful(),
-                'response_body' => $response->body()
-            ]);
-
-            if ($response->successful()) {
-                $ipnResponse = $response->json();
-                $ipnId = $ipnResponse['ipn_id'] ?? null;
-
-                if ($ipnId) {
-                    Log::info('IPN registered successfully', ['ipn_id' => $ipnId]);
-                    return $ipnId;
-                }
-            }
-
-            Log::error('IPN registration failed', [
-                'status' => $response->status(),
-                'response' => $response->body()
-            ]);
-
-            return null;
-
-        } catch (\Exception $e) {
-            Log::error('IPN registration error: ' . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Ensure we have a valid IPN registered
-     */
-    public function ensureIPNRegistered($ipnUrl = null)
-    {
-        try {
-            $token = $this->getToken(true);
-
-            if (!$ipnUrl) {
-                $ipnUrl = config('services.pesapal.ipn_url') ?? route('pesapal.ipn');
-            }
-
-            Log::info('Ensuring IPN is registered', ['ipn_url' => $ipnUrl]);
-
-            // Get existing IPNs
-            $existingIPNs = $this->getRegisteredIPNs($token);
-
-            if ($existingIPNs && isset($existingIPNs['ipn_registration_response'])) {
-                foreach ($existingIPNs['ipn_registration_response'] as $ipn) {
-                    if ($ipn['url'] === $ipnUrl) {
-                        Log::info('IPN already registered', ['ipn_id' => $ipn['ipn_id']]);
-                        return $ipn['ipn_id'];
-                    }
-                }
-            }
-
-            // Register new IPN
-            $ipnId = $this->registerIPN($token, $ipnUrl);
-
-            if ($ipnId) {
-                Log::info('New IPN registered successfully', ['ipn_id' => $ipnId]);
-                return $ipnId;
-            }
-
-            Log::error('Failed to register IPN');
-            return null;
-
-        } catch (\Exception $e) {
-            Log::error('IPN registration error: ' . $e->getMessage());
-            return null;
-        }
-    }
-
-    public function getOrderStatus($orderTrackingId, $token)
-    {
-        try {
             Log::info('Checking Pesapal order status', [
                 'order_tracking_id' => $orderTrackingId
             ]);
@@ -494,7 +249,7 @@ class PesapalService
                 Log::warning('Token expired during status check, refreshing');
                 $newToken = $this->getToken(true);
                 if ($newToken) {
-                    return $this->getOrderStatus($orderTrackingId, $newToken);
+                    return $this->getOrderStatus($orderTrackingId);
                 }
             }
 
@@ -543,12 +298,43 @@ class PesapalService
     }
 
     /**
-     * Clear cached token (useful for testing or when credentials change)
+     * Clear cached token
      */
     public function clearCachedToken()
     {
         Cache::forget('pesapal_access_token');
         Cache::forget('pesapal_token_expiry');
         Log::info('Pesapal cached tokens cleared');
+    }
+
+    /**
+     * Debug method to check Pesapal configuration
+     */
+    public function debugConfiguration()
+    {
+        return [
+            'environment' => $this->environment,
+            'base_url' => $this->baseUrl,
+            'has_consumer_key' => !empty($this->consumerKey),
+            'has_consumer_secret' => !empty($this->consumerSecret),
+            'token_info' => $this->getTokenInfo()
+        ];
+    }
+
+    /**
+     * Get token information for debugging
+     */
+    public function getTokenInfo()
+    {
+        $token = Cache::get('pesapal_access_token');
+        $expiry = Cache::get('pesapal_token_expiry');
+
+        return [
+            'has_token' => !empty($token),
+            'token_prefix' => $token ? substr($token, 0, 20) . '...' : null,
+            'expires_at' => $expiry ? $expiry->toDateTimeString() : null,
+            'is_expired' => $expiry ? now()->gt($expiry) : true,
+            'minutes_remaining' => $expiry ? now()->diffInMinutes($expiry, false) : 0
+        ];
     }
 }

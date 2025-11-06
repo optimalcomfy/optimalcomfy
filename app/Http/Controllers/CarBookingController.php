@@ -19,6 +19,7 @@ use Carbon\Carbon;
 use App\Http\Controllers\MpesaStkController;
 use App\Services\MpesaStkService;
 use App\Traits\Mpesa;
+use App\Services\PesapalService;
 
 use App\Mail\BookingConfirmation;
 use App\Mail\CarBookingConfirmation;
@@ -291,7 +292,7 @@ class CarBookingController extends Controller
         ]);
     }
 
-    public function store(StoreCarBookingRequest $request, SmsService $smsService)
+    public function store(StoreCarBookingRequest $request, SmsService $smsService, PesapalService $pesapalService)
     {
         $validatedData = $request->validated();
 
@@ -304,10 +305,7 @@ class CarBookingController extends Controller
         $startDate = Carbon::parse($request->start_date);
         $endDate = Carbon::parse($request->end_date);
         $days = $startDate->diffInDays($endDate);
-
-        // Ensure at least 1 day
         $days = max($days, 1);
-
 
         $booking = CarBooking::create([
             'user_id'         => $user->id,
@@ -319,47 +317,28 @@ class CarBookingController extends Controller
             'dropoff_location'=> $request->pickup_location,
             'status'          => 'pending',
             'special_requests'=> $request->special_requests,
-            'referral_code'=> $request->referral_code
+            'referral_code'   => $request->referral_code,
+            'payment_method'  => $request->payment_method
         ]);
 
         try {
             // Send booking confirmation SMS
             $this->sendCarBookingConfirmationSms($booking, 'pending', $smsService);
 
-            $callbackBase = env('MPESA_RIDE_CALLBACK_URL')
-                ?? secure_url('/api/mpesa/ride/stk/callback');
-
             $company = Company::first();
 
             $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
-
             $finalAmount = ceil($finalAmount);
 
-            $callbackData = [
-                'phone' => $request->phone,
-                'amount' => $finalAmount,
-                'booking_id' => $booking->id,
-                'booking_type' => 'car'
-            ];
-
-            $callbackUrl = $callbackBase . '?data=' . urlencode(json_encode($callbackData));
-
-            $this->STKPush(
-                'Paybill',
-                $finalAmount,
-                $request->phone,
-                $callbackUrl,
-                'reference',
-                'Book Ristay'
-            );
-
-            return redirect()->route('ride.payment.pending', [
-                'booking' => $booking->id,
-                'message' => 'Payment initiated. Please complete the M-Pesa payment on your phone.'
-            ]);
+            // Handle different payment methods
+            if ($request->payment_method === 'mpesa') {
+                return $this->processCarMpesaPayment($booking, $request->phone, $finalAmount);
+            } elseif ($request->payment_method === 'pesapal') {
+                return $this->processCarPesapalPayment($booking, $user, $finalAmount, $pesapalService);
+            }
 
         } catch (\Exception $e) {
-            \Log::error('M-Pesa payment initiation failed: ' . $e->getMessage());
+            \Log::error('Payment initiation failed: ' . $e->getMessage());
             $booking->update(['status' => 'failed']);
 
             // Send payment failure SMS
@@ -369,6 +348,306 @@ class CarBookingController extends Controller
                 ->withInput()
                 ->withErrors(['payment' => 'Payment initiation failed due to a system error.']);
         }
+    }
+
+    /**
+     * Process M-Pesa payment for car booking
+     */
+    private function processCarMpesaPayment($booking, $phone, $amount)
+    {
+        $callbackBase = env('MPESA_RIDE_CALLBACK_URL') ?? secure_url('/api/mpesa/ride/stk/callback');
+
+        $callbackData = [
+            'phone' => $phone,
+            'amount' => $amount,
+            'booking_id' => $booking->id,
+            'booking_type' => 'car'
+        ];
+
+        $callbackUrl = $callbackBase . '?data=' . urlencode(json_encode($callbackData));
+
+        $this->STKPush(
+            'Paybill',
+            $amount,
+            $phone,
+            $callbackUrl,
+            'reference',
+            'Book Ristay'
+        );
+
+        return redirect()->route('ride.payment.pending', [
+            'booking' => $booking->id,
+            'message' => 'Payment initiated. Please complete the M-Pesa payment on your phone.'
+        ]);
+    }
+
+    /**
+     * Process Pesapal payment for car booking
+     */
+    private function processCarPesapalPayment($booking, $user, $amount, $pesapalService)
+    {
+        try {
+            // Prepare order data
+            $orderData = [
+                'id' => $booking->number,
+                'currency' => 'KES',
+                'amount' => $amount,
+                'description' => 'Car booking for ' . $booking->car->name,
+                'callback_url' => route('pesapal.callback'),
+                'cancellation_url' => route('ride.payment.cancelled', ['booking' => $booking->id]),
+                'notification_id' => config('services.pesapal.ipn_id'),
+                'billing_address' => [
+                    'email_address' => $user->email,
+                    'phone_number' => $user->phone ?? '254700000000',
+                    'country_code' => 'KE',
+                    'first_name' => $user->name,
+                    'middle_name' => '',
+                    'last_name' => '',
+                    'line_1' => 'Nairobi',
+                    'line_2' => '',
+                    'city' => 'Nairobi',
+                    'state' => 'Nairobi',
+                    'postal_code' => '00100',
+                    'zip_code' => '00100'
+                ]
+            ];
+
+            \Log::info('Submitting Pesapal car order', [
+                'booking_id' => $booking->id,
+                'order_data' => $orderData
+            ]);
+
+            $orderResponse = $pesapalService->createOrderDirect($orderData);
+
+            \Log::info('Pesapal Car Order Response', [
+                'booking_id' => $booking->id,
+                'order_response' => $orderResponse
+            ]);
+
+            if (isset($orderResponse['order_tracking_id']) && isset($orderResponse['redirect_url'])) {
+                // Store Pesapal tracking ID in booking
+                $booking->update([
+                    'pesapal_tracking_id' => $orderResponse['order_tracking_id']
+                ]);
+
+                \Log::info('Pesapal car payment initiated successfully', [
+                    'booking_id' => $booking->id,
+                    'tracking_id' => $orderResponse['order_tracking_id'],
+                    'redirect_url' => $orderResponse['redirect_url']
+                ]);
+
+                // Return Inertia response
+                return Inertia::render('PaymentRedirect', [
+                    'success' => true,
+                    'redirect_url' => $orderResponse['redirect_url'],
+                    'booking_id' => $booking->id,
+                    'message' => 'Payment initiated successfully',
+                    'payment_method' => 'pesapal',
+                    'booking_type' => 'car'
+                ]);
+
+            } else {
+                $errorType = $orderResponse['error']['error_type'] ?? 'unknown_error';
+                $errorCode = $orderResponse['error']['code'] ?? 'unknown_code';
+                $errorMessage = $orderResponse['error']['message'] ?? 'Unknown error occurred';
+
+                \Log::error('Pesapal car order creation failed', [
+                    'error_type' => $errorType,
+                    'error_code' => $errorCode,
+                    'error_message' => $errorMessage,
+                    'full_response' => $orderResponse
+                ]);
+
+                return back()->withErrors([
+                    'payment' => "Pesapal Error [$errorCode]: $errorMessage"
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Pesapal car payment initiation failed: ' . $e->getMessage());
+
+            $booking->update(['status' => 'failed']);
+
+            return back()->withErrors([
+                'payment' => 'Payment initiation failed: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Handle Pesapal IPN for car bookings
+     */
+    public function handleCarPesapalNotification(Request $request, SmsService $smsService, PesapalService $pesapalService)
+    {
+        try {
+            $rawInput = $request->getContent();
+            $ipnData = $request->all();
+
+            \Log::info('Pesapal Car IPN Received - Raw', ['raw_data' => $rawInput]);
+            \Log::info('Pesapal Car IPN Received - Parsed', $ipnData);
+
+            // Validate IPN data
+            if (!$pesapalService->validateIPN($ipnData)) {
+                \Log::error('Pesapal Car IPN validation failed', $ipnData);
+                return response()->json(['error' => 'Invalid IPN data'], 400);
+            }
+
+            // Extract important fields from IPN
+            $orderTrackingId = $ipnData['OrderTrackingId'] ?? null;
+            $orderNotificationType = $ipnData['OrderNotificationType'] ?? null;
+            $orderMerchantReference = $ipnData['OrderMerchantReference'] ?? null;
+
+            // Find car booking
+            $booking = CarBooking::where('pesapal_tracking_id', $orderTrackingId)
+                            ->orWhere('number', $orderMerchantReference)
+                            ->with(['user', 'car.user'])
+                            ->first();
+
+            if (!$booking) {
+                \Log::error('Car booking not found for Pesapal IPN', [
+                    'tracking_id' => $orderTrackingId,
+                    'merchant_reference' => $orderMerchantReference
+                ]);
+                return response()->json(['error' => 'Car booking not found'], 404);
+            }
+
+            // Handle different notification types
+            switch ($orderNotificationType) {
+                case 'CHANGE':
+                    $status = $ipnData['Status'] ?? null;
+                    $this->handleCarPaymentStatus($booking, $status, $ipnData, $smsService);
+                    break;
+
+                case 'CONFIRMED':
+                    $this->handleCarConfirmedPayment($booking, $ipnData, $smsService);
+                    break;
+
+                default:
+                    \Log::warning('Unknown Pesapal car notification type', [
+                        'type' => $orderNotificationType,
+                        'booking_id' => $booking->id
+                    ]);
+            }
+
+            return response()->json(['status' => 'success']);
+
+        } catch (\Exception $e) {
+            \Log::error('Pesapal Car IPN processing error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'ipn_data' => $ipnData ?? []
+            ]);
+            return response()->json(['error' => 'IPN processing failed'], 500);
+        }
+    }
+
+    /**
+     * Handle car payment status changes
+     */
+    private function handleCarPaymentStatus($booking, $status, $ipnData, $smsService)
+    {
+        \Log::info('Handling Pesapal car payment status', [
+            'booking_id' => $booking->id,
+            'status' => $status,
+            'previous_status' => $booking->status
+        ]);
+
+        switch ($status) {
+            case 'COMPLETED':
+            case 'SUCCESS':
+                $this->handleCarSuccessfulPayment($booking, $ipnData, $smsService);
+                break;
+
+            case 'FAILED':
+            case 'INVALID':
+                $this->handleCarFailedPayment($booking, $ipnData, $smsService);
+                break;
+
+            case 'PENDING':
+                \Log::info('Car payment still pending', ['booking_id' => $booking->id]);
+                break;
+
+            default:
+                \Log::warning('Unknown car payment status', [
+                    'booking_id' => $booking->id,
+                    'status' => $status
+                ]);
+        }
+    }
+
+    /**
+     * Handle successful car payment
+     */
+    private function handleCarSuccessfulPayment($booking, $ipnData, $smsService)
+    {
+        if ($booking->status === 'paid') {
+            \Log::info('Car payment already processed', ['booking_id' => $booking->id]);
+            return;
+        }
+
+        // Update booking status
+        $booking->update(['status' => 'paid']);
+
+        // Create payment record
+        Payment::create([
+            'user_id' => $booking->user_id,
+            'car_booking_id' => $booking->id,
+            'amount' => $booking->total_price,
+            'method' => 'pesapal',
+            'status' => 'completed',
+            'pesapal_tracking_id' => $booking->pesapal_tracking_id,
+            'transaction_reference' => $ipnData['PaymentMethodReference'] ?? null,
+            'booking_type' => 'car',
+            'transaction_date' => now()
+        ]);
+
+        // Send confirmation emails and SMS
+        $this->sendCarConfirmationEmails($booking);
+        $this->sendCarBookingConfirmationSms($booking, 'confirmed', $smsService);
+
+        \Log::info('Pesapal car payment completed successfully', [
+            'booking_id' => $booking->id,
+            'tracking_id' => $booking->pesapal_tracking_id
+        ]);
+    }
+
+    /**
+     * Handle confirmed car payment
+     */
+    private function handleCarConfirmedPayment($booking, $ipnData, $smsService)
+    {
+        $this->handleCarSuccessfulPayment($booking, $ipnData, $smsService);
+    }
+
+    /**
+     * Handle failed car payment
+     */
+    private function handleCarFailedPayment($booking, $ipnData, $smsService)
+    {
+        if ($booking->status === 'failed') {
+            return;
+        }
+
+        $booking->update(['status' => 'failed']);
+
+        // Create failed payment record
+        Payment::create([
+            'user_id' => $booking->user_id,
+            'car_booking_id' => $booking->id,
+            'amount' => $booking->total_price,
+            'method' => 'pesapal',
+            'status' => 'failed',
+            'pesapal_tracking_id' => $booking->pesapal_tracking_id,
+            'failure_reason' => $ipnData['Description'] ?? 'Payment failed',
+            'booking_type' => 'car'
+        ]);
+
+        // Send failure notification
+        $this->sendCarPaymentFailureSms($booking, 'Payment failed via Pesapal', $smsService);
+
+        \Log::warning('Pesapal car payment failed', [
+            'booking_id' => $booking->id,
+            'tracking_id' => $booking->pesapal_tracking_id
+        ]);
     }
 
     public function handleCallback(Request $request, SmsService $smsService)
@@ -431,7 +710,7 @@ class CarBookingController extends Controller
             // Prepare payment data
             $paymentData = [
                 'user_id' => $booking->user_id,
-                'booking_id' => $booking->id,
+                'car_booking_id' => $booking->id,
                 'amount' => $callbackParams['amount'] ?? $booking->total_price,
                 'method' => 'mpesa',
                 'phone' => $callbackParams['phone'] ?? null,
@@ -828,6 +1107,29 @@ class CarBookingController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Car refund SMS failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send car confirmation emails
+     */
+    protected function sendCarConfirmationEmails(CarBooking $booking)
+    {
+        try {
+            Mail::to($booking->user->email)
+                ->send(new CarBookingConfirmation($booking, 'customer'));
+
+            // Send to host
+            if ($booking->car->user) {
+                Mail::to($booking->car->user->email)
+                    ->send(new CarBookingConfirmation($booking, 'host'));
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Car email sending failed: ' . $e->getMessage(), [
+                'booking_id' => $booking->id,
+                'error' => $e
+            ]);
         }
     }
 }

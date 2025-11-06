@@ -209,6 +209,9 @@ Route::get('/register-pesapal-ipn', function (PesapalService $pesapalService) {
     return response()->json(['error' => 'Failed to register IPN']);
 });
 
+// Add this with your other car booking payment routes
+Route::get('/ride/{booking}/payment/cancelled', [CarBookingController::class, 'paymentCancelled'])->name('ride.payment.cancelled');
+
 Route::get('/debug-pesapal-ipn', function (App\Services\PesapalService $pesapalService) {
     try {
         $ipnUrl = route('pesapal.ipn');

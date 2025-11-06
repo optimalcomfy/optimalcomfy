@@ -35,6 +35,7 @@ class StoreCarBookingRequest extends FormRequest
             'checked_in' => 'nullable',
             'checked_out' => 'nullable',
             'number' => 'nullable',
+            'payment_method' => 'nullable',
             'phone' => 'nullable',
             'external_booking' => 'nullable',
             'referral_code'=> 'nullable',

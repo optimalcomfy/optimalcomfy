@@ -325,15 +325,19 @@ class CarBookingController extends Controller
             // Send booking confirmation SMS
             $this->sendCarBookingConfirmationSms($booking, 'pending', $smsService);
 
-            $company = Company::first();
-
-            $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
-            $finalAmount = ceil($finalAmount);
-
             // Handle different payment methods
             if ($request->payment_method === 'mpesa') {
+                $company = Company::first();
+                $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
+                $finalAmount = ceil($finalAmount);
+
                 return $this->processCarMpesaPayment($booking, $request->phone, $finalAmount);
+
             } elseif ($request->payment_method === 'pesapal') {
+                $company = Company::first();
+                $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
+                $finalAmount = ceil($finalAmount);
+
                 return $this->processCarPesapalPayment($booking, $user, $finalAmount, $pesapalService);
             }
 
@@ -394,7 +398,7 @@ class CarBookingController extends Controller
                 'amount' => $amount,
                 'description' => 'Car booking for ' . $booking->car->name,
                 'callback_url' => route('pesapal.callback'),
-                'cancellation_url' => route('ride.payment.cancelled', ['booking' => $booking->id]),
+                'cancellation_url' => route('ride.payment.cancelled', ['booking' => $booking->id]), // FIXED: Use correct route name
                 'notification_id' => config('services.pesapal.ipn_id'),
                 'billing_address' => [
                     'email_address' => $user->email,
@@ -1131,5 +1135,16 @@ class CarBookingController extends Controller
                 'error' => $e
             ]);
         }
+    }
+
+    public function paymentCancelled(CarBooking $booking)
+    {
+        $booking->update(['status' => 'cancelled']);
+
+        return Inertia::render('PaymentCancelled', [
+            'booking' => $booking,
+            'message' => 'Payment was cancelled. You can try again.',
+            'booking_type' => 'car'
+        ]);
     }
 }

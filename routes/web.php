@@ -36,6 +36,7 @@ use App\Http\Controllers\PropertyServiceController;
 use App\Http\Controllers\PropertyFeatureController;
 
 use App\Http\Controllers\CarBookingController;
+use App\Http\Controllers\CommunicationController;
 use App\Http\Controllers\CarCategoryController;
 use App\Http\Controllers\CarFeatureController;
 use App\Http\Controllers\CarMediaController;
@@ -361,6 +362,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/markup-stats', [MarkupBookingController::class, 'getMarkupStats'])->name('markup.stats');
     Route::get('/markup/browse/properties', [MarkupBookingController::class, 'browseProperties'])->name('markup.browse.properties');
     Route::get('/markup/browse/cars', [MarkupBookingController::class, 'browseCars'])->name('markup.browse.cars');
+});
+
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/communications', [CommunicationController::class, 'index'])->name('communications.index');
+    Route::post('/communications/templates', [CommunicationController::class, 'createTemplate'])->name('communications.templates.create');
+    Route::put('/communications/templates/{template}', [CommunicationController::class, 'updateTemplate'])->name('communications.templates.update');
+    Route::post('/communications/bulk', [CommunicationController::class, 'createBulkCommunication'])->name('communications.bulk.create');
+    Route::post('/communications/bulk/{bulkCommunication}/send', [CommunicationController::class, 'sendBulkCommunication'])->name('communications.bulk.send');
+    Route::post('/communications/individual/send', [CommunicationController::class, 'sendIndividualCommunication'])->name('communications.individual.send');
+    Route::get('/communications/users/search', [CommunicationController::class, 'searchUsers'])->name('communications.users.search');
+    Route::get('/communications/bulk/{bulkCommunication}/logs', [CommunicationController::class, 'getCommunicationLogs'])->name('communications.bulk.logs');
+    Route::get('/communications/individual/logs', [CommunicationController::class, 'getIndividualLogs'])->name('communications.individual.logs');
+    Route::get('/communications/analytics', [CommunicationController::class, 'analytics'])->name('communications.analytics');
+    Route::get('/communications/user-stats', [CommunicationController::class, 'getUserStats'])->name('communications.user-stats');
 });
 
 // UI Kit Routes

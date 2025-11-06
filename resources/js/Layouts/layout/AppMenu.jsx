@@ -64,6 +64,12 @@ const AppMenu = () => {
             items: [
                 { label: 'Company', icon: 'pi pi-fw pi-briefcase', to: route('companies.index'), roles: [1] }
             ]
+        },
+        {
+            label: 'Communications',
+            items: [
+                { label: 'Communications', icon: 'pi pi-fw pi-envelope', to: route('communications.index'), roles: [1] }
+            ]
         }
     ];
 

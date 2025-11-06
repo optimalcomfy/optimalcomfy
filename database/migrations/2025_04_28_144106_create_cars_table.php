@@ -27,15 +27,15 @@ return new class extends Migration
             $table->string('fuel_type')->nullable();
             $table->integer('engine_capacity')->nullable();
             $table->string('transmission')->nullable();
-            $table->string('drive_type')->nullable(); // e.g. 4WD, FWD, AWD
-            $table->string('fuel_economy')->nullable(); // e.g. 18.5
+            $table->string('drive_type')->nullable();
+            $table->string('fuel_economy')->nullable();
             $table->string('exterior_color')->nullable();
             $table->string('interior_color')->nullable();
             $table->decimal('price_per_day', 10, 2);
-            $table->double('amount')->nullable()->after('price_per_day');
+            $table->double('amount')->nullable();
             $table->text('description')->nullable();
             $table->boolean('is_available')->default(true);
-            $table->string('location_address')->nullable(); 
+            $table->string('location_address')->nullable();
             $table->decimal('latitude', 10, 7)->nullable();
             $table->decimal('longitude', 10, 7)->nullable();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');

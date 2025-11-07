@@ -11,7 +11,7 @@ use App\Services\EmailService;
 use App\Services\CommunicationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class CommunicationController extends Controller
@@ -252,26 +252,45 @@ class CommunicationController extends Controller
             return redirect()->back()->with('error', 'No valid recipients found for the selected communication methods.');
         }
 
-        // Replace template variables in content before sending
-        $smsContent = $request->sms_content ?? '';
-        $emailContent = $request->email_content ?? '';
-        $emailSubject = $request->email_subject ?? 'Message from ' . config('app.name');
+        // Pre-process content for each recipient with variable replacement
+        $processedRecipients = [];
+        foreach ($filteredRecipients as $recipient) {
+            $processedRecipient = $recipient;
 
-        // If using a template, replace variables for each recipient individually in the service
-        // For now, we'll pass the raw content and let the service handle variable replacement per recipient
+            // Replace variables for this specific recipient
+            if ($request->send_sms && $request->sms_content) {
+                $processedRecipient['processed_sms_content'] = $this->replaceTemplateVariables($request->sms_content, $recipient);
+            }
 
-        // Use the communication service with explicit flags
+            if ($request->send_email && $request->email_content) {
+                $processedRecipient['processed_email_content'] = $this->replaceTemplateVariables($request->email_content, $recipient);
+                $processedRecipient['processed_email_subject'] = $this->replaceTemplateVariables($request->email_subject, $recipient);
+            }
+
+            $processedRecipients[] = $processedRecipient;
+        }
+
+        Log::info('Processed recipients for individual communication', [
+            'total_recipients' => count($processedRecipients),
+            'send_sms' => $request->send_sms,
+            'send_email' => $request->send_email,
+            'first_recipient_processed_content' => $processedRecipients[0]['processed_sms_content'] ?? 'No processed content',
+            'first_recipient_name' => $processedRecipients[0]['name'] ?? 'Unknown'
+        ]);
+
+        // Use the communication service with PROCESSED content
         $results = $this->communicationService->sendBulkCommunications(
-            $filteredRecipients,
-            $smsContent,
-            $emailContent,
-            $emailSubject,
+            $processedRecipients,
+            $request->sms_content, // Keep original for logging
+            $request->email_content, // Keep original for logging
+            $request->email_subject, // Keep original for logging
             [
                 'sent_by' => $request->user()->id,
                 'type' => 'individual',
                 'template_id' => $request->template_id,
                 'send_sms' => $request->send_sms,
-                'send_email' => $request->send_email
+                'send_email' => $request->send_email,
+                'use_processed_content' => true // Flag to use processed content
             ]
         );
 
@@ -534,10 +553,15 @@ class CommunicationController extends Controller
 
     /**
      * Replace template variables with actual values
-     * This method is called by the CommunicationService for each recipient
+     * This method is called for each recipient individually
      */
     public function replaceTemplateVariables($content, $recipient)
     {
+        if (empty($content)) {
+            return $content;
+        }
+
+        // Handle both User model and array recipients
         if (is_object($recipient) && method_exists($recipient, 'getAttributes')) {
             // User model
             $variables = [
@@ -560,7 +584,16 @@ class CommunicationController extends Controller
             ];
         }
 
-        return str_replace(array_keys($variables), array_values($variables), $content);
+        $replacedContent = str_replace(array_keys($variables), array_values($variables), $content);
+
+        Log::info('Variable replacement debug', [
+            'original_content' => $content,
+            'replaced_content' => $replacedContent,
+            'recipient_name' => $recipient['name'] ?? ($recipient->name ?? 'Unknown'),
+            'variables_used' => array_keys($variables)
+        ]);
+
+        return $replacedContent;
     }
 
     /**
@@ -605,5 +638,116 @@ class CommunicationController extends Controller
                 'app_name' => 'Name of your application',
             ]
         ]);
+    }
+
+    /**
+     * Test SMS sending with variable replacement
+     */
+    public function testSms(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string',
+            'content' => 'required|string'
+        ]);
+
+        try {
+            // Create a test recipient
+            $testRecipient = [
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+                'phone' => $request->phone
+            ];
+
+            // Replace variables in content
+            $processedContent = $this->replaceTemplateVariables($request->content, $testRecipient);
+
+            // Send SMS
+            $result = $this->smsService->sendSms($request->phone, $processedContent);
+
+            if ($result) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'SMS sent successfully',
+                    'original_content' => $request->content,
+                    'processed_content' => $processedContent
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send SMS',
+                    'original_content' => $request->content,
+                    'processed_content' => $processedContent
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error sending SMS: ' . $e->getMessage(),
+                'original_content' => $request->content
+            ], 500);
+        }
+    }
+
+    /**
+     * Direct SMS send with variable replacement for debugging
+     */
+    public function directSendSms(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string',
+            'content' => 'required|string',
+            'name' => 'required|string'
+        ]);
+
+        try {
+            // Create recipient data
+            $recipient = [
+                'name' => $request->name,
+                'email' => 'test@example.com',
+                'phone' => $request->phone
+            ];
+
+            // Replace variables
+            $processedContent = $this->replaceTemplateVariables($request->content, $recipient);
+
+            Log::info('Direct SMS send debug', [
+                'original_content' => $request->content,
+                'processed_content' => $processedContent,
+                'recipient_name' => $request->name,
+                'phone' => $request->phone
+            ]);
+
+            // Send directly using SMS service
+            $result = $this->smsService->sendSms($request->phone, $processedContent);
+
+            if ($result) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'SMS sent successfully',
+                    'original_content' => $request->content,
+                    'processed_content' => $processedContent,
+                    'sent_to' => $request->phone
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'SMS service returned failure',
+                    'original_content' => $request->content,
+                    'processed_content' => $processedContent
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('Direct SMS send error', [
+                'error' => $e->getMessage(),
+                'phone' => $request->phone,
+                'content' => $request->content
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+                'original_content' => $request->content
+            ], 500);
+        }
     }
 }

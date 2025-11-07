@@ -11,19 +11,120 @@ import '../../css/main'
 import CarRideForm from "@/Components/CarRideForm";
 import './Property.css'
 import { PopupGallery } from "@/Components/PopupGallery";
+import CarShareModal from "@/Components/CarShareModal";
+import { Share2 } from "lucide-react";
 
 export default function RentNow({ auth, laravelVersion, phpVersion }) {
   const { car } = usePage().props;
 
   const [galleryVisible, setGalleryVisible] = useState(false);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+
+  // Get the car image for OG tags
+  const carImage = car?.initial_gallery?.[0]?.image
+    ? `/storage/${car.initial_gallery[0].image}`
+    : '/images/no-pic.avif';
+
+  const fullImageUrl = `${window.location.origin}${carImage}`;
+  const carUrl = window.location.href;
+  const carTitle = `${car?.brand} ${car?.model} ${car?.year} - ${car?.category?.name}`;
+  const carDescription = `Rent this ${car?.brand} ${car?.model} in ${car?.location_address} for KSh ${car?.platform_price}/day`;
+  const siteName = "Ristay - Car Rentals";
 
   return (
     <>
       <PrimeReactProvider>
         <LayoutProvider>
-          <Head title="Cars" />
+          <Head>
+            <title>{carTitle}</title>
+
+            {/* Open Graph Meta Tags for Rich Link Previews */}
+            <meta property="og:type" content="website" />
+            <meta property="og:url" content={carUrl} />
+            <meta property="og:title" content={carTitle} />
+            <meta property="og:description" content={carDescription} />
+            <meta property="og:image" content={fullImageUrl} />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            <meta property="og:site_name" content={siteName} />
+            <meta property="og:locale" content="en_US" />
+
+            {/* Twitter Card Meta Tags */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content={carTitle} />
+            <meta name="twitter:description" content={carDescription} />
+            <meta name="twitter:image" content={fullImageUrl} />
+            <meta name="twitter:site" content="@ristay" />
+
+            {/* Additional Meta Tags */}
+            <meta name="description" content={carDescription} />
+            <meta name="keywords" content={`${car?.brand}, ${car?.model}, ${car?.year}, car rental, ${car?.location_address}, ${car?.category?.name}`} />
+
+            {/* Structured Data for SEO */}
+            <script type="application/ld+json">
+              {JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Car",
+                "name": carTitle,
+                "description": carDescription,
+                "image": fullImageUrl,
+                "url": carUrl,
+                "brand": {
+                  "@type": "Brand",
+                  "name": car?.brand
+                },
+                "model": car?.model,
+                "vehicleModelDate": car?.year,
+                "vehicleSeatingCapacity": car?.seats,
+                "numberOfDoors": car?.doors,
+                "fuelType": car?.fuel_type,
+                "vehicleTransmission": car?.transmission,
+                "color": car?.exterior_color,
+                "address": {
+                  "@type": "PostalAddress",
+                  "streetAddress": car?.location_address
+                },
+                "offers": {
+                  "@type": "Offer",
+                  "price": car?.platform_price,
+                  "priceCurrency": "KES",
+                  "availability": "https://schema.org/InStock"
+                }
+              })}
+            </script>
+          </Head>
+
           <HomeLayout>
-            <div className="py-8 max-w-6xl mx-auto">
+            <div className="py-8 max-w-6xl mx-auto px-4">
+              {/* Car Header with Share Button */}
+              <div className="property-header flex justify-between items-start mb-6">
+                <div className="property-title-section">
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                    {car?.brand} {car?.model} {car?.year} - {car?.category?.name}
+                  </h1>
+                  <div className="property-rating text-gray-600">
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(car?.location_address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-gray-900 hover:underline"
+                    >
+                      {car?.location_address}
+                    </a>
+                  </div>
+                </div>
+
+                <div className="header-actions">
+                  <button
+                    className="share-btn flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
+                    onClick={() => setShareModalVisible(true)}
+                  >
+                    <Share2 size={18} />
+                    Share
+                  </button>
+                </div>
+              </div>
+
               {/* Main Section */}
               <section className="main">
                 <div className="container f-reverse">
@@ -242,11 +343,18 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                 </div>
               </section>
 
-               <PopupGallery
-                  images={car?.initial_gallery || []}
-                  visible={galleryVisible}
-                  onHide={() => setGalleryVisible(false)}
-                />
+              {/* Share Modal */}
+              <CarShareModal
+                car={car}
+                visible={shareModalVisible}
+                onHide={() => setShareModalVisible(false)}
+              />
+
+              <PopupGallery
+                images={car?.initial_gallery || []}
+                visible={galleryVisible}
+                onHide={() => setGalleryVisible(false)}
+              />
             </div>
           </HomeLayout>
         </LayoutProvider>

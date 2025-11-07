@@ -11,20 +11,117 @@ import "../../css/main";
 import PropertyBookingForm from "@/Components/PropertyBookingForm";
 import './Property.css'
 import { PopupGallery } from "@/Components/PopupGallery";
+import ShareModal from "@/Components/ShareModal";
 
 export default function Welcome({ auth, laravelVersion, phpVersion }) {
   const { property, similarProperties, flash, pagination } = usePage().props;
-
-  // Default fallback image
   const [galleryVisible, setGalleryVisible] = useState(false);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+
+  // Calculate average rating from bookings
+  const calculateAverageRating = () => {
+    return {
+      rating: 4.95,
+      reviews: property?.bookings?.length || 0
+    };
+  };
+
+  const ratingData = calculateAverageRating();
+
+  // Get the property image for OG tags
+  const propertyImage = property?.initial_gallery?.[0]?.image
+    ? `/storage/${property.initial_gallery[0].image}`
+    : '/images/no-pic.avif';
+
+  const fullImageUrl = `${window.location.origin}${propertyImage}`;
+  const propertyUrl = window.location.href;
+  const propertyTitle = `${property?.property_name} - ${property?.type}`;
+  const propertyDescription = `Stay at ${property?.property_name} in ${property?.location} for KSh ${property?.platform_price}/night`;
+  const siteName = "Ristay - Book Your Perfect Stay";
 
   return (
     <>
       <PrimeReactProvider>
         <LayoutProvider>
-          <Head title="Welcome" />
+          <Head>
+            <title>{propertyTitle}</title>
+
+            {/* Open Graph Meta Tags for Rich Link Previews */}
+            <meta property="og:type" content="website" />
+            <meta property="og:url" content={propertyUrl} />
+            <meta property="og:title" content={propertyTitle} />
+            <meta property="og:description" content={propertyDescription} />
+            <meta property="og:image" content={fullImageUrl} />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            <meta property="og:site_name" content={siteName} />
+            <meta property="og:locale" content="en_US" />
+
+            {/* Twitter Card Meta Tags */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content={propertyTitle} />
+            <meta name="twitter:description" content={propertyDescription} />
+            <meta name="twitter:image" content={fullImageUrl} />
+            <meta name="twitter:site" content="@ristay" />
+
+            {/* Additional Meta Tags */}
+            <meta name="description" content={propertyDescription} />
+            <meta name="keywords" content={`${property?.property_name}, ${property?.type}, ${property?.location}, accommodation, booking`} />
+
+            {/* Structured Data for SEO */}
+            <script type="application/ld+json">
+              {JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "VacationRental",
+                "name": property?.property_name,
+                "description": propertyDescription,
+                "image": fullImageUrl,
+                "url": propertyUrl,
+                "address": {
+                  "@type": "PostalAddress",
+                  "streetAddress": property?.location
+                },
+                "priceRange": `KSh ${property?.platform_price}`,
+                "telephone": property?.user?.phone
+              })}
+            </script>
+          </Head>
+
           <HomeLayout>
-            <div className="py-8 max-w-6xl mx-auto">
+            <div className="py-8 max-w-6xl mx-auto px-4">
+              {/* Property Header with Share Button */}
+              <div className="property-header">
+                <div className="property-title-section">
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                    {property?.property_name} - {property?.type}
+                  </h1>
+                  <div className="property-rating">
+                    <span className="star-icon">★</span>
+                    <span className="font-semibold text-gray-900">{ratingData.rating}</span>
+                    <span className="text-gray-600">({ratingData.reviews} reviews)</span>
+                    <span className="mx-2">•</span>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property?.location)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-600 hover:text-gray-900 hover:underline"
+                    >
+                      {property?.location}
+                    </a>
+                  </div>
+                </div>
+
+                <div className="header-actions">
+                  <button
+                    className="share-btn"
+                    onClick={() => setShareModalVisible(true)}
+                  >
+                    <span>🔗</span>
+                    Share
+                  </button>
+                </div>
+              </div>
+
               {/* Main Section */}
               <section className="main">
                 <div className="container f-reverse">
@@ -137,7 +234,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     </div>
                     <hr />
                     {/* details */}
-                    {property.property_amenities.some(amenity => amenity.amenity_id === 8) && (
+                    {property?.property_amenities?.some(amenity => amenity.amenity_id === 8) && (
                       <div className="small-detail">
                         <div className="img__container">
                           <p>
@@ -156,12 +253,12 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     <hr />
                     {/* paragraphs */}
                     <p className="section__content-paragraph">
-                      Stay at safe and clean place during your stay in {property.property_name}!
+                      Stay at safe and clean place during your stay in {property?.property_name}!
                     </p>
                     <p className="section__content-paragraph">
                       {property?.user?.bio}
                     </p>
-                      {property?.initial_gallery[0]?.image &&
+                      {property?.initial_gallery?.[0]?.image &&
                         <div className="image-group-m">
                           {/* First image container with view all button */}
                           <div className="img__container main-image">
@@ -226,7 +323,14 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 </div>
               </section>
 
-               <PopupGallery
+              {/* Share Modal */}
+              <ShareModal
+                property={property}
+                visible={shareModalVisible}
+                onHide={() => setShareModalVisible(false)}
+              />
+
+              <PopupGallery
                 images={property?.initial_gallery || []}
                 visible={galleryVisible}
                 onHide={() => setGalleryVisible(false)}

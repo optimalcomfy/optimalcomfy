@@ -33,8 +33,10 @@ export default function CarShareModal({ car, visible, onHide }) {
 
   // Share just the URL - platforms will fetch OG tags automatically
   const shareToWhatsApp = () => {
-    const text = encodeURIComponent(`${getShareText()}\n\n${carData.url}`);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
+    // WhatsApp needs the URL to be separate from the text for proper link detection
+    const text = encodeURIComponent(getShareText());
+    const url = encodeURIComponent(carData.url);
+    window.open(`https://wa.me/?text=${text}%0A%0A${url}`, '_blank');
   };
 
   const shareToFacebook = () => {
@@ -51,8 +53,10 @@ export default function CarShareModal({ car, visible, onHide }) {
   };
 
   const shareToTwitter = () => {
-    const text = encodeURIComponent(`${getShareText()}\n${carData.url}`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+    // Twitter works best with text + URL format
+    const text = encodeURIComponent(getShareText());
+    const url = encodeURIComponent(carData.url);
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
   };
 
   const shareToEmail = () => {
@@ -96,11 +100,11 @@ export default function CarShareModal({ car, visible, onHide }) {
 
   return (
     <div
-      className="modal-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      className="modal-overlay fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4"
       onClick={onHide}
     >
       <div
-        className="modal bg-white rounded-xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto"
+        className="modal bg-white rounded-xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto z-[10000]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -188,7 +192,7 @@ export default function CarShareModal({ car, visible, onHide }) {
               <div className="flex-1 relative">
                 <input
                   type="text"
-                  className="link-input w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-colors"
+                  className="link-input w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm bg-gray-50 font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-colors cursor-pointer"
                   value={carData.url}
                   readOnly
                   onClick={(e) => e.target.select()}
@@ -196,7 +200,7 @@ export default function CarShareModal({ car, visible, onHide }) {
                 <Link size={16} className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
               <button
-                className={`copy-btn px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 ${
+                className={`copy-btn px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 min-w-[80px] justify-center ${
                   copied
                     ? 'bg-green-500 text-white'
                     : 'bg-gray-800 text-white hover:bg-gray-900'

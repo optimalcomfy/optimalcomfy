@@ -337,4 +337,71 @@ class PesapalService
             'minutes_remaining' => $expiry ? now()->diffInMinutes($expiry, false) : 0
         ];
     }
+
+    /**
+     * Get payment status for immediate callback checking
+     */
+    public function getPaymentStatus($orderTrackingId)
+    {
+        try {
+            $statusData = $this->getOrderStatus($orderTrackingId);
+
+            if (!$statusData) {
+                Log::warning('Could not retrieve payment status', [
+                    'order_tracking_id' => $orderTrackingId
+                ]);
+                return 'Pending';
+            }
+
+            // Extract status from the response
+            $status = $statusData['status'] ?? $statusData['payment_status'] ?? 'Pending';
+
+            Log::info('Payment status retrieved', [
+                'order_tracking_id' => $orderTrackingId,
+                'status' => $status,
+                'full_response' => $statusData
+            ]);
+
+            // Map Pesapal statuses to our simplified statuses
+            return $this->mapPaymentStatus($status);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting payment status: ' . $e->getMessage(), [
+                'order_tracking_id' => $orderTrackingId
+            ]);
+            return 'Pending';
+        }
+    }
+
+    /**
+     * Map Pesapal statuses to simplified application statuses
+     */
+    private function mapPaymentStatus($pesapalStatus)
+    {
+        $upperStatus = strtoupper(trim($pesapalStatus));
+
+        // Only four statuses: Pending, Paid, Failed, Rejected
+        switch ($upperStatus) {
+            case 'COMPLETED':
+            case 'CONFIRMED':
+            case 'SUCCESS':
+                return 'Paid';
+
+            case 'FAILED':
+            case 'CANCELLED':
+            case 'EXPIRED':
+                return 'Failed';
+
+            case 'REJECTED':
+            case 'DECLINED':
+            case 'INVALID':
+                return 'Rejected';
+
+            case 'PENDING':
+            case 'INPROGRESS':
+            case 'PROCESSING':
+            default:
+                return 'Pending';
+        }
+    }
 }

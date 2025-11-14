@@ -63,4 +63,119 @@ body {
     z-index: 1500 !important;
 }
 
+/* Enhanced NProgress Styles */
+#nprogress {
+  pointer-events: none;
+  position: relative;
+  z-index: 9999;
+}
+
+#nprogress .bar {
+  background: linear-gradient(90deg, #d65130, #d65130, #d65130);
+  height: 4px;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1031;
+  box-shadow: 0 0 10px #d65130, 0 0 5px #d65130;
+  animation: progress-pulse 2s ease-in-out infinite;
+}
+
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px #3B82F6, 0 0 5px #3B82F6;
+  opacity: 1;
+  transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* Full-screen semi-translucent overlay - FIXED */
+#nprogress .spinner {
+  display: flex !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 1030;
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+
+  /* Reset any inherited spinner styles */
+  border-radius: 0 !important;
+  animation: none !important;
+  transform: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Spinner container */
+#nprogress .spinner-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Only the icon spins */
+#nprogress .spinner-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 100%;
+  animation: nprogress-spinner 1.5s ease-in-out infinite;
+  background-image: url('/android-icon-192x192.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+#nprogress .spinner-text {
+  color: #374151;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-top: 0.5rem;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8);
+}
+
+/* Animations - Only for the icon */
+@keyframes nprogress-spinner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes progress-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Progress states */
+.nprogress-busy {
+  overflow: hidden !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  #nprogress .spinner-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  #nprogress .spinner-text {
+    font-size: 1rem;
+  }
+}
 

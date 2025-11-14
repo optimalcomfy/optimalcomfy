@@ -379,6 +379,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/communications/user-stats', [CommunicationController::class, 'getUserStats'])->name('communications.user-stats');
 });
 
+
 // UI Kit Routes
 Route::get('/uikit/button', function () {
     return Inertia::render('main/uikit/button/page');

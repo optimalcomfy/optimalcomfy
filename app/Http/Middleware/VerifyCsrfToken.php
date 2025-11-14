@@ -22,9 +22,20 @@ class VerifyCsrfToken extends Middleware
         'api/car-refund/callback',
         'api/car-refund/timeout',
 
+        'mpesa/stk/callback',
+        'mpesa/ride/stk/callback',
+        'mpesa/result',
+        'mpesa/timeout',
+        'refund/callback',
+        'refund/timeout',
+        'car-refund/callback',
+        'car-refund/timeout',
+
         // Pesapal Callbacks
         'api/pesapal/callback',
+        'pesapal/callback',
         'api/pesapal/notification',
+        'pesapal/notification',
 
         // Other callbacks
         'bookings/store',

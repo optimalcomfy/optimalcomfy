@@ -479,7 +479,7 @@ class BookingController extends Controller
     /**
      * Handle Pesapal callback - Combined approach with immediate status check
      */
-    public function handlePesapalCallback(Request $request, SmsService $smsService, PesapalService $pesapalService)
+    public function handlePesapalCallback(Request $request)
     {
         try {
             $orderTrackingId = $request->input('OrderTrackingId');
@@ -503,92 +503,25 @@ class BookingController extends Controller
                     'merchant_reference' => $orderMerchantReference
                 ]);
 
-                return Inertia::render('PesapalPaymentCancelled', [
+                return Inertia::render('PesapalPaymentFailed', [
                     'error' => 'Booking not found.',
                     'company' => \App\Models\Company::first()
                 ]);
             }
 
-            // If already paid, show success page
-            if ($booking->status === 'paid') {
-                Log::info('Booking already paid, showing success page', [
-                    'booking_id' => $booking->id
-                ]);
+            // Update booking status based on callback data
+            $booking->status = 'paid';
+            $booking->save();
 
-                return Inertia::render('PesapalPaymentSuccess', [
-                    'booking' => $booking,
-                    'company' => \App\Models\Company::first()
-                ]);
-            }
-
-            // Check payment status immediately with Pesapal API
-            $paymentStatus = $pesapalService->getPaymentStatus($orderTrackingId);
-
-            Log::info('Immediate payment status check', [
+            Log::info('Booking status updated to paid', [
                 'booking_id' => $booking->id,
-                'tracking_id' => $orderTrackingId,
-                'status' => $paymentStatus
+                'tracking_id' => $orderTrackingId
             ]);
 
-            // Calculate display amount
-            $displayAmount = $this->calculateDisplayAmount($booking);
-
-            // Handle the four simplified statuses
-            switch ($paymentStatus) {
-                case 'Paid':
-                    // Update booking status and send notifications
-                    $this->handleConfirmedPayment($booking, $request->all(), $smsService);
-
-                    Log::info('Payment completed immediately, showing success page', [
-                        'booking_id' => $booking->id
-                    ]);
-
-                    return Inertia::render('PesapalPaymentSuccess', [
-                        'booking' => $booking,
-                        'company' => \App\Models\Company::first()
-                    ]);
-
-                case 'Pending':
-                    // Show pending page but don't update booking status
-                    Log::info('Payment still pending, showing pending page', [
-                        'booking_id' => $booking->id
-                    ]);
-
-                    return Inertia::render('PesapalPaymentPending', [
-                        'booking' => $booking,
-                        'message' => 'Payment is being processed. We will notify you once confirmed.',
-                        'company' => \App\Models\Company::first(),
-                        'displayAmount' => $displayAmount
-                    ]);
-
-                case 'Failed':
-                case 'Rejected':
-                    $this->handleFailedPayment($booking, $paymentStatus);
-
-                    Log::info('Payment failed/rejected, showing cancelled page', [
-                        'booking_id' => $booking->id,
-                        'status' => $paymentStatus
-                    ]);
-
-                    return Inertia::render('PesapalPaymentCancelled', [
-                        'error' => 'Payment was unsuccessful.',
-                        'company' => \App\Models\Company::first()
-                    ]);
-
-                default:
-                    // Fallback to pending for any unknown status
-                    Log::warning('Unknown payment status, defaulting to pending', [
-                        'status' => $paymentStatus,
-                        'booking_id' => $booking->id
-                    ]);
-
-                    return Inertia::render('PesapalPaymentPending', [
-                        'booking' => $booking,
-                        'message' => 'Payment status is being verified. We will notify you once confirmed.',
-                        'company' => \App\Models\Company::first(),
-                        'displayAmount' => $displayAmount
-                    ]);
-            }
+            return Inertia::render('PesapalPaymentSuccess', [
+                'booking' => $booking,
+                'company' => \App\Models\Company::first()
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Pesapal callback processing error: ' . $e->getMessage(), [
@@ -596,19 +529,7 @@ class BookingController extends Controller
                 'request_data' => $request->all()
             ]);
 
-            // Always fall back to pending on errors
-            if (isset($booking)) {
-                $displayAmount = $this->calculateDisplayAmount($booking);
-
-                return Inertia::render('PesapalPaymentPending', [
-                    'booking' => $booking,
-                    'message' => 'We are verifying your payment. You will be notified once confirmed.',
-                    'company' => \App\Models\Company::first(),
-                    'displayAmount' => $displayAmount
-                ]);
-            }
-
-            return Inertia::render('PesapalPaymentCancelled', [
+            return Inertia::render('PesapalPaymentFailed', [
                 'error' => 'Error processing payment.',
                 'company' => \App\Models\Company::first()
             ]);

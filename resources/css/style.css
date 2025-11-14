@@ -5650,7 +5650,7 @@ select {
 .nice-select {
   width: 100%;
   height: auto;
-  
+
   position: relative;
 }
 .nice-select.open::before {
@@ -8239,32 +8239,32 @@ input {
     background-color: #1B1B1B;
     box-shadow: none;
   }
-  
+
   .field-label {
     color: #fff;
   }
-  
+
   .form-input, .form-select {
     background-color: #1B1B1B;
     color: #fff;
   }
-  
+
   .border-right {
     border-right-color: #383838;
   }
-  
+
   @media (min-width: 640px) {
     .form-field:nth-child(odd) {
       border-right-color: #383838;
     }
   }
-  
+
   @media (min-width: 768px) {
     .form-field:nth-child(3n-1) {
       border-right-color: #383838;
     }
   }
-  
+
   .input-icon::before {
     color: #fff;
   }
@@ -8574,11 +8574,11 @@ input {
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .modal-actions {
     flex-direction: column;
   }
-  
+
   .location-permission-modal {
     margin: 1rem;
     padding: 1.5rem;

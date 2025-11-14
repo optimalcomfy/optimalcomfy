@@ -451,13 +451,13 @@ const PropertyBookingForm = () => {
 
   const StepIndicator = ({ step, currentStep, title, completed = false }) => (
     <div className="flex items-center gap-3 mb-6">
-      <div style={{width: '80px'}} className={`
+      <div style={{width: '20px', height: '20px'}} className={`
         rounded-full flex items-center justify-center font-semibold text-sm
-        ${completed ? 'bg-green-500 text-white' :
-          step === currentStep ? 'bg-peachDark text-white' :
+        ${completed ? 'bg-green-500 text-white p-1' :
+          step === currentStep ? 'bg-peachDark text-white p-1' :
           'bg-gray-200 text-gray-600'}
       `}>
-        {completed ? <Check className="w-5 h-5" /> : step}
+        {completed ? <Check className="" /> : step}
       </div>
       <span className={`font-medium ${step === currentStep ? 'text-gray-900' : 'text-gray-600'}`}>
         {title}

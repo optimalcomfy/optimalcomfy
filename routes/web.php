@@ -94,7 +94,7 @@ Route::get('/joby/{job}', [HomeController::class, 'showJob'])->name('jobShow');
 Route::get('/locations', [LocationController::class, 'locations'])->name('locations');
 
 // Pesapal Public Callback Routes
-Route::post('/pesapal/callback', [BookingController::class, 'handlePesapalCallback'])->name('pesapal.callback');
+Route::get('/pesapal/callback', [BookingController::class, 'handlePesapalCallback'])->name('pesapal.callback');
 Route::post('/pesapal/ipn', [BookingController::class, 'handlePesapalNotification'])->name('pesapal.ipn');
 Route::post('/pesapal/car-ipn', [CarBookingController::class, 'handleCarPesapalNotification'])->name('pesapal.car-ipn');
 

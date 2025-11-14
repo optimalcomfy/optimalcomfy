@@ -395,7 +395,7 @@ class CarBookingController extends Controller
             $orderData = [
                 'id' => $booking->number,
                 'currency' => 'KES',
-                'amount' => 1, // Changed from $amount to 1 for testing
+                'amount' => $amount, // Changed from $amount to 1 for testing
                 'description' => 'Car booking for ' . $booking->car->name,
                 'callback_url' => route('pesapal.car.callback'), // CHANGED: Use car-specific callback
                 'cancellation_url' => route('ride.payment.cancelled', ['booking' => $booking->id]),

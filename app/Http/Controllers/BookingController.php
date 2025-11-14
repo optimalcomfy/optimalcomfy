@@ -348,7 +348,7 @@ class BookingController extends Controller
 
         $this->STKPush(
             'Paybill',
-            $amount,
+            1,
             $phone,
             $callbackUrl,
             'reference',
@@ -1124,6 +1124,11 @@ class BookingController extends Controller
         try {
             // Parse callback data
             $callbackData = $request->json()->all();
+
+             Log::info('MPesa Callback Received - Parsed', [
+                'callback_data' => $callbackData,
+                'full_request' => $request->all()
+            ]);
 
             // Extract transaction details
             $resultCode = $callbackData['Body']['stkCallback']['ResultCode'] ?? null;

@@ -32,7 +32,8 @@ class Booking extends Model
         'non_refund_reason',
         'refund_amount',
         'cancelled_by_id',
-        'referral_code'
+        'referral_code',
+        'pesapal_tracking_id'
     ];
 
     protected $appends = [

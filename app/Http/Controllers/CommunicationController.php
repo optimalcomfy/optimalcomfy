@@ -345,7 +345,7 @@ class CommunicationController extends Controller
     public function getIndividualLogs(Request $request)
     {
         // Only show logs for communications sent by the current host
-        $logs = CommunicationLog::where('created_by', $request->user()->id)
+        $logs = CommunicationLog::where('user_id', $request->user()->id)
             ->where('type', 'like', 'individual_%')
             ->with('user')
             ->orderBy('created_at', 'desc')

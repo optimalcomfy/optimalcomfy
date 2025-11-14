@@ -395,7 +395,7 @@ class CarBookingController extends Controller
             $orderData = [
                 'id' => $booking->number,
                 'currency' => 'KES',
-                'amount' => $amount,
+                'amount' => 1,
                 'description' => 'Car booking for ' . $booking->car->name,
                 'callback_url' => route('pesapal.callback'),
                 'cancellation_url' => route('ride.payment.cancelled', ['booking' => $booking->id]), // FIXED: Use correct route name

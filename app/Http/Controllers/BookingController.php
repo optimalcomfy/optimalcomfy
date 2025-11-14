@@ -371,7 +371,7 @@ class BookingController extends Controller
             $orderData = [
                 'id' => $booking->number,
                 'currency' => 'KES',
-                'amount' => 1,
+                'amount' => $amount,
                 'description' => 'Booking for ' . $booking->property->property_name,
                 'callback_url' => route('pesapal.callback'),
                 'cancellation_url' => route('booking.payment.cancelled', ['booking' => $booking->id]),

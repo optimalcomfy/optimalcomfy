@@ -395,10 +395,10 @@ class CarBookingController extends Controller
             $orderData = [
                 'id' => $booking->number,
                 'currency' => 'KES',
-                'amount' => 1,
+                'amount' => 1, // Changed from $amount to 1 for testing
                 'description' => 'Car booking for ' . $booking->car->name,
-                'callback_url' => route('pesapal.callback'),
-                'cancellation_url' => route('ride.payment.cancelled', ['booking' => $booking->id]), // FIXED: Use correct route name
+                'callback_url' => route('pesapal.car.callback'), // CHANGED: Use car-specific callback
+                'cancellation_url' => route('ride.payment.cancelled', ['booking' => $booking->id]),
                 'notification_id' => config('services.pesapal.ipn_id'),
                 'billing_address' => [
                     'email_address' => $user->email,
@@ -418,7 +418,8 @@ class CarBookingController extends Controller
 
             \Log::info('Submitting Pesapal car order', [
                 'booking_id' => $booking->id,
-                'order_data' => $orderData
+                'order_data' => $orderData,
+                'callback_url' => $orderData['callback_url'] // Log the callback URL
             ]);
 
             $orderResponse = $pesapalService->createOrderDirect($orderData);
@@ -437,7 +438,8 @@ class CarBookingController extends Controller
                 \Log::info('Pesapal car payment initiated successfully', [
                     'booking_id' => $booking->id,
                     'tracking_id' => $orderResponse['order_tracking_id'],
-                    'redirect_url' => $orderResponse['redirect_url']
+                    'redirect_url' => $orderResponse['redirect_url'],
+                    'callback_url' => $orderData['callback_url']
                 ]);
 
                 // Return Inertia response
@@ -447,7 +449,7 @@ class CarBookingController extends Controller
                     'booking_id' => $booking->id,
                     'message' => 'Payment initiated successfully',
                     'payment_method' => 'pesapal',
-                    'booking_type' => 'car' // Important: Set this to 'car'
+                    'booking_type' => 'car'
                 ]);
 
             } else {
@@ -669,6 +671,16 @@ class CarBookingController extends Controller
                 'all_params' => $request->all()
             ]);
 
+            // Debug: Log all car bookings with similar tracking IDs or numbers
+            $similarBookings = CarBooking::where('pesapal_tracking_id', 'like', '%' . $orderTrackingId . '%')
+                ->orWhere('number', 'like', '%' . $orderMerchantReference . '%')
+                ->get();
+
+            \Log::info('Similar car bookings found', [
+                'count' => $similarBookings->count(),
+                'bookings' => $similarBookings->pluck('id', 'number')
+            ]);
+
             // Find car booking by tracking ID or merchant reference
             $booking = CarBooking::where('pesapal_tracking_id', $orderTrackingId)
                             ->orWhere('number', $orderMerchantReference)
@@ -678,19 +690,46 @@ class CarBookingController extends Controller
             if (!$booking) {
                 \Log::error('Car booking not found for Pesapal callback', [
                     'tracking_id' => $orderTrackingId,
-                    'merchant_reference' => $orderMerchantReference
+                    'merchant_reference' => $orderMerchantReference,
+                    'all_car_bookings' => CarBooking::all()->pluck('number', 'pesapal_tracking_id'),
+                    'similar_bookings' => $similarBookings
                 ]);
 
                 return Inertia::render('PesapalPaymentFailed', [
-                    'error' => 'Car booking not found.',
+                    'error' => 'Car booking not found. Please contact support with your booking reference: ' . $orderMerchantReference,
                     'company' => Company::first(),
                     'booking_type' => 'car'
                 ]);
             }
 
+            \Log::info('Car booking found', [
+                'booking_id' => $booking->id,
+                'booking_number' => $booking->number,
+                'status' => $booking->status,
+                'tracking_id' => $booking->pesapal_tracking_id
+            ]);
+
             // Update booking status based on callback data
             $booking->status = 'paid';
             $booking->save();
+
+            // Create payment record
+            Payment::create([
+                'user_id' => $booking->user_id,
+                'car_booking_id' => $booking->id,
+                'amount' => $booking->total_price,
+                'method' => 'pesapal',
+                'status' => 'completed',
+                'pesapal_tracking_id' => $booking->pesapal_tracking_id,
+                'transaction_reference' => $request->input('PaymentMethodReference'),
+                'booking_type' => 'car',
+                'transaction_date' => now()
+            ]);
+
+            // Send confirmation emails and SMS
+            $smsService = app(SmsService::class);
+            $this->sendCarConfirmationEmails($booking);
+            $this->sendCarBookingConfirmationSms($booking, 'confirmed', $smsService);
 
             \Log::info('Car booking status updated to paid', [
                 'booking_id' => $booking->id,
@@ -710,7 +749,7 @@ class CarBookingController extends Controller
             ]);
 
             return Inertia::render('PesapalPaymentFailed', [
-                'error' => 'Error processing payment.',
+                'error' => 'Error processing payment: ' . $e->getMessage(),
                 'company' => Company::first(),
                 'booking_type' => 'car'
             ]);

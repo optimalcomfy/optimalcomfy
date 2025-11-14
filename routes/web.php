@@ -379,6 +379,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/communications/user-stats', [CommunicationController::class, 'getUserStats'])->name('communications.user-stats');
 });
 
+// Add this with your other Pesapal routes
+Route::get('/pesapal/car-callback', [CarBookingController::class, 'handleCarPesapalCallback'])->name('pesapal.car.callback');
+
 
 // UI Kit Routes
 Route::get('/uikit/button', function () {

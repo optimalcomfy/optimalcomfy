@@ -44,5 +44,9 @@ class VerifyCsrfToken extends Middleware
         'api/mpesa/test-callback',
         'api/mpesa/test-get',
         'api/mpesa/test-any',
+
+        'car-bookings/store',
+        'pesapal/car-callback',
+        'pesapal/car-ipn',
     ];
 }

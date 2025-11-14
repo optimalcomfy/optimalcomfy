@@ -6,7 +6,7 @@ import '../../css/main';
 import { Button } from 'primereact/button';
 
 export default function PesapalPaymentSuccess({ auth, laravelVersion, phpVersion }) {
-    const { booking, company } = usePage().props;
+    const { booking, company, booking_type = 'property' } = usePage().props;
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-KE', {
@@ -15,6 +15,26 @@ export default function PesapalPaymentSuccess({ auth, laravelVersion, phpVersion
             minimumFractionDigits: 0,
         }).format(amount);
     };
+
+    const getBookingDetails = () => {
+        if (booking_type === 'car') {
+            return {
+                title: booking?.car?.name,
+                type: 'Car',
+                viewRoute: 'car-bookings.show',
+                viewParam: booking?.id
+            };
+        } else {
+            return {
+                title: booking?.property?.property_name || booking?.property?.title,
+                type: 'Property',
+                viewRoute: 'bookings.show',
+                viewParam: booking?.id
+            };
+        }
+    };
+
+    const details = getBookingDetails();
 
     return (
         <PrimeReactProvider>
@@ -34,14 +54,17 @@ export default function PesapalPaymentSuccess({ auth, laravelVersion, phpVersion
 
                             <div className="space-y-4 mb-6">
                                 <p className="text-lg text-gray-700">
-                                    Thank you for your payment. Your booking has been confirmed.
+                                    Thank you for your payment. Your {details.type.toLowerCase()} booking has been confirmed.
                                 </p>
 
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <h3 className="font-semibold mb-2">Booking Details</h3>
                                     <p><strong>Booking ID:</strong> {booking?.number}</p>
                                     <p><strong>Amount Paid:</strong> {formatCurrency(booking?.total_price)}</p>
-                                    <p><strong>Property:</strong> {booking?.property?.title}</p>
+                                    <p><strong>{details.type}:</strong> {details.title}</p>
+                                    {booking_type === 'car' && booking?.car && (
+                                        <p><strong>License Plate:</strong> {booking.car.license_plate}</p>
+                                    )}
                                     <p><strong>Status:</strong> <span className="text-green-600 font-semibold">Confirmed</span></p>
                                 </div>
 
@@ -52,9 +75,9 @@ export default function PesapalPaymentSuccess({ auth, laravelVersion, phpVersion
 
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <Button
-                                    label="View Booking Details"
+                                    label={`View ${details.type} Booking Details`}
                                     icon="pi pi-eye"
-                                    onClick={() => window.location.href = route('bookings.show', booking?.id)}
+                                    onClick={() => window.location.href = route(details.viewRoute, details.viewParam)}
                                     className="p-button-success"
                                 />
                                 <Button

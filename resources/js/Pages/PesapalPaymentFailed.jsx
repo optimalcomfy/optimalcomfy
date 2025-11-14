@@ -6,7 +6,7 @@ import '../../css/main';
 import { Button } from 'primereact/button';
 
 export default function PesapalPaymentFailed({ auth, laravelVersion, phpVersion }) {
-    const { booking, error, company } = usePage().props;
+    const { booking, error, company, booking_type = 'property' } = usePage().props;
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-KE', {
@@ -15,6 +15,22 @@ export default function PesapalPaymentFailed({ auth, laravelVersion, phpVersion 
             minimumFractionDigits: 0,
         }).format(amount);
     };
+
+    const getBookingDetails = () => {
+        if (booking_type === 'car') {
+            return {
+                title: booking?.car?.name,
+                type: 'Car'
+            };
+        } else {
+            return {
+                title: booking?.property?.property_name || booking?.property?.title,
+                type: 'Property'
+            };
+        }
+    };
+
+    const details = getBookingDetails();
 
     return (
         <PrimeReactProvider>
@@ -42,7 +58,10 @@ export default function PesapalPaymentFailed({ auth, laravelVersion, phpVersion 
                                         <h3 className="font-semibold mb-2">Booking Details</h3>
                                         <p><strong>Booking ID:</strong> {booking?.number}</p>
                                         <p><strong>Amount:</strong> {formatCurrency(booking?.total_price)}</p>
-                                        <p><strong>Property:</strong> {booking?.property?.title}</p>
+                                        <p><strong>{details.type}:</strong> {details.title}</p>
+                                        {booking_type === 'car' && booking?.car && (
+                                            <p><strong>License Plate:</strong> {booking.car.license_plate}</p>
+                                        )}
                                         <p><strong>Status:</strong> <span className="text-red-600 font-semibold">Payment Failed</span></p>
                                     </div>
                                 )}
@@ -53,6 +72,12 @@ export default function PesapalPaymentFailed({ auth, laravelVersion, phpVersion 
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                <Button
+                                    label="Try Again"
+                                    icon="pi pi-refresh"
+                                    onClick={() => window.history.back()}
+                                    className="p-button-warning"
+                                />
                                 <Button
                                     label="Back to Home"
                                     icon="pi pi-home"

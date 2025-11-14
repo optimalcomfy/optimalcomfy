@@ -242,55 +242,43 @@ const CarBookingForm = () => {
   };
 
   // Handle Pesapal submission
-  const handlePesapalSubmit = async (e) => {
+    // In your CarBookingForm component
+   const handlePesapalSubmit = async (e) => {
     e.preventDefault();
 
     if (!data.start_date || !data.end_date) {
-      showErrorAlert('Please select valid pickup and return dates');
-      return;
-    }
-
-    if (!data.car_id) {
-      showErrorAlert('Please select a vehicle');
-      return;
-    }
-
-    if (!data.pickup_location) {
-      showErrorAlert('Please select pickup location');
-      return;
+        showErrorAlert('Please select valid pickup and return dates');
+        return;
     }
 
     setProcessing(true);
 
     try {
-      const bookingData = {
+        const bookingData = {
         ...data,
         referral_discount: referralData.discountAmount,
         total_price: finalPrice,
-        user_id: auth.user?.id,
         payment_method: 'pesapal'
-      };
+        };
 
-      console.log('Submitting Pesapal car booking:', bookingData);
-
-      router.post(route('car-bookings.store'), bookingData, {
+        router.post(route('car-bookings.store'), bookingData, {
         onSuccess: (response) => {
-          // The controller will handle the Pesapal redirect
-          console.log('Pesapal booking initiated successfully');
+            // The controller will handle the Pesapal redirect
+            // The PaymentRedirect component will handle the redirect
+            console.log('Pesapal booking initiated successfully');
         },
-        onError: (formErrors) => {
-          console.error('Pesapal car booking failed:', formErrors);
-          showErrorAlert(formErrors.message || 'Booking failed. Please check the form and try again.');
+        onError: (errors) => {
+            console.error('Pesapal car booking failed:', errors);
+            showErrorAlert('Booking creation failed. Please try again.');
         }
-      });
-
+        });
     } catch (error) {
-      console.error("Pesapal submit error:", error);
-      showErrorAlert(error.response?.data?.message || 'An unexpected error occurred. Please try again.');
+        console.error("Pesapal submit error:", error);
+        showErrorAlert('An unexpected error occurred. Please try again.');
     } finally {
-      setProcessing(false);
+        setProcessing(false);
     }
-  };
+    };
 
   const handleSubmit = (e) => {
     if (paymentMethod === 'mpesa') {

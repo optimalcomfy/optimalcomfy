@@ -447,7 +447,7 @@ class CarBookingController extends Controller
                     'booking_id' => $booking->id,
                     'message' => 'Payment initiated successfully',
                     'payment_method' => 'pesapal',
-                    'booking_type' => 'car'
+                    'booking_type' => 'car' // Important: Set this to 'car'
                 ]);
 
             } else {
@@ -652,6 +652,69 @@ class CarBookingController extends Controller
             'booking_id' => $booking->id,
             'tracking_id' => $booking->pesapal_tracking_id
         ]);
+    }
+
+    /**
+     * Handle Pesapal callback for car bookings
+     */
+    public function handleCarPesapalCallback(Request $request)
+    {
+        try {
+            $orderTrackingId = $request->input('OrderTrackingId');
+            $orderMerchantReference = $request->input('OrderMerchantReference');
+
+            \Log::info('Pesapal Car Callback Received', [
+                'order_tracking_id' => $orderTrackingId,
+                'order_merchant_reference' => $orderMerchantReference,
+                'all_params' => $request->all()
+            ]);
+
+            // Find car booking by tracking ID or merchant reference
+            $booking = CarBooking::where('pesapal_tracking_id', $orderTrackingId)
+                            ->orWhere('number', $orderMerchantReference)
+                            ->with(['car', 'user'])
+                            ->first();
+
+            if (!$booking) {
+                \Log::error('Car booking not found for Pesapal callback', [
+                    'tracking_id' => $orderTrackingId,
+                    'merchant_reference' => $orderMerchantReference
+                ]);
+
+                return Inertia::render('PesapalPaymentFailed', [
+                    'error' => 'Car booking not found.',
+                    'company' => Company::first(),
+                    'booking_type' => 'car'
+                ]);
+            }
+
+            // Update booking status based on callback data
+            $booking->status = 'paid';
+            $booking->save();
+
+            \Log::info('Car booking status updated to paid', [
+                'booking_id' => $booking->id,
+                'tracking_id' => $orderTrackingId
+            ]);
+
+            return Inertia::render('PesapalPaymentSuccess', [
+                'booking' => $booking,
+                'company' => Company::first(),
+                'booking_type' => 'car'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Pesapal car callback processing error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request_data' => $request->all()
+            ]);
+
+            return Inertia::render('PesapalPaymentFailed', [
+                'error' => 'Error processing payment.',
+                'company' => Company::first(),
+                'booking_type' => 'car'
+            ]);
+        }
     }
 
     public function handleCallback(Request $request, SmsService $smsService)

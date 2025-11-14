@@ -103,24 +103,6 @@ class CommunicationController extends Controller
             'send_email' => 'boolean'
         ]);
 
-        // Validate that at least one communication method is selected
-        if (!$request->send_sms && !$request->send_email) {
-            return redirect()->back()->with('error', 'Please select at least one communication method (SMS or Email).');
-        }
-
-        // Validate content based on selected methods
-        if ($request->send_sms && empty($request->sms_content)) {
-            return redirect()->back()->with('error', 'SMS content is required when sending SMS.');
-        }
-
-        if ($request->send_email && empty($request->email_content)) {
-            return redirect()->back()->with('error', 'Email content is required when sending email.');
-        }
-
-        if ($request->send_email && empty($request->subject)) {
-            return redirect()->back()->with('error', 'Email subject is required when sending email.');
-        }
-
         // Create the bulk communication
         $bulkCommunication = BulkCommunication::create([
             ...$request->all(),
@@ -561,6 +543,8 @@ class CommunicationController extends Controller
             return $content;
         }
 
+        $variables = [];
+
         // Handle both User model and array recipients
         if (is_object($recipient) && method_exists($recipient, 'getAttributes')) {
             // User model
@@ -572,6 +556,9 @@ class CommunicationController extends Controller
                 '{{current_time}}' => now()->format('g:i A'),
                 '{{app_name}}' => config('app.name'),
             ];
+
+            // Add booking-related variables if user has recent bookings
+            $this->addBookingVariables($variables, $recipient);
         } else {
             // Array recipient (custom or from individual send)
             $variables = [
@@ -582,6 +569,14 @@ class CommunicationController extends Controller
                 '{{current_time}}' => now()->format('g:i A'),
                 '{{app_name}}' => config('app.name'),
             ];
+
+            // Add booking variables if user ID is available
+            if (isset($recipient['user_id']) && $recipient['user_id']) {
+                $user = User::find($recipient['user_id']);
+                if ($user) {
+                    $this->addBookingVariables($variables, $user);
+                }
+            }
         }
 
         $replacedContent = str_replace(array_keys($variables), array_values($variables), $content);
@@ -597,8 +592,94 @@ class CommunicationController extends Controller
     }
 
     /**
-     * Preview template with variable replacement
+     * Add booking-related variables to the variables array
      */
+    private function addBookingVariables(&$variables, $user)
+    {
+        // Get the most recent completed booking
+        $recentBooking = Booking::where('user_id', $user->id)
+            ->where('status', 'paid')
+            ->whereNotNull('checked_in')
+            ->whereNotNull('checked_out')
+            ->orderBy('check_out_date', 'desc')
+            ->first();
+
+        // Get the most recent upcoming booking
+        $upcomingBooking = Booking::where('user_id', $user->id)
+            ->where('status', 'paid')
+            ->whereNull('checked_in')
+            ->whereNull('checked_out')
+            ->orderBy('check_in_date', 'asc')
+            ->first();
+
+        // Get the most recent car booking
+        $recentCarBooking = CarBooking::where('user_id', $user->id)
+            ->where('status', 'paid')
+            ->whereNotNull('checked_in')
+            ->whereNotNull('checked_out')
+            ->orderBy('end_date', 'desc')
+            ->first();
+
+        $upcomingCarBooking = CarBooking::where('user_id', $user->id)
+            ->where('status', 'paid')
+            ->whereNull('checked_in')
+            ->whereNull('checked_out')
+            ->orderBy('start_date', 'asc')
+            ->first();
+
+        // Use the most relevant booking (prefer upcoming over completed)
+        $booking = $upcomingBooking ?? $recentBooking;
+        $carBooking = $upcomingCarBooking ?? $recentCarBooking;
+
+        // Booking variables
+        if ($booking) {
+            $variables['{{booking_number}}'] = $booking->number ?? 'N/A';
+            $variables['{{booking_date}}'] = $booking->created_at ? $booking->created_at->format('M j, Y') : 'N/A';
+            $variables['{{check_in_date}}'] = $booking->check_in_date ? $booking->check_in_date->format('M j, Y') : 'N/A';
+            $variables['{{check_out_date}}'] = $booking->check_out_date ? $booking->check_out_date->format('M j, Y') : 'N/A';
+            $variables['{{total_amount}}'] = $booking->total_price ? number_format($booking->total_price, 2) : 'N/A';
+
+            if ($booking->property) {
+                $variables['{{property_name}}'] = $booking->property->property_name ?? 'N/A';
+                $variables['{{host_name}}'] = $booking->property->user->name ?? 'N/A';
+            } else {
+                $variables['{{property_name}}'] = 'N/A';
+                $variables['{{host_name}}'] = 'N/A';
+            }
+        } else {
+            $variables['{{booking_number}}'] = 'N/A';
+            $variables['{{booking_date}}'] = 'N/A';
+            $variables['{{check_in_date}}'] = 'N/A';
+            $variables['{{check_out_date}}'] = 'N/A';
+            $variables['{{property_name}}'] = 'N/A';
+            $variables['{{total_amount}}'] = 'N/A';
+            $variables['{{host_name}}'] = 'N/A';
+        }
+
+        // Car booking variables
+        if ($carBooking) {
+            $variables['{{car_name}}'] = $carBooking->car ? ($carBooking->car->name ?? 'N/A') : 'N/A';
+            // If we have car booking but no property booking, use car booking amount
+            if (!$booking) {
+                $variables['{{total_amount}}'] = $carBooking->total_price ? number_format($carBooking->total_price, 2) : 'N/A';
+            }
+        } else {
+            $variables['{{car_name}}'] = 'N/A';
+        }
+
+        // Ensure all required variables are set
+        $requiredVariables = [
+            '{{booking_number}}', '{{booking_date}}', '{{check_in_date}}', '{{check_out_date}}',
+            '{{property_name}}', '{{car_name}}', '{{total_amount}}', '{{host_name}}'
+        ];
+
+        foreach ($requiredVariables as $var) {
+            if (!isset($variables[$var])) {
+                $variables[$var] = 'N/A';
+            }
+        }
+    }
+
     public function previewTemplate(Request $request)
     {
         $request->validate([
@@ -607,17 +688,35 @@ class CommunicationController extends Controller
             'subject' => 'nullable|string'
         ]);
 
-        // Create a sample user for preview
+        // Create a sample user with sample bookings for preview
         $sampleUser = new User([
             'name' => 'John Doe',
             'email' => 'john.doe@example.com',
             'phone' => '+1234567890'
         ]);
 
+        // Manually set sample booking data for preview
+        $previewVariables = [
+            '{{user_name}}' => 'John Doe',
+            '{{user_email}}' => 'john.doe@example.com',
+            '{{user_phone}}' => '+1234567890',
+            '{{booking_number}}' => 'BKG-ABC123XY',
+            '{{booking_date}}' => now()->format('M j, Y'),
+            '{{check_in_date}}' => now()->addDays(7)->format('M j, Y'),
+            '{{check_out_date}}' => now()->addDays(14)->format('M j, Y'),
+            '{{property_name}}' => 'Luxury Beach Villa',
+            '{{car_name}}' => 'Toyota Camry 2023',
+            '{{total_amount}}' => number_format(1250.00, 2),
+            '{{host_name}}' => 'Sarah Johnson',
+            '{{current_date}}' => now()->format('M j, Y'),
+            '{{current_time}}' => now()->format('g:i A'),
+            '{{app_name}}' => config('app.name'),
+        ];
+
         $preview = [
-            'sms_content' => $request->sms_content ? $this->replaceTemplateVariables($request->sms_content, $sampleUser) : null,
-            'email_content' => $request->email_content ? $this->replaceTemplateVariables($request->email_content, $sampleUser) : null,
-            'subject' => $request->subject ? $this->replaceTemplateVariables($request->subject, $sampleUser) : null,
+            'sms_content' => $request->sms_content ? str_replace(array_keys($previewVariables), array_values($previewVariables), $request->sms_content) : null,
+            'email_content' => $request->email_content ? str_replace(array_keys($previewVariables), array_values($previewVariables), $request->email_content) : null,
+            'subject' => $request->subject ? str_replace(array_keys($previewVariables), array_values($previewVariables), $request->subject) : null,
         ];
 
         return response()->json($preview);
@@ -633,6 +732,14 @@ class CommunicationController extends Controller
                 'user_name' => 'Full name of the user',
                 'user_email' => 'Email address of the user',
                 'user_phone' => 'Phone number of the user',
+                'booking_number' => 'Booking reference number',
+                'booking_date' => 'Date when booking was made',
+                'check_in_date' => 'Check-in date for booking',
+                'check_out_date' => 'Check-out date for booking',
+                'property_name' => 'Name of the property booked',
+                'car_name' => 'Name of the car booked',
+                'total_amount' => 'Total amount of the booking',
+                'host_name' => 'Name of the host',
                 'current_date' => 'Current date (e.g., Jan 15, 2024)',
                 'current_time' => 'Current time (e.g., 2:30 PM)',
                 'app_name' => 'Name of your application',

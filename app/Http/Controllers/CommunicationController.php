@@ -103,6 +103,29 @@ class CommunicationController extends Controller
             'send_email' => 'boolean'
         ]);
 
+        // Validate that at least one communication method is selected
+        if (!$request->send_sms && !$request->send_email) {
+            return redirect()->back()->with('error', 'Please select at least one communication method (SMS or Email).');
+        }
+
+        // Validate content based on selected methods
+        if ($request->send_sms && empty($request->sms_content)) {
+            return redirect()->back()->with('error', 'SMS content is required when sending SMS.');
+        }
+
+        if ($request->send_email) {
+            if (empty($request->email_content)) {
+                return redirect()->back()->with('error', 'Email content is required when sending email.');
+            }
+
+            // If no subject provided, get the template name
+            if (empty($request->subject)) {
+                $template = CommunicationTemplate::find($request->template_id);
+                $defaultSubject = $template ? $template->name : 'Message from ' . config('app.name');
+                $request->merge(['subject' => $defaultSubject]);
+            }
+        }
+
         // Create the bulk communication
         $bulkCommunication = BulkCommunication::create([
             ...$request->all(),
@@ -162,7 +185,7 @@ class CommunicationController extends Controller
             'template_id' => 'nullable|exists:communication_templates,id',
             'sms_content' => 'nullable|string',
             'email_content' => 'nullable|string',
-            'email_subject' => 'nullable|string|required_if:send_email,true',
+            'email_subject' => 'nullable|string',
             'selected_users' => 'nullable|array',
             'selected_users.*' => 'exists:users,id',
             'custom_phone' => 'nullable|string',
@@ -182,14 +205,23 @@ class CommunicationController extends Controller
             return redirect()->back()->with('error', 'SMS content is required when sending SMS.');
         }
 
-        if ($request->send_email && empty($request->email_content)) {
-            return redirect()->back()->with('error', 'Email content is required when sending email.');
+        if ($request->send_email) {
+            if (empty($request->email_content)) {
+                return redirect()->back()->with('error', 'Email content is required when sending email.');
+            }
+
+            // If no subject provided, get the template name or use default
+            if (empty($request->email_subject)) {
+                if ($request->template_id) {
+                    $template = CommunicationTemplate::find($request->template_id);
+                    $request->merge(['email_subject' => $template ? $template->name : 'Message from ' . config('app.name')]);
+                } else {
+                    $request->merge(['email_subject' => 'Message from ' . config('app.name')]);
+                }
+            }
         }
 
-        if ($request->send_email && empty($request->email_subject)) {
-            return redirect()->back()->with('error', 'Email subject is required when sending email.');
-        }
-
+        // ... rest of the method remains the same
         $recipients = [];
 
         // Process selected users

@@ -348,7 +348,7 @@ class BookingController extends Controller
 
         $this->STKPush(
             'Paybill',
-            $amount,
+            1,
             $phone,
             $callbackUrl,
             'reference',

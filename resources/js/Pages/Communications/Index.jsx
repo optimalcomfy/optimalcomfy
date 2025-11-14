@@ -3,6 +3,8 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import Select from 'react-select';
 import makeAnimated from 'react-select/animated';
+import Swal from "sweetalert2";
+
 import {
     Mail,
     MessageSquare,
@@ -54,7 +56,7 @@ const CustomRecipientsSection = React.memo(({
                         onClick={onImportCSV}
                         className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
                     >
-                        <Upload className="w-4 h-4" />
+                        <Upload className="h-4" />
                         Import CSV
                     </button>
                 </div>
@@ -145,7 +147,7 @@ const CustomRecipientsSection = React.memo(({
                                     className="text-red-500 hover:text-red-700 p-1"
                                     title="Remove recipient"
                                 >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="h-4" />
                                 </button>
                             </div>
                         ))}
@@ -157,7 +159,7 @@ const CustomRecipientsSection = React.memo(({
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <div className="flex">
                     <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                        <svg className="h-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                         </svg>
                     </div>
@@ -316,7 +318,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                 <div className="flex-1">
                     <div className="font-medium text-gray-900 flex items-center gap-2">
                         {data.label}
-                        {isSelected && <Check className="w-4 h-4 text-green-600" />}
+                        {isSelected && <Check className="h-4 text-green-600" />}
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
                         <div className="flex items-center gap-1">
@@ -389,23 +391,18 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
 
         // Validate that at least one communication method is selected
         if (!individualFormData.send_sms && !individualFormData.send_email) {
-            alert('Please select at least one communication method (SMS or Email)');
+            Swal.fire('Error','Please select at least one communication method (SMS or Email)');
             return;
         }
 
         // Validate content based on selected methods
         if (individualFormData.send_sms && !individualFormData.sms_content.trim()) {
-            alert('Please enter SMS content when SMS is selected');
+           Swal.fire('Error','Please enter SMS content when SMS is selected');
             return;
         }
 
         if (individualFormData.send_email && !individualFormData.email_content.trim()) {
-            alert('Please enter email content when email is selected');
-            return;
-        }
-
-        if (individualFormData.send_email && !individualFormData.email_subject.trim()) {
-            alert('Please enter email subject when email is selected');
+           Swal.fire('Error','Please enter email content when email is selected');
             return;
         }
 
@@ -744,23 +741,19 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                     </div>
                                 )}
                             </div>
-
-                            {/* Individual Send Button - Only for Hosts */}
-                            {auth.user.role_id === 2 && (
-                                <button
-                                    onClick={() => setShowIndividualModal(true)}
-                                    className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors"
-                                >
-                                    <Send className="w-4 h-4" />
-                                    Send to Individual
-                                </button>
-                            )}
+                            <button
+                                onClick={() => setShowIndividualModal(true)}
+                                className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors"
+                            >
+                                <Send className="h-4" />
+                                Send to Individual
+                            </button>
 
                             <button
                                 onClick={() => setShowTemplateModal(true)}
                                 className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-600 transition-colors"
                             >
-                                <Plus className="w-4 h-4" />
+                                <Plus className="h-4" />
                                 New Template
                             </button>
                         </div>
@@ -828,13 +821,13 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                                 <div className="flex gap-4 mt-2 text-sm text-gray-600">
                                                     {template.sms_content && (
                                                         <span className="flex items-center gap-1">
-                                                            <MessageSquare className="w-4 h-4" />
+                                                            <MessageSquare className="h-4" />
                                                             SMS
                                                         </span>
                                                     )}
                                                     {template.email_content && (
                                                         <span className="flex items-center gap-1">
-                                                            <Mail className="w-4 h-4" />
+                                                            <Mail className="h-4" />
                                                             Email
                                                         </span>
                                                     )}
@@ -860,24 +853,21 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                                         });
                                                         setShowBulkModal(true);
                                                     }}
-                                                    className="text-gray-400 hover:text-gray-500 p-2 rounded-lg hover:bg-gray-100"
+                                                    className="text-gray-400 hover:text-gray-500 flex items-center p-2 rounded-lg hover:bg-gray-100"
                                                     title="Send Bulk Communication"
                                                 >
-                                                    <Send className="h-8" />
+                                                    <Send className="h-8" />Send Bulk
                                                 </button>
-                                                {/* Individual Send for Hosts */}
-                                                {auth.user.role_id === 2 && (
-                                                    <button
-                                                        onClick={() => {
-                                                            loadTemplateForIndividual(template);
-                                                            setShowIndividualModal(true);
-                                                        }}
-                                                        className="text-green-600 hover:text-green-700 p-2 rounded-lg hover:bg-green-50"
-                                                        title="Send to Individual"
-                                                    >
-                                                        <User className="w-4 h-4" />
-                                                    </button>
-                                                )}
+                                                <button
+                                                    onClick={() => {
+                                                        loadTemplateForIndividual(template);
+                                                        setShowIndividualModal(true);
+                                                    }}
+                                                    className="text-green-600 hover:text-green-700 p-2 flex items-center rounded-lg hover:bg-green-50"
+                                                    title="Send to Individual"
+                                                >
+                                                    <User className="h-4" />Send to Individual
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -920,13 +910,13 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                                 <div className="flex gap-4 mt-1 text-sm text-gray-600">
                                                     {campaign.send_sms && (
                                                         <span className="flex items-center gap-1">
-                                                            <MessageSquare className="w-4 h-4" />
+                                                            <MessageSquare className="h-4" />
                                                             SMS
                                                         </span>
                                                     )}
                                                     {campaign.send_email && (
                                                         <span className="flex items-center gap-1">
-                                                            <Mail className="w-4 h-4" />
+                                                            <Mail className="h-4" />
                                                             Email
                                                         </span>
                                                     )}
@@ -948,7 +938,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                                     className="text-gray-400 hover:text-gray-500 p-2 rounded-lg hover:bg-gray-100"
                                                     title="View Logs"
                                                 >
-                                                    <Eye className="w-4 h-4" />
+                                                    <Eye className="h-4" />
                                                 </Link>
                                                 {campaign.status === 'draft' && (
                                                     <button
@@ -956,7 +946,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                                         className="text-green-600 hover:text-green-700 p-2 rounded-lg hover:bg-green-50"
                                                         title="Send Campaign"
                                                     >
-                                                        <Send className="w-4 h-4" />
+                                                        <Send className="h-4" />
                                                     </button>
                                                 )}
                                             </div>
@@ -1012,7 +1002,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                     onClick={() => setShowIndividualModal(true)}
                                     className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors"
                                 >
-                                    <Send className="w-4 h-4" />
+                                    <Send className="h-4" />
                                     New Individual Message
                                 </button>
                             )}
@@ -1025,7 +1015,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                 href={route('communications.individual.logs')}
                                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center"
                             >
-                                <Eye className="w-4 h-4 mr-2" />
+                                <Eye className="h-4 mr-2" />
                                 View Individual Logs
                             </Link>
                         </div>
@@ -1045,7 +1035,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                 href={route('communications.analytics')}
                                 className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors inline-flex items-center"
                             >
-                                <BarChart3 className="w-4 h-4 mr-2" />
+                                <BarChart3 className="h-4 mr-2" />
                                 Open Analytics Dashboard
                             </Link>
                         </div>
@@ -1079,7 +1069,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                         }}
                                         className="text-gray-400 hover:text-gray-500"
                                     >
-                                        <X className="w-6 h-6" />
+                                        <X className="h-6" />
                                     </button>
                                 </div>
 
@@ -1233,7 +1223,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                             type="submit"
                                             className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors flex items-center gap-2"
                                         >
-                                            <Save className="w-4 h-4" />
+                                            <Save className="h-4" />
                                             {selectedTemplate ? 'Update Template' : 'Create Template'}
                                         </button>
                                     </div>
@@ -1270,7 +1260,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                         }}
                                         className="text-gray-400 hover:text-gray-500"
                                     >
-                                        <X className="w-6 h-6" />
+                                        <X className="h-6" />
                                     </button>
                                 </div>
 
@@ -1381,7 +1371,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                                     disabled={!canSendSMS()}
                                                 />
                                                 <span className="ml-2 text-sm text-gray-700 flex items-center gap-2">
-                                                    <MessageSquare className="w-4 h-4" />
+                                                    <MessageSquare className="h-4" />
                                                     Send SMS
                                                     {!canSendSMS() && (
                                                         <span className="text-xs text-red-500">(No phone numbers available)</span>
@@ -1400,7 +1390,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                                     disabled={!canSendEmail()}
                                                 />
                                                 <span className="ml-2 text-sm text-gray-700 flex items-center gap-2">
-                                                    <Mail className="w-4 h-4" />
+                                                    <Mail className="h-4" />
                                                     Send Email
                                                     {!canSendEmail() && (
                                                         <span className="text-xs text-red-500">(No email addresses available)</span>
@@ -1452,7 +1442,6 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                                 }))}
                                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                                 placeholder="Enter email subject..."
-                                                required={individualFormData.send_email}
                                             />
                                         </div>
                                     )}
@@ -1549,12 +1538,6 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                         </button>
                                         <button
                                             type="submit"
-                                            disabled={
-                                                (!individualFormData.send_sms && !individualFormData.send_email) ||
-                                                (individualFormData.selected_users.length === 0 && !individualFormData.custom_phone && !individualFormData.custom_email) ||
-                                                (individualFormData.send_sms && !individualFormData.sms_content.trim()) ||
-                                                (individualFormData.send_email && (!individualFormData.email_content.trim() || !individualFormData.email_subject.trim()))
-                                            }
                                             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                                         >
                                             Send Communication
@@ -1586,7 +1569,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                         }}
                                         className="text-gray-400 hover:text-gray-500"
                                     >
-                                        <X className="w-6 h-6" />
+                                        <X className="h-6" />
                                     </button>
                                 </div>
 
@@ -1616,7 +1599,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                                     disabled={!selectedTemplate?.sms_content}
                                                 />
                                                 <span className="ml-2 text-sm text-gray-700 flex items-center gap-2">
-                                                    <MessageSquare className="w-4 h-4" />
+                                                    <MessageSquare className="h-4" />
                                                     Send SMS
                                                     {!selectedTemplate?.sms_content && (
                                                         <span className="text-xs text-red-500">(No SMS content in template)</span>
@@ -1635,7 +1618,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                                     disabled={!selectedTemplate?.email_content}
                                                 />
                                                 <span className="ml-2 text-sm text-gray-700 flex items-center gap-2">
-                                                    <Mail className="w-4 h-4" />
+                                                    <Mail className="h-4" />
                                                     Send Email
                                                     {!selectedTemplate?.email_content && (
                                                         <span className="text-xs text-red-500">(No email content in template)</span>
@@ -1648,7 +1631,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                                         <div className="flex">
                                             <div className="flex-shrink-0">
-                                                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                <svg className="h-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
                                                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                                 </svg>
                                             </div>
@@ -1687,7 +1670,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                             {selectedTemplate?.sms_content && (
                                                 <div className="bg-gray-50 p-3 rounded-lg">
                                                     <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-2">
-                                                        <MessageSquare className="w-4 h-4" />
+                                                        <MessageSquare className="h-4" />
                                                         SMS Content
                                                     </label>
                                                     <p className="text-sm text-gray-900">{selectedTemplate.sms_content}</p>
@@ -1696,7 +1679,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                             {selectedTemplate?.email_content && (
                                                 <div className="bg-gray-50 p-3 rounded-lg">
                                                     <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-2">
-                                                        <Mail className="w-4 h-4" />
+                                                        <Mail className="h-4" />
                                                         Email Content
                                                     </label>
                                                     <p className="text-sm text-gray-900">{selectedTemplate.email_content}</p>
@@ -1750,7 +1733,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                         }}
                                         className="text-gray-400 hover:text-gray-500"
                                     >
-                                        <X className="w-6 h-6" />
+                                        <X className="h-6" />
                                     </button>
                                 </div>
 
@@ -1774,7 +1757,7 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                         <div className="flex">
                                             <div className="flex-shrink-0">
-                                                <CsvIcon className="h-5 w-5 text-blue-400" />
+                                                <CsvIcon className="h-5 text-blue-400" />
                                             </div>
                                             <div className="ml-3">
                                                 <h3 className="text-sm font-medium text-blue-800">

@@ -6,6 +6,8 @@ use App\Models\CommunicationTemplate;
 use App\Models\BulkCommunication;
 use App\Models\CommunicationLog;
 use App\Models\User;
+use App\Models\Booking;
+use App\Models\CarBooking;
 use App\Services\SmsService;
 use App\Services\EmailService;
 use App\Services\CommunicationService;
@@ -176,10 +178,6 @@ class CommunicationController extends Controller
 
     public function sendIndividualCommunication(Request $request)
     {
-        // Only allow hosts to send individual communications
-        if ($request->user()->role_id !== 2) {
-            return redirect()->back()->with('error', 'Unauthorized to send individual communications.');
-        }
 
         $request->validate([
             'template_id' => 'nullable|exists:communication_templates,id',
@@ -359,11 +357,7 @@ class CommunicationController extends Controller
     public function getIndividualLogs(Request $request)
     {
         // Only show logs for communications sent by the current host
-        $logs = CommunicationLog::where('user_id', $request->user()->id)
-            ->where('type', 'like', 'individual_%')
-            ->with('user')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $logs = CommunicationLog::all();
 
         return Inertia::render('Communications/IndividualLogs', [
             'logs' => $logs

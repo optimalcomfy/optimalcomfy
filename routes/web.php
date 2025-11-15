@@ -122,8 +122,8 @@ Route::get('/booking/failed', function () {
 })->name('bookings.failed');
 
 // Public Markup Booking Routes
-Route::get('/markup-booking/{token}', [MarkupBookingController::class, 'showMarkupBooking'])->name('markup.booking.show');
-Route::post('/markup-booking/{token}', [MarkupBookingController::class, 'processMarkupBooking'])->name('markup.booking.process');
+Route::get('/mrk-booking/{token}', [MarkupBookingController::class, 'showMarkupBooking'])->name('markup.booking.show');
+Route::post('/mrk-booking/{token}', [MarkupBookingController::class, 'processMarkupBooking'])->name('markup.booking.process');
 Route::get('/check-user-exists', [MarkupBookingController::class, 'checkUserExists']);
 
 // Public Referral Validation

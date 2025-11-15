@@ -20,6 +20,18 @@ const BrowseCars = () => {
     });
     const [showMarkupModal, setShowMarkupModal] = useState(false);
     const [selectedCar, setSelectedCar] = useState(null);
+    const [carsWithMarkupStatus, setCarsWithMarkupStatus] = useState([]);
+
+    // Initialize cars with markup status on component mount and when cars change
+    useEffect(() => {
+        if (cars && cars.length > 0) {
+            const carsWithStatus = cars.map(car => ({
+                ...car,
+                has_user_markup: car.has_user_markup || false
+            }));
+            setCarsWithMarkupStatus(carsWithStatus);
+        }
+    }, [cars]);
 
     useEffect(() => {
         // Debounce search
@@ -49,12 +61,21 @@ const BrowseCars = () => {
     };
 
     const handleAddMarkup = (car) => {
-        setSelectedCar(car);
+        // Use platform_price for markup calculations instead of amount
+        const carWithPlatformPrice = {
+            ...car,
+            // Ensure we're using platform_price for markup calculations
+            platform_price: car.platform_price || car.amount,
+            base_price: car.platform_price || car.amount // Add base_price for clarity
+        };
+
+        setSelectedCar(carWithPlatformPrice);
         setShowMarkupModal(true);
     };
 
     const hasExistingMarkup = (carId) => {
-        return cars?.find(c => c.id === carId)?.has_user_markup || false;
+        const car = carsWithMarkupStatus.find(c => c.id === carId);
+        return car?.has_user_markup || false;
     };
 
     const clearFilters = () => {
@@ -72,7 +93,10 @@ const BrowseCars = () => {
         const labels = {
             'automatic': 'Automatic',
             'manual': 'Manual',
-            'cvt': 'CVT'
+            'cvt': 'CVT',
+            'Auto': 'Automatic',
+            'Automatic': 'Automatic',
+            'Manual': 'Manual'
         };
         return labels[transmission] || transmission;
     };
@@ -82,9 +106,27 @@ const BrowseCars = () => {
             'petrol': 'Petrol',
             'diesel': 'Diesel',
             'electric': 'Electric',
-            'hybrid': 'Hybrid'
+            'hybrid': 'Hybrid',
+            'Petrol': 'Petrol',
+            'Diesel': 'Diesel'
         };
         return labels[fuelType] || fuelType;
+    };
+
+    // Update markup status when modal closes (after successful markup addition/update)
+    const handleMarkupModalClose = (success = false) => {
+        if (success && selectedCar) {
+            // Update the local state to reflect the new markup status
+            setCarsWithMarkupStatus(prevCars =>
+                prevCars.map(car =>
+                    car.id === selectedCar.id
+                        ? { ...car, has_user_markup: true }
+                        : car
+                )
+            );
+        }
+        setShowMarkupModal(false);
+        setSelectedCar(null);
     };
 
     if (!auth.user?.can_add_markup) {
@@ -159,6 +201,9 @@ const BrowseCars = () => {
                                 <option value="Audi">Audi</option>
                                 <option value="Nissan">Nissan</option>
                                 <option value="Volkswagen">Volkswagen</option>
+                                <option value="Mazda">Mazda</option>
+                                <option value="sedam">Sedam</option>
+                                <option value="VW">Volkswagen</option>
                             </select>
                         </div>
 
@@ -245,7 +290,7 @@ const BrowseCars = () => {
                 {/* Cars Grid */}
                 {!loading && (
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                        {cars?.length === 0 ? (
+                        {carsWithMarkupStatus?.length === 0 ? (
                             <div className="browse-properties-empty">
                                 <Car className="browse-properties-empty-icon" />
                                 <h3 className="browse-properties-empty-title">No cars found</h3>
@@ -259,7 +304,7 @@ const BrowseCars = () => {
                             </div>
                         ) : (
                             <div className="browse-properties-grid p-6">
-                                {cars?.map((car) => (
+                                {carsWithMarkupStatus?.map((car) => (
                                     <div key={car.id} className="browse-properties-card">
                                         {/* Car Image */}
                                         <div className="browse-properties-image-container">
@@ -286,10 +331,17 @@ const BrowseCars = () => {
                                                 <h3 className="browse-properties-name">
                                                     {car.name}
                                                 </h3>
-                                                <span className="browse-properties-price">
-                                                    KES {new Intl.NumberFormat('en-KE').format(car.amount)}
-                                                    <span className="text-sm text-gray-500 font-normal">/day</span>
-                                                </span>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="browse-properties-price">
+                                                        KES {new Intl.NumberFormat('en-KE').format(car.platform_price || car.amount)}
+                                                        <span className="text-sm text-gray-500 font-normal">/day</span>
+                                                    </span>
+                                                    {car.platform_price && car.platform_price !== car.amount && (
+                                                        <span className="text-xs text-gray-400 line-through">
+                                                            KES {new Intl.NumberFormat('en-KE').format(car.amount)}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <p className="text-gray-600 text-sm mb-3">
@@ -330,6 +382,22 @@ const BrowseCars = () => {
                                                     <span className="browse-properties-host-label">Owner:</span>
                                                     <span>{car.user?.name}</span>
                                                 </div>
+                                            </div>
+
+                                            {/* Price Information */}
+                                            <div className="browse-properties-price-info mb-3 p-2 bg-gray-50 rounded text-xs">
+                                                <div className="flex justify-between">
+                                                    <span>Platform Price:</span>
+                                                    <span className="font-medium">
+                                                        KES {new Intl.NumberFormat('en-KE').format(car.platform_price || car.amount)}
+                                                    </span>
+                                                </div>
+                                                {car.platform_charges > 0 && (
+                                                    <div className="flex justify-between text-gray-500">
+                                                        <span>Platform Charges:</span>
+                                                        <span>KES {new Intl.NumberFormat('en-KE').format(car.platform_charges)}</span>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Actions */}
@@ -431,13 +499,11 @@ const BrowseCars = () => {
             {showMarkupModal && selectedCar && (
                 <AddMarkupModal
                     isOpen={showMarkupModal}
-                    onClose={() => {
-                        setShowMarkupModal(false);
-                        setSelectedCar(null);
-                    }}
+                    onClose={handleMarkupModalClose}
                     item={selectedCar}
                     itemType="cars"
                     onSuccess={() => {
+                        handleMarkupModalClose(true);
                         handleFilterChange(); // Refresh the list
                     }}
                 />

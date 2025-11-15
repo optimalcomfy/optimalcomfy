@@ -109,7 +109,7 @@ trait HasMarkup
             now()->addDays(30)
         );
 
-        return url("/markup-booking/{$markup->markup_token}");
+        return url("/mrk-booking/{$markup->markup_token}");
     }
 
     /**

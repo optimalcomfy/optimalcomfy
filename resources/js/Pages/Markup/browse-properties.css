@@ -26,11 +26,11 @@
 .browse-properties-title {
   font-size: 1.875rem;
   font-weight: bold;
-  color: #111827;
+  color: #0d3c46;
 }
 
 .browse-properties-subtitle {
-  color: #6b7280;
+  color: #0f3b46;
   margin-top: 0.5rem;
 }
 
@@ -39,14 +39,14 @@
   display: inline-flex;
   align-items: center;
   padding: 0.5rem 1rem;
-  background-color: #4f46e5;
-  color: white;
+  background-color: #dd5227;
+  color: #edeae5;
   border-radius: 0.5rem;
   transition: background-color 0.2s;
 }
 
 .browse-properties-browse-link:hover {
-  background-color: #4338ca;
+  background-color: #c44923;
 }
 
 @media (min-width: 768px) {
@@ -57,10 +57,10 @@
 
 /* Search and Filters Styles */
 .browse-properties-filters {
-  background-color: white;
+  background-color: #edeae5;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px 0 rgba(13, 60, 70, 0.1);
+  border: 1px solid #f4f4f4;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
 }
@@ -92,7 +92,7 @@
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: #0f3b46;
   width: 1rem;
   height: 1rem;
 }
@@ -103,34 +103,36 @@
   padding-right: 1rem;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #f4f4f4;
   border-radius: 0.5rem;
   outline: none;
+  background-color: white;
 }
 
 .browse-properties-input:focus {
   ring: 2px;
-  ring-color: #3b82f6;
+  ring-color: #dd5227;
 }
 
 .browse-properties-select {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #f4f4f4;
   border-radius: 0.5rem;
   outline: none;
+  background-color: white;
 }
 
 .browse-properties-select:focus {
   ring: 2px;
-  ring-color: #3b82f6;
+  ring-color: #dd5227;
 }
 
 .browse-properties-search-btn {
   width: 100%;
   padding: 0.5rem 1rem;
-  background-color: #2563eb;
-  color: white;
+  background-color: #0d3c46;
+  color: #edeae5;
   border-radius: 0.5rem;
   transition: background-color 0.2s;
   display: flex;
@@ -139,7 +141,7 @@
 }
 
 .browse-properties-search-btn:hover {
-  background-color: #1d4ed8;
+  background-color: #0f3b46;
 }
 
 .browse-properties-search-btn:disabled {
@@ -170,7 +172,7 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: #0d3c46;
   margin-bottom: 0.25rem;
 }
 
@@ -183,7 +185,7 @@
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: #0f3b46;
   width: 1rem;
   height: 1rem;
 }
@@ -194,14 +196,15 @@
   padding-right: 1rem;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #f4f4f4;
   border-radius: 0.5rem;
   outline: none;
+  background-color: white;
 }
 
 .browse-properties-price-input:focus {
   ring: 2px;
-  ring-color: #3b82f6;
+  ring-color: #dd5227;
 }
 
 .browse-properties-filter-buttons {
@@ -213,14 +216,14 @@
 .browse-properties-apply-btn {
   flex: 1;
   padding: 0.5rem 1rem;
-  background-color: #2563eb;
-  color: white;
+  background-color: #dd5227;
+  color: #edeae5;
   border-radius: 0.5rem;
   transition: background-color 0.2s;
 }
 
 .browse-properties-apply-btn:hover {
-  background-color: #1d4ed8;
+  background-color: #c44923;
 }
 
 .browse-properties-apply-btn:disabled {
@@ -230,14 +233,14 @@
 .browse-properties-clear-btn {
   flex: 1;
   padding: 0.5rem 1rem;
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: #0d3c46;
+  color: #edeae5;
   border-radius: 0.5rem;
   transition: background-color 0.2s;
 }
 
 .browse-properties-clear-btn:hover {
-  background-color: #e5e7eb;
+  background-color: #0f3b46;
 }
 
 .browse-properties-clear-btn:disabled {
@@ -253,7 +256,7 @@
 }
 
 .browse-properties-results-text {
-  color: #6b7280;
+  color: #0f3b46;
 }
 
 .browse-properties-pagination-info {
@@ -261,7 +264,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #0f3b46;
 }
 
 /* Loading Spinner */
@@ -277,7 +280,7 @@
   border-radius: 50%;
   width: 3rem;
   height: 3rem;
-  border-bottom: 2px solid #2563eb;
+  border-bottom: 2px solid #dd5227;
 }
 
 @keyframes spin {
@@ -298,19 +301,19 @@
 .browse-properties-empty-icon {
   width: 4rem;
   height: 4rem;
-  color: #9ca3af;
+  color: #0f3b46;
   margin: 0 auto 1rem;
 }
 
 .browse-properties-empty-title {
   font-size: 1.125rem;
   font-weight: 500;
-  color: #111827;
+  color: #0d3c46;
   margin-bottom: 0.5rem;
 }
 
 .browse-properties-empty-text {
-  color: #6b7280;
+  color: #0f3b46;
 }
 
 /* Properties Grid */
@@ -334,16 +337,16 @@
 
 /* Property Card */
 .browse-properties-card {
-  background-color: white;
+  background-color: #edeae5;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px 0 rgba(13, 60, 70, 0.1);
+  border: 1px solid #f4f4f4;
   overflow: hidden;
   transition: box-shadow 0.2s;
 }
 
 .browse-properties-card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(13, 60, 70, 0.2);
 }
 
 .browse-properties-image-container {
@@ -363,8 +366,8 @@
 }
 
 .browse-properties-markup-active {
-  background-color: #059669;
-  color: white;
+  background-color: #dd5227;
+  color: #edeae5;
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
@@ -374,9 +377,8 @@
   position: absolute;
   bottom: 0.75rem;
   left: 0.75rem;
-  background-color: black;
-  background-opacity: 0.5;
-  color: white;
+  background-color: #0d3c46;
+  color: #edeae5;
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
@@ -390,7 +392,7 @@
 .browse-properties-name {
   font-weight: 600;
   font-size: 1.25rem;
-  color: #111827;
+  color: #0d3c46;
   margin-bottom: 0.5rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -399,7 +401,7 @@
 }
 
 .browse-properties-location {
-  color: #6b7280;
+  color: #0f3b46;
   font-size: 0.875rem;
   margin-bottom: 0.75rem;
   display: flex;
@@ -412,6 +414,7 @@
   margin-right: 0.25rem;
   margin-top: 0.125rem;
   flex-shrink: 0;
+  color: #dd5227;
 }
 
 .browse-properties-location-text {
@@ -430,19 +433,19 @@
 
 .browse-properties-type {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #0f3b46;
   text-transform: capitalize;
 }
 
 .browse-properties-price {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #2563eb;
+  color: #dd5227;
 }
 
 /* Platform Info */
 .browse-properties-platform-info {
-  background-color: #f9fafb;
+  background-color: #0d3c46;
   border-radius: 0.5rem;
   padding: 0.75rem;
   margin-bottom: 0.75rem;
@@ -455,16 +458,17 @@
 }
 
 .browse-properties-platform-label {
-  color: #6b7280;
+  color: #edeae5;
 }
 
 .browse-properties-platform-value {
   font-weight: 500;
+  color: #edeae5;
 }
 
 /* Host Info */
 .browse-properties-host-info {
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #f4f4f4;
   padding-top: 0.75rem;
   margin-top: 0.75rem;
 }
@@ -474,7 +478,7 @@
   align-items: center;
   justify-content: between;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #0f3b46;
 }
 
 .browse-properties-host-label {
@@ -501,21 +505,21 @@
 }
 
 .browse-properties-markup-btn-primary {
-  background-color: #2563eb;
-  color: white;
+  background-color: #0d3c46;
+  color: #edeae5;
 }
 
 .browse-properties-markup-btn-primary:hover {
-  background-color: #1d4ed8;
+  background-color: #0f3b46;
 }
 
 .browse-properties-markup-btn-success {
-  background-color: #059669;
-  color: white;
+  background-color: #dd5227;
+  color: #edeae5;
 }
 
 .browse-properties-markup-btn-success:hover {
-  background-color: #047857;
+  background-color: #c44923;
 }
 
 .browse-properties-markup-btn-icon {
@@ -545,31 +549,33 @@
 }
 
 .browse-properties-pagination-btn-active {
-  background-color: #2563eb;
-  color: white;
+  background-color: #dd5227;
+  color: #edeae5;
 }
 
 .browse-properties-pagination-btn-inactive {
-  background-color: white;
-  border: 1px solid #d1d5db;
-  color: #374151;
+  background-color: #edeae5;
+  border: 1px solid #f4f4f4;
+  color: #0d3c46;
 }
 
 .browse-properties-pagination-btn-inactive:hover {
-  background-color: #f9fafb;
+  background-color: #0d3c46;
+  color: #edeae5;
 }
 
 .browse-properties-pagination-btn-disabled {
-  background-color: #f3f4f6;
-  color: #9ca3af;
+  background-color: #0f3b46;
+  color: #edeae5;
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .browse-properties-page-info {
   text-align: center;
   margin-top: 1rem;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #0f3b46;
 }
 
 /* Access Restricted */
@@ -581,7 +587,7 @@
 
 .browse-properties-warning {
   background-color: #fefce8;
-  border: 1px solid #fef08a;
+  border: 1px solid #dd5227;
   border-radius: 0.5rem;
   padding: 1.5rem;
 }
@@ -589,10 +595,10 @@
 .browse-properties-warning-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #92400e;
+  color: #dd5227;
   margin-bottom: 0.5rem;
 }
 
 .browse-properties-warning-text {
-  color: #92400e;
+  color: #0d3c46;
 }

@@ -13,7 +13,7 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
     const [properties, setProperties] = useState([]);
     const [pagination, setPagination] = useState(initialPagination || {});
     const [loading, setLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(initialFilters?.search || '');
     const [filters, setFilters] = useState({
         type: initialFilters?.type || '',
         minPrice: initialFilters?.minPrice || '',
@@ -22,15 +22,26 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
     });
     const [showMarkupModal, setShowMarkupModal] = useState(false);
     const [selectedProperty, setSelectedProperty] = useState(null);
+    const [propertiesWithMarkupStatus, setPropertiesWithMarkupStatus] = useState([]);
 
-    // Initialize properties and pagination
+    // Initialize properties with markup status on component mount and when properties change
     useEffect(() => {
+        let propertiesData = [];
+
         if (Array.isArray(initialProperties)) {
-            setProperties(initialProperties);
+            propertiesData = initialProperties;
         } else if (initialProperties?.data) {
-            setProperties(initialProperties.data);
+            propertiesData = initialProperties.data;
+        }
+
+        if (propertiesData && propertiesData.length > 0) {
+            const propertiesWithStatus = propertiesData.map(property => ({
+                ...property,
+                has_user_markup: property.has_user_markup || false
+            }));
+            setPropertiesWithMarkupStatus(propertiesWithStatus);
         } else {
-            setProperties([]);
+            setPropertiesWithMarkupStatus([]);
         }
 
         if (initialPagination) {
@@ -38,24 +49,50 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
         }
     }, [initialProperties, initialPagination]);
 
-    const handleSearch = () => {
+    // Debounced search effect
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (searchTerm !== initialFilters?.search) {
+                handleFilterChange();
+            }
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm]);
+
+    // Handle filter changes
+    useEffect(() => {
+        handleFilterChange();
+    }, [filters]);
+
+    const handleFilterChange = () => {
         setLoading(true);
+
         router.get(route('markup.browse.properties'), {
             search: searchTerm,
             ...filters
         }, {
-            preserveState: false,
-            onFinish: () => setLoading(false)
+            preserveState: true,
+            onFinish: () => setLoading(false),
         });
     };
 
     const handleAddMarkup = (property) => {
-        setSelectedProperty(property);
+        // Use platform_price for markup calculations instead of amount
+        const propertyWithPlatformPrice = {
+            ...property,
+            // Ensure we're using platform_price for markup calculations
+            platform_price: property.platform_price || property.price_per_night,
+            base_price: property.platform_price || property.price_per_night // Add base_price for clarity
+        };
+
+        setSelectedProperty(propertyWithPlatformPrice);
         setShowMarkupModal(true);
     };
 
     const hasExistingMarkup = (propertyId) => {
-        return properties.find(p => p.id === propertyId)?.has_user_markup || false;
+        const property = propertiesWithMarkupStatus.find(p => p.id === propertyId);
+        return property?.has_user_markup || false;
     };
 
     const clearFilters = () => {
@@ -66,25 +103,22 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
             location: ''
         });
         setSearchTerm('');
-        router.get(route('markup.browse.properties'), {}, {
-            preserveState: false
-        });
     };
 
-    const loadMore = () => {
-        if (pagination.next_page_url && !loading) {
-            setLoading(true);
-            router.get(pagination.next_page_url, {}, {
-                preserveState: true,
-                only: ['properties', 'pagination'],
-                onSuccess: (page) => {
-                    const newProperties = page.props.properties?.data || [];
-                    setProperties(prev => [...prev, ...newProperties]);
-                    setPagination(page.props.pagination || {});
-                },
-                onFinish: () => setLoading(false)
-            });
+    // Update markup status when modal closes (after successful markup addition/update)
+    const handleMarkupModalClose = (success = false) => {
+        if (success && selectedProperty) {
+            // Update the local state to reflect the new markup status
+            setPropertiesWithMarkupStatus(prevProperties =>
+                prevProperties.map(property =>
+                    property.id === selectedProperty.id
+                        ? { ...property, has_user_markup: true }
+                        : property
+                )
+            );
         }
+        setShowMarkupModal(false);
+        setSelectedProperty(null);
     };
 
     const handlePageChange = (url) => {
@@ -95,7 +129,7 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
                 only: ['properties', 'pagination'],
                 onSuccess: (page) => {
                     const newProperties = page.props.properties?.data || [];
-                    setProperties(newProperties);
+                    setPropertiesWithMarkupStatus(newProperties);
                     setPagination(page.props.pagination || {});
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
@@ -154,7 +188,6 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                                     placeholder="Search properties..."
                                     className="browse-properties-input"
                                 />
@@ -182,21 +215,18 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
                                 type="text"
                                 value={filters.location}
                                 onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                                 placeholder="Location..."
                                 className="browse-properties-input"
                             />
                         </div>
 
-                        {/* Search Button */}
+                        {/* Clear Filters */}
                         <div>
                             <button
-                                onClick={handleSearch}
-                                disabled={loading}
-                                className="browse-properties-search-btn"
+                                onClick={clearFilters}
+                                className="browse-properties-clear-btn"
                             >
-                                <Search className="browse-properties-search-btn-icon" />
-                                {loading ? 'Searching...' : 'Search'}
+                                Clear Filters
                             </button>
                         </div>
                     </div>
@@ -204,175 +234,232 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
                     {/* Price Range */}
                     <div className="browse-properties-price-grid">
                         <div>
-                            <label className="browse-properties-price-label">Min Price</label>
+                            <label className="browse-properties-price-label">Min Price (KES)</label>
                             <div className="browse-properties-price-input-container">
                                 <DollarSign className="browse-properties-price-icon" />
                                 <input
                                     type="number"
                                     value={filters.minPrice}
                                     onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-                                    placeholder="Min price"
+                                    placeholder="Min price per night"
                                     className="browse-properties-price-input"
                                 />
                             </div>
                         </div>
                         <div>
-                            <label className="browse-properties-price-label">Max Price</label>
+                            <label className="browse-properties-price-label">Max Price (KES)</label>
                             <div className="browse-properties-price-input-container">
                                 <DollarSign className="browse-properties-price-icon" />
                                 <input
                                     type="number"
                                     value={filters.maxPrice}
                                     onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-                                    placeholder="Max price"
+                                    placeholder="Max price per night"
                                     className="browse-properties-price-input"
                                 />
                             </div>
                         </div>
                         <div className="browse-properties-filter-buttons">
                             <button
-                                onClick={handleSearch}
+                                onClick={handleFilterChange}
                                 disabled={loading}
                                 className="browse-properties-apply-btn"
                             >
-                                {loading ? 'Applying...' : 'Apply Filters'}
-                            </button>
-                            <button
-                                onClick={clearFilters}
-                                disabled={loading}
-                                className="browse-properties-clear-btn"
-                            >
-                                Clear
+                                {loading ? 'Loading ...' : 'Apply Filters'}
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Results Info */}
-                {properties.length > 0 && (
-                    <div className="browse-properties-results-info">
-                        <p className="browse-properties-results-text">
-                            Showing {properties.length} of {pagination.total || properties.length} properties
-                            {pagination.current_page && ` (Page ${pagination.current_page} of ${pagination.last_page})`}
-                        </p>
+                {/* Properties Grid */}
+                {!loading && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                        {propertiesWithMarkupStatus?.length === 0 ? (
+                            <div className="browse-properties-empty">
+                                <Home className="browse-properties-empty-icon" />
+                                <h3 className="browse-properties-empty-title">No properties found</h3>
+                                <p className="browse-properties-empty-text">Try adjusting your search criteria</p>
+                                <button
+                                    onClick={clearFilters}
+                                    className="browse-properties-browse-link mt-4"
+                                >
+                                    Clear All Filters
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="browse-properties-grid p-6">
+                                {propertiesWithMarkupStatus?.map((property) => (
+                                    <div key={property.id} className="browse-properties-card">
+                                        {/* Property Image */}
+                                        <div className="browse-properties-image-container">
+                                            <img
+                                                src={property.primary_image || '/images/placeholder-property.jpg'}
+                                                alt={property.property_name}
+                                                className="browse-properties-image"
+                                                onError={(e) => {
+                                                    e.target.src = '/images/placeholder-property.jpg';
+                                                }}
+                                            />
+                                            {hasExistingMarkup(property.id) && (
+                                                <div className="browse-properties-markup-badge">
+                                                    <span className="browse-properties-markup-active">
+                                                        Your Markup Active
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <div className="browse-properties-type-badge">
+                                                <span>{property.type}</span>
+                                            </div>
+                                        </div>
 
-                        {pagination.last_page > 1 && (
-                            <div className="browse-properties-pagination-info">
-                                <span>Page {pagination.current_page} of {pagination.last_page}</span>
+                                        {/* Property Info */}
+                                        <div className="browse-properties-info">
+                                            <div className="browse-properties-meta mb-2">
+                                                <h3 className="browse-properties-name">
+                                                    {property.property_name}
+                                                </h3>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="browse-properties-price">
+                                                        KES {new Intl.NumberFormat('en-KE').format(property.platform_price || property.price_per_night)}
+                                                        <span className="text-sm text-gray-500 font-normal">/night</span>
+                                                    </span>
+                                                    {property.platform_price && property.platform_price !== property.price_per_night && (
+                                                        <span className="text-xs text-gray-400 line-through">
+                                                            KES {new Intl.NumberFormat('en-KE').format(property.price_per_night)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Location */}
+                                            {property.location && (
+                                                <div className="browse-properties-location mb-3">
+                                                    <MapPin className="browse-properties-location-icon" />
+                                                    <span className="browse-properties-location-text">{property.location}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Property Type */}
+                                            <div className="browse-properties-type-info mb-3">
+                                                <span className="browse-properties-type-tag">{property.type}</span>
+                                            </div>
+
+                                            {/* Host Info */}
+                                            <div className="browse-properties-host-info mb-3">
+                                                <div className="browse-properties-host-row">
+                                                    <span className="browse-properties-host-label">Host:</span>
+                                                    <span>{property.user?.name}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Price Information */}
+                                            <div className="browse-properties-price-info mb-3 p-2 bg-gray-50 rounded text-xs">
+                                                <div className="flex justify-between">
+                                                    <span>Platform Price:</span>
+                                                    <span className="font-medium">
+                                                        KES {new Intl.NumberFormat('en-KE').format(property.platform_price || property.price_per_night)}
+                                                    </span>
+                                                </div>
+                                                {property.platform_charges > 0 && (
+                                                    <div className="flex justify-between text-gray-500">
+                                                        <span>Platform Charges:</span>
+                                                        <span>KES {new Intl.NumberFormat('en-KE').format(property.platform_charges)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Actions */}
+                                            <div className="browse-properties-actions">
+                                                <button
+                                                    onClick={() => handleAddMarkup(property)}
+                                                    className={`browse-properties-markup-btn ${
+                                                        hasExistingMarkup(property.id)
+                                                            ? 'browse-properties-markup-btn-success'
+                                                            : 'browse-properties-markup-btn-primary'
+                                                    }`}
+                                                >
+                                                    <Plus className="browse-properties-markup-btn-icon" />
+                                                    {hasExistingMarkup(property.id) ? 'Update Markup' : 'Add Markup'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* Properties Grid */}
-                {loading && properties.length === 0 ? (
-                    <div className="browse-properties-loading">
-                        <div className="browse-properties-spinner"></div>
-                    </div>
-                ) : properties.length === 0 ? (
-                    <div className="browse-properties-empty">
-                        <Home className="browse-properties-empty-icon" />
-                        <h3 className="browse-properties-empty-title">No properties found</h3>
-                        <p className="browse-properties-empty-text">Try adjusting your search criteria</p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="browse-properties-grid">
-                            {properties.map((property) => (
-                                <div key={property.id} className="browse-properties-card">
-                                    {/* Property Image */}
-                                    <div className="browse-properties-image-container">
-                                        <img
-                                            src={property.primary_image || '/images/placeholder-property.jpg'}
-                                            alt={property.property_name}
-                                            className="browse-properties-image"
-                                            onError={(e) => {
-                                                e.target.src = '/images/placeholder-property.jpg';
-                                            }}
-                                        />
-                                        {hasExistingMarkup(property.id) && (
-                                            <div className="browse-properties-markup-badge">
-                                                <span className="browse-properties-markup-active">
-                                                    Your Markup Active
-                                                </span>
-                                            </div>
-                                        )}
-                                        <div className="browse-properties-type-badge">
-                                            <span>{property.type}</span>
-                                        </div>
-                                    </div>
+                {/* Pagination */}
+                {pagination && pagination.total > pagination.per_page && (
+                    <div className="browse-properties-pagination">
+                        <div className="browse-properties-pagination-links">
+                            {/* Previous Page */}
+                            {pagination.prev_page_url ? (
+                                <Link
+                                    href={pagination.prev_page_url}
+                                    className="browse-properties-pagination-btn browse-properties-pagination-btn-inactive"
+                                    preserveState
+                                >
+                                    Previous
+                                </Link>
+                            ) : (
+                                <span className="browse-properties-pagination-btn browse-properties-pagination-btn-disabled">
+                                    Previous
+                                </span>
+                            )}
 
-                                    {/* Property Info */}
-                                    <div className="browse-properties-info">
-                                        <h3 className="browse-properties-name">
-                                            {property.property_name}
-                                        </h3>
-                                        <p className="browse-properties-location">
-                                            <MapPin className="browse-properties-location-icon" />
-                                            <span className="browse-properties-location-text">{property.location}</span>
-                                        </p>
-                                        <div className="browse-properties-meta">
-                                            <span className="browse-properties-type">{property.type}</span>
-                                            <span className="browse-properties-price">
-                                                KES {new Intl.NumberFormat('en-KE').format(property.price_per_night)}
-                                            </span>
-                                        </div>
-
-                                        {/* Host Info */}
-                                        <div className="browse-properties-host-info">
-                                            <div className="browse-properties-host-row">
-                                                <span className="browse-properties-host-label">Host:</span>
-                                                <span>{property.user?.name}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Actions */}
-                                        <div className="browse-properties-actions">
-                                            <button
-                                                onClick={() => handleAddMarkup(property)}
-                                                className={`browse-properties-markup-btn ${
-                                                    hasExistingMarkup(property.id)
-                                                        ? 'browse-properties-markup-btn-success'
-                                                        : 'browse-properties-markup-btn-primary'
-                                                }`}
-                                            >
-                                                <Plus className="browse-properties-markup-btn-icon" />
-                                                {hasExistingMarkup(property.id) ? 'Update Markup' : 'Add Markup'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Pagination Controls */}
-                        {pagination.last_page > 1 && (
-                            <div className="browse-properties-pagination">
-                                <div className="browse-properties-pagination-links">
-                                    {pagination.links?.map((link, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={() => handlePageChange(link.url)}
-                                            disabled={!link.url || link.active || loading}
+                            {/* Page Numbers */}
+                            {pagination.links?.map((link, index) => (
+                                <React.Fragment key={index}>
+                                    {link.url ? (
+                                        <Link
+                                            href={link.url}
                                             className={`browse-properties-pagination-btn ${
                                                 link.active
                                                     ? 'browse-properties-pagination-btn-active'
-                                                    : link.url
-                                                    ? 'browse-properties-pagination-btn-inactive'
+                                                    : 'browse-properties-pagination-btn-inactive'
+                                            }`}
+                                            preserveState
+                                        >
+                                            {link.label.replace('&laquo;', '').replace('&raquo;', '')}
+                                        </Link>
+                                    ) : (
+                                        <span
+                                            className={`browse-properties-pagination-btn ${
+                                                link.active
+                                                    ? 'browse-properties-pagination-btn-active'
                                                     : 'browse-properties-pagination-btn-disabled'
                                             }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    ))}
-                                </div>
+                                        >
+                                            {link.label.replace('&laquo;', '').replace('&raquo;', '')}
+                                        </span>
+                                    )}
+                                </React.Fragment>
+                            ))}
 
-                                <div className="browse-properties-page-info">
-                                    Page {pagination.current_page} of {pagination.last_page} •
-                                    Total {pagination.total} properties
-                                </div>
-                            </div>
-                        )}
-                    </>
+                            {/* Next Page */}
+                            {pagination.next_page_url ? (
+                                <Link
+                                    href={pagination.next_page_url}
+                                    className="browse-properties-pagination-btn browse-properties-pagination-btn-inactive"
+                                    preserveState
+                                >
+                                    Next
+                                </Link>
+                            ) : (
+                                <span className="browse-properties-pagination-btn browse-properties-pagination-btn-disabled">
+                                    Next
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Page Info */}
+                        <div className="browse-properties-page-info">
+                            Page {pagination.current_page} of {pagination.last_page} •
+                            Total {pagination.total} properties
+                        </div>
+                    </div>
                 )}
             </div>
 
@@ -380,14 +467,12 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
             {showMarkupModal && selectedProperty && (
                 <AddMarkupModal
                     isOpen={showMarkupModal}
-                    onClose={() => {
-                        setShowMarkupModal(false);
-                        setSelectedProperty(null);
-                    }}
+                    onClose={handleMarkupModalClose}
                     item={selectedProperty}
                     itemType="properties"
                     onSuccess={() => {
-                        router.reload({ only: ['properties', 'pagination'] });
+                        handleMarkupModalClose(true);
+                        handleFilterChange(); // Refresh the list
                     }}
                 />
             )}

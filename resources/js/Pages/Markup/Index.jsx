@@ -69,7 +69,7 @@ const MarkupIndex = () => {
     };
 
     const getItemTypeIcon = (type) => {
-        return type === 'App\\Models\\Car' ? <Car className="w-4 h-4" /> : <Home className="w-4 h-4" />;
+        return type === 'App\\Models\\Car' ? <Car className="h-4" /> : <Home className="h-4" />;
     };
 
     const getItemTypeLabel = (type) => {
@@ -154,18 +154,18 @@ const MarkupIndex = () => {
                             >
                                 {mobileFiltersOpen ? (
                                     <>
-                                        <X className="w-4 h-4 mr-2" /> Close Filters
+                                        <X className="h-4 mr-2" /> Close Filters
                                     </>
                                 ) : (
                                     <>
-                                        <Filter className="w-4 h-4 mr-2" /> Filter Markups
+                                        <Filter className="h-4 mr-2" /> Filter Markups
                                     </>
                                 )}
                             </button>
                         </div>
 
                         {/* Filter Buttons */}
-                        <div className={`${mobileFiltersOpen ? 'block' : 'hidden'} lg:block flex flex-wrap gap-2`}>
+                        <div className={`${mobileFiltersOpen ? 'block' : 'hidden'} lg:block flex flex-wrap gap-2 space-x-4 space-y-4`}>
                             <button
                                 onClick={() => setFilter('all')}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -204,14 +204,14 @@ const MarkupIndex = () => {
                                 href={route('properties.index')}
                                 className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                             >
-                                <Home className="w-4 h-4 mr-2" />
+                                <Home className="h-4 mr-2" />
                                 Browse Properties
                             </Link>
                             <Link
                                 href={route('main-cars.index')}
                                 className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
                             >
-                                <Car className="w-4 h-4 mr-2" />
+                                <Car className="h-4 mr-2" />
                                 Browse Cars
                             </Link>
                         </div>
@@ -241,14 +241,14 @@ const MarkupIndex = () => {
                                     href={route('properties.index')}
                                     className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                                 >
-                                    <Home className="w-4 h-4 mr-2" />
+                                    <Home className="h-4 mr-2" />
                                     Browse Properties
                                 </Link>
                                 <Link
                                     href={route('main-cars.index')}
                                     className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                                 >
-                                    <Car className="w-4 h-4 mr-2" />
+                                    <Car className="h-4 mr-2" />
                                     Browse Cars
                                 </Link>
                             </div>
@@ -303,14 +303,14 @@ const MarkupIndex = () => {
                                                 onClick={() => copyToClipboard(markup.markup_link)}
                                                 className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                                             >
-                                                <Copy className="w-4 h-4 mr-2" />
+                                                <Copy className="h-4 mr-2" />
                                                 Copy Link
                                             </button>
                                             <button
                                                 onClick={() => removeMarkup(markup.id)}
                                                 className="inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
                                             >
-                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                <Trash2 className="h-4 mr-2" />
                                                 Remove
                                             </button>
                                         </div>
@@ -336,7 +336,7 @@ const MarkupIndex = () => {
                                                 onClick={() => copyToClipboard(markup.markup_link)}
                                                 className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                                             >
-                                                <Copy className="w-4 h-4" />
+                                                <Copy className="h-4" />
                                             </button>
                                         </div>
                                     </div>

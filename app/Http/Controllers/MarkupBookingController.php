@@ -20,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use App\Services\SmsService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use App\Services\PesapalService;
 
 class MarkupBookingController extends Controller
 {
@@ -201,9 +202,9 @@ class MarkupBookingController extends Controller
     }
 
     /**
-     * Process markup booking - UPDATED with user handling
+     * Process markup booking - UPDATED with Pesapal support
      */
-    public function processMarkupBooking(Request $request, $token, SmsService $smsService)
+    public function processMarkupBooking(Request $request, $token, SmsService $smsService, PesapalService $pesapalService)
     {
         $request->validate([
             'start_date' => 'required|date',
@@ -211,7 +212,8 @@ class MarkupBookingController extends Controller
             'special_requests' => 'nullable|string|max:500',
             'name' => 'required|string|max:255',
             'email' => 'required|email',
-            'phone' => 'required|string',
+            'phone' => 'required_if:payment_method,mpesa|string',
+            'payment_method' => 'required|in:mpesa,pesapal',
         ]);
 
         $markupData = Cache::get("markup_link_{$token}");
@@ -245,8 +247,12 @@ class MarkupBookingController extends Controller
 
             DB::commit();
 
-            // Instead of redirecting to payment.create, initiate M-Pesa payment directly
-            return $this->initiateMarkupPayment($booking, $request->phone, $bookingType, $smsService);
+            // Handle different payment methods
+            if ($request->payment_method === 'mpesa') {
+                return $this->initiateMarkupPayment($booking, $request->phone, $bookingType, $smsService);
+            } elseif ($request->payment_method === 'pesapal') {
+                return $this->initiateMarkupPesapalPayment($booking, $user, $bookingType, $pesapalService);
+            }
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -411,6 +417,115 @@ class MarkupBookingController extends Controller
             return back()
                 ->withInput()
                 ->withErrors(['payment' => 'Payment initiation failed due to a system error.']);
+        }
+    }
+
+    /**
+     * Initiate Pesapal payment for markup booking
+     */
+    private function initiateMarkupPesapalPayment($booking, $user, $bookingType, $pesapalService)
+    {
+        try {
+            $company = Company::first();
+            $finalAmount = ceil($booking->total_price);
+
+            // Prepare order data
+            $orderData = [
+                'id' => $booking->number,
+                'currency' => 'KES',
+                'amount' => $finalAmount,
+                'description' => $bookingType === 'car'
+                    ? 'Car booking for ' . $booking->car->name
+                    : 'Booking for ' . $booking->property->property_name,
+                'callback_url' => $bookingType === 'car'
+                    ? route('pesapal.car.callback')
+                    : route('pesapal.callback'),
+                'cancellation_url' => $bookingType === 'car'
+                    ? route('ride.payment.cancelled', ['booking' => $booking->id])
+                    : route('booking.payment.cancelled', ['booking' => $booking->id]),
+                'notification_id' => config('services.pesapal.ipn_id'),
+                'billing_address' => [
+                    'email_address' => $user->email,
+                    'phone_number' => $user->phone ?? '254700000000',
+                    'country_code' => 'KE',
+                    'first_name' => $user->name,
+                    'middle_name' => '',
+                    'last_name' => '',
+                    'line_1' => 'Nairobi',
+                    'line_2' => '',
+                    'city' => 'Nairobi',
+                    'state' => 'Nairobi',
+                    'postal_code' => '00100',
+                    'zip_code' => '00100'
+                ]
+            ];
+
+            \Log::info('Submitting Pesapal markup order', [
+                'booking_id' => $booking->id,
+                'booking_type' => $bookingType,
+                'order_data' => $orderData
+            ]);
+
+            $orderResponse = $pesapalService->createOrderDirect($orderData);
+
+            \Log::info('Pesapal Markup Order Response', [
+                'booking_id' => $booking->id,
+                'order_response' => $orderResponse
+            ]);
+
+            if (isset($orderResponse['order_tracking_id']) && isset($orderResponse['redirect_url'])) {
+                // Store Pesapal tracking ID in booking
+                $booking->update([
+                    'pesapal_tracking_id' => $orderResponse['order_tracking_id']
+                ]);
+
+                \Log::info('Pesapal markup payment initiated successfully', [
+                    'booking_id' => $booking->id,
+                    'tracking_id' => $orderResponse['order_tracking_id'],
+                    'redirect_url' => $orderResponse['redirect_url']
+                ]);
+
+                // Return Inertia response for redirect
+                return Inertia::render('PaymentRedirect', [
+                    'success' => true,
+                    'redirect_url' => $orderResponse['redirect_url'],
+                    'booking_id' => $booking->id,
+                    'message' => 'Payment initiated successfully',
+                    'payment_method' => 'pesapal',
+                    'booking_type' => $bookingType
+                ]);
+
+            } else {
+                $errorType = $orderResponse['error']['error_type'] ?? 'unknown_error';
+                $errorCode = $orderResponse['error']['code'] ?? 'unknown_code';
+                $errorMessage = $orderResponse['error']['message'] ?? 'Unknown error occurred';
+
+                \Log::error('Pesapal markup order creation failed', [
+                    'error_type' => $errorType,
+                    'error_code' => $errorCode,
+                    'error_message' => $errorMessage,
+                    'full_response' => $orderResponse
+                ]);
+
+                $booking->update([
+                    'status' => 'failed'
+                ]);
+
+                return back()->withErrors([
+                    'payment' => "Pesapal Error [$errorCode]: $errorMessage"
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Pesapal markup payment initiation failed: ' . $e->getMessage());
+
+            $booking->update([
+                'status' => 'failed'
+            ]);
+
+            return back()->withErrors([
+                'payment' => 'Payment initiation failed: ' . $e->getMessage()
+            ]);
         }
     }
 
@@ -718,7 +833,7 @@ class MarkupBookingController extends Controller
             now()->addDays(30)
         );
 
-        return url("/markup-booking/{$markup->markup_token}");
+        return url("/mrk-booking/{$markup->markup_token}");
     }
 
     /**

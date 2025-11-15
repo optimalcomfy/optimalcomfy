@@ -340,7 +340,7 @@ class BookingController extends Controller
 
         $callbackData = [
             'phone' => $phone,
-            'amount' => 1,
+            'amount' => $amount,
             'booking_id' => $booking->id,
             'booking_type' => 'property'
         ];

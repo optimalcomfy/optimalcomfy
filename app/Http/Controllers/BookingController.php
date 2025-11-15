@@ -539,17 +539,6 @@ class BookingController extends Controller
 
     public function extend(Request $request, Booking $booking)
     {
-        // Ensure user is authenticated
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
-        $user = Auth::user();
-
-        // Check if user has permission to extend this booking
-        if ($user->role_id == 3 && $booking->user_id !== $user->id) {
-            return redirect()->back()->with('error', 'You do not have permission to extend this booking.');
-        }
 
         // Load the property with all necessary relationships
         $property = Property::with([

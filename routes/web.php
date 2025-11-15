@@ -108,6 +108,7 @@ Route::get('/api/booking/{booking}/payment-status', [BookingController::class, '
 Route::get('/booking/{booking}/payment/success', [BookingController::class, 'paymentSuccess'])->name('booking.payment.success');
 Route::get('/booking/{booking}/payment/cancelled', [BookingController::class, 'paymentCancelled'])->name('booking.payment.cancelled');
 
+
 Route::get('/ride/{booking}/payment-pending', [CarBookingController::class, 'paymentPending'])->name('ride.payment.pending');
 Route::get('/api/ride/{booking}/payment-status', [CarBookingController::class, 'paymentStatus'])->name('ride.payment.status');
 
@@ -323,6 +324,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/stay-bookings-cancel', [BookingController::class, 'cancel'])->name('stay-bookings.cancel');
     Route::post('/bookings/{booking}/handle-refund', [RefundController::class, 'handleRefund'])->name('bookings.handle-refund');
     Route::post('/bookings/lookup', [BookingController::class, 'lookup'])->name('bookings.lookup');
+    Route::get('/bookings/{booking}/extend', [BookingController::class, 'extend'])->name('bookings.extend');
 
     // Car Booking Management
     Route::get('/car-bookings/export-data', [CarBookingController::class, 'exportData'])->name('car-bookings.exportData');

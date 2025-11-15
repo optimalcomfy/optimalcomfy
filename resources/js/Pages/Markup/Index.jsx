@@ -1,9 +1,11 @@
+// In your MarkupIndex component
 import React, { useState, useEffect } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { Copy, Trash2, Plus, Eye, Car, Home, Filter, X, Loader2 } from 'lucide-react';
+import { Copy, Trash2, Plus, Eye, Car, Home, Filter, X, Loader2, Share2, User, ExternalLink } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import MarkupShareModal from '@/Components/MarkupShareModal';
 
 const MarkupIndex = () => {
     const { auth } = usePage().props;
@@ -14,8 +16,9 @@ const MarkupIndex = () => {
         total_bookings: 0
     });
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('all'); // all, cars, properties
+    const [filter, setFilter] = useState('all');
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+    const [shareModal, setShareModal] = useState({ visible: false, markup: null });
 
     useEffect(() => {
         fetchMarkups();
@@ -24,6 +27,7 @@ const MarkupIndex = () => {
 
     const fetchMarkups = async () => {
         try {
+            setLoading(true);
             const response = await axios.get(route('markup.user.markups'), {
                 params: { type: filter === 'all' ? null : filter }
             });
@@ -68,6 +72,14 @@ const MarkupIndex = () => {
         }
     };
 
+    const openShareModal = (markup) => {
+        setShareModal({ visible: true, markup });
+    };
+
+    const closeShareModal = () => {
+        setShareModal({ visible: false, markup: null });
+    };
+
     const getItemTypeIcon = (type) => {
         return type === 'App\\Models\\Car' ? <Car className="h-4" /> : <Home className="h-4" />;
     };
@@ -75,6 +87,24 @@ const MarkupIndex = () => {
     const getItemTypeLabel = (type) => {
         return type === 'App\\Models\\Car' ? 'Car' : 'Property';
     };
+
+    // Function to open catalog in new tab
+    const openCatalog = () => {
+        window.open(`/host/${auth?.user?.id}/catalog`, '_blank');
+    };
+
+    // Function to copy catalog link to clipboard
+    const copyCatalogLink = () => {
+        const catalogLink = `${window.location.origin}/host/${auth?.user?.id}/catalog`;
+        copyToClipboard(catalogLink);
+    };
+
+    const filteredMarkups = markups.filter(markup => {
+        if (filter === 'all') return true;
+        if (filter === 'cars') return markup.type === 'App\\Models\\Car';
+        if (filter === 'properties') return markup.type === 'App\\Models\\Property';
+        return true;
+    });
 
     if (!auth.user?.can_add_markup) {
         return (
@@ -92,17 +122,17 @@ const MarkupIndex = () => {
         );
     }
 
-    const filteredMarkups = markups.filter(markup => {
-        if (filter === 'all') return true;
-        if (filter === 'cars') return markup.type === 'App\\Models\\Car';
-        if (filter === 'properties') return markup.type === 'App\\Models\\Property';
-        return true;
-    });
-
     return (
         <Layout>
             <Head title="My Markups" />
             <ToastContainer position="top-right" autoClose={3000} />
+
+            {/* Share Modal */}
+            <MarkupShareModal
+                markup={shareModal.markup}
+                visible={shareModal.visible}
+                onHide={closeShareModal}
+            />
 
             <div className="max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
                 {/* Header */}
@@ -143,6 +173,36 @@ const MarkupIndex = () => {
                     </div>
                 </div>
 
+                <div className="mb-8 bg-blue-50 rounded-lg border border-blue-200 p-6">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                                Share Your Complete Catalog
+                            </h3>
+                            <p className="text-blue-700 text-sm">
+                                Share your entire collection of offers with clients using your catalog link.
+                                This shows all your properties and cars in one beautiful page.
+                            </p>
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                            <button
+                                onClick={openCatalog}
+                                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                            >
+                                <ExternalLink className="h-4 mr-2" />
+                                View Catalog
+                            </button>
+                            <button
+                                onClick={copyCatalogLink}
+                                className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                            >
+                                <Copy className="h-4 mr-2" />
+                                Copy Catalog Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Filters and Actions */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -165,7 +225,7 @@ const MarkupIndex = () => {
                         </div>
 
                         {/* Filter Buttons */}
-                        <div className={`${mobileFiltersOpen ? 'block' : 'hidden'} lg:block flex flex-wrap gap-2 space-x-4 space-y-4`}>
+                        <div className={`${mobileFiltersOpen ? 'block' : 'hidden'} lg:block flex flex-wrap gap-2 space-x-2 space-y-2`}>
                             <button
                                 onClick={() => setFilter('all')}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -198,22 +258,43 @@ const MarkupIndex = () => {
                             </button>
                         </div>
 
-                        {/* Browse Links */}
-                        <div className="flex gap-3">
-                            <Link
-                                href={route('properties.index')}
-                                className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-                            >
-                                <Home className="h-4 mr-2" />
-                                Browse Properties
-                            </Link>
-                            <Link
-                                href={route('main-cars.index')}
-                                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
-                            >
-                                <Car className="h-4 mr-2" />
-                                Browse Cars
-                            </Link>
+                        {/* Catalog and Browse Links */}
+                        <div className="flex gap-3 flex-col lg:flex-row">
+                            {/* Catalog Options */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={openCatalog}
+                                    className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+                                >
+                                    <ExternalLink className="h-4 mr-2" />
+                                    View Catalog
+                                </button>
+                                <button
+                                    onClick={copyCatalogLink}
+                                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                                >
+                                    <Copy className="h-4 mr-2" />
+                                    Copy Catalog Link
+                                </button>
+                            </div>
+
+                            {/* Browse Links */}
+                            <div className="flex gap-2">
+                                <Link
+                                    href={route('properties.index')}
+                                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                                >
+                                    <Home className="h-4 mr-2" />
+                                    Browse Properties
+                                </Link>
+                                <Link
+                                    href={route('main-cars.index')}
+                                    className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+                                >
+                                    <Car className="h-4 mr-2" />
+                                    Browse Cars
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -236,7 +317,7 @@ const MarkupIndex = () => {
                                     ? "You haven't added any markups yet. Browse properties or cars to add your markup."
                                     : `No ${filter} markups found.`}
                             </p>
-                            <div className="flex justify-center gap-3">
+                            <div className="flex flex-col lg:flex-row justify-center gap-3">
                                 <Link
                                     href={route('properties.index')}
                                     className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
@@ -259,7 +340,7 @@ const MarkupIndex = () => {
                                 <div key={markup.id} className="p-6 hover:bg-gray-50 transition-colors">
                                     <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                                         {/* Item Info */}
-                                        <div className="flex gap-4 flex-1">
+                                        <div className="flex flex-col lg:flex-row gap-4 flex-1">
                                             <img
                                                 src={markup.item.image || '/images/placeholder.jpg'}
                                                 alt={markup.item.name}
@@ -272,7 +353,7 @@ const MarkupIndex = () => {
                                                         {getItemTypeLabel(markup.type)}
                                                     </span>
                                                 </div>
-                                                <h3 className="font-semibold text-gray-900 truncate">
+                                                <h3 className="font-semibold text-gray-900">
                                                     {markup.item.name}
                                                 </h3>
                                                 <div className="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
@@ -300,11 +381,11 @@ const MarkupIndex = () => {
                                         {/* Actions */}
                                         <div className="flex flex-col sm:flex-row lg:flex-col gap-2 lg:items-end">
                                             <button
-                                                onClick={() => copyToClipboard(markup.markup_link)}
+                                                onClick={() => openShareModal(markup)}
                                                 className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                                             >
-                                                <Copy className="h-4 mr-2" />
-                                                Copy Link
+                                                <Share2 className="h-4 mr-2" />
+                                                Share
                                             </button>
                                             <button
                                                 onClick={() => removeMarkup(markup.id)}
@@ -324,7 +405,7 @@ const MarkupIndex = () => {
                                                 Share this link with your clients
                                             </span>
                                         </div>
-                                        <div className="flex gap-2 mt-1">
+                                        <div className="flex gap-2 mt-1 flex-col lg:flex-row">
                                             <input
                                                 type="text"
                                                 value={markup.markup_link}
@@ -332,12 +413,31 @@ const MarkupIndex = () => {
                                                 className="flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 onClick={(e) => e.target.select()}
                                             />
-                                            <button
-                                                onClick={() => copyToClipboard(markup.markup_link)}
-                                                className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-                                            >
-                                                <Copy className="h-4" />
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => copyToClipboard(markup.markup_link)}
+                                                    className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-2"
+                                                >
+                                                    <Copy className="h-4" />
+                                                    Copy
+                                                </button>
+                                                <a
+                                                    href={markup.markup_link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm flex items-center gap-2"
+                                                >
+                                                    <ExternalLink className="h-4" />
+                                                    Open
+                                                </a>
+                                                <button
+                                                    onClick={() => openShareModal(markup)}
+                                                    className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm flex items-center gap-2"
+                                                >
+                                                    <Share2 className="h-4" />
+                                                    Share
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

@@ -387,6 +387,9 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/pesapal/car-callback', [CarBookingController::class, 'handleCarPesapalCallback'])->name('pesapal.car.callback');
 
 
+// routes/web.php
+Route::get('/host/{user}/catalog', [MarkupBookingController::class, 'showCatalog'])->name('markup.catalog');
+
 // UI Kit Routes
 Route::get('/uikit/button', function () {
     return Inertia::render('main/uikit/button/page');

@@ -836,6 +836,74 @@ class MarkupBookingController extends Controller
         return url("/mrk-booking/{$markup->markup_token}");
     }
 
+    // App\Http\Controllers\MarkupBookingController.php
+
+    /**
+     * Show host catalog page
+     */
+    public function showCatalog(User $user)
+    {
+        // Get active markups for this host
+        $markups = Markup::with(['markupable'])
+            ->where('user_id', $user->id)
+            ->active()
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($markup) {
+                $item = $markup->markupable;
+
+                return [
+                    'id' => $markup->id,
+                    'type' => $markup->markupable_type,
+                    'item' => [
+                        'id' => $item->id,
+                        'name' => $item->name ?? $item->property_name,
+                        'original_amount' => $markup->original_amount,
+                        'final_amount' => $markup->final_amount,
+                        'image' => $this->getItemImage($item),
+                        'location' => $item->location ?? $item->location_address,
+                        'features' => $this->getItemFeatures($item),
+                        'rating' => $item->rating ?? null,
+                    ],
+                    'markup_link' => $this->generateMarkupLink($markup),
+                    'created_at' => $markup->created_at->format('Y-m-d H:i:s'),
+                ];
+            });
+
+        return Inertia::render('Markup/MarkupCatalog', [
+            'host' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'profile_picture' => $user->profile_picture,
+                'bio' => $user->bio,
+                'ristay_verified' => $user->ristay_verified,
+            ],
+            'markups' => $markups,
+        ]);
+    }
+
+    /**
+     * Get item features for display
+     */
+    private function getItemFeatures($item)
+    {
+        $features = [];
+
+        if ($item instanceof \App\Models\Car) {
+            if ($item->seats) $features[] = $item->seats . ' seats';
+            if ($item->transmission) $features[] = $item->transmission;
+            if ($item->fuel_type) $features[] = $item->fuel_type;
+        } elseif ($item instanceof \App\Models\Property) {
+            if ($item->type) $features[] = $item->type;
+            if ($item->bedrooms) $features[] = $item->bedrooms . ' bedrooms';
+            if ($item->bathrooms) $features[] = $item->bathrooms . ' bathrooms';
+        }
+
+        return $features;
+    }
+
     /**
      * Browse properties for markup
      */

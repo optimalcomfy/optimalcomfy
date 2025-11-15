@@ -438,6 +438,10 @@ class BookingController extends Controller
                     'full_response' => $orderResponse
                 ]);
 
+                $booking->update([
+                    'checked_in' => null
+                ]);
+
                 // Return Inertia response for error
                 return back()->withErrors([
                     'payment' => "Pesapal Error [$errorCode]: $errorMessage"
@@ -447,7 +451,10 @@ class BookingController extends Controller
         } catch (\Exception $e) {
             Log::error('Pesapal payment initiation failed: ' . $e->getMessage());
 
-            $booking->update(['status' => 'failed']);
+            $booking->update([
+                'status' => 'failed',
+                'checked_in' => null
+            ]);
 
             return back()->withErrors([
                 'payment' => 'Payment initiation failed: ' . $e->getMessage()
@@ -1260,7 +1267,10 @@ class BookingController extends Controller
                 $this->sendBookingConfirmationSms($booking, 'confirmed', $smsService);
 
             } else {
-                $booking->update(['status' => 'failed']);
+                $booking->update([
+                    'status' => 'failed',
+                    'checked_in'=> null
+                ]);
                 // Send payment failure SMS
                 $this->sendPaymentFailureSms($booking, $resultDesc, $smsService);
                 Log::error('Payment failed', [

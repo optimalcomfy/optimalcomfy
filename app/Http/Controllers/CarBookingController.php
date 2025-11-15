@@ -315,6 +315,7 @@ class CarBookingController extends Controller
             'total_price'     => $request->total_price,
             'pickup_location' => $request->pickup_location,
             'dropoff_location'=> $request->pickup_location,
+            'checked_in' => $request->is_extension ? now() : null,
             'status'          => 'pending',
             'special_requests'=> $request->special_requests,
             'referral_code'   => $request->referral_code,
@@ -343,7 +344,10 @@ class CarBookingController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Payment initiation failed: ' . $e->getMessage());
-            $booking->update(['status' => 'failed']);
+            $booking->update([
+                'status' => 'failed',
+                'checked_in' => null
+            ]);
 
             // Send payment failure SMS
             $this->sendCarPaymentFailureSms($booking, $e->getMessage(), $smsService);
@@ -472,12 +476,44 @@ class CarBookingController extends Controller
         } catch (\Exception $e) {
             \Log::error('Pesapal car payment initiation failed: ' . $e->getMessage());
 
-            $booking->update(['status' => 'failed']);
+            $booking->update([
+                'status' => 'failed',
+                'checked_in' => null
+            ]);
 
             return back()->withErrors([
                 'payment' => 'Payment initiation failed: ' . $e->getMessage()
             ]);
         }
+    }
+
+    public function extend(Request $request, CarBooking $carBooking)
+    {
+        // Load the car with all necessary relationships
+        $car = Car::with([
+            'carFeatures.feature',
+            'initialGallery',
+            'user',
+            'bookings',
+            'category'
+        ])->findOrFail($carBooking->car_id);
+
+        // Get the original booking's end_date for extension start
+        $extensionStartDate = $carBooking->end_date;
+
+        return Inertia::render('CarExtendBooking', [
+            'car' => $car,
+            'auth' => ['user' => Auth::user()],
+            'company' => Company::first(),
+            // Pass the extension parameters to pre-fill the form
+            'extension_data' => [
+                'booking_id' => $carBooking->id,
+                'start_date' => $extensionStartDate, // Use end_date as the start for extension
+                'end_date' => $request->end_date ?? '', // Allow empty for user to select
+                'car_id' => $request->car_id ?? $carBooking->car_id,
+                'is_extension' => true
+            ]
+        ]);
     }
 
     /**
@@ -857,7 +893,10 @@ class CarBookingController extends Controller
 
             } else {
                 // Payment failed
-                $booking->update(['status' => 'failed']);
+                $booking->update([
+                    'status' => 'failed',
+                    'checked_in' => null
+                ]);
 
                 // Send payment failure SMS
                 $this->sendCarPaymentFailureSms($booking, $resultDesc, $smsService);

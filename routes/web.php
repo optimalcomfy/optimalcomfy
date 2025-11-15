@@ -332,6 +332,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/car-bookings/add', [CarBookingController::class, 'add'])->name('car-bookings.add');
     Route::put('/car-bookings/{booking}/cancel', [CarBookingController::class, 'cancel'])->name('car-bookings.cancel');
     Route::post('/car-bookings/{car_booking}/refund', [CarRefundController::class, 'handleRefund'])->name('car-bookings.handle-refund');
+    // In your car booking routes section
+    Route::get('/car-bookings/{car_booking}/extend', [CarBookingController::class, 'extend'])->name('car-bookings.extend');
 
     // Food & Order Management
     Route::resource('foods', FoodController::class);

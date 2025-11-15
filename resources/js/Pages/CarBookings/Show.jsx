@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { FaCalendarAlt, FaMapMarkerAlt, FaEye, FaUser, FaCar, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaEye, FaUser, FaCar, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaSignInAlt, FaSignOutAlt, FaCalendarPlus } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const CarBookingShow = () => {
@@ -584,11 +584,39 @@ const CarBookingShow = () => {
     });
   };
 
+  const handleExtendRental = () => {
+    if (!booking?.id) {
+      Swal.fire('Error', 'Booking information is not available', 'error');
+      return;
+    }
+
+    // Format the date properly
+    const formatDate = (dateString) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toISOString();
+    };
+
+    const params = new URLSearchParams({
+      start_date: formatDate(booking.end_date) || '',
+      end_date: '', // Explicitly set as empty string
+      car_id: booking.car_id || ''
+    });
+
+    // Use the correct route name for car booking extension
+    const url = route('car-bookings.extend', {
+      car_booking: booking.id,
+      ...Object.fromEntries(params)
+    });
+
+    router.visit(url);
+  };
+
   return (
     <Layout>
       <div className="max-w-7xl p-4">
         {/* Header with back button */}
-        <div className="flex items-center mb-6">
+        <div className="flex gap-4 items-center mb-6">
           {roleId !== 4 &&
           <Link
             href={route('car-bookings.index')}
@@ -597,6 +625,15 @@ const CarBookingShow = () => {
             <FaArrowLeft className="mr-2" /> Back to Car Bookings
           </Link>}
           <h1 className="text-3xl font-bold text-gray-800">Car Rental Details</h1>
+            {booking.checked_in && !booking.checked_out && booking.status !== 'Cancelled' && booking.status !== 'failed' && (
+                <button
+                    onClick={handleExtendRental}
+                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                >
+                    <FaCalendarPlus className="mr-2" />
+                    Extend Rental
+                </button>
+            )}
         </div>
 
         {/* Status banner with check-in/out buttons */}
@@ -608,7 +645,7 @@ const CarBookingShow = () => {
           <div className="flex justify-between items-center">
             <div className="flex">
               <div className="flex-shrink-0">
-                <FaCheckCircle className={`h-5 w-5 ${
+                <FaCheckCircle className={`h-5 ${
                   bookingStatus === 'checked_in' ? 'text-blue-500' :
                   bookingStatus === 'checked_out' ? 'text-purple-500' :
                   'text-green-500'
@@ -798,7 +835,7 @@ const CarBookingShow = () => {
               <div className="mt-6 p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
                     </svg>
                   </div>
@@ -826,7 +863,7 @@ const CarBookingShow = () => {
                       <div className="relative flex space-x-3">
                         <div>
                           <span className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
-                            <svg className="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <svg className="h-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </span>
@@ -847,7 +884,7 @@ const CarBookingShow = () => {
                         <div className="relative flex space-x-3">
                           <div>
                             <span className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
-                              <FaSignInAlt className="h-5 w-5 text-white" />
+                              <FaSignInAlt className="h-5 text-white" />
                             </span>
                           </div>
                           <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
@@ -866,7 +903,7 @@ const CarBookingShow = () => {
                         <div className="relative flex space-x-3">
                           <div>
                             <span className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center ring-8 ring-white">
-                              <FaSignOutAlt className="h-5 w-5 text-white" />
+                              <FaSignOutAlt className="h-5 text-white" />
                             </span>
                           </div>
                           <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">

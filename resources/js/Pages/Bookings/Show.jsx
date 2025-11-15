@@ -715,15 +715,15 @@ const BookingShow = () => {
                   </p>
                 )}
               </div>
-            {booking.checked_in && !booking.checked_out && booking.status !== 'Cancelled' && booking.status !== 'failed' && (
-                <button
-                    onClick={handleExtendStay}
-                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                >
-                    <FaCalendarPlus className="mr-2" />
-                    Extend Stay
-                </button>
-            )}
+                {booking.checked_in && !booking.checked_out && booking.status !== 'Cancelled' && booking.status !== 'failed' && (
+                    <button
+                        onClick={handleExtendStay}
+                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                    >
+                        <FaCalendarPlus className="mr-2" />
+                        Extend Stay
+                    </button>
+                )}
             </div>
             {roleId !== 3 &&
             <div className="flex space-x-2">

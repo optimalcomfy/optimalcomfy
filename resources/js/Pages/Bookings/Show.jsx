@@ -646,7 +646,7 @@ const BookingShow = () => {
     });
   };
 
-   const handleExtendStay = () => {
+    const handleExtendStay = () => {
         if (!booking?.id) {
             Swal.fire('Error', 'Booking information is not available', 'error');
             return;
@@ -665,7 +665,12 @@ const BookingShow = () => {
             variation_id: booking.variation_id || '' // Explicitly set as empty string instead of undefined
         });
 
-        const url = `/bookings/${booking.id}/extend?${params.toString()}`;
+        // Use the correct route name
+        const url = route('bookings.extend', {
+            booking: booking.id,
+            ...Object.fromEntries(params)
+        });
+
         router.visit(url);
     };
 

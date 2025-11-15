@@ -551,26 +551,6 @@ class BookingController extends Controller
             return redirect()->back()->with('error', 'You do not have permission to extend this booking.');
         }
 
-        // Validate only the parameters that are provided and not empty
-        $validationRules = [];
-
-        if ($request->has('check_in_date') && !empty($request->check_in_date)) {
-            $validationRules['check_in_date'] = 'required|date';
-        }
-
-        if ($request->has('check_out_date') && !empty($request->check_out_date)) {
-            $validationRules['check_out_date'] = 'required|date|after:check_in_date';
-        }
-
-        if ($request->has('variation_id') && !empty($request->variation_id)) {
-            $validationRules['variation_id'] = 'nullable|exists:variations,id';
-        }
-
-        // Only validate if there are rules to validate
-        if (!empty($validationRules)) {
-            $request->validate($validationRules);
-        }
-
         // Load the property with all necessary relationships
         $property = Property::with([
             'propertyAmenities',
@@ -582,6 +562,9 @@ class BookingController extends Controller
             'variations'
         ])->findOrFail($booking->property_id);
 
+        // Get the original booking's check_out_date for extension start
+        $extensionStartDate = $booking->check_out_date;
+
         return Inertia::render('PropertyExtendBooking', [
             'property' => $property,
             'auth' => ['user' => Auth::user()],
@@ -589,9 +572,9 @@ class BookingController extends Controller
             // Pass the extension parameters to pre-fill the form
             'extension_data' => [
                 'booking_id' => $booking->id,
-                'check_in_date' => $booking->check_in_date,
-                'check_out_date' => $booking->check_out_date,
-                'variation_id' => $request->variation_id,
+                'check_in_date' => $extensionStartDate, // Use check_out_date as the start for extension
+                'check_out_date' => $request->check_out_date ?? '', // Allow empty for user to select
+                'variation_id' => $request->variation_id ?? $booking->variation_id,
                 'is_extension' => true
             ]
         ]);

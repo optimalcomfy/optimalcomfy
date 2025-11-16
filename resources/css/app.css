@@ -193,3 +193,8 @@ body {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+
+.swal2-actions {
+    gap: 20px;
+}

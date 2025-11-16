@@ -211,8 +211,17 @@ class BookingController extends Controller
 
     public function handleRefund(Request $request, Booking $booking, SmsService $smsService)
     {
-        // Calculate maximum refundable amount
+        // Load payment and refund relationships
+        $booking->load(['payment', 'refunds']);
+
+        // Calculate maximum refundable amount based on actual payments
         $maxRefundable = $booking->max_refundable_amount;
+
+        // Get payment summary for validation
+        $paymentSummary = $booking->payment_summary;
+        $actualAmountPaid = $paymentSummary['actual_amount_paid'];
+        $totalRefunded = $paymentSummary['total_refunded'];
+        $remainingRefundable = $paymentSummary['remaining_refundable'];
 
         $request->validate([
             'action' => 'required|in:approve,reject',
@@ -220,28 +229,40 @@ class BookingController extends Controller
             'refund_amount' => [
                 'required_if:action,approve',
                 'numeric',
-                'min:0',
+                'min:0.01',
                 'max:' . $maxRefundable,
             ],
         ], [
-            'refund_amount.max' => 'Refund amount cannot exceed the maximum refundable amount of KES ' . number_format($maxRefundable, 2),
+            'refund_amount.max' => 'Refund amount cannot exceed the remaining refundable amount of KES ' . number_format($maxRefundable, 2),
+            'refund_amount.min' => 'Refund amount must be at least KES 0.01',
         ]);
 
-        // Double-check the amount server-side (important security measure)
-        if ($request->action === 'approve' && $request->refund_amount > $maxRefundable) {
-            return redirect()->back()->withErrors([
-                'refund_amount' => 'Refund amount cannot exceed the maximum refundable amount of KES ' . number_format($maxRefundable, 2)
-            ]);
-        }
-
+        // Additional server-side validation
         if ($request->action === 'approve') {
-            // Check if refund amount is reasonable
-            if ($request->refund_amount <= 0) {
+            // Check if any payment was actually made
+            if ($actualAmountPaid <= 0) {
                 return redirect()->back()->withErrors([
-                    'refund_amount' => 'Refund amount must be greater than 0'
+                    'refund_amount' => 'Cannot process refund - no successful payment was made for this booking.'
                 ]);
             }
 
+            // Check if refund amount exceeds remaining refundable amount
+            if ($request->refund_amount > $remainingRefundable) {
+                return redirect()->back()->withErrors([
+                    'refund_amount' => 'Refund amount cannot exceed the remaining refundable amount of KES ' . number_format($remainingRefundable, 2)
+                ]);
+            }
+
+            // Final security check
+            $newTotalRefunded = $totalRefunded + $request->refund_amount;
+            if ($newTotalRefunded > $actualAmountPaid) {
+                return redirect()->back()->withErrors([
+                    'refund_amount' => 'This refund would exceed the total amount paid. Maximum additional refund: KES ' . number_format($remainingRefundable, 2)
+                ]);
+            }
+        }
+
+        if ($request->action === 'approve') {
             $booking->update([
                 'refund_approval' => 'approved',
                 'refund_amount' => $request->refund_amount,
@@ -885,12 +906,14 @@ class BookingController extends Controller
             'property.initialGallery',
             'property.PropertyServices',
             'property.user',
-            'refunds'
+            'refunds',
+            'payment' // Load the payment relationship
         ]);
 
         return Inertia::render('Bookings/Show', [
             'booking' => $booking,
             'max_refundable_amount' => $booking->max_refundable_amount,
+            'payment_summary' => $booking->payment_summary, // Pass payment summary to frontend
         ]);
     }
 

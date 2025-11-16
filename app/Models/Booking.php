@@ -88,43 +88,91 @@ class Booking extends Model
             return 0;
         }
 
-        // If booking is cancelled but was already checked in
-        if ($this->status === 'Cancelled' && $this->checked_in) {
+        // Get the actual payment record
+        $payment = $this->payment;
+
+        // If no payment was made or payment failed, no refund possible
+        if (!$payment || $payment->status !== 'completed') {
             return 0;
         }
 
-        // If checked in, calculate based on nights stayed
-        if ($this->checked_in) {
+        $actualAmountPaid = $payment->amount;
+
+        // Get total amount already refunded
+        $totalRefunded = $this->refunds()->sum('amount');
+
+        // Calculate remaining refundable amount
+        $remainingRefundable = $actualAmountPaid - $totalRefunded;
+
+        // If already fully refunded, no more refunds
+        if ($remainingRefundable <= 0) {
+            return 0;
+        }
+
+        // If booking was never checked in (cancelled before check-in)
+        if (!$this->checked_in) {
+            $checkIn = Carbon::parse($this->check_in_date);
+            $cancelledAt = $this->cancelled_at ? Carbon::parse($this->cancelled_at) : Carbon::now();
+
+            // Calculate hours between cancellation and check-in
+            $hoursUntilCheckIn = $checkIn->diffInHours($cancelledAt, false);
+
+            // If cancelled AFTER check-in time, allow full refund (guest never showed up)
+            if ($hoursUntilCheckIn > 0) {
+                return $remainingRefundable;
+            }
+
+            // If cancellation is within 24 hours BEFORE check-in, no refund
+            if ($hoursUntilCheckIn >= -24) {
+                return 0;
+            }
+
+            // Full refund available for cancellations more than 24 hours before check-in
+            return $remainingRefundable;
+        }
+
+        // If booking was checked in but then cancelled
+        if ($this->checked_in && $this->status === 'Cancelled') {
             $checkIn = Carbon::parse($this->check_in_date);
             $checkOut = Carbon::parse($this->check_out_date);
-            $today = Carbon::now();
+            $cancelledAt = $this->cancelled_at ? Carbon::parse($this->cancelled_at) : Carbon::now();
 
             $totalNights = $checkOut->diffInDays($checkIn);
-            $nightsStayed = $today->diffInDays($checkIn);
+            $nightsStayed = $cancelledAt->diffInDays($checkIn);
 
             // If more than 50% completed, no refund
             if ($nightsStayed >= ceil($totalNights / 2)) {
                 return 0;
             }
 
-            // Calculate refund for remaining nights
-            $nightlyRate = $this->total_price / $totalNights;
-            $remainingNights = $totalNights - $nightsStayed;
+            // Calculate refund based on unused nights
+            $unusedNights = $totalNights - $nightsStayed;
+            $refundPercentage = $unusedNights / $totalNights;
 
-            return max(0, $remainingNights * $nightlyRate);
+            return round($remainingRefundable * $refundPercentage, 2);
         }
 
-        // If not checked in yet, check cancellation time
-        $checkIn = Carbon::parse($this->check_in_date);
-        $daysUntilCheckIn = Carbon::now()->diffInDays($checkIn, false);
+        // Default case - return remaining refundable amount
+        return $remainingRefundable;
+    }
 
-        // If cancellation is within 24 hours of check-in, no refund
-        if ($daysUntilCheckIn <= 1) {
-            return 0;
-        }
+    // Helper method to get payment summary
+    public function getPaymentSummaryAttribute()
+    {
+        $payment = $this->payment;
+        $actualAmountPaid = $payment && $payment->status === 'completed' ? $payment->amount : 0;
+        $totalRefunded = $this->refunds()->sum('amount');
+        $remainingRefundable = max(0, $actualAmountPaid - $totalRefunded);
 
-        // Full refund available for cancelled bookings that haven't started
-        return $this->total_price;
+        return [
+            'actual_amount_paid' => $actualAmountPaid,
+            'total_refunded' => $totalRefunded,
+            'remaining_refundable' => $remainingRefundable,
+            'payment_status' => $payment ? $payment->status : 'no_payment',
+            'payment_method' => $payment ? $payment->method : null,
+            'payment_date' => $payment ? $payment->created_at : null,
+            'refunds' => $this->refunds()->get(['amount', 'created_at'])
+        ];
     }
 
     /**

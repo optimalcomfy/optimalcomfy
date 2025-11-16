@@ -9,6 +9,7 @@ use App\Mail\RefundNotification;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Models\Refund;
 
 class RefundController extends Controller
 {
@@ -33,13 +34,13 @@ class RefundController extends Controller
                 $phone = $booking->user->phone;
                 $amount = $request->refund_amount;
                 $reference = $booking->id . '_' . now()->timestamp;
-                
+
                 $response = $this->mpesaRefundService->processRefund(
-                    $phone, 
-                    $amount, 
+                    $phone,
+                    $amount,
                     $reference
                 );
-                
+
                 if (isset($response['error'])) {
                     throw new \Exception($response['error']);
                 }
@@ -51,13 +52,20 @@ class RefundController extends Controller
                     'non_refund_reason' => null,
                     'refund_status' => 'processing',
                 ]);
-                
+
+
+                Refund::create([
+                    "amount" => $amount,
+                    "booking_id" => $booking->id,
+                    "car_booking_id" => null,
+                ]);
+
                 // Notify user
                 Mail::to($booking->user->email)
                     ->send(new RefundNotification($booking, 'approved'));
-                
+
                 DB::commit();
-                
+
                 return redirect()->back()->with('success', 'Refund approved and processing initiated.');
             } else {
                 $booking->update([
@@ -70,14 +78,14 @@ class RefundController extends Controller
                 // Notify user
                 Mail::to($booking->user->email)
                     ->send(new RefundNotification($booking, 'rejected', $request->reason));
-                
+
                 DB::commit();
-                
+
                 return redirect()->back()->with('success', 'Refund rejected successfully.');
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return redirect()->back()
                 ->withErrors(['error' => 'Refund processing failed: ' . $e->getMessage()]);
         }
@@ -85,43 +93,43 @@ class RefundController extends Controller
 
     public function handleRefundCallback(Request $request)
     {
-    
+
         $reference = $request->input('reference');
         if (!$reference) {
             return response()->json(['message' => 'Reference missing'], 400);
         }
-    
+
         // Extract booking ID from reference (bookingid_timestamp)
         $parts = explode('_', $reference);
         if (count($parts) < 2) {
             return response()->json(['message' => 'Invalid reference'], 400);
         }
-        
+
         $bookingId = $parts[0];
         $booking = Booking::find($bookingId);
-        
+
         if (!$booking) {
             return response()->json(['message' => 'Booking not found'], 404);
         }
-    
+
         $result = $request->json('Result');
         $resultCode = $result['ResultCode'] ?? null;
         $resultDesc = $result['ResultDesc'] ?? 'No description';
-    
+
         if ($resultCode == 0 || $resultCode == '0') {
             $booking->update([
                 'refund_status' => 'completed',
                 'refund_completed_at' => now(),
             ]);
-            
+
         } else {
             $booking->update([
                 'refund_status' => 'failed',
                 'refund_failed_reason' => $resultDesc,
             ]);
-        
+
         }
-    
+
         return response()->json(['message' => 'Callback processed'], 200);
     }
 }

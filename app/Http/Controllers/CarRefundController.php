@@ -9,6 +9,7 @@ use App\Mail\CarRefundNotification;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Models\Refund;
 
 class CarRefundController extends Controller
 {
@@ -33,13 +34,13 @@ class CarRefundController extends Controller
                 $phone = $carBooking->user->phone;
                 $amount = $request->refund_amount;
                 $reference = (string)$carBooking->id; // Simple numeric reference
-                
+
                 $response = $this->mpesaRefundService->processRefund(
                     $phone,
                     $amount,
                     $reference
                 );
-                
+
                 if (isset($response['error'])) {
                     throw new \Exception($response['error']);
                 }
@@ -50,10 +51,16 @@ class CarRefundController extends Controller
                     'non_refund_reason' => null,
                     'refund_status' => 'processing',
                 ]);
-                
+
+                Refund::create([
+                    "amount" => $amount,
+                    "booking_id" => null,
+                    "car_booking_id" => $carBooking->id,
+                ]);
+
                 Mail::to($carBooking->user->email)
                     ->send(new CarRefundNotification($carBooking, 'approved'));
-                
+
                 DB::commit();
                 return redirect()->back()->with('success', 'Refund approved and processing initiated.');
             } else {
@@ -66,7 +73,7 @@ class CarRefundController extends Controller
 
                 Mail::to($carBooking->user->email)
                     ->send(new CarRefundNotification($carBooking, 'rejected', $request->reason));
-                
+
                 DB::commit();
                 return redirect()->back()->with('success', 'Refund rejected successfully.');
             }
@@ -83,7 +90,7 @@ class CarRefundController extends Controller
 
             // Get the reference - expecting just the numeric booking ID
             $bookingId = (int)$request->input('reference');
-            
+
             if ($bookingId <= 0) {
                 return response()->json(['message' => 'Invalid booking ID'], 400);
             }
@@ -113,7 +120,7 @@ class CarRefundController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            
+
             return response()->json([
                 'message' => 'Processing error'
             ], 500);

@@ -199,75 +199,77 @@ const PropertyBookingForm = () => {
     setShowLocationSuggestions(false);
   };
 
-  // Validate referral code - FIXED VERSION
-  const validateReferralCode = async (code) => {
-    if (!code || code.trim().length < 3) {
-      setReferralData({
-        isValid: false,
-        isLoading: false,
-        error: '',
-        discountAmount: 0,
-        referredByUserName: ''
-      });
-      return;
-    }
+    // Validate referral code - UPDATED VERSION
+    const validateReferralCode = async (code) => {
+        if (!code || code.trim().length < 3) {
+            setReferralData({
+            isValid: false,
+            isLoading: false,
+            error: '',
+            discountAmount: 0,
+            commissionAmount: 0,
+            referredByUserName: ''
+            });
+            return;
+        }
 
-    const trimmedCode = code.trim().toUpperCase();
+        const trimmedCode = code.trim().toUpperCase();
 
-    setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
+        setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
 
-    try {
-      console.log('Validating referral code:', trimmedCode);
-      console.log('Company data:', company);
-      console.log('Total price:', totalPrice);
+        try {
 
-      const response = await fetch(`/validate-referral?code=${encodeURIComponent(trimmedCode)}`);
+            const response = await fetch(`/validate-referral?code=${encodeURIComponent(trimmedCode)}`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+            if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-      const result = await response.json();
+            const result = await response.json();
 
-      console.log('Referral validation result:', result);
+            // Check if the response has the expected structure
+            if (result.valid === true && result.user && result.user.name) {
+            // Get percentages from company
+            const customerDiscountPercentage = company?.booking_referral_percentage || 0;
+            const referrerCommissionPercentage = company?.referral_percentage || 0;
 
-      // Check if the response has the expected structure
-      if (result.valid === true && result.user && result.user.name) {
-        // Check if company and booking_referral_percentage exist
-        const referralPercentage = company?.booking_referral_percentage || 0;
-        console.log('Referral percentage:', referralPercentage);
+            // Calculate amounts
+            const discountAmount = (totalPrice * customerDiscountPercentage) / 100;
+            const commissionAmount = (totalPrice * referrerCommissionPercentage) / 100;
 
-        const discountAmount = (totalPrice * referralPercentage) / 100;
+            setReferralData({
+                isValid: true,
+                isLoading: false,
+                error: '',
+                discountAmount: discountAmount,
+                commissionAmount: commissionAmount,
+                referredByUserName: result.user.name,
+                customerDiscountPercentage: customerDiscountPercentage,
+                referrerCommissionPercentage: referrerCommissionPercentage
+            });
 
-        setReferralData({
-          isValid: true,
-          isLoading: false,
-          error: '',
-          discountAmount: discountAmount,
-          referredByUserName: result.user.name
-        });
-
-        console.log('Discount applied:', discountAmount);
-      } else {
-        setReferralData({
-          isValid: false,
-          isLoading: false,
-          error: result.message || 'Invalid referral code',
-          discountAmount: 0,
-          referredByUserName: ''
-        });
-      }
-    } catch (error) {
-      console.error('Referral validation error:', error);
-      setReferralData({
-        isValid: false,
-        isLoading: false,
-        error: 'Unable to validate referral code. Please try again.',
-        discountAmount: 0,
-        referredByUserName: ''
-      });
-    }
-  };
+            } else {
+            setReferralData({
+                isValid: false,
+                isLoading: false,
+                error: result.message || 'Invalid referral code',
+                discountAmount: 0,
+                commissionAmount: 0,
+                referredByUserName: ''
+            });
+            }
+        } catch (error) {
+            console.error('Referral validation error:', error);
+            setReferralData({
+            isValid: false,
+            isLoading: false,
+            error: 'Unable to validate referral code. Please try again.',
+            discountAmount: 0,
+            commissionAmount: 0,
+            referredByUserName: ''
+            });
+        }
+        };
 
   // Auto-validate referral code when it changes
   useEffect(() => {
@@ -417,8 +419,6 @@ const PropertyBookingForm = () => {
         final_price: finalPrice,
         payment_method: 'mpesa'
       };
-
-      console.log('Submitting M-Pesa booking data:', bookingData);
 
       // Create booking using Inertia (for M-Pesa)
       router.post(route('bookings.store'), bookingData, {

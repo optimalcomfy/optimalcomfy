@@ -178,62 +178,76 @@ const CarExtendPayForm = () => {
   };
 
   // Validate referral code
-  const validateReferralCode = async (code) => {
-    if (!code || code.trim().length < 3) {
-      setReferralData({
-        isValid: false,
-        isLoading: false,
-        error: '',
-        discountAmount: 0,
-        referredByUserName: ''
-      });
-      return;
-    }
+    const validateReferralCode = async (code) => {
+        if (!code || code.trim().length < 3) {
+            setReferralData({
+            isValid: false,
+            isLoading: false,
+            error: '',
+            discountAmount: 0,
+            commissionAmount: 0,
+            referredByUserName: ''
+            });
+            return;
+        }
 
-    const trimmedCode = code.trim().toUpperCase();
+        const trimmedCode = code.trim().toUpperCase();
 
-    setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
+        setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
 
-    try {
-      const response = await fetch(`/validate-referral?code=${encodeURIComponent(trimmedCode)}`);
+        try {
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+            const response = await fetch(`/validate-referral?code=${encodeURIComponent(trimmedCode)}`);
 
-      const result = await response.json();
+            if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-      if (result.valid === true && result.user && result.user.name) {
-        const referralPercentage = company?.booking_referral_percentage || 0;
-        const discountAmount = (totalPrice * referralPercentage) / 100;
+            const result = await response.json();
 
-        setReferralData({
-          isValid: true,
-          isLoading: false,
-          error: '',
-          discountAmount: discountAmount,
-          referredByUserName: result.user.name
-        });
-      } else {
-        setReferralData({
-          isValid: false,
-          isLoading: false,
-          error: result.message || 'Invalid referral code',
-          discountAmount: 0,
-          referredByUserName: ''
-        });
-      }
-    } catch (error) {
-      console.error('Referral validation error:', error);
-      setReferralData({
-        isValid: false,
-        isLoading: false,
-        error: 'Unable to validate referral code. Please try again.',
-        discountAmount: 0,
-        referredByUserName: ''
-      });
-    }
-  };
+            // Check if the response has the expected structure
+            if (result.valid === true && result.user && result.user.name) {
+            // Get percentages from company
+            const customerDiscountPercentage = company?.booking_referral_percentage || 0;
+            const referrerCommissionPercentage = company?.referral_percentage || 0;
+
+            // Calculate amounts
+            const discountAmount = (totalPrice * customerDiscountPercentage) / 100;
+            const commissionAmount = (totalPrice * referrerCommissionPercentage) / 100;
+
+            setReferralData({
+                isValid: true,
+                isLoading: false,
+                error: '',
+                discountAmount: discountAmount,
+                commissionAmount: commissionAmount,
+                referredByUserName: result.user.name,
+                customerDiscountPercentage: customerDiscountPercentage,
+                referrerCommissionPercentage: referrerCommissionPercentage
+            });
+
+            } else {
+            setReferralData({
+                isValid: false,
+                isLoading: false,
+                error: result.message || 'Invalid referral code',
+                discountAmount: 0,
+                commissionAmount: 0,
+                referredByUserName: ''
+            });
+            }
+        } catch (error) {
+            console.error('Referral validation error:', error);
+            setReferralData({
+            isValid: false,
+            isLoading: false,
+            error: 'Unable to validate referral code. Please try again.',
+            discountAmount: 0,
+            commissionAmount: 0,
+            referredByUserName: ''
+            });
+        }
+    };
 
   // Auto-validate referral code when it changes
   useEffect(() => {

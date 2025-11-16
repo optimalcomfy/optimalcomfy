@@ -83,56 +83,76 @@ const CarBookingForm = () => {
   };
 
   // Validate referral code
-  const validateReferralCode = async (code) => {
-    if (!code || code.length < 3) {
-      setReferralData({
-        isValid: false,
-        isLoading: false,
-        error: '',
-        discountAmount: 0,
-        referredByUserName: ''
-      });
-      return;
-    }
+    const validateReferralCode = async (code) => {
+        if (!code || code.trim().length < 3) {
+            setReferralData({
+            isValid: false,
+            isLoading: false,
+            error: '',
+            discountAmount: 0,
+            commissionAmount: 0,
+            referredByUserName: ''
+            });
+            return;
+        }
 
-    setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
+        const trimmedCode = code.trim().toUpperCase();
 
-    try {
-      const response = await fetch(`/validate-referral?code=${encodeURIComponent(code)}`);
+        setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
 
-      if (!response.ok) throw new Error('Failed to validate referral code');
+        try {
 
-      const result = await response.json();
+            const response = await fetch(`/validate-referral?code=${encodeURIComponent(trimmedCode)}`);
 
-      if (result.valid) {
-        const discountAmount = (totalPrice * company.booking_referral_percentage) / 100;
+            if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-        setReferralData({
-          isValid: true,
-          isLoading: false,
-          error: '',
-          discountAmount: discountAmount,
-          referredByUserName: result.user.name
-        });
-      } else {
-        setReferralData({
-          isValid: false,
-          isLoading: false,
-          error: result.message || 'Invalid referral code',
-          discountAmount: 0,
-          referredByUserName: ''
-        });
-      }
-    } catch (error) {
-      setReferralData({
-        isValid: false,
-        isLoading: false,
-        error: 'Error validating referral code',
-        discountAmount: 0,
-        referredByUserName: ''
-      });
-    }
-  };
+            const result = await response.json();
+
+            // Check if the response has the expected structure
+            if (result.valid === true && result.user && result.user.name) {
+            // Get percentages from company
+            const customerDiscountPercentage = company?.booking_referral_percentage || 0;
+            const referrerCommissionPercentage = company?.referral_percentage || 0;
+
+            // Calculate amounts
+            const discountAmount = (totalPrice * customerDiscountPercentage) / 100;
+            const commissionAmount = (totalPrice * referrerCommissionPercentage) / 100;
+
+            setReferralData({
+                isValid: true,
+                isLoading: false,
+                error: '',
+                discountAmount: discountAmount,
+                commissionAmount: commissionAmount,
+                referredByUserName: result.user.name,
+                customerDiscountPercentage: customerDiscountPercentage,
+                referrerCommissionPercentage: referrerCommissionPercentage
+            });
+
+            } else {
+            setReferralData({
+                isValid: false,
+                isLoading: false,
+                error: result.message || 'Invalid referral code',
+                discountAmount: 0,
+                commissionAmount: 0,
+                referredByUserName: ''
+            });
+            }
+        } catch (error) {
+            console.error('Referral validation error:', error);
+            setReferralData({
+            isValid: false,
+            isLoading: false,
+            error: 'Unable to validate referral code. Please try again.',
+            discountAmount: 0,
+            commissionAmount: 0,
+            referredByUserName: ''
+            });
+        }
+    };
 
   // Auto-validate referral code when it changes
   useEffect(() => {

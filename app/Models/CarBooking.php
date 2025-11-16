@@ -135,8 +135,30 @@ class CarBooking extends Model
         return round($this->refund_amount - $this->refund_platform_fee, 2);
     }
 
+
     /**
-     * Calculate maximum refundable amount for car bookings
+     * Get payment summary with actual amounts
+     */
+    public function getPaymentSummaryAttribute()
+    {
+        $payment = $this->payment;
+        $actualAmountPaid = $payment && $payment->status === 'completed' ? $payment->amount : 0;
+        $totalRefunded = $this->refunds()->sum('amount');
+        $remainingRefundable = max(0, $actualAmountPaid - $totalRefunded);
+
+        return [
+            'actual_amount_paid' => $actualAmountPaid,
+            'total_refunded' => $totalRefunded,
+            'remaining_refundable' => $remainingRefundable,
+            'payment_status' => $payment ? $payment->status : 'no_payment',
+            'payment_method' => $payment ? $payment->method : null,
+            'payment_date' => $payment ? $payment->created_at : null,
+            'refunds' => $this->refunds()->get(['amount', 'created_at'])
+        ];
+    }
+
+    /**
+     * Calculate maximum refundable amount based on actual payment data
      */
     public function getMaxRefundableAmountAttribute()
     {
@@ -145,44 +167,79 @@ class CarBooking extends Model
             return 0;
         }
 
-        // If booking is cancelled but was already checked in
-        if ($this->status === 'Cancelled' && $this->checked_in) {
+        // Get the actual payment record
+        $payment = $this->payment;
+
+        // If no payment was made or payment failed, no refund possible
+        if (!$payment || $payment->status !== 'completed') {
             return 0;
         }
 
-        // If checked in, calculate based on time used
-        if ($this->checked_in) {
+        $actualAmountPaid = $payment->amount;
+
+        // Get total amount already refunded
+        $totalRefunded = $this->refunds()->sum('amount');
+
+        // Calculate remaining refundable amount
+        $remainingRefundable = $actualAmountPaid - $totalRefunded;
+
+        // If already fully refunded, no more refunds
+        if ($remainingRefundable <= 0) {
+            return 0;
+        }
+
+        // If booking was never checked in (cancelled before check-in)
+        if (!$this->checked_in) {
+            $startDate = Carbon::parse($this->start_date);
+            $cancelledAt = $this->cancelled_at ? Carbon::parse($this->cancelled_at) : Carbon::now();
+
+            // Calculate hours between cancellation and start time
+            $hoursUntilStart = $startDate->diffInHours($cancelledAt, false);
+
+            // If cancelled within 2 hours of start time, no refund
+            if ($hoursUntilStart <= 2) {
+                return 0;
+            }
+
+            // Full refund available for cancellations more than 2 hours before start
+            return $remainingRefundable;
+        }
+
+        // If booking was checked in but then cancelled
+        if ($this->checked_in && $this->status === 'cancelled') {
             $startDate = Carbon::parse($this->start_date);
             $endDate = Carbon::parse($this->end_date);
-            $today = Carbon::now();
+            $cancelledAt = $this->cancelled_at ? Carbon::parse($this->cancelled_at) : Carbon::now();
 
             $totalHours = $endDate->diffInHours($startDate);
-            $hoursUsed = $today->diffInHours($startDate);
+            $hoursUsed = $cancelledAt->diffInHours($startDate);
 
             // If more than 50% completed, no refund
             if ($hoursUsed >= ceil($totalHours / 2)) {
                 return 0;
             }
 
-            // Calculate refund for remaining time
-            $hourlyRate = $this->total_price / $totalHours;
-            $remainingHours = $totalHours - $hoursUsed;
+            // Calculate refund based on unused time
+            $unusedHours = $totalHours - $hoursUsed;
+            $refundPercentage = $unusedHours / $totalHours;
 
-            return max(0, $remainingHours * $hourlyRate);
+            return round($remainingRefundable * $refundPercentage, 2);
         }
 
-        // If not checked in yet, check cancellation time
-        $startDate = Carbon::parse($this->start_date);
-        $hoursUntilStart = Carbon::now()->diffInHours($startDate, false);
-
-        // If cancellation is within 2 hours of start time, no refund
-        if ($hoursUntilStart <= 2) {
-            return 0;
-        }
-
-        // Full refund available for cancelled bookings that haven't started
-        return $this->total_price;
+        // Default case - return remaining refundable amount
+        return $remainingRefundable;
     }
+
+    /**
+     * Helper method to check if refund can be processed
+     */
+    public function canProcessRefund()
+    {
+        return $this->status === 'cancelled' &&
+            $this->refund_approval === null &&
+            $this->max_refundable_amount > 0;
+    }
+
 
     /**
      * Calculate host price for a specific amount (useful for partial calculations)
@@ -209,16 +266,6 @@ class CarBooking extends Model
             'host_refund_amount' => $this->host_refund_amount,
             'max_refundable_amount' => $this->max_refundable_amount,
         ];
-    }
-
-    /**
-     * Helper method to check if refund can be processed
-     */
-    public function canProcessRefund()
-    {
-        return $this->status === 'Cancelled' &&
-               $this->refund_approval === null &&
-               $this->max_refundable_amount > 0;
     }
 
     /**
@@ -257,13 +304,13 @@ class CarBooking extends Model
 
     public function payments()
     {
-        return $this->hasMany(Payment::class, 'booking_id')
+        return $this->hasMany(Payment::class, 'car_booking_id')
                     ->where('booking_type', 'car');
     }
 
     public function payment()
     {
-        return $this->hasOne(Payment::class, 'booking_id')
+        return $this->hasOne(Payment::class, 'car_booking_id')
                     ->where('booking_type', 'car');
     }
 

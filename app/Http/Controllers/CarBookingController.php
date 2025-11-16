@@ -1018,8 +1018,21 @@ class CarBookingController extends Controller
 
     public function show(CarBooking $carBooking)
     {
+        // Load necessary relationships
+        $carBooking->load([
+            'car',
+            'user',
+            'car.category',
+            'car.initialGallery',
+            'car.carFeatures.feature',
+            'car.user',
+            'payment',
+            'refunds'
+        ]);
+
         return Inertia::render('CarBookings/Show', [
-            'carBooking' => $carBooking->load(['car', 'user', 'car.category','car.initialGallery','car.carFeatures.feature','car.user']),
+            'carBooking' => $carBooking,
+            'max_refundable_amount' => $carBooking->max_refundable_amount,
         ]);
     }
 

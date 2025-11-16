@@ -224,21 +224,13 @@ const BookingShow = () => {
         // The maximum allowed refund is the minimum between calculated refund and remaining refundable
         const maxAllowedRefund = Math.min(maxRefundable, remainingRefundable);
 
-        // Check conditions for refund
+        // SIMPLIFIED: Only check if there's a successful payment and maxAllowedRefund > 0
         const hasSuccessfulPayment = actualAmountPaid > 0 && payment?.status === 'completed';
-        const isNonRefundable = maxAllowedRefund === 0;
-        const isPartiallyRefundable = maxAllowedRefund > 0 && maxAllowedRefund < actualAmountPaid;
-        const hasPreviousRefunds = totalRefunded > 0;
+        const canProcessRefund = hasSuccessfulPayment && maxAllowedRefund > 0;
 
-        // Determine no refund reason
-        const noRefundReason = !hasSuccessfulPayment ?
-            'No successful payment was recorded for this booking.' :
-            (booking.checked_out ?
-            'This booking cannot be refunded as the stay has already been completed.' :
-            booking.checked_in ?
-            'This booking cannot be refunded as more than 50% of the stay has been completed.' :
-            'This booking cannot be refunded as cancellation is within 24 hours of check-in.'
-            );
+        // Determine if this is a partial refund scenario
+        const isPartialRefund = maxAllowedRefund > 0 && maxAllowedRefund < actualAmountPaid;
+        const hasPreviousRefunds = totalRefunded > 0;
 
         Swal.fire({
             title: 'Process Refund Request',
@@ -305,7 +297,7 @@ const BookingShow = () => {
                     Cannot process refund - no successful payment was recorded for this booking.
                     </p>
                 </div>
-                ` : isNonRefundable ? `
+                ` : !canProcessRefund ? `
                 <div style="
                     background: #fef2f2;
                     border: 1px solid #fecaca;
@@ -319,12 +311,12 @@ const BookingShow = () => {
                     <strong>Non-refundable</strong>
                     </div>
                     <p style="margin: 8px 0 0 0; font-size: 14px;">
-                    ${noRefundReason}
+                    Maximum refundable amount has been reached or exceeded.
                     </p>
                 </div>
                 ` : ''}
 
-                ${hasSuccessfulPayment && isPartiallyRefundable ? `
+                ${canProcessRefund && isPartialRefund ? `
                 <div style="
                     background: #fffbeb;
                     border: 1px solid #fed7aa;
@@ -354,7 +346,7 @@ const BookingShow = () => {
                 padding: 20px;
                 margin-bottom: 24px;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                ${!hasSuccessfulPayment || isNonRefundable ? 'opacity: 0.6; pointer-events: none;' : ''}
+                ${!canProcessRefund ? 'opacity: 0.6; pointer-events: none;' : ''}
                 ">
                 <h4 style="
                     margin: 0 0 16px 0;
@@ -376,18 +368,18 @@ const BookingShow = () => {
                     background: white;
                     border: 2px solid #10b981;
                     border-radius: 8px;
-                    cursor: ${!hasSuccessfulPayment || isNonRefundable ? 'not-allowed' : 'pointer'};
+                    cursor: ${!canProcessRefund ? 'not-allowed' : 'pointer'};
                     transition: all 0.2s ease;
                     font-weight: 500;
                     color: #065f46;
-                    ${!hasSuccessfulPayment || isNonRefundable ? 'opacity: 0.6;' : ''}
+                    ${!canProcessRefund ? 'opacity: 0.6;' : ''}
                     " for="approveRefund">
                     <input
                         type="radio"
                         id="approveRefund"
                         name="refundAction"
                         value="approve"
-                        ${!hasSuccessfulPayment || isNonRefundable ? 'disabled' : 'checked'}
+                        ${!canProcessRefund ? 'disabled' : 'checked'}
                         style="
                         margin-right: 12px;
                         transform: scale(1.2);
@@ -415,7 +407,7 @@ const BookingShow = () => {
                         id="rejectRefund"
                         name="refundAction"
                         value="reject"
-                        ${!hasSuccessfulPayment || isNonRefundable ? 'checked' : ''}
+                        ${!canProcessRefund ? 'checked' : ''}
                         style="
                         margin-right: 12px;
                         transform: scale(1.2);
@@ -436,7 +428,7 @@ const BookingShow = () => {
                 padding: 20px;
                 margin-bottom: 16px;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                ${!hasSuccessfulPayment || isNonRefundable ? 'display: none;' : ''}
+                ${!canProcessRefund ? 'display: none;' : ''}
                 ">
                 <h4 style="
                     margin: 0 0 16px 0;
@@ -464,14 +456,14 @@ const BookingShow = () => {
                         background: #f9fafb;
                         transition: all 0.2s ease;
                         box-sizing: border-box;
-                        ${!hasSuccessfulPayment || isNonRefundable ? 'background: #f3f4f6; color: #9ca3af;' : ''}
+                        ${!canProcessRefund ? 'background: #f3f4f6; color: #9ca3af;' : ''}
                     "
                     min="0.01"
                     max="${maxAllowedRefund}"
                     value="${maxAllowedRefund}"
                     step="0.01"
                     placeholder="0.00"
-                    ${!hasSuccessfulPayment || isNonRefundable ? 'disabled' : ''}
+                    ${!canProcessRefund ? 'disabled' : ''}
                     >
                     <span style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: #6b7280; font-weight: 600;">KES:</span>
                 </div>
@@ -505,7 +497,7 @@ const BookingShow = () => {
                 padding: 20px;
                 margin-bottom: 16px;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                display: ${!hasSuccessfulPayment || isNonRefundable ? 'block' : 'none'};
+                display: ${!canProcessRefund ? 'block' : 'none'};
                 ">
                 <h4 style="
                     margin: 0 0 16px 0;
@@ -554,11 +546,11 @@ const BookingShow = () => {
             `,
             width: 560,
             showCancelButton: true,
-            confirmButtonText: !hasSuccessfulPayment || isNonRefundable ?
+            confirmButtonText: !canProcessRefund ?
             '<i class="fas fa-ban" style="margin-right: 8px;"></i>Reject Refund' :
             '<i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Submit Request',
             cancelButtonText: '<i class="fas fa-times" style="margin-right: 8px;"></i>Cancel',
-            confirmButtonColor: !hasSuccessfulPayment || isNonRefundable ? '#ef4444' : '#3b82f6',
+            confirmButtonColor: !canProcessRefund ? '#ef4444' : '#3b82f6',
             cancelButtonColor: '#6b7280',
             customClass: {
             popup: 'professional-refund-modal',
@@ -606,14 +598,14 @@ const BookingShow = () => {
                 }
 
                 .professional-confirm-btn {
-                background: ${!hasSuccessfulPayment || isNonRefundable ? '#ef4444' : '#3b82f6'} !important;
+                background: ${!canProcessRefund ? '#ef4444' : '#3b82f6'} !important;
                 color: white !important;
                 }
 
                 .professional-confirm-btn:hover {
-                background: ${!hasSuccessfulPayment || isNonRefundable ? '#dc2626' : '#2563eb'} !important;
+                background: ${!canProcessRefund ? '#dc2626' : '#2563eb'} !important;
                 transform: translateY(-1px) !important;
-                box-shadow: 0 4px 12px rgba(${!hasSuccessfulPayment || isNonRefundable ? '239, 68, 68' : '59, 130, 246'}, 0.4) !important;
+                box-shadow: 0 4px 12px rgba(${!canProcessRefund ? '239, 68, 68' : '59, 130, 246'}, 0.4) !important;
                 }
 
                 .professional-cancel-btn {
@@ -1147,13 +1139,13 @@ const BookingShow = () => {
                   {booking.cancel_reason}
                 </p>
 
-                {roleId === 1 && booking.refund_approval === null && (
-                  <button
-                    onClick={handleRefund}
-                    className="px-8 py-2 w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-150"
-                  >
-                    Process Refund
-                  </button>
+                {roleId === 1 && max_refundable_amount > 0 && (
+                    <button
+                        onClick={handleRefund}
+                        className="px-8 py-2 w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-150"
+                    >
+                        Process Refund
+                    </button>
                 )}
 
                 {booking.refund_approval === 'approved' && (

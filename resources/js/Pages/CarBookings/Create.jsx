@@ -11,13 +11,13 @@ const CreateCarBooking = () => {
   const [selectedCar, setSelectedCar] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [pricePerDay, setPricePerDay] = useState(0);
-  
+
   // Location suggestions state
   const [pickupSuggestions, setPickupSuggestions] = useState([]);
   const [dropoffSuggestions, setDropoffSuggestions] = useState([]);
   const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
   const [showDropoffSuggestions, setShowDropoffSuggestions] = useState(false);
-  
+
   const pickupRef = useRef(null);
   const dropoffRef = useRef(null);
 
@@ -42,13 +42,13 @@ const CreateCarBooking = () => {
         setSelectedCar(car);
         setPricePerDay(parseFloat(car.price_per_day));
         const dates = car.bookings
-          .filter(b => b.id !== booking.id) 
+          .filter(b => b.id !== booking.id)
           .map(booking => ({
             start: parseISO(booking.start_date),
             end: parseISO(booking.end_date)
           }));
         setBookedDates(dates);
-        
+
         // Initialize form data with booking data
         setData({
           ...data,
@@ -146,10 +146,10 @@ const CreateCarBooking = () => {
 
   // Handle date selection
   const handleDateClick = (date) => {
-    const isBooked = bookedDates.some(range => 
+    const isBooked = bookedDates.some(range =>
       isWithinInterval(date, { start: range.start, end: range.end })
     );
-    
+
     if (isBooked) {
       alert('This date is already booked. Please select an available date.');
       return;
@@ -167,7 +167,7 @@ const CreateCarBooking = () => {
       const startDate = new Date(data.start_date);
       const endDate = isAfter(date, startDate) ? date : startDate;
       const newStartDate = isAfter(date, startDate) ? startDate : date;
-      
+
       // Check if any date in range is booked
       const datesInRange = [];
       let currentDate = new Date(newStartDate);
@@ -175,18 +175,18 @@ const CreateCarBooking = () => {
         datesInRange.push(new Date(currentDate));
         currentDate = addDays(currentDate, 1);
       }
-      
-      const hasConflict = datesInRange.some(rangeDate => 
-        bookedDates.some(bookedRange => 
+
+      const hasConflict = datesInRange.some(rangeDate =>
+        bookedDates.some(bookedRange =>
           isWithinInterval(rangeDate, { start: bookedRange.start, end: bookedRange.end })
         )
       );
-      
+
       if (hasConflict) {
         alert('Some dates in your selection are already booked. Please select different dates.');
         return;
       }
-      
+
       setData({
         ...data,
         start_date: format(newStartDate, 'yyyy-MM-dd'),
@@ -204,45 +204,45 @@ const CreateCarBooking = () => {
     const lastDay = new Date(year, month + 1, 0);
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
+
     const days = [];
     const endDate = new Date(lastDay);
     endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
-    
+
     let currentDate = new Date(startDate);
     while (currentDate <= endDate) {
       days.push(new Date(currentDate));
       currentDate = addDays(currentDate, 1);
     }
-    
+
     return days;
   };
 
   // Check if date is selected
   const isDateSelected = (date) => {
     if (!data.start_date) return false;
-    
+
     const startDate = new Date(data.start_date);
     if (isSameDay(date, startDate)) return true;
-    
+
     if (data.end_date) {
       const endDate = new Date(data.end_date);
       return isWithinInterval(date, { start: startDate, end: endDate });
     }
-    
+
     return false;
   };
 
   // Check if date is booked
   const isDateBooked = (date) => {
-    return bookedDates.some(range => 
+    return bookedDates.some(range =>
       isWithinInterval(date, { start: range.start, end: range.end })
     );
   };
 
   // Check if date is in current month
   const isCurrentMonth = (date) => {
-    return date.getMonth() === currentMonth.getMonth() && 
+    return date.getMonth() === currentMonth.getMonth() &&
            date.getFullYear() === currentMonth.getFullYear();
   };
 
@@ -253,8 +253,8 @@ const CreateCarBooking = () => {
     setCurrentMonth(newMonth);
   };
 
-  const carOptions = cars.map(car => ({ 
-    value: car.id, 
+  const carOptions = cars.map(car => ({
+    value: car.id,
     label: `${car.brand} ${car.model} (${car.year}) - ${car.price_per_day}/day`
   }));
 
@@ -268,7 +268,7 @@ const CreateCarBooking = () => {
 
   return (
     <Layout>
-      <div className="max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl lg:px-8 py-8">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Header */}
           <div className="bg-peachDark px-8 py-6">
@@ -281,9 +281,9 @@ const CreateCarBooking = () => {
           </div>
 
           {/* Main Form */}
-          <div className="p-8 space-y-8 min-h-[60vh]">
+          <div className="p-3 lg:p-8 space-y-8 min-h-[60vh]">
             <form onSubmit={handleSubmit} className="space-y-8">
-              
+
               {/* User and Car Selection */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
@@ -308,53 +308,33 @@ const CreateCarBooking = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-white p-4 rounded-xl shadow-sm">
                       <div className="flex items-center">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <svg className="w-5 h-5 text-peachDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                          </svg>
-                        </div>
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Brand/Model</p>
                           <p className="text-sm font-semibold text-gray-900">{selectedCar.brand} {selectedCar.model}</p>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-white p-4 rounded-xl shadow-sm">
                       <div className="flex items-center">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Price</p>
                           <p className="text-sm font-semibold text-gray-900">{selectedCar.price_per_day}/day</p>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-white p-4 rounded-xl shadow-sm">
                       <div className="flex items-center">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                          <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Seats</p>
                           <p className="text-sm font-semibold text-gray-900">{selectedCar.seats} seats</p>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-white p-4 rounded-xl shadow-sm">
                       <div className="flex items-center">
-                        <div className="p-2 bg-yellow-100 rounded-lg">
-                          <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-                          </svg>
-                        </div>
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Fuel Type</p>
                           <p className="text-sm font-semibold text-gray-900">{selectedCar.fuel_type}</p>
@@ -369,19 +349,19 @@ const CreateCarBooking = () => {
               {selectedCar && (
                 <div className="space-y-6">
                   <h3 className="text-xl font-semibold text-gray-900">Select Rental Dates</h3>
-                  
+
                   {/* Calendar Legend */}
                   <div className="flex flex-wrap gap-6 text-sm">
                     <div className="flex items-center">
-                      <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                      <div className="h-4 bg-blue-500 rounded mr-2"></div>
                       <span className="text-gray-600">Selected</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                      <div className="h-4 bg-red-500 rounded mr-2"></div>
                       <span className="text-gray-600">Booked</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="w-4 h-4 bg-gray-200 rounded mr-2"></div>
+                      <div className="h-4 bg-gray-200 rounded mr-2"></div>
                       <span className="text-gray-600">Available</span>
                     </div>
                   </div>
@@ -395,7 +375,7 @@ const CreateCarBooking = () => {
                         onClick={() => navigateMonth(-1)}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                       >
-                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                       </button>
@@ -407,7 +387,7 @@ const CreateCarBooking = () => {
                         onClick={() => navigateMonth(1)}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                       >
-                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
@@ -454,50 +434,6 @@ const CreateCarBooking = () => {
                     </div>
                   </div>
 
-                  {/* Selected Dates Display */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Pickup Date</label>
-                      <input
-                        type="date"
-                        value={data.start_date}
-                        onChange={(e) => {
-                          const newStartDate = e.target.value;
-                          setData('start_date', newStartDate);
-                          if (data.end_date) {
-                            const endDate = new Date(data.end_date);
-                            const startDate = new Date(newStartDate);
-                            setData('total_price', calculatePrice(startDate, endDate));
-                          }
-                        }}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        min={format(new Date(), 'yyyy-MM-dd')}
-                        required
-                      />
-                      {errors.start_date && <p className="mt-1 text-sm text-red-600">{errors.start_date}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Return Date</label>
-                      <input
-                        type="date"
-                        value={data.end_date}
-                        onChange={(e) => {
-                          const newEndDate = e.target.value;
-                          setData('end_date', newEndDate);
-                          if (data.start_date) {
-                            const startDate = new Date(data.start_date);
-                            const endDate = new Date(newEndDate);
-                            setData('total_price', calculatePrice(startDate, endDate));
-                          }
-                        }}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        min={data.start_date || format(new Date(), 'yyyy-MM-dd')}
-                        required
-                      />
-                      {errors.end_date && <p className="mt-1 text-sm text-red-600">{errors.end_date}</p>}
-                    </div>
-                  </div>
-
                   {/* Price Summary */}
                   {data.start_date && data.end_date && data.total_price && (
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-200">
@@ -540,7 +476,7 @@ const CreateCarBooking = () => {
                         onClick={() => setData('pickup_location', '')}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
-                        <X className="w-5 h-5" />
+                        <X className="h-5" />
                       </button>
                     )}
                   </div>
@@ -559,7 +495,7 @@ const CreateCarBooking = () => {
                   )}
                   {errors.pickup_location && <p className="mt-1 text-sm text-red-600">{errors.pickup_location}</p>}
                 </div>
-                
+
                 {/* Dropoff Location with Suggestions */}
                 <div className="relative" ref={dropoffRef}>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Drop-off Location</label>
@@ -579,7 +515,7 @@ const CreateCarBooking = () => {
                         onClick={() => setData('dropoff_location', '')}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
-                        <X className="w-5 h-5" />
+                        <X className="h-5" />
                       </button>
                     )}
                   </div>
@@ -602,7 +538,7 @@ const CreateCarBooking = () => {
 
               {/* Status and Special Requests */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 <div className='col-span-2'>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Special Requests</label>
                   <textarea
@@ -617,12 +553,12 @@ const CreateCarBooking = () => {
               </div>
 
               {/* Form Actions */}
-              <div className="flex items-center justify-between pt-8 border-t border-gray-200">
-                <Link 
-                  href={route('car-bookings.index')} 
+              <div className="flex flex-col lg:flex-row gap-4 items-center justify-between pt-8 border-t border-gray-200">
+                <Link
+                  href={route('car-bookings.index')}
                   className="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                 >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                   </svg>
                   Cancel
@@ -642,7 +578,7 @@ const CreateCarBooking = () => {
                     </>
                   ) : (
                     <>
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       {booking ? 'Update Booking' : 'Create Booking'}

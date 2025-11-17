@@ -28,61 +28,83 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
 
   const ratingData = calculateAverageRating();
 
-  // Get the property image for OG tags
-  const propertyImage = property?.initial_gallery?.[0]?.image
-    ? `/storage/${property.initial_gallery[0].image}`
-    : '/images/no-pic.avif';
+  // Get absolute URL for OG image
+  const getAbsoluteImageUrl = () => {
+    if (typeof window === 'undefined') return '';
 
-  const fullImageUrl = `${window.location.origin}${propertyImage}`;
-  const propertyUrl = window.location.href;
-  const propertyTitle = `${property?.property_name} - ${property?.type}`;
-  const propertyDescription = `Stay at ${property?.property_name} in ${property?.location} for KSh ${property?.platform_price}/night`;
-  const siteName = "Ristay - Book Your Perfect Stay";
+    const baseUrl = window.location.origin;
+
+    if (property?.initial_gallery?.[0]?.image) {
+      const imagePath = property.initial_gallery[0].image;
+      // Remove leading slash if present to avoid double slashes
+      const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+      const fullPath = cleanPath.includes('storage/')
+        ? cleanPath
+        : `/storage/${imagePath}`;
+      return `${baseUrl}${fullPath}`;
+    }
+
+    return `${baseUrl}/images/no-pic.avif`;
+  };
+
+  const fullImageUrl = getAbsoluteImageUrl();
+  const propertyUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const propertyTitle = `${property?.property_name} - ${property?.type} in ${property?.location}`;
+  const propertyDescription = `Stay at ${property?.property_name}, a beautiful ${property?.type} in ${property?.location}. Book now for KSh ${property?.platform_price}/night on Ristay.`;
+  const siteName = "Ristay";
 
   return (
     <>
       <PrimeReactProvider>
         <LayoutProvider>
           <Head>
+            {/* Basic Meta Tags */}
             <title>{propertyTitle}</title>
+            <meta name="description" content={propertyDescription} />
+            <meta name="keywords" content={`${property?.property_name}, ${property?.type}, ${property?.location}, accommodation, booking, Ristay`} />
 
-            {/* Open Graph Meta Tags for Rich Link Previews */}
+            {/* Open Graph / Facebook */}
             <meta property="og:type" content="website" />
             <meta property="og:url" content={propertyUrl} />
             <meta property="og:title" content={propertyTitle} />
             <meta property="og:description" content={propertyDescription} />
             <meta property="og:image" content={fullImageUrl} />
+            <meta property="og:image:secure_url" content={fullImageUrl} />
             <meta property="og:image:width" content="1200" />
             <meta property="og:image:height" content="630" />
+            <meta property="og:image:alt" content={`Photo of ${property?.property_name}`} />
             <meta property="og:site_name" content={siteName} />
             <meta property="og:locale" content="en_US" />
 
-            {/* Twitter Card Meta Tags */}
+            {/* Twitter Card */}
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:title" content={propertyTitle} />
             <meta name="twitter:description" content={propertyDescription} />
             <meta name="twitter:image" content={fullImageUrl} />
-            <meta name="twitter:site" content="@ristay" />
+            <meta name="twitter:image:alt" content={`Photo of ${property?.property_name}`} />
 
-            {/* Additional Meta Tags */}
-            <meta name="description" content={propertyDescription} />
-            <meta name="keywords" content={`${property?.property_name}, ${property?.type}, ${property?.location}, accommodation, booking`} />
+            {/* WhatsApp uses Open Graph tags, no special tags needed */}
 
             {/* Structured Data for SEO */}
             <script type="application/ld+json">
               {JSON.stringify({
                 "@context": "https://schema.org",
-                "@type": "VacationRental",
+                "@type": "LodgingBusiness",
                 "name": property?.property_name,
                 "description": propertyDescription,
                 "image": fullImageUrl,
                 "url": propertyUrl,
+                "priceRange": `KSh ${property?.platform_price}`,
                 "address": {
                   "@type": "PostalAddress",
-                  "streetAddress": property?.location
+                  "addressLocality": property?.location,
+                  "addressCountry": "KE"
                 },
-                "priceRange": `KSh ${property?.platform_price}`,
-                "telephone": property?.user?.phone
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": ratingData.rating,
+                  "reviewCount": ratingData.reviews
+                }
               })}
             </script>
           </Head>

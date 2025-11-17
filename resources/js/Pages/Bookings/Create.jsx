@@ -24,17 +24,52 @@ const CreateBooking = () => {
     external_booking: 'Yes'
   });
 
+  // Enhanced function to check if a date range is booked for a specific variation
+  const isRangeBooked = (startDate, endDate, variationId = null) => {
+    if (!selectedProperty || !startDate || !endDate) return false;
+
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
+
+    return selectedProperty.bookings.some(booking => {
+      // Skip if we're checking for standard (no variation) and this booking is for a variation
+      if (variationId === null && booking.variation_id !== null) return false;
+
+      // Skip if we're checking for a specific variation and this booking is for standard or a different variation
+      if (variationId !== null && booking.variation_id !== variationId) return false;
+
+      const bookingStart = new Date(booking.check_in_date);
+      bookingStart.setHours(0, 0, 0, 0);
+
+      const bookingEnd = new Date(booking.check_out_date);
+      bookingEnd.setHours(0, 0, 0, 0);
+
+      return (
+        (start >= bookingStart && start < bookingEnd) || // Start date is within a booking
+        (end > bookingStart && end <= bookingEnd) ||    // End date is within a booking
+        (start <= bookingStart && end >= bookingEnd)     // Range encompasses a booking
+      );
+    });
+  };
+
   // Load booked dates when property is selected
   useEffect(() => {
     if (data.property_id) {
       const property = properties.find(p => p.id === data.property_id);
       if (property) {
         setSelectedProperty(property);
+
+        // Get all booked dates for this property
         const dates = property.bookings.map(booking => ({
           start: parseISO(booking.check_in_date),
-          end: parseISO(booking.check_out_date)
+          end: parseISO(booking.check_out_date),
+          variationId: booking.variation_id
         }));
         setBookedDates(dates);
+
         // Reset variation selection when property changes
         setSelectedVariation(null);
         setData('variation_id', '');
@@ -45,23 +80,36 @@ const CreateBooking = () => {
   // Calculate price based on selected dates and variation
   const calculatePrice = (startDate, endDate) => {
     if (!selectedProperty || !startDate || !endDate) return '';
-    
+
     const diffDays = differenceInDays(endDate, startDate) + 1;
-    
+
     let pricePerNight = parseFloat(selectedProperty.price_per_night);
-    
+
     if (selectedVariation) {
       pricePerNight = selectedVariation.price;
     }
-    
+
     return (diffDays * pricePerNight).toFixed(2);
   };
 
   // Handle variation selection
   const handleVariationChange = (variation) => {
+    const newVariationId = variation?.id || null;
+
+    // Check if current selected dates are available for the new variation
+    if (data.check_in_date && data.check_out_date) {
+      if (isRangeBooked(data.check_in_date, data.check_out_date, newVariationId)) {
+        const message = variation
+          ? 'The currently selected dates are not available for this room type. Please choose different dates.'
+          : 'The currently selected dates are not available for the standard room. Please choose different dates.';
+        alert(message);
+        return;
+      }
+    }
+
     setSelectedVariation(variation);
-    setData('variation_id', variation ? variation.id : '');
-    
+    setData('variation_id', newVariationId);
+
     // Recalculate price if dates are already selected
     if (data.check_in_date && data.check_out_date) {
       const startDate = new Date(data.check_in_date);
@@ -70,15 +118,16 @@ const CreateBooking = () => {
     }
   };
 
-  // Handle date selection
+  // Enhanced date selection handler with variation-aware booking checks
   const handleDateClick = (date) => {
-    // Check if date is booked
-    const isBooked = bookedDates.some(range => 
-      isWithinInterval(date, { start: range.start, end: range.end })
-    );
-    
+    // Check if date is booked for the current variation
+    const isBooked = isDateBooked(date);
+
     if (isBooked) {
-      alert('This date is already booked. Please select an available date.');
+      const message = selectedVariation
+        ? 'This date is already booked for the selected room type. Please select an available date.'
+        : 'This date is already booked for the standard room. Please select an available date.';
+      alert(message);
       return;
     }
 
@@ -95,26 +144,27 @@ const CreateBooking = () => {
       const checkInDate = new Date(data.check_in_date);
       const endDate = isAfter(date, checkInDate) ? date : checkInDate;
       const startDate = isAfter(date, checkInDate) ? checkInDate : date;
-      
-      // Check if any date in range is booked
+
+      // Check if any date in range is booked for the current variation
       const datesInRange = [];
       let currentDate = new Date(startDate);
       while (currentDate <= endDate) {
         datesInRange.push(new Date(currentDate));
         currentDate = addDays(currentDate, 1);
       }
-      
-      const hasConflict = datesInRange.some(rangeDate => 
-        bookedDates.some(bookedRange => 
-          isWithinInterval(rangeDate, { start: bookedRange.start, end: bookedRange.end })
-        )
+
+      const hasConflict = datesInRange.some(rangeDate =>
+        isDateBooked(rangeDate)
       );
-      
+
       if (hasConflict) {
-        alert('Some dates in your selection are already booked. Please select different dates.');
+        const message = selectedVariation
+          ? 'Some dates in your selection are already booked for this room type. Please select different dates.'
+          : 'Some dates in your selection are already booked for the standard room. Please select different dates.';
+        alert(message);
         return;
       }
-      
+
       setData({
         ...data,
         check_in_date: format(startDate, 'yyyy-MM-dd'),
@@ -132,45 +182,53 @@ const CreateBooking = () => {
     const lastDay = new Date(year, month + 1, 0);
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
+
     const days = [];
     const endDate = new Date(lastDay);
     endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
-    
+
     let currentDate = new Date(startDate);
     while (currentDate <= endDate) {
       days.push(new Date(currentDate));
       currentDate = addDays(currentDate, 1);
     }
-    
+
     return days;
   };
 
   // Check if date is selected
   const isDateSelected = (date) => {
     if (!data.check_in_date) return false;
-    
+
     const checkInDate = new Date(data.check_in_date);
     if (isSameDay(date, checkInDate)) return true;
-    
+
     if (data.check_out_date) {
       const checkOutDate = new Date(data.check_out_date);
       return isWithinInterval(date, { start: checkInDate, end: checkOutDate });
     }
-    
+
     return false;
   };
 
-  // Check if date is booked
+  // Enhanced function to check if date is booked for current variation
   const isDateBooked = (date) => {
-    return bookedDates.some(range => 
-      isWithinInterval(date, { start: range.start, end: range.end })
-    );
+    if (!selectedProperty) return false;
+
+    return bookedDates.some(bookedRange => {
+      // Skip if we're checking for standard and this booking is for a variation
+      if (!selectedVariation && bookedRange.variationId !== null) return false;
+
+      // Skip if we're checking for a variation and this booking is for standard or a different variation
+      if (selectedVariation && bookedRange.variationId !== selectedVariation.id) return false;
+
+      return isWithinInterval(date, { start: bookedRange.start, end: bookedRange.end });
+    });
   };
 
   // Check if date is in current month
   const isCurrentMonth = (date) => {
-    return date.getMonth() === currentMonth.getMonth() && 
+    return date.getMonth() === currentMonth.getMonth() &&
            date.getFullYear() === currentMonth.getFullYear();
   };
 
@@ -184,8 +242,20 @@ const CreateBooking = () => {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Final validation before submission
+    if (data.check_in_date && data.check_out_date) {
+      if (isRangeBooked(data.check_in_date, data.check_out_date, data.variation_id)) {
+        const message = selectedVariation
+          ? 'The selected dates are no longer available for this room type. Please choose different dates.'
+          : 'The selected dates are no longer available for the standard room. Please choose different dates.';
+        alert(message);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
-    
+
     post(route('bookings.add'), {
       onSuccess: () => {
         setShowSuccess(true);
@@ -200,8 +270,8 @@ const CreateBooking = () => {
     });
   };
 
-  const propertyOptions = properties.map(property => ({ 
-    value: property.id, 
+  const propertyOptions = properties.map(property => ({
+    value: property.id,
     label: `${property.property_name} (${property.type}) - ${property.location}`
   }));
 
@@ -209,7 +279,7 @@ const CreateBooking = () => {
 
   return (
     <Layout>
-      <div className="max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl lg:px-8 py-8">
         {/* Success Notification */}
         {showSuccess && (
           <div className="fixed top-4 right-4 z-50 animate-fade-in-down">
@@ -230,9 +300,9 @@ const CreateBooking = () => {
           </div>
 
           {/* Main Form */}
-          <div className="p-8 space-y-8 min-h-[60vh]">
+          <div className="p-3 lg:p-8 space-y-8 min-h-[60vh]">
             <form onSubmit={handleSubmit} className="space-y-8">
-              
+
               {/* User and Property Selection */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
@@ -265,13 +335,13 @@ const CreateBooking = () => {
                   />
                   {errors.property_id && <p className="mt-2 text-sm text-red-600">{errors.property_id}</p>}
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Booking Type</label>
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                     <div className="flex items-center">
                       <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                        <svg className="w-5 h-5 text-[#d95932]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-5 text-[#d95932]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                       </div>
@@ -291,25 +361,15 @@ const CreateBooking = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                       <div className="flex items-center">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <svg className="w-5 h-5 text-[#d95932]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          </svg>
-                        </div>
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Type</p>
                           <p className="text-lg font-semibold text-gray-900">{selectedProperty.type}</p>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                       <div className="flex items-center">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Base Price</p>
                           <p className="text-lg font-semibold text-gray-900">
@@ -318,14 +378,9 @@ const CreateBooking = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                       <div className="flex items-center">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                          <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Capacity</p>
                           <p className="text-lg font-semibold text-gray-900">
@@ -334,14 +389,9 @@ const CreateBooking = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                       <div className="flex items-center">
-                        <div className="p-2 bg-orange-100 rounded-lg">
-                          <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                          </svg>
-                        </div>
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Location</p>
                           <p className="text-lg font-semibold text-gray-900">{selectedProperty.location}</p>
@@ -356,7 +406,7 @@ const CreateBooking = () => {
                       <h4 className="text-lg font-semibold text-gray-800 mb-3">Select Room Type</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {/* Base property option */}
-                        <div 
+                        <div
                           className={`p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ${!selectedVariation ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-gray-300'}`}
                           onClick={() => handleVariationChange(null)}
                         >
@@ -374,7 +424,7 @@ const CreateBooking = () => {
 
                         {/* Variations options */}
                         {selectedProperty.variations.map(variation => (
-                          <div 
+                          <div
                             key={variation.id}
                             className={`p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ${selectedVariation?.id === variation.id ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-gray-300'}`}
                             onClick={() => handleVariationChange(variation)}
@@ -404,23 +454,23 @@ const CreateBooking = () => {
               {selectedProperty && (
                 <div className="space-y-6">
                   <h3 className="text-xl font-semibold text-gray-900">Select Dates</h3>
-                  
+
                   {/* Calendar Legend */}
                   <div className="flex flex-wrap gap-6 text-sm">
                     <div className="flex items-center">
-                      <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                      <div className="h-4 bg-blue-500 rounded mr-2"></div>
                       <span className="text-gray-600">Selected</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="w-4 h-4 bg-red-400 rounded mr-2"></div>
+                      <div className="h-4 bg-red-400 rounded mr-2"></div>
                       <span className="text-gray-600">Booked</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="w-4 h-4 bg-gray-100 border border-gray-300 rounded mr-2"></div>
+                      <div className="h-4 bg-gray-100 border border-gray-300 rounded mr-2"></div>
                       <span className="text-gray-600">Available</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="w-4 h-4 bg-gray-200 rounded mr-2"></div>
+                      <div className="h-4 bg-gray-200 rounded mr-2"></div>
                       <span className="text-gray-600">Past Date</span>
                     </div>
                   </div>
@@ -434,7 +484,7 @@ const CreateBooking = () => {
                         onClick={() => navigateMonth(-1)}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
                       >
-                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                       </button>
@@ -446,7 +496,7 @@ const CreateBooking = () => {
                         onClick={() => navigateMonth(1)}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
                       >
-                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
@@ -482,62 +532,20 @@ const CreateBooking = () => {
                               ${isSelected ? 'bg-blue-500 text-white shadow-md transform scale-105' : ''}
                               ${isBooked ? 'bg-red-400 text-white cursor-not-allowed' : ''}
                               ${isPast && !isBooked ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : ''}
-                              ${!isSelected && !isBooked && !isPast && isCurrentMonthDate ? 
+                              ${!isSelected && !isBooked && !isPast && isCurrentMonthDate ?
                                 'hover:bg-blue-50 hover:text-[#d95932] hover:border-blue-200' : ''}
                               ${!isDisabled ? 'cursor-pointer' : ''}
                               border border-transparent
                             `}
                           >
                             <span className="relative z-10">{date.getDate()}</span>
-                            {isSelected && (isSameDay(date, new Date(data.check_in_date)) || 
+                            {isSelected && (isSameDay(date, new Date(data.check_in_date)) ||
                               isSameDay(date, new Date(data.check_out_date))) && (
                               <span className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full"></span>
                             )}
                           </button>
                         );
                       })}
-                    </div>
-                  </div>
-
-                  {/* Selected Dates Display */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Check-in Date</label>
-                      <div className="relative">
-                        <input
-                          type="date"
-                          value={data.check_in_date}
-                          onChange={(e) => setData('check_in_date', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                          min={format(new Date(), 'yyyy-MM-dd')}
-                          required
-                        />
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      </div>
-                      {errors.check_in_date && <p className="mt-1 text-sm text-red-600">{errors.check_in_date}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Check-out Date</label>
-                      <div className="relative">
-                        <input
-                          type="date"
-                          value={data.check_out_date}
-                          onChange={(e) => setData('check_out_date', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                          min={data.check_in_date || format(new Date(), 'yyyy-MM-dd')}
-                          required
-                        />
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      </div>
-                      {errors.check_out_date && <p className="mt-1 text-sm text-red-600">{errors.check_out_date}</p>}
                     </div>
                   </div>
 
@@ -564,12 +572,12 @@ const CreateBooking = () => {
               )}
 
               {/* Form Actions */}
-              <div className="flex items-center justify-between pt-8 border-t border-gray-200">
-                <Link 
-                  href={route('bookings.index')} 
+              <div className="flex flex-col lg:flex-row gap-4 items-center justify-between pt-8 border-t border-gray-200">
+                <Link
+                  href={route('bookings.index')}
                   className="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                 >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                   </svg>
                   Cancel
@@ -589,7 +597,7 @@ const CreateBooking = () => {
                     </>
                   ) : (
                     <>
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       Confirm External Booking

@@ -24,17 +24,27 @@ const BrowseCars = () => {
 
     // Initialize cars with markup status on component mount and when cars change
     useEffect(() => {
-        if (cars && cars.length > 0) {
-            const carsWithStatus = cars.map(car => ({
+        let carsData = [];
+
+        if (Array.isArray(cars)) {
+            carsData = cars;
+        } else if (cars?.data) {
+            carsData = cars.data;
+        }
+
+        if (carsData && carsData.length > 0) {
+            const carsWithStatus = carsData.map(car => ({
                 ...car,
                 has_user_markup: car.has_user_markup || false
             }));
             setCarsWithMarkupStatus(carsWithStatus);
+        } else {
+            setCarsWithMarkupStatus([]);
         }
     }, [cars]);
 
+    // Debounced search effect
     useEffect(() => {
-        // Debounce search
         const timeoutId = setTimeout(() => {
             if (searchTerm !== initialFilters?.search) {
                 handleFilterChange();
@@ -44,6 +54,7 @@ const BrowseCars = () => {
         return () => clearTimeout(timeoutId);
     }, [searchTerm]);
 
+    // Handle filter changes
     useEffect(() => {
         handleFilterChange();
     }, [filters]);
@@ -61,12 +72,14 @@ const BrowseCars = () => {
     };
 
     const handleAddMarkup = (car) => {
-        // Use platform_price for markup calculations instead of amount
+        // Use platform_price for markup calculations - markup is added on top of platform price
         const carWithPlatformPrice = {
             ...car,
             // Ensure we're using platform_price for markup calculations
-            platform_price: car.platform_price || car.amount,
-            base_price: car.platform_price || car.amount // Add base_price for clarity
+            platform_price: car.platform_price || car.price_per_day,
+            base_price: car.platform_price || car.price_per_day, // Add base_price for clarity
+            // Make sure the final price calculation uses platform_price as base
+            final_price_base: car.platform_price || car.price_per_day
         };
 
         setSelectedCar(carWithPlatformPrice);
@@ -87,6 +100,18 @@ const BrowseCars = () => {
             transmission: ''
         });
         setSearchTerm('');
+    };
+
+    // Handle image error
+    const handleImageError = (e) => {
+        console.log('Car image failed to load, using placeholder');
+        // Use a reliable placeholder image
+        e.target.src = '/images/placeholder.jpg';
+
+        // If that also fails, use a data URL as fallback
+        e.target.onerror = () => {
+            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDMyMCAyNDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yNDAgMTIwSDE2MFY4MEgyNDBWMTIwWk0xNjAgMTYwSDgwVjgwSDE2MFYxNjBaIiBmaWxsPSIjOUNBMEE2Ii8+CjxwYXRoIGQ9Ik0yNTYgMTg0SDY0VjY0SDI1NlYxODRaTTcyIDE3NkgyNDhWNzJINzJWMTc2WiIgZmlsbD0iIzlDQTBBNiIvPgo8L3N2Zz4K';
+        };
     };
 
     const getTransmissionLabel = (transmission) => {
@@ -179,7 +204,7 @@ const BrowseCars = () => {
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    placeholder="Search ..."
+                                    placeholder="Search cars..."
                                     className="browse-properties-input"
                                 />
                             </div>
@@ -309,9 +334,10 @@ const BrowseCars = () => {
                                         {/* Car Image */}
                                         <div className="browse-properties-image-container">
                                             <img
-                                                src={car.primary_image || '/images/car-placeholder.jpg'}
+                                                src={car.primary_image || '/images/placeholder.jpg'}
                                                 alt={car.name}
                                                 className="browse-properties-image"
+                                                onError={handleImageError}
                                             />
                                             {hasExistingMarkup(car.id) && (
                                                 <div className="browse-properties-markup-badge">
@@ -333,19 +359,14 @@ const BrowseCars = () => {
                                                 </h3>
                                                 <div className="flex flex-col items-end">
                                                     <span className="browse-properties-price">
-                                                        KES {new Intl.NumberFormat('en-KE').format(car.platform_price || car.amount)}
+                                                        KES {new Intl.NumberFormat('en-KE').format(car.platform_price || car.price_per_day)}
                                                         <span className="text-sm text-gray-500 font-normal">/day</span>
                                                     </span>
-                                                    {car.platform_price && car.platform_price !== car.amount && (
-                                                        <span className="text-xs text-gray-400 line-through">
-                                                            KES {new Intl.NumberFormat('en-KE').format(car.amount)}
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </div>
 
                                             <p className="text-gray-600 text-sm mb-3">
-                                                {car.brand} {car.model}
+                                                {car.brand} {car.model} • {car.body_type}
                                             </p>
 
                                             {/* Car Specifications */}
@@ -382,22 +403,6 @@ const BrowseCars = () => {
                                                     <span className="browse-properties-host-label">Owner:</span>
                                                     <span>{car.user?.name}</span>
                                                 </div>
-                                            </div>
-
-                                            {/* Price Information */}
-                                            <div className="browse-properties-price-info mb-3 p-2 bg-gray-50 rounded text-xs">
-                                                <div className="flex justify-between">
-                                                    <span>Platform Price:</span>
-                                                    <span className="font-medium">
-                                                        KES {new Intl.NumberFormat('en-KE').format(car.platform_price || car.amount)}
-                                                    </span>
-                                                </div>
-                                                {car.platform_charges > 0 && (
-                                                    <div className="flex justify-between text-gray-500">
-                                                        <span>Platform Charges:</span>
-                                                        <span>KES {new Intl.NumberFormat('en-KE').format(car.platform_charges)}</span>
-                                                    </div>
-                                                )}
                                             </div>
 
                                             {/* Actions */}
@@ -506,6 +511,8 @@ const BrowseCars = () => {
                         handleMarkupModalClose(true);
                         handleFilterChange(); // Refresh the list
                     }}
+                    // Ensure the modal uses platform_price as the base for markup calculations
+                    basePrice={selectedCar.platform_price || selectedCar.price_per_day}
                 />
             )}
         </Layout>

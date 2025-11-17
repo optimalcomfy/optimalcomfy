@@ -92,18 +92,24 @@ class MarkupBookingController extends Controller
 
         return $query->get()->map(function($markup) {
             $item = $markup->markupable;
+
+            // Get platform price - use platform_price if available, otherwise fall back to original_amount
+            $platformPrice = $item->platform_price ?? $markup->original_amount;
+
             return [
                 'id' => $markup->id,
                 'type' => $markup->markupable_type,
                 'item' => [
                     'id' => $item->id,
                     'name' => $item->name ?? $item->property_name,
-                    'original_amount' => $markup->original_amount,
+                    'original_amount' => $platformPrice, // Use platform price here
+                    'platform_price' => $platformPrice, // Explicit platform price field
+                    'base_price' => $item->amount, // Original base price for reference
                     'image' => $this->getItemImage($item),
                 ],
                 'markup_percentage' => $markup->markup_percentage,
                 'markup_amount' => $markup->markup_amount,
-                'final_amount' => $markup->final_amount,
+                'final_amount' => $platformPrice + $markup->profit,
                 'profit' => $markup->profit,
                 'markup_link' => $this->generateMarkupLink($markup),
                 'created_at' => $markup->created_at->format('Y-m-d H:i:s'),
@@ -587,7 +593,7 @@ class MarkupBookingController extends Controller
     }
 
     /**
-     * Add markup to a property/car
+     * Add markup to a property/car - UPDATED to use platform price
      */
     public function addMarkup(Request $request)
     {
@@ -607,6 +613,8 @@ class MarkupBookingController extends Controller
             'item_type' => 'required|in:cars,properties',
             'markup_value' => 'required|numeric|min:0',
             'is_percentage' => 'required|boolean',
+            'base_price' => 'sometimes|numeric', // Allow custom base price (platform price)
+            'base_price_type' => 'sometimes|string', // Track if using platform price
         ]);
 
         DB::beginTransaction();
@@ -618,19 +626,39 @@ class MarkupBookingController extends Controller
                 $item = Property::findOrFail($request->item_id);
             }
 
+            // Determine the base price for markup calculations
+            // Use platform_price if available, otherwise use the item's base amount
+            $platformPrice = $item->platform_price ?? $item->amount;
+
+            // Use provided base_price if specified (for platform price), otherwise use calculated platform price
+            $basePriceForMarkup = $request->has('base_price') ? $request->base_price : $platformPrice;
+
+            \Log::info('Markup creation details', [
+                'item_id' => $item->id,
+                'item_type' => $request->item_type,
+                'item_base_amount' => $item->amount,
+                'item_platform_price' => $item->platform_price,
+                'platform_price_used' => $platformPrice,
+                'base_price_for_markup' => $basePriceForMarkup,
+                'base_price_type' => $request->base_price_type ?? 'auto',
+                'markup_value' => $request->markup_value,
+                'is_percentage' => $request->is_percentage,
+            ]);
+
             // Deactivate any existing markup for this user and item
             Markup::where('user_id', $user->id)
                 ->where('markupable_id', $item->id)
                 ->where('markupable_type', get_class($item))
                 ->update(['is_active' => false]);
 
-            // Create new markup
+            // Create new markup with platform price as base
             $markup = new Markup([
                 'user_id' => $user->id,
                 'markup_percentage' => $request->is_percentage ? $request->markup_value : null,
                 'markup_amount' => $request->is_percentage ? null : $request->markup_value,
-                'original_amount' => $item->amount,
+                'original_amount' => $basePriceForMarkup, // Use platform price as the base
                 'is_active' => true,
+                'base_price_type' => $request->base_price_type ?? ($item->platform_price ? 'platform_price' : 'base_price'),
             ]);
 
             $markup->final_amount = $markup->calculateFinalAmount();
@@ -647,9 +675,10 @@ class MarkupBookingController extends Controller
                         'markup' => [
                             'id' => $markup->id,
                             'base_amount' => $markup->original_amount,
+                            'platform_price' => $basePriceForMarkup,
                             'markup_percentage' => $markup->markup_percentage,
                             'markup_amount' => $markup->markup_amount,
-                            'final_amount' => $markup->final_amount,
+                            'final_amount' => $platformPrice + $markup->profit,
                             'your_profit' => $markup->profit,
                         ]
                     ]
@@ -663,9 +692,10 @@ class MarkupBookingController extends Controller
                 'markup' => [
                     'id' => $markup->id,
                     'base_amount' => $markup->original_amount,
+                    'platform_price' => $basePriceForMarkup,
                     'markup_percentage' => $markup->markup_percentage,
                     'markup_amount' => $markup->markup_amount,
-                    'final_amount' => $markup->final_amount,
+                    'final_amount' => $platformPrice + $markup->profit,
                     'your_profit' => $markup->profit,
                 ]
             ]);
@@ -836,8 +866,6 @@ class MarkupBookingController extends Controller
         return url("/mrk-booking/{$markup->markup_token}");
     }
 
-    // App\Http\Controllers\MarkupBookingController.php
-
     /**
      * Show host catalog page
      */
@@ -852,14 +880,18 @@ class MarkupBookingController extends Controller
             ->map(function($markup) {
                 $item = $markup->markupable;
 
+                // Get platform price for display
+                $platformPrice = $item->platform_price ?? $markup->original_amount;
+
                 return [
                     'id' => $markup->id,
                     'type' => $markup->markupable_type,
                     'item' => [
                         'id' => $item->id,
                         'name' => $item->name ?? $item->property_name,
-                        'original_amount' => $markup->original_amount,
-                        'final_amount' => $markup->final_amount,
+                        'original_amount' => $platformPrice, // Use platform price
+                        'platform_price' => $platformPrice, // Explicit platform price
+                        'final_amount' => $platformPrice + $markup->profit,
                         'image' => $this->getItemImage($item),
                         'location' => $item->location ?? $item->location_address,
                         'features' => $this->getItemFeatures($item),
@@ -945,12 +977,18 @@ class MarkupBookingController extends Controller
             $query->where('location', 'LIKE', "%{$request->input('location')}%");
         }
 
-        // Price range filter
+        // Price range filter - use platform_price if available, otherwise use amount
         if ($request->filled('minPrice')) {
-            $query->where('amount', '>=', $request->input('minPrice'));
+            $query->where(function($q) use ($request) {
+                $q->where('platform_price', '>=', $request->input('minPrice'))
+                  ->orWhere('amount', '>=', $request->input('minPrice'));
+            });
         }
         if ($request->filled('maxPrice')) {
-            $query->where('amount', '<=', $request->input('maxPrice'));
+            $query->where(function($q) use ($request) {
+                $q->where('platform_price', '<=', $request->input('maxPrice'))
+                  ->orWhere('amount', '<=', $request->input('maxPrice'));
+            });
         }
 
         // Debug: Get total count before pagination
@@ -963,6 +1001,10 @@ class MarkupBookingController extends Controller
         $properties->getCollection()->transform(function ($property) use ($user) {
             $property->has_user_markup = $property->userHasMarkup($user->id);
             $property->primary_image = $this->getItemImage($property);
+
+            // Ensure platform_price is available for frontend
+            $property->platform_price = $property->platform_price ?? $property->amount;
+
             return $property;
         });
 
@@ -1021,12 +1063,18 @@ class MarkupBookingController extends Controller
             $query->where('brand', $request->input('brand'));
         }
 
-        // Price range filter
+        // Price range filter - use platform_price if available, otherwise use amount
         if ($request->filled('minPrice')) {
-            $query->where('amount', '>=', $request->input('minPrice'));
+            $query->where(function($q) use ($request) {
+                $q->where('platform_price', '>=', $request->input('minPrice'))
+                  ->orWhere('amount', '>=', $request->input('minPrice'));
+            });
         }
         if ($request->filled('maxPrice')) {
-            $query->where('amount', '<=', $request->input('maxPrice'));
+            $query->where(function($q) use ($request) {
+                $q->where('platform_price', '<=', $request->input('maxPrice'))
+                  ->orWhere('amount', '<=', $request->input('maxPrice'));
+            });
         }
 
         $cars = $query->paginate(12);
@@ -1035,6 +1083,10 @@ class MarkupBookingController extends Controller
         $cars->getCollection()->transform(function ($car) use ($user) {
             $car->has_user_markup = $car->userHasMarkup($user->id);
             $car->primary_image = $this->getItemImage($car);
+
+            // Ensure platform_price is available for frontend
+            $car->platform_price = $car->platform_price ?? $car->amount;
+
             return $car;
         });
 

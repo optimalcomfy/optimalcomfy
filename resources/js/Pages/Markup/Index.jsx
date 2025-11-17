@@ -6,6 +6,7 @@ import { Copy, Trash2, Plus, Eye, Car, Home, Filter, X, Loader2, Share2, User, E
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import MarkupShareModal from '@/Components/MarkupShareModal';
+import Swal from 'sweetalert2';
 
 const MarkupIndex = () => {
     const { auth } = usePage().props;
@@ -58,17 +59,46 @@ const MarkupIndex = () => {
     };
 
     const removeMarkup = async (markupId) => {
-        if (!confirm('Are you sure you want to remove this markup?')) {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, remove it!',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (!result.isConfirmed) {
             return;
         }
 
         try {
-            await router.delete(route('markup.remove', markupId));
-            toast.success('Markup removed successfully');
+            // Use axios instead of router.delete to handle JSON response
+            await axios.delete(route('markup.remove', markupId));
+
+            await Swal.fire({
+                title: 'Removed!',
+                text: 'Markup has been removed successfully.',
+                icon: 'success',
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'OK'
+            });
+
+            // Refresh the data
             fetchMarkups();
             fetchStats();
         } catch (error) {
-            toast.error('Failed to remove markup');
+            console.error('Error removing markup:', error);
+
+            await Swal.fire({
+                title: 'Error!',
+                text: 'Failed to remove markup. Please try again.',
+                icon: 'error',
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'OK'
+            });
         }
     };
 

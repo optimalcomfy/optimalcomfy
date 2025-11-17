@@ -323,11 +323,6 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
                                                         KES {new Intl.NumberFormat('en-KE').format(property.platform_price || property.price_per_night)}
                                                         <span className="text-sm text-gray-500 font-normal">/night</span>
                                                     </span>
-                                                    {property.platform_price && property.platform_price !== property.price_per_night && (
-                                                        <span className="text-xs text-gray-400 line-through">
-                                                            KES {new Intl.NumberFormat('en-KE').format(property.price_per_night)}
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </div>
 
@@ -350,22 +345,6 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
                                                     <span className="browse-properties-host-label">Host:</span>
                                                     <span>{property.user?.name}</span>
                                                 </div>
-                                            </div>
-
-                                            {/* Price Information */}
-                                            <div className="browse-properties-price-info mb-3 p-2 bg-gray-50 rounded text-xs">
-                                                <div className="flex justify-between">
-                                                    <span>Platform Price:</span>
-                                                    <span className="font-medium">
-                                                        KES {new Intl.NumberFormat('en-KE').format(property.platform_price || property.price_per_night)}
-                                                    </span>
-                                                </div>
-                                                {property.platform_charges > 0 && (
-                                                    <div className="flex justify-between text-gray-500">
-                                                        <span>Platform Charges:</span>
-                                                        <span>KES {new Intl.NumberFormat('en-KE').format(property.platform_charges)}</span>
-                                                    </div>
-                                                )}
                                             </div>
 
                                             {/* Actions */}

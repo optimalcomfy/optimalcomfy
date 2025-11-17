@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Star, X, Loader2, MapPin, Calendar, User, CreditCard, Eye, Shield } from 'lucide-react';
 import { Link, Head, router, usePage, useForm } from "@inertiajs/react";
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import Swal from 'sweetalert2';
 
 import './CarBookingForm.css'
@@ -48,10 +50,93 @@ const CarBookingForm = () => {
     referredByUserName: ''
   });
 
+  // Get all booked dates for the car
+  const getBookedDates = () => {
+    const bookedDates = [];
+
+    car.bookings.forEach(booking => {
+      const start = new Date(booking.start_date);
+      const end = new Date(booking.end_date);
+
+      // Add all dates in the range (excluding end date as it's available)
+      let current = new Date(start);
+      while (current < end) {
+        bookedDates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+      }
+    });
+
+    return bookedDates;
+  };
+
+  // Check if a date should be disabled for pickup
+  const isPickupDateDisabled = (date) => {
+    const bookedDates = getBookedDates();
+    return bookedDates.some(bookedDate =>
+      bookedDate.toDateString() === date.toDateString()
+    );
+  };
+
+  // Check if a date should be disabled for drop-off
+  const isDropoffDateDisabled = (date) => {
+    if (!data.start_date) return true;
+
+    const pickup = new Date(data.start_date);
+
+    // Must be after pickup
+    if (date <= pickup) return true;
+
+    // Check if any date in the range is booked
+    const bookedDates = getBookedDates();
+    let current = new Date(pickup);
+    current.setDate(current.getDate() + 1);
+
+    while (current <= date) {
+      if (bookedDates.some(bookedDate =>
+        bookedDate.toDateString() === current.toDateString()
+      )) {
+        return true;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return false;
+  };
+
+  // Helper function to format date without timezone issues
+  const formatDateString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const handlePickupChange = (date) => {
+    if (date) {
+      const dateString = formatDateString(date);
+      setData({
+        ...data,
+        start_date: dateString,
+        end_date: '' // Reset drop-off when pickup changes
+      });
+    }
+  };
+
+  const handleDropoffChange = (date) => {
+    if (date) {
+      const dateString = formatDateString(date);
+      setData('end_date', dateString);
+    }
+  };
+
   const calculateDays = () => {
-    const start = new Date(data.start_date);
-    const end = new Date(data.end_date);
-    return Math.max(1, Math.ceil((end - start) / (1000 * 3600 * 24)));
+    if (data.start_date && data.end_date) {
+      const start = new Date(data.start_date);
+      const end = new Date(data.end_date);
+      const timeDifference = end - start;
+      return Math.max(1, Math.ceil(timeDifference / (1000 * 3600 * 24)));
+    }
+    return 0;
   };
 
   const days = calculateDays();
@@ -74,85 +159,76 @@ const CarBookingForm = () => {
     }
   };
 
-  const handleDivClick = (inputId) => {
-    const inputElement = document.getElementById(inputId);
-    if (inputElement) {
-      inputElement.focus();
-      inputElement.showPicker();
+  // Validate referral code
+  const validateReferralCode = async (code) => {
+    if (!code || code.trim().length < 3) {
+      setReferralData({
+        isValid: false,
+        isLoading: false,
+        error: '',
+        discountAmount: 0,
+        commissionAmount: 0,
+        referredByUserName: ''
+      });
+      return;
+    }
+
+    const trimmedCode = code.trim().toUpperCase();
+
+    setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
+
+    try {
+      const response = await fetch(`/validate-referral?code=${encodeURIComponent(trimmedCode)}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      // Check if the response has the expected structure
+      if (result.valid === true && result.user && result.user.name) {
+        // Get percentages from company
+        const customerDiscountPercentage = company?.booking_referral_percentage || 0;
+        const referrerCommissionPercentage = company?.referral_percentage || 0;
+
+        // Calculate amounts
+        const discountAmount = (totalPrice * customerDiscountPercentage) / 100;
+        const commissionAmount = (totalPrice * referrerCommissionPercentage) / 100;
+
+        setReferralData({
+          isValid: true,
+          isLoading: false,
+          error: '',
+          discountAmount: discountAmount,
+          commissionAmount: commissionAmount,
+          referredByUserName: result.user.name,
+          customerDiscountPercentage: customerDiscountPercentage,
+          referrerCommissionPercentage: referrerCommissionPercentage
+        });
+
+      } else {
+        setReferralData({
+          isValid: false,
+          isLoading: false,
+          error: result.message || 'Invalid referral code',
+          discountAmount: 0,
+          commissionAmount: 0,
+          referredByUserName: ''
+        });
+      }
+    } catch (error) {
+      console.error('Referral validation error:', error);
+      setReferralData({
+        isValid: false,
+        isLoading: false,
+        error: 'Unable to validate referral code. Please try again.',
+        discountAmount: 0,
+        commissionAmount: 0,
+        referredByUserName: ''
+      });
     }
   };
-
-  // Validate referral code
-    const validateReferralCode = async (code) => {
-        if (!code || code.trim().length < 3) {
-            setReferralData({
-            isValid: false,
-            isLoading: false,
-            error: '',
-            discountAmount: 0,
-            commissionAmount: 0,
-            referredByUserName: ''
-            });
-            return;
-        }
-
-        const trimmedCode = code.trim().toUpperCase();
-
-        setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
-
-        try {
-
-            const response = await fetch(`/validate-referral?code=${encodeURIComponent(trimmedCode)}`);
-
-            if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-
-            // Check if the response has the expected structure
-            if (result.valid === true && result.user && result.user.name) {
-            // Get percentages from company
-            const customerDiscountPercentage = company?.booking_referral_percentage || 0;
-            const referrerCommissionPercentage = company?.referral_percentage || 0;
-
-            // Calculate amounts
-            const discountAmount = (totalPrice * customerDiscountPercentage) / 100;
-            const commissionAmount = (totalPrice * referrerCommissionPercentage) / 100;
-
-            setReferralData({
-                isValid: true,
-                isLoading: false,
-                error: '',
-                discountAmount: discountAmount,
-                commissionAmount: commissionAmount,
-                referredByUserName: result.user.name,
-                customerDiscountPercentage: customerDiscountPercentage,
-                referrerCommissionPercentage: referrerCommissionPercentage
-            });
-
-            } else {
-            setReferralData({
-                isValid: false,
-                isLoading: false,
-                error: result.message || 'Invalid referral code',
-                discountAmount: 0,
-                commissionAmount: 0,
-                referredByUserName: ''
-            });
-            }
-        } catch (error) {
-            console.error('Referral validation error:', error);
-            setReferralData({
-            isValid: false,
-            isLoading: false,
-            error: 'Unable to validate referral code. Please try again.',
-            discountAmount: 0,
-            commissionAmount: 0,
-            referredByUserName: ''
-            });
-        }
-    };
 
   // Auto-validate referral code when it changes
   useEffect(() => {
@@ -262,43 +338,42 @@ const CarBookingForm = () => {
   };
 
   // Handle Pesapal submission
-    // In your CarBookingForm component
-   const handlePesapalSubmit = async (e) => {
+  const handlePesapalSubmit = async (e) => {
     e.preventDefault();
 
     if (!data.start_date || !data.end_date) {
-        showErrorAlert('Please select valid pickup and return dates');
-        return;
+      showErrorAlert('Please select valid pickup and return dates');
+      return;
     }
 
     setProcessing(true);
 
     try {
-        const bookingData = {
+      const bookingData = {
         ...data,
         referral_discount: referralData.discountAmount,
         total_price: finalPrice,
         payment_method: 'pesapal'
-        };
+      };
 
-        router.post(route('car-bookings.store'), bookingData, {
+      router.post(route('car-bookings.store'), bookingData, {
         onSuccess: (response) => {
-            // The controller will handle the Pesapal redirect
-            // The PaymentRedirect component will handle the redirect
-            console.log('Pesapal booking initiated successfully');
+          // The controller will handle the Pesapal redirect
+          // The PaymentRedirect component will handle the redirect
+          console.log('Pesapal booking initiated successfully');
         },
         onError: (errors) => {
-            console.error('Pesapal car booking failed:', errors);
-            showErrorAlert('Booking creation failed. Please try again.');
+          console.error('Pesapal car booking failed:', errors);
+          showErrorAlert('Booking creation failed. Please try again.');
         }
-        });
+      });
     } catch (error) {
-        console.error("Pesapal submit error:", error);
-        showErrorAlert('An unexpected error occurred. Please try again.');
+      console.error("Pesapal submit error:", error);
+      showErrorAlert('An unexpected error occurred. Please try again.');
     } finally {
-        setProcessing(false);
+      setProcessing(false);
     }
-    };
+  };
 
   const handleSubmit = (e) => {
     if (paymentMethod === 'mpesa') {
@@ -326,7 +401,7 @@ const CarBookingForm = () => {
         ${completed ? 'bg-green-500 text-white p-1' :
           step === currentStep ? 'bg-peachDark text-white p-1' :
           'bg-gray-200 text-gray-600'}
-      `} style={{width: "30px", height: "30px"}}>
+      `} style={{ width: "30px", height: "30px" }}>
         {completed ? '✓' : step}
       </div>
       <span className={`font-medium ${step === currentStep ? 'text-gray-900' : 'text-gray-600'}`}>
@@ -449,30 +524,42 @@ const CarBookingForm = () => {
 
                 {currentStep === 2 && (
                   <div className="space-y-6">
-                    {/* Date Selection */}
+                    {/* Date Selection with React DatePicker */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <div onClick={() => handleDivClick('start_date')} className="cursor-pointer">
+                      {/* Pickup Date */}
+                      <div>
                         <label className="block text-sm font-medium mb-2">Pickup Date</label>
                         <div className="relative rounded-lg border border-gray-300 p-3">
-                          <input
-                            type="date"
-                            id="start_date"
-                            value={data.start_date}
-                            onChange={(e) => setData('start_date', e.target.value)}
-                            className="w-full bg-transparent focus:outline-none"
+                          <DatePicker
+                            selected={data.start_date ? new Date(data.start_date) : null}
+                            onChange={handlePickupChange}
+                            minDate={new Date()}
+                            filterDate={(date) => !isPickupDateDisabled(date)}
+                            placeholderText="Select pickup date"
+                            className="w-full border-none bg-transparent text-sm font-medium text-gray-900 dark:text-white focus:outline-none cursor-pointer"
+                            dateFormat="yyyy-MM-dd"
+                            withPortal
+                            showPopperArrow={false}
                           />
                         </div>
                         {errors.start_date && <div className="text-red-500 text-sm mt-1">{errors.start_date}</div>}
                       </div>
-                      <div onClick={() => handleDivClick('end_date')} className="cursor-pointer">
+
+                      {/* Drop-off Date */}
+                      <div>
                         <label className="block text-sm font-medium mb-2">Return Date</label>
                         <div className="relative rounded-lg border border-gray-300 p-3">
-                          <input
-                            type="date"
-                            id="end_date"
-                            value={data.end_date}
-                            onChange={(e) => setData('end_date', e.target.value)}
-                            className="w-full bg-transparent focus:outline-none"
+                          <DatePicker
+                            selected={data.end_date ? new Date(data.end_date) : null}
+                            onChange={handleDropoffChange}
+                            minDate={data.start_date ? new Date(new Date(data.start_date).getTime() + 86400000) : new Date()}
+                            filterDate={(date) => !isDropoffDateDisabled(date)}
+                            disabled={!data.start_date}
+                            placeholderText="Select return date"
+                            className="w-full border-none bg-transparent text-sm font-medium text-gray-900 dark:text-white focus:outline-none disabled:opacity-50 cursor-pointer"
+                            dateFormat="yyyy-MM-dd"
+                            withPortal
+                            showPopperArrow={false}
                           />
                         </div>
                         {errors.end_date && <div className="text-red-500 text-sm mt-1">{errors.end_date}</div>}

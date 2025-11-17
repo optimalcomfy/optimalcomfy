@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Star, X, Loader2, MapPin, Calendar, User, CreditCard, Eye, Check, Mail, Shield, Phone } from 'lucide-react';
 import { Link, Head, router, usePage } from "@inertiajs/react";
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import Swal from 'sweetalert2';
 
 const PropertyBookingForm = () => {
@@ -11,7 +13,6 @@ const PropertyBookingForm = () => {
   const checkInDate = params.get('check_in_date');
   const checkOutDate = params.get('check_out_date');
   const variationId = params.get('variation_id');
-  const today = new Date().toISOString().split('T')[0];
 
   const [currentStep, setCurrentStep] = useState(1);
   const [processing, setProcessing] = useState(false);
@@ -27,7 +28,7 @@ const PropertyBookingForm = () => {
     referredByUserName: ''
   });
 
-  const [paymentMethod, setPaymentMethod] = useState('mpesa'); // Default to M-Pesa
+  const [paymentMethod, setPaymentMethod] = useState('mpesa');
 
   const [data, setData] = useState({
     property_id: property.id,
@@ -63,7 +64,7 @@ const PropertyBookingForm = () => {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const locationRef = useRef(null);
 
-  // Calculate pricing - moved to the top to avoid reference errors
+  // Calculate pricing
   const calculateDays = (check_in_date, check_out_date) => {
     if (check_in_date && check_out_date) {
       const checkInDate = new Date(check_in_date);
@@ -80,33 +81,69 @@ const PropertyBookingForm = () => {
   const totalPrice = subtotal;
   const finalPrice = totalPrice - referralData.discountAmount;
 
-  // Function to check if a date range is booked for a specific variation (or standard)
-  const isRangeBooked = (startDate, endDate, variationId = null) => {
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
+  // Get all booked dates for the selected variation
+  const getBookedDates = (variationId = null) => {
+    const bookedDates = [];
 
-    const end = new Date(endDate);
-    end.setHours(0, 0, 0, 0);
+    property.bookings.forEach(booking => {
+      // Filter bookings by variation
+      if (variationId === null && booking.variation_id !== null) return;
+      if (variationId !== null && booking.variation_id !== variationId) return;
 
-    return property.bookings.some(booking => {
-      // Skip if we're checking for standard and this booking is for a variation
-      if (variationId === null && booking.variation_id !== null) return false;
+      const start = new Date(booking.check_in_date);
+      const end = new Date(booking.check_out_date);
 
-      // Skip if we're checking for a variation and this booking is for standard or a different variation
-      if (variationId !== null && booking.variation_id !== variationId) return false;
-
-      const bookingStart = new Date(booking.check_in_date);
-      bookingStart.setHours(0, 0, 0, 0);
-
-      const bookingEnd = new Date(booking.check_out_date);
-      bookingEnd.setHours(0, 0, 0, 0);
-
-      return (
-        (start >= bookingStart && start < bookingEnd) || // Start date is within a booking
-        (end > bookingStart && end <= bookingEnd) ||    // End date is within a booking
-        (start <= bookingStart && end >= bookingEnd)     // Range encompasses a booking
-      );
+      // Add all dates in the range (excluding checkout day as it's available)
+      let current = new Date(start);
+      while (current < end) {
+        bookedDates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+      }
     });
+
+    return bookedDates;
+  };
+
+  // Check if a date should be disabled for check-in
+  const isCheckInDateDisabled = (date) => {
+    const bookedDates = getBookedDates(data.variation_id);
+    return bookedDates.some(bookedDate =>
+      bookedDate.toDateString() === date.toDateString()
+    );
+  };
+
+  // Check if a date should be disabled for check-out
+  const isCheckOutDateDisabled = (date) => {
+    if (!data.check_in_date) return true;
+
+    const checkIn = new Date(data.check_in_date);
+
+    // Must be after check-in
+    if (date <= checkIn) return true;
+
+    // Check if any date in the range is booked
+    const bookedDates = getBookedDates(data.variation_id);
+    let current = new Date(checkIn);
+    current.setDate(current.getDate() + 1);
+
+    while (current <= date) {
+      if (bookedDates.some(bookedDate =>
+        bookedDate.toDateString() === current.toDateString()
+      )) {
+        return true;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return false;
+  };
+
+  // Helper function to format date without timezone issues
+  const formatDateString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const showErrorAlert = (message) => {
@@ -126,150 +163,109 @@ const PropertyBookingForm = () => {
     }));
   };
 
-  const handleDateChange = (e) => {
-    const { name, value } = e.target;
-
-    if (name === 'check_out_date' && data.check_in_date && new Date(value) <= new Date(data.check_in_date)) {
-      showErrorAlert('Check-out date must be after check-in date');
-      return;
+  const handleCheckInChange = (date) => {
+    if (date) {
+      const dateString = formatDateString(date);
+      setData({
+        ...data,
+        check_in_date: dateString,
+        check_out_date: '' // Reset checkout when check-in changes
+      });
+    } else {
+      updateData('check_in_date', '');
     }
+  };
 
-    if (name === 'check_in_date' && data.check_out_date && new Date(value) >= new Date(data.check_out_date)) {
-      showErrorAlert('Check-in date must be before check-out date');
-      return;
-    }
-
-    // Check if this date is booked for the selected variation (or standard)
-    if (name === 'check_in_date' && isRangeBooked(value, value, data.variation_id)) {
-      const message = data.variation_id
-        ? 'This date is already booked for the selected room type. Please choose different dates.'
-        : 'This date is already booked for the standard room. Please choose different dates.';
-      showErrorAlert(message);
-      return;
-    }
-
-    // If changing check-in date and we have a check-out date, validate the range
-    if (name === 'check_in_date' && data.check_out_date && isRangeBooked(value, data.check_out_date, data.variation_id)) {
-      const message = data.variation_id
-        ? 'The selected dates overlap with an existing booking for this room type.'
-        : 'The selected dates overlap with an existing booking for the standard room.';
-      showErrorAlert(message);
+  const handleCheckOutChange = (date) => {
+    if (date) {
+      const dateString = formatDateString(date);
+      updateData('check_out_date', dateString);
+    } else {
       updateData('check_out_date', '');
     }
-
-    updateData(name, value);
   };
 
   const handleVariationChange = (variation) => {
     const newVariationId = variation?.id || null;
 
-    // Check if current selected dates are available for the new variation
-    if (data.check_in_date && data.check_out_date) {
-      if (isRangeBooked(data.check_in_date, data.check_out_date, newVariationId)) {
-        const message = variation
-          ? 'The currently selected dates are not available for this room type. Please choose different dates.'
-          : 'The currently selected dates are not available for the standard room. Please choose different dates.';
-        showErrorAlert(message);
-        return;
-      }
-    }
-
     setSelectedVariation(variation);
-    updateData('variation_id', newVariationId);
+    setData({
+      ...data,
+      variation_id: newVariationId,
+      check_in_date: '',
+      check_out_date: '',
+      nights: 0,
+      total_price: 0
+    });
+  };
 
-    // Recalculate price if dates are already selected
-    if (data.check_in_date && data.check_out_date) {
-      const nights = calculateDays(data.check_in_date, data.check_out_date);
-      const basePrice = nights * (variation ? variation.platform_price : property.platform_price);
+  // Validate referral code
+  const validateReferralCode = async (code) => {
+    if (!code || code.trim().length < 3) {
+      setReferralData({
+        isValid: false,
+        isLoading: false,
+        error: '',
+        discountAmount: 0,
+        commissionAmount: 0,
+        referredByUserName: ''
+      });
+      return;
+    }
 
-      updateData('total_price', basePrice);
+    const trimmedCode = code.trim().toUpperCase();
+
+    setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
+
+    try {
+      const response = await fetch(`/validate-referral?code=${encodeURIComponent(trimmedCode)}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.valid === true && result.user && result.user.name) {
+        const customerDiscountPercentage = company?.booking_referral_percentage || 0;
+        const referrerCommissionPercentage = company?.referral_percentage || 0;
+
+        const discountAmount = (totalPrice * customerDiscountPercentage) / 100;
+        const commissionAmount = (totalPrice * referrerCommissionPercentage) / 100;
+
+        setReferralData({
+          isValid: true,
+          isLoading: false,
+          error: '',
+          discountAmount: discountAmount,
+          commissionAmount: commissionAmount,
+          referredByUserName: result.user.name,
+          customerDiscountPercentage: customerDiscountPercentage,
+          referrerCommissionPercentage: referrerCommissionPercentage
+        });
+
+      } else {
+        setReferralData({
+          isValid: false,
+          isLoading: false,
+          error: result.message || 'Invalid referral code',
+          discountAmount: 0,
+          commissionAmount: 0,
+          referredByUserName: ''
+        });
+      }
+    } catch (error) {
+      console.error('Referral validation error:', error);
+      setReferralData({
+        isValid: false,
+        isLoading: false,
+        error: 'Unable to validate referral code. Please try again.',
+        discountAmount: 0,
+        commissionAmount: 0,
+        referredByUserName: ''
+      });
     }
   };
-
-  const handleDivClick = (inputId) => {
-    const inputElement = document.getElementById(inputId);
-    if (inputElement) {
-      inputElement.focus();
-      inputElement.showPicker();
-    }
-  };
-
-  const handleLocationSelect = (location) => {
-    updateData('current_location', location);
-    setShowLocationSuggestions(false);
-  };
-
-    // Validate referral code - UPDATED VERSION
-    const validateReferralCode = async (code) => {
-        if (!code || code.trim().length < 3) {
-            setReferralData({
-            isValid: false,
-            isLoading: false,
-            error: '',
-            discountAmount: 0,
-            commissionAmount: 0,
-            referredByUserName: ''
-            });
-            return;
-        }
-
-        const trimmedCode = code.trim().toUpperCase();
-
-        setReferralData(prev => ({ ...prev, isLoading: true, error: '' }));
-
-        try {
-
-            const response = await fetch(`/validate-referral?code=${encodeURIComponent(trimmedCode)}`);
-
-            if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-
-            // Check if the response has the expected structure
-            if (result.valid === true && result.user && result.user.name) {
-            // Get percentages from company
-            const customerDiscountPercentage = company?.booking_referral_percentage || 0;
-            const referrerCommissionPercentage = company?.referral_percentage || 0;
-
-            // Calculate amounts
-            const discountAmount = (totalPrice * customerDiscountPercentage) / 100;
-            const commissionAmount = (totalPrice * referrerCommissionPercentage) / 100;
-
-            setReferralData({
-                isValid: true,
-                isLoading: false,
-                error: '',
-                discountAmount: discountAmount,
-                commissionAmount: commissionAmount,
-                referredByUserName: result.user.name,
-                customerDiscountPercentage: customerDiscountPercentage,
-                referrerCommissionPercentage: referrerCommissionPercentage
-            });
-
-            } else {
-            setReferralData({
-                isValid: false,
-                isLoading: false,
-                error: result.message || 'Invalid referral code',
-                discountAmount: 0,
-                commissionAmount: 0,
-                referredByUserName: ''
-            });
-            }
-        } catch (error) {
-            console.error('Referral validation error:', error);
-            setReferralData({
-            isValid: false,
-            isLoading: false,
-            error: 'Unable to validate referral code. Please try again.',
-            discountAmount: 0,
-            commissionAmount: 0,
-            referredByUserName: ''
-            });
-        }
-        };
 
   // Auto-validate referral code when it changes
   useEffect(() => {
@@ -346,11 +342,11 @@ const PropertyBookingForm = () => {
     setCurrentStep(2);
   };
 
-  useEffect(()=>{
-    if(auth.user) {
+  useEffect(() => {
+    if (auth.user) {
       setCurrentStep(3)
     }
-  },[auth])
+  }, [auth])
 
   // Handle Pesapal payment submission
   const handlePesapalSubmit = async (e) => {
@@ -373,14 +369,14 @@ const PropertyBookingForm = () => {
 
       router.post(route('bookings.store'), bookingData, {
         onSuccess: () => {
-            window.open(result.redirect_url, 'pesapal_payment', 'width=800,height=600,scrollbars=yes');
+          window.open(result.redirect_url, 'pesapal_payment', 'width=800,height=600,scrollbars=yes');
 
-            Swal.fire({
+          Swal.fire({
             icon: 'success',
             title: 'Redirecting to Pesapal',
             text: 'Please complete your payment in the new window.',
             confirmButtonColor: '#f97316',
-            });
+          });
         },
         onError: (errors) => {
           console.error('Booking creation failed:', errors);
@@ -395,7 +391,7 @@ const PropertyBookingForm = () => {
     }
   };
 
-  // Handle M-Pesa submission (existing Inertia approach)
+  // Handle M-Pesa submission
   const handleMpesaSubmit = async (e) => {
     e.preventDefault();
     setProcessing(true);
@@ -420,7 +416,6 @@ const PropertyBookingForm = () => {
         payment_method: 'mpesa'
       };
 
-      // Create booking using Inertia (for M-Pesa)
       router.post(route('bookings.store'), bookingData, {
         onSuccess: () => {
           // Handle success
@@ -451,11 +446,11 @@ const PropertyBookingForm = () => {
 
   const StepIndicator = ({ step, currentStep, title, completed = false }) => (
     <div className="flex items-center gap-3 mb-6">
-      <div style={{width: '20px', height: '20px'}} className={`
+      <div style={{ width: '20px', height: '20px' }} className={`
         rounded-full flex items-center justify-center font-semibold text-sm
         ${completed ? 'bg-green-500 text-white p-1' :
           step === currentStep ? 'bg-peachDark text-white p-1' :
-          'bg-gray-200 text-gray-600'}
+            'bg-gray-200 text-gray-600'}
       `}>
         {completed ? <Check className="" /> : step}
       </div>
@@ -534,57 +529,60 @@ const PropertyBookingForm = () => {
                             key={variation.id}
                             className={`p-3 border rounded-lg cursor-pointer ${selectedVariation?.id === variation.id ? 'border-orange-400 bg-orange-50' : 'border-gray-300 hover:border-gray-400'}`}
                             onClick={() => handleVariationChange(variation)}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium">
-                              {variation.type}
-                            </span>
-                            <span>
-                              KES {variation.platform_price}
-                            </span>
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium">
+                                {variation.type}
+                              </span>
+                              <span>
+                                KES {variation.platform_price}
+                              </span>
+                            </div>
                           </div>
-                        </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Date Selection */}
-                  <div className="flex flex-col lg:flex-row border border-gray-300 rounded-xl overflow-hidden">
-                    <div
-                      className="border-b lg:border-r flex-1 border-gray-300 p-4 cursor-pointer"
-                      onClick={() => handleDivClick('check_in_date')}
-                    >
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
-                        Check-in
-                      </label>
-                      <input
-                        type="date"
-                        id="check_in_date"
-                        name="check_in_date"
-                        className="w-full bg-transparent text-sm font-medium text-gray-900 border-none focus:outline-none pointer-events-none"
-                        value={data.check_in_date}
-                        onChange={handleDateChange}
-                        min={today}
-                      />
-                    </div>
+                  {/* Date Selection with react-datepicker */}
+                  <div className="date-selection mb-4">
+                    <div className="flex flex-col lg:flex-row border border-gray-300 rounded-lg">
+                      {/* Check-in Date */}
+                      <div className="border-r flex-1 border-gray-300 p-3">
+                        <label className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1 block">
+                          Check-In
+                        </label>
+                        <DatePicker
+                          selected={data.check_in_date ? new Date(data.check_in_date) : null}
+                          onChange={handleCheckInChange}
+                          minDate={new Date()}
+                          filterDate={(date) => !isCheckInDateDisabled(date)}
+                          placeholderText="Add date"
+                          className="w-full border-none bg-transparent text-sm font-medium text-gray-900 focus:outline-none cursor-pointer"
+                          dateFormat="yyyy-MM-dd"
+                          withPortal
+                          showPopperArrow={false}
+                        />
+                      </div>
 
-                    <div
-                      className="p-4 flex-1 cursor-pointer"
-                      onClick={() => handleDivClick('check_out_date')}
-                    >
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
-                        Check-out
-                      </label>
-                      <input
-                        type="date"
-                        id="check_out_date"
-                        name="check_out_date"
-                        className="w-full bg-transparent text-sm font-medium text-gray-900 border-none focus:outline-none pointer-events-none"
-                        value={data.check_out_date}
-                        onChange={handleDateChange}
-                        min={data.check_in_date || today}
-                      />
+                      {/* Check-out Date */}
+                      <div className="p-3 flex-1">
+                        <label className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1 block">
+                          Checkout
+                        </label>
+                        <DatePicker
+                          selected={data.check_out_date ? new Date(data.check_out_date) : null}
+                          onChange={handleCheckOutChange}
+                          minDate={data.check_in_date ? new Date(new Date(data.check_in_date).getTime() + 86400000) : new Date()}
+                          filterDate={(date) => !isCheckOutDateDisabled(date)}
+                          disabled={!data.check_in_date}
+                          placeholderText="Add date"
+                          className="w-full border-none bg-transparent text-sm font-medium text-gray-900 focus:outline-none disabled:opacity-50 cursor-pointer"
+                          dateFormat="yyyy-MM-dd"
+                          withPortal
+                          showPopperArrow={false}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -613,28 +611,28 @@ const PropertyBookingForm = () => {
                 <div className="space-y-6">
                   {/* User Type Selection */}
                   {!auth.user &&
-                  <div className="flex flex-col lg:flex-row gap-4 p-4 bg-gray-50 rounded-xl">
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name="userType"
-                        checked={!data.is_registered}
-                        onChange={() => updateData('is_registered', false)}
-                        className=" text-peachDark"
-                      />
-                      <span className="ml-3 font-medium">New User</span>
-                    </label>
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name="userType"
-                        checked={data.is_registered}
-                        onChange={() => updateData('is_registered', true)}
-                        className=" text-peachDark"
-                      />
-                      <span className="ml-3 font-medium">Existing User</span>
-                    </label>
-                  </div>}
+                    <div className="flex flex-col lg:flex-row gap-4 p-4 bg-gray-50 rounded-xl">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="userType"
+                          checked={!data.is_registered}
+                          onChange={() => updateData('is_registered', false)}
+                          className=" text-peachDark"
+                        />
+                        <span className="ml-3 font-medium">New User</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="userType"
+                          checked={data.is_registered}
+                          onChange={() => updateData('is_registered', true)}
+                          className=" text-peachDark"
+                        />
+                        <span className="ml-3 font-medium">Existing User</span>
+                      </label>
+                    </div>}
 
                   {auth.user &&
                     <div className='flex flex-col'>
@@ -645,35 +643,35 @@ const PropertyBookingForm = () => {
 
                   {currentStep === 2 && (
                     <>
-                    {data.is_registered === true ?
-                    <Link
-                      type="button"
-                      href={route('c-login', {
-                        property_id: property.id,
-                        check_in_date: checkInDate,
-                        check_out_date: checkOutDate,
-                        variation_id: variationId || null
-                      })}
-                    >
-                      <button className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200">
-                        Continue
-                      </button>
-                    </Link>
-                    :
-                    <Link
-                      type="button"
-                      href={route('c-register', {
-                        property_id: property.id,
-                        check_in_date: checkInDate,
-                        check_out_date: checkOutDate,
-                        variation_id: variationId || null
-                      })}
-                    >
-                      <button className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200">
-                        Continue
-                      </button>
-                    </Link>
-                    }
+                      {data.is_registered === true ?
+                        <Link
+                          type="button"
+                          href={route('c-login', {
+                            property_id: property.id,
+                            check_in_date: data.check_in_date,
+                            check_out_date: data.check_out_date,
+                            variation_id: data.variation_id || null
+                          })}
+                        >
+                          <button className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200">
+                            Continue
+                          </button>
+                        </Link>
+                        :
+                        <Link
+                          type="button"
+                          href={route('c-register', {
+                            property_id: property.id,
+                            check_in_date: data.check_in_date,
+                            check_out_date: data.check_out_date,
+                            variation_id: data.variation_id || null
+                          })}
+                        >
+                          <button className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200">
+                            Continue
+                          </button>
+                        </Link>
+                      }
                     </>
                   )}
                 </div>
@@ -694,35 +692,33 @@ const PropertyBookingForm = () => {
                   <div>
                     <label className="block text-sm font-medium mb-2">Payment Method</label>
                     <div className="flex flex-col lg:flex-row gap-2">
-                    {/* M-Pesa Option */}
-                    <div
-                        className={`p-3 rounded-lg cursor-pointer transition-colors border ${
-                        paymentMethod === 'mpesa'
-                            ? 'border-orange-500 bg-orange-50'
-                            : 'border-gray-200 hover:bg-gray-50'
-                        }`}
+                      {/* M-Pesa Option */}
+                      <div
+                        className={`p-3 rounded-lg cursor-pointer transition-colors border ${paymentMethod === 'mpesa'
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-200 hover:bg-gray-50'
+                          }`}
                         onClick={() => setPaymentMethod('mpesa')}
-                    >
+                      >
                         <div className="flex items-center gap-3">
-                        <img src="/image/mpesa.jpg" className="h-5" alt="M-Pesa" />
-                        <span className="font-medium">M-Pesa</span>
+                          <img src="/image/mpesa.jpg" className="h-5" alt="M-Pesa" />
+                          <span className="font-medium">M-Pesa</span>
                         </div>
-                    </div>
+                      </div>
 
-                    {/* Pesapal Option */}
-                    <div
-                        className={`p-3 rounded-lg cursor-pointer transition-colors border ${
-                        paymentMethod === 'pesapal'
-                            ? 'border-orange-500 bg-orange-50'
-                            : 'border-gray-200 hover:bg-gray-50'
-                        }`}
+                      {/* Pesapal Option */}
+                      <div
+                        className={`p-3 rounded-lg cursor-pointer transition-colors border ${paymentMethod === 'pesapal'
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-200 hover:bg-gray-50'
+                          }`}
                         onClick={() => setPaymentMethod('pesapal')}
-                    >
+                      >
                         <div className="flex items-center gap-3">
-                        <img src="/image/pesapal.png" className="h-5" alt="Pesapal" />
-                        <span className="font-medium">Pesapal</span>
+                          <img src="/image/pesapal.png" className="h-5" alt="Pesapal" />
+                          <span className="font-medium">Pesapal</span>
                         </div>
-                    </div>
+                      </div>
                     </div>
                   </div>
 

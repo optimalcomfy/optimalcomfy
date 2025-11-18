@@ -33,6 +33,12 @@ transition: background 250ms ease;
 position: relative;
 }
 
+@media (max-width: 768px) {
+    .mobile-search-trigger {
+        padding: 0 0 !important;
+    }
+}
+
 .bar div:hover {
 background: hsl(0 0% 94%);
 }
@@ -41,8 +47,8 @@ background: hsl(0 0% 94%);
 width: 34%;
 }
 
-.check-in, 
-.check-out, 
+.check-in,
+.check-out,
 .guests {
 width: 22%;
 }

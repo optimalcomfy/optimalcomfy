@@ -198,3 +198,10 @@ body {
 .swal2-actions {
     gap: 20px;
 }
+
+
+@media (max-width: 768px) {
+    .mobile-search-trigger {
+        padding: 0 0 !important;
+    }
+}

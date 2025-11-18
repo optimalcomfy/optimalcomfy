@@ -323,14 +323,16 @@ function Header() {
         <div className="modal-header lg:hidden flex justify-between my-2 border-b border-gray-200 px-4">
             <Link
             href={route('home')}
-            className={`modal-title px-4 py-2 text-lg font-medium ${(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking' || isWhich === '/privacy-policy' || isWhich === '/host-calendar-policy' || isWhich === '/terms-and-conditions') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
+            className={`modal-title flex items-center gap-2 px-4 py-2 text-sm font-medium ${(isWhich === '/' || isWhich === '/all-properties' || isWhich === '/property-detail' || isWhich === '/login' || isWhich === '/register' || isWhich === '/property-booking' || isWhich === '/privacy-policy' || isWhich === '/host-calendar-policy' || isWhich === '/terms-and-conditions') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
             >
+            <img src='/image/houses.png' alt='' className='h-4' />
             Search stays
             </Link>
             <Link
             href={route('all-cars')}
-            className={`modal-title px-4 py-2 text-lg font-medium ${route().current('all-cars') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
+            className={`modal-title flex items-center gap-2 px-4 py-2 text-sm font-medium ${route().current('all-cars') ? 'text-peachDark border-b-2 border-indigo-500' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'} transition duration-150 ease-in-out`}
             >
+            <img src='/image/car.png' alt='' className='h-4' />
             Search Rides
             </Link>
         </div>

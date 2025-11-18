@@ -258,6 +258,13 @@ label.focused {
   margin: 0 1rem;
 }
 
+
+@media (max-width: 768px) {
+    .mobile-search-trigger {
+        padding: 0 0px !important;
+    }
+}
+
 .mini {
   border-radius: 5px !important;
 }

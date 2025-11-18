@@ -26,8 +26,8 @@ const MobileSearchTrigger = ({ formData, openModal, handleLocationClick, handleD
             handleLocationClick();
           }}
         >
-          <p className="text-sm font-medium text-gray-600">
-            {formData.location || 'Anywhere'}
+          <p className="text-xs font-medium text-gray-600">
+            {formData.location || 'Where to Ristay?'}
           </p>
         </div>
 
@@ -39,10 +39,10 @@ const MobileSearchTrigger = ({ formData, openModal, handleLocationClick, handleD
             handleDateClick('checkIn');
           }}
         >
-          <p className="text-sm font-medium text-gray-600">
+          <p className="text-xs font-medium text-gray-600">
             {formData.checkIn && formData.checkOut
               ? `${format(new Date(formData.checkIn), 'MMM d')} - ${format(new Date(formData.checkOut), 'MMM d')}`
-              : 'Any week'
+              : 'Your Ristay dates'
             }
           </p>
         </div>
@@ -55,8 +55,8 @@ const MobileSearchTrigger = ({ formData, openModal, handleLocationClick, handleD
             handleGuestsClick();
           }}
         >
-          <p className="text-sm font-medium text-gray-600">
-            {formData.guests ? `${formData.guests} guest${formData.guests > 1 ? 's' : ''}` : 'Add guests'}
+          <p className="text-xs font-medium text-gray-600">
+            {formData.guests ? `${formData.guests} guest${formData.guests > 1 ? 's' : ''}` : `Who's coming?`}
           </p>
         </div>
 
@@ -1037,11 +1037,17 @@ export default function SearchForm() {
           padding: 0 16px;
         }
 
+        @media (max-width: 768px) {
+            .mobile-search-trigger {
+                padding: 0 0px;
+            }
+        }
+
         .value-display {
           margin: 0;
           padding: 0;
           color: inherit;
-          font-size: inherit;
+          font-size: 10px;
           font-weight: inherit;
         }
 

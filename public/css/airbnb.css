@@ -164,10 +164,6 @@ img {
 	padding: 1rem 0;
 }
 
-.sticky-content--container {
-	display: none;
-}
-
 .heading {
 	display: flex;
 	justify-content: space-between;

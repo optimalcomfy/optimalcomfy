@@ -897,6 +897,7 @@ class HomeController extends Controller
             ->with(['payments', 'car'])
             ->get();
 
+
         $carBookingTotal = $carBookings->sum(function ($booking) {
             return $booking->payments->sum('amount');
         });
@@ -1005,7 +1006,6 @@ class HomeController extends Controller
                 }
             })
             ->count();
-
 
         return Inertia::render("Wallet/Wallet", [
             "canLogin" => Route::has("login"),

@@ -304,13 +304,13 @@ class CarBooking extends Model
 
     public function payments()
     {
-        return $this->hasMany(Payment::class, 'car_booking_id')
+        return $this->hasMany(Payment::class, 'booking_id')
                     ->where('booking_type', 'car');
     }
 
     public function payment()
     {
-        return $this->hasOne(Payment::class, 'car_booking_id')
+        return $this->hasOne(Payment::class, 'booking_id')
                     ->where('booking_type', 'car');
     }
 

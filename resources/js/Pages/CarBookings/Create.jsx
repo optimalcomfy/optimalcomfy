@@ -281,7 +281,7 @@ const CreateCarBooking = () => {
           </div>
 
           {/* Main Form */}
-          <div className="p-3 lg:p-8 space-y-8 min-h-[60vh]">
+          <div className="p-3 lg:p-4 space-y-8 min-h-[60vh]">
             <form onSubmit={handleSubmit} className="space-y-8">
 
               {/* User and Car Selection */}
@@ -353,15 +353,15 @@ const CreateCarBooking = () => {
                   {/* Calendar Legend */}
                   <div className="flex flex-wrap gap-6 text-sm">
                     <div className="flex items-center">
-                      <div className="h-4 bg-blue-500 rounded mr-2"></div>
+                      <div className="min-h-4 min-w-4 bg-blue-500 rounded mr-2"></div>
                       <span className="text-gray-600">Selected</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="h-4 bg-red-500 rounded mr-2"></div>
+                      <div className="min-h-4 min-w-4 bg-red-500 rounded mr-2"></div>
                       <span className="text-gray-600">Booked</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="h-4 bg-gray-200 rounded mr-2"></div>
+                      <div className="min-h-4 min-w-4 bg-gray-200 rounded mr-2"></div>
                       <span className="text-gray-600">Available</span>
                     </div>
                   </div>

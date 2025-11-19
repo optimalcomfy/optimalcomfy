@@ -24,8 +24,8 @@ const CreateBooking = () => {
     external_booking: 'Yes'
   });
 
-  // Enhanced function to check if a date range is booked for a specific variation
-  const isRangeBooked = (startDate, endDate, variationId = null) => {
+  // Enhanced function to check if a date range is booked for ANY variation (including base property)
+  const isRangeBooked = (startDate, endDate) => {
     if (!selectedProperty || !startDate || !endDate) return false;
 
     const start = new Date(startDate);
@@ -35,23 +35,30 @@ const CreateBooking = () => {
     end.setHours(0, 0, 0, 0);
 
     return selectedProperty.bookings.some(booking => {
-      // Skip if we're checking for standard (no variation) and this booking is for a variation
-      if (variationId === null && booking.variation_id !== null) return false;
-
-      // Skip if we're checking for a specific variation and this booking is for standard or a different variation
-      if (variationId !== null && booking.variation_id !== variationId) return false;
-
       const bookingStart = new Date(booking.check_in_date);
       bookingStart.setHours(0, 0, 0, 0);
 
       const bookingEnd = new Date(booking.check_out_date);
       bookingEnd.setHours(0, 0, 0, 0);
 
-      return (
+      const hasDateOverlap = (
         (start >= bookingStart && start < bookingEnd) || // Start date is within a booking
         (end > bookingStart && end <= bookingEnd) ||    // End date is within a booking
         (start <= bookingStart && end >= bookingEnd)     // Range encompasses a booking
       );
+
+      // If there's any booking (regardless of variation) that overlaps, block it
+      // because the entire property becomes unavailable when any variation is booked
+      return hasDateOverlap;
+    });
+  };
+
+  // Enhanced function to check if date is booked for ANY variation
+  const isDateBooked = (date) => {
+    if (!selectedProperty) return false;
+
+    return bookedDates.some(bookedRange => {
+      return isWithinInterval(date, { start: bookedRange.start, end: bookedRange.end });
     });
   };
 
@@ -96,12 +103,10 @@ const CreateBooking = () => {
   const handleVariationChange = (variation) => {
     const newVariationId = variation?.id || null;
 
-    // Check if current selected dates are available for the new variation
+    // Check if current selected dates are available for ANY booking
     if (data.check_in_date && data.check_out_date) {
-      if (isRangeBooked(data.check_in_date, data.check_out_date, newVariationId)) {
-        const message = variation
-          ? 'The currently selected dates are not available for this room type. Please choose different dates.'
-          : 'The currently selected dates are not available for the standard room. Please choose different dates.';
+      if (isRangeBooked(data.check_in_date, data.check_out_date)) {
+        const message = 'The currently selected dates are already booked. Please choose different dates.';
         alert(message);
         return;
       }
@@ -120,13 +125,11 @@ const CreateBooking = () => {
 
   // Enhanced date selection handler with variation-aware booking checks
   const handleDateClick = (date) => {
-    // Check if date is booked for the current variation
+    // Check if date is booked for ANY variation
     const isBooked = isDateBooked(date);
 
     if (isBooked) {
-      const message = selectedVariation
-        ? 'This date is already booked for the selected room type. Please select an available date.'
-        : 'This date is already booked for the standard room. Please select an available date.';
+      const message = 'This date is already booked. Please select an available date.';
       alert(message);
       return;
     }
@@ -145,7 +148,7 @@ const CreateBooking = () => {
       const endDate = isAfter(date, checkInDate) ? date : checkInDate;
       const startDate = isAfter(date, checkInDate) ? checkInDate : date;
 
-      // Check if any date in range is booked for the current variation
+      // Check if any date in range is booked for ANY variation
       const datesInRange = [];
       let currentDate = new Date(startDate);
       while (currentDate <= endDate) {
@@ -153,14 +156,10 @@ const CreateBooking = () => {
         currentDate = addDays(currentDate, 1);
       }
 
-      const hasConflict = datesInRange.some(rangeDate =>
-        isDateBooked(rangeDate)
-      );
+      const hasConflict = datesInRange.some(rangeDate => isDateBooked(rangeDate));
 
       if (hasConflict) {
-        const message = selectedVariation
-          ? 'Some dates in your selection are already booked for this room type. Please select different dates.'
-          : 'Some dates in your selection are already booked for the standard room. Please select different dates.';
+        const message = 'Some dates in your selection are already booked. Please select different dates.';
         alert(message);
         return;
       }
@@ -211,21 +210,6 @@ const CreateBooking = () => {
     return false;
   };
 
-  // Enhanced function to check if date is booked for current variation
-  const isDateBooked = (date) => {
-    if (!selectedProperty) return false;
-
-    return bookedDates.some(bookedRange => {
-      // Skip if we're checking for standard and this booking is for a variation
-      if (!selectedVariation && bookedRange.variationId !== null) return false;
-
-      // Skip if we're checking for a variation and this booking is for standard or a different variation
-      if (selectedVariation && bookedRange.variationId !== selectedVariation.id) return false;
-
-      return isWithinInterval(date, { start: bookedRange.start, end: bookedRange.end });
-    });
-  };
-
   // Check if date is in current month
   const isCurrentMonth = (date) => {
     return date.getMonth() === currentMonth.getMonth() &&
@@ -243,12 +227,10 @@ const CreateBooking = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Final validation before submission
+    // Final validation before submission - check against ALL bookings
     if (data.check_in_date && data.check_out_date) {
-      if (isRangeBooked(data.check_in_date, data.check_out_date, data.variation_id)) {
-        const message = selectedVariation
-          ? 'The selected dates are no longer available for this room type. Please choose different dates.'
-          : 'The selected dates are no longer available for the standard room. Please choose different dates.';
+      if (isRangeBooked(data.check_in_date, data.check_out_date)) {
+        const message = 'The selected dates are no longer available. Please choose different dates.';
         alert(message);
         return;
       }
@@ -300,7 +282,7 @@ const CreateBooking = () => {
           </div>
 
           {/* Main Form */}
-          <div className="p-3 lg:p-8 space-y-8 min-h-[60vh]">
+          <div className="p-3 lg:p-4 space-y-8 min-h-[60vh]">
             <form onSubmit={handleSubmit} className="space-y-8">
 
               {/* User and Property Selection */}
@@ -356,10 +338,10 @@ const CreateBooking = () => {
 
               {/* Property Details */}
               {selectedProperty && (
-                <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-2xl border border-gray-200 transition-all duration-300">
+                <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-2xl border border-gray-200 transition-all duration-300">
                   <h3 className="font-semibold text-xl text-gray-800 mb-4">Property Details</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100">
                       <div className="flex items-center">
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Type</p>
@@ -368,7 +350,7 @@ const CreateBooking = () => {
                       </div>
                     </div>
 
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100">
                       <div className="flex items-center">
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Base Price</p>
@@ -379,7 +361,7 @@ const CreateBooking = () => {
                       </div>
                     </div>
 
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100">
                       <div className="flex items-center">
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Capacity</p>
@@ -390,7 +372,7 @@ const CreateBooking = () => {
                       </div>
                     </div>
 
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100">
                       <div className="flex items-center">
                         <div className="ml-3">
                           <p className="text-sm font-medium text-gray-500">Location</p>
@@ -412,11 +394,11 @@ const CreateBooking = () => {
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <h5 className="font-medium text-gray-900">{selectedProperty.type} (Standard)</h5>
+                              <h5 className="font-medium text-sm text-gray-900">{selectedProperty.type} (Standard)</h5>
                               <p className="text-sm text-gray-600 mt-1">Base property option</p>
                             </div>
                             <div className="text-right">
-                              <p className="font-semibold">${selectedProperty.price_per_night}</p>
+                              <p className="font-semibold">Kes {selectedProperty.price_per_night}</p>
                               <p className="text-xs text-gray-500">per night</p>
                             </div>
                           </div>
@@ -431,11 +413,11 @@ const CreateBooking = () => {
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <h5 className="font-medium text-gray-900">{variation.type}</h5>
+                                <h5 className="font-medium text-xs text-gray-900">{variation.type}</h5>
                                 <p className="text-sm text-gray-600 mt-1">{variation.description || 'Premium option'}</p>
                               </div>
                               <div className="text-right">
-                                <p className="font-semibold">${variation.price}</p>
+                                <p className="font-semibold">Kes {variation.price}</p>
                                 <p className="text-xs text-gray-500">per night</p>
                                 {variation.price > selectedProperty.price_per_night && (
                                   <p className="text-xs text-green-600 mt-1">+${(variation.price - selectedProperty.price_per_night).toFixed(2)} upgrade</p>
@@ -458,19 +440,19 @@ const CreateBooking = () => {
                   {/* Calendar Legend */}
                   <div className="flex flex-wrap gap-6 text-sm">
                     <div className="flex items-center">
-                      <div className="h-4 bg-blue-500 rounded mr-2"></div>
+                      <div className="min-h-4 min-w-4 bg-blue-500 rounded mr-2"></div>
                       <span className="text-gray-600">Selected</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="h-4 bg-red-400 rounded mr-2"></div>
+                      <div className="min-h-4 min-w-4 bg-red-400 rounded mr-2"></div>
                       <span className="text-gray-600">Booked</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="h-4 bg-gray-100 border border-gray-300 rounded mr-2"></div>
+                      <div className="min-h-4 min-w-4 bg-gray-100 border border-gray-300 rounded mr-2"></div>
                       <span className="text-gray-600">Available</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="h-4 bg-gray-200 rounded mr-2"></div>
+                      <div className="min-h-4 min-w-4 bg-gray-200 rounded mr-2"></div>
                       <span className="text-gray-600">Past Date</span>
                     </div>
                   </div>

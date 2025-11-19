@@ -67,7 +67,8 @@ const IndividualLogs = ({ logs }) => {
         });
     };
 
-    const filteredLogs = logs.data.filter(log => {
+    const safeLogs = logs?.data ?? [];
+    const filteredLogs = safeLogs.filter(log => {
         const matchesSearch = !searchTerm ||
             log.recipient?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             log.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -117,25 +118,25 @@ const IndividualLogs = ({ logs }) => {
                         <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                             <div className="text-blue-600 text-sm font-medium">Total Sent</div>
                             <div className="text-2xl font-bold text-blue-700">
-                                {logs.data.filter(log => log.status === 'sent').length}
+                                {logs?.data?.filter(log => log.status === 'sent').length}
                             </div>
                         </div>
                         <div className="bg-green-50 p-4 rounded-lg border border-green-100">
                             <div className="text-green-600 text-sm font-medium">SMS Messages</div>
                             <div className="text-2xl font-bold text-green-700">
-                                {logs.data.filter(log => log.type === 'individual_sms').length}
+                                {logs?.data?.filter(log => log.type === 'individual_sms').length}
                             </div>
                         </div>
                         <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
                             <div className="text-purple-600 text-sm font-medium">Email Messages</div>
                             <div className="text-2xl font-bold text-purple-700">
-                                {logs.data.filter(log => log.type === 'individual_email').length}
+                                {logs?.data?.filter(log => log.type === 'individual_email').length}
                             </div>
                         </div>
                         <div className="bg-red-50 p-4 rounded-lg border border-red-100">
                             <div className="text-red-600 text-sm font-medium">Failed</div>
                             <div className="text-2xl font-bold text-red-700">
-                                {logs.data.filter(log => log.status === 'failed').length}
+                                {logs?.data?.filter(log => log.status === 'failed').length}
                             </div>
                         </div>
                     </div>
@@ -274,7 +275,7 @@ const IndividualLogs = ({ logs }) => {
                                         <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
                                             <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                                             <p>No individual communication logs found.</p>
-                                            {logs.data.length > 0 && (
+                                            {logs?.data?.length > 0 && (
                                                 <p className="text-sm text-gray-400 mt-2">
                                                     Try adjusting your search or filters
                                                 </p>
@@ -287,11 +288,11 @@ const IndividualLogs = ({ logs }) => {
                     </div>
 
                     {/* Pagination */}
-                    {logs.data.length > 0 && pagination && pagination.total > pagination.per_page && (
+                    {logs?.data?.length > 0 && pagination && pagination.total > pagination.per_page && (
                         <div className="px-6 py-4 border-t border-gray-200">
                             <div className="flex justify-between items-center">
                                 <p className="text-sm text-gray-700">
-                                    Showing {logs.data.length} of {pagination.total} logs
+                                    Showing {logs?.data?.length} of {pagination.total} logs
                                 </p>
                                 <div className="flex gap-2">
                                     {pagination.prev_page_url && (

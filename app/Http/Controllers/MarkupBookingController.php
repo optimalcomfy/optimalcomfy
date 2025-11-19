@@ -320,6 +320,7 @@ class MarkupBookingController extends Controller
         $booking = Booking::create([
             'user_id' => $user->id,
             'property_id' => $property->id,
+            'markup_user_id' => $markup->user_id,
             'markup_id' => $markup->id,
             'check_in_date' => $request->start_date,
             'check_out_date' => $request->end_date,
@@ -350,6 +351,7 @@ class MarkupBookingController extends Controller
         $booking = CarBooking::create([
             'user_id' => $user->id,
             'car_id' => $car->id,
+            'markup_user_id' => $markup->user_id,
             'markup_id' => $markup->id,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,

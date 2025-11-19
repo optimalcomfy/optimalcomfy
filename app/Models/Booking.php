@@ -33,7 +33,8 @@ class Booking extends Model
         'refund_amount',
         'cancelled_by_id',
         'referral_code',
-        'pesapal_tracking_id'
+        'pesapal_tracking_id',
+        'markup_user_id'
     ];
 
     protected $appends = [
@@ -62,6 +63,11 @@ class Booking extends Model
         static::creating(function ($booking) {
             $booking->number = self::generateUniqueNumber();
         });
+    }
+
+    public function markupUser()
+    {
+        return $this->belongsTo(User::class, 'markup_user_id');
     }
 
     public function getStayStatusAttribute()
@@ -327,14 +333,21 @@ class Booking extends Model
 
     public function getMarkupProfitAttribute()
     {
-        if (!$this->markup_id) {
-            return 0;
+        // If we have an active markup, use it
+        if ($this->markup && $this->markup->is_active) {
+            $platformFeePercentage = $this->getPlatformFeePercentage();
+            $markupProfit = $this->markup->profit;
+            $platformFeeOnMarkup = ($markupProfit * $platformFeePercentage) / 100;
+            return $markupProfit - $platformFeeOnMarkup;
         }
 
-        $platformFeePercentage = $this->getPlatformFeePercentage();
-        $markupProfit = $this->markup->profit;
-        $platformFeeOnMarkup = ($markupProfit * $platformFeePercentage) / 100;
+        if ($this->markup_user_id) {
+            $platformFeePercentage = $this->getPlatformFeePercentage();
+            $platformFee = ($this->total_price * $platformFeePercentage) / 100;
 
-        return $markupProfit - $platformFeeOnMarkup;
+            return max(0, $this->total_price - $platformFee - ($this->property->platform_price ?? $this->property->amount));
+        }
+
+        return 0;
     }
 }

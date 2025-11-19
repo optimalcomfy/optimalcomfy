@@ -216,10 +216,11 @@ class User extends Authenticatable
 
     /**
      * Get completed bookings through markups (checked in AND checked out)
+     * UPDATED: Use markup_user_id instead of markup_id
      */
     public function markupBookings()
     {
-        return $this->hasMany(Booking::class, 'markup_id')
+        return $this->hasMany(Booking::class, 'markup_user_id')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
                     ->whereNotNull("checked_in")
@@ -228,10 +229,11 @@ class User extends Authenticatable
 
     /**
      * Get completed car bookings through markups (checked in AND checked out)
+     * UPDATED: Use markup_user_id instead of markup_id
      */
     public function markupCarBookings()
     {
-        return $this->hasMany(CarBooking::class, 'markup_id')
+        return $this->hasMany(CarBooking::class, 'markup_user_id')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
                     ->whereNotNull("checked_in")
@@ -240,10 +242,11 @@ class User extends Authenticatable
 
     /**
      * Get pending markup bookings where checkin is done but checkout is null (ongoing stays)
+     * UPDATED: Use markup_user_id instead of markup_id
      */
     public function pendingMarkupBookings()
     {
-        return $this->hasMany(Booking::class, 'markup_id')
+        return $this->hasMany(Booking::class, 'markup_user_id')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
                     ->whereNotNull("checked_in")
@@ -252,10 +255,11 @@ class User extends Authenticatable
 
     /**
      * Get pending markup car bookings where checkin is done but checkout is null (ongoing rentals)
+     * UPDATED: Use markup_user_id instead of markup_id
      */
     public function pendingMarkupCarBookings()
     {
-        return $this->hasMany(CarBooking::class, 'markup_id')
+        return $this->hasMany(CarBooking::class, 'markup_user_id')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
                     ->whereNotNull("checked_in")
@@ -264,10 +268,11 @@ class User extends Authenticatable
 
     /**
      * Get upcoming markup bookings (not checked in yet)
+     * UPDATED: Use markup_user_id instead of markup_id
      */
     public function upcomingMarkupBookings()
     {
-        return $this->hasMany(Booking::class, 'markup_id')
+        return $this->hasMany(Booking::class, 'markup_user_id')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
                     ->whereNull("checked_in");
@@ -275,10 +280,11 @@ class User extends Authenticatable
 
     /**
      * Get upcoming markup car bookings (not checked in yet)
+     * UPDATED: Use markup_user_id instead of markup_id
      */
     public function upcomingMarkupCarBookings()
     {
-        return $this->hasMany(CarBooking::class, 'markup_id')
+        return $this->hasMany(CarBooking::class, 'markup_user_id')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
                     ->whereNull("checked_in");
@@ -353,7 +359,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Get earnings from markups attribute - UPDATED to use markup_profit
+     * Get earnings from markups attribute - UPDATED to use markup_profit with markup_user_id fallback
      */
     public function getEarningsFromMarkupsAttribute()
     {
@@ -418,7 +424,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Get pending markup earnings from ONGOING bookings - UPDATED to use markup_profit
+     * Get pending markup earnings from ONGOING bookings - UPDATED to use markup_profit with markup_user_id
      */
     public function getPendingMarkupEarningsAttribute()
     {
@@ -473,7 +479,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Get upcoming markup earnings from bookings that haven't started yet - UPDATED to use markup_profit
+     * Get upcoming markup earnings from bookings that haven't started yet - UPDATED to use markup_profit with markup_user_id
      */
     public function getUpcomingMarkupEarningsAttribute()
     {
@@ -519,6 +525,7 @@ class User extends Authenticatable
 
     /**
      * Alternative method to get detailed earnings breakdown with balance and pending balance
+     * UPDATED: All markup relationships now use markup_user_id
      */
     public function getDetailedReferralEarnings()
     {
@@ -588,12 +595,12 @@ class User extends Authenticatable
             $carBookingEarnings += $this->calculateReferralEarnings($carBookingTotal, $referralPercentage, $platformPercentage);
         }
 
-        // UPDATED: Use markup_profit instead of markup->profit
+        // UPDATED: Use markup_profit with markup_user_id fallback
         foreach ($markupBookings as $booking) {
             $markupBookingEarnings += $booking->markup_profit;
         }
 
-        // UPDATED: Use markup_profit instead of markup->profit
+        // UPDATED: Use markup_profit with markup_user_id fallback
         foreach ($markupCarBookings as $carBooking) {
             $markupCarBookingEarnings += $carBooking->markup_profit;
         }
@@ -608,12 +615,12 @@ class User extends Authenticatable
             $pendingCarBookingEarnings += $this->calculateReferralEarnings($carBookingTotal, $referralPercentage, $platformPercentage);
         }
 
-        // UPDATED: Use markup_profit instead of markup->profit
+        // UPDATED: Use markup_profit with markup_user_id fallback
         foreach ($pendingMarkupBookings as $booking) {
             $pendingMarkupBookingEarnings += $booking->markup_profit;
         }
 
-        // UPDATED: Use markup_profit instead of markup->profit
+        // UPDATED: Use markup_profit with markup_user_id fallback
         foreach ($pendingMarkupCarBookings as $carBooking) {
             $pendingMarkupCarBookingEarnings += $carBooking->markup_profit;
         }
@@ -628,12 +635,12 @@ class User extends Authenticatable
             $upcomingCarBookingEarnings += $this->calculateReferralEarnings($carBookingTotal, $referralPercentage, $platformPercentage);
         }
 
-        // UPDATED: Use markup_profit instead of markup->profit
+        // UPDATED: Use markup_profit with markup_user_id fallback
         foreach ($upcomingMarkupBookings as $booking) {
             $upcomingMarkupBookingEarnings += $booking->markup_profit;
         }
 
-        // UPDATED: Use markup_profit instead of markup->profit
+        // UPDATED: Use markup_profit with markup_user_id fallback
         foreach ($upcomingMarkupCarBookings as $carBooking) {
             $upcomingMarkupCarBookingEarnings += $carBooking->markup_profit;
         }

@@ -35,7 +35,8 @@ class CarBooking extends Model
         'refund_amount',
         'cancelled_by_id',
         'referral_code',
-        'pesapal_tracking_id'
+        'pesapal_tracking_id',
+        'markup_user_id'
     ];
 
     protected $appends = [
@@ -64,6 +65,11 @@ class CarBooking extends Model
         static::creating(function ($carBooking) {
             $carBooking->number = self::generateUniqueNumber();
         });
+    }
+
+    public function markupUser()
+    {
+        return $this->belongsTo(User::class, 'markup_user_id');
     }
 
     // Accessor for ride_status
@@ -331,14 +337,19 @@ class CarBooking extends Model
 
     public function getMarkupProfitAttribute()
     {
-        if (!$this->markup_id) {
-            return 0;
+        if ($this->markup && $this->markup->is_active) {
+            $platformFeePercentage = $this->getPlatformFeePercentage();
+            $markupProfit = $this->markup->profit;
+            $platformFeeOnMarkup = ($markupProfit * $platformFeePercentage) / 100;
+            return $markupProfit - $platformFeeOnMarkup;
+        }
+        if ($this->markup_user_id) {
+            $platformFeePercentage = $this->getPlatformFeePercentage();
+            $platformFee = ($this->total_price * $platformFeePercentage) / 100;
+
+            return max(0, $this->total_price - $platformFee - ($this->car->platform_price ?? $this->car->amount));
         }
 
-        $platformFeePercentage = $this->getPlatformFeePercentage();
-        $markupProfit = $this->markup->profit;
-        $platformFeeOnMarkup = ($markupProfit * $platformFeePercentage) / 100;
-
-        return $markupProfit - $platformFeeOnMarkup;
+        return 0;
     }
 }

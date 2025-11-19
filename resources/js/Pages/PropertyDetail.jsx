@@ -118,10 +118,6 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                     {property?.property_name} - {property?.type}
                   </h1>
                   <div className="property-rating">
-                    <span className="star-icon">★</span>
-                    <span className="font-semibold text-gray-900">{ratingData.rating}</span>
-                    <span className="text-gray-600">({ratingData.reviews} reviews)</span>
-                    <span className="mx-2">•</span>
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property?.location)}`}
                       target="_blank"

@@ -127,7 +127,7 @@ const CarRideForm = ({ car }) => {
   return (
     <>
       <div className="sticky-content--container">
-        <div className="sticky-content">
+        <div className="sticky-content hidden lg:flex">
           <div className="sticky-card bg-white dark:bg-[#2D2D2D] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6">
             {/* Price Section */}
             <div className="price-detail mb-6">
@@ -228,7 +228,7 @@ const CarRideForm = ({ car }) => {
       </div>
 
       {/* Mobile version */}
-      <div className="mt-2 sm:hidden">
+      <div className="mt-2 lg:hidden">
         <div className="sticky-content">
           <div className="sticky-card bg-white dark:bg-[#2D2D2D] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6">
             {/* Price Section */}

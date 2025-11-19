@@ -134,7 +134,7 @@ body {
   height: 64px;
   border-radius: 100%;
   animation: nprogress-spinner 1.5s ease-in-out infinite;
-  background-image: url('/android-icon-192x192.png');
+  background-image: url('/app-icon.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;

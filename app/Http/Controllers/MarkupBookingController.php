@@ -102,14 +102,14 @@ class MarkupBookingController extends Controller
                 'item' => [
                     'id' => $item->id,
                     'name' => $item->name ?? $item->property_name,
-                    'original_amount' => $platformPrice, // Use platform price here
+                    'original_amount' => $markup->original_amount, // Use platform price here
                     'platform_price' => $platformPrice, // Explicit platform price field
                     'base_price' => $item->amount, // Original base price for reference
                     'image' => $this->getItemImage($item),
                 ],
                 'markup_percentage' => $markup->markup_percentage,
                 'markup_amount' => $markup->markup_amount,
-                'final_amount' => $platformPrice + $markup->profit,
+                'final_amount' => $markup->final_amount,
                 'profit' => $markup->profit,
                 'markup_link' => $this->generateMarkupLink($markup),
                 'created_at' => $markup->created_at->format('Y-m-d H:i:s'),
@@ -466,29 +466,13 @@ class MarkupBookingController extends Controller
                 ]
             ];
 
-            \Log::info('Submitting Pesapal markup order', [
-                'booking_id' => $booking->id,
-                'booking_type' => $bookingType,
-                'order_data' => $orderData
-            ]);
-
             $orderResponse = $pesapalService->createOrderDirect($orderData);
 
-            \Log::info('Pesapal Markup Order Response', [
-                'booking_id' => $booking->id,
-                'order_response' => $orderResponse
-            ]);
 
             if (isset($orderResponse['order_tracking_id']) && isset($orderResponse['redirect_url'])) {
                 // Store Pesapal tracking ID in booking
                 $booking->update([
                     'pesapal_tracking_id' => $orderResponse['order_tracking_id']
-                ]);
-
-                \Log::info('Pesapal markup payment initiated successfully', [
-                    'booking_id' => $booking->id,
-                    'tracking_id' => $orderResponse['order_tracking_id'],
-                    'redirect_url' => $orderResponse['redirect_url']
                 ]);
 
                 // Return Inertia response for redirect
@@ -632,18 +616,6 @@ class MarkupBookingController extends Controller
 
             // Use provided base_price if specified (for platform price), otherwise use calculated platform price
             $basePriceForMarkup = $request->has('base_price') ? $request->base_price : $platformPrice;
-
-            \Log::info('Markup creation details', [
-                'item_id' => $item->id,
-                'item_type' => $request->item_type,
-                'item_base_amount' => $item->amount,
-                'item_platform_price' => $item->platform_price,
-                'platform_price_used' => $platformPrice,
-                'base_price_for_markup' => $basePriceForMarkup,
-                'base_price_type' => $request->base_price_type ?? 'auto',
-                'markup_value' => $request->markup_value,
-                'is_percentage' => $request->is_percentage,
-            ]);
 
             // Deactivate any existing markup for this user and item
             Markup::where('user_id', $user->id)
@@ -889,9 +861,9 @@ class MarkupBookingController extends Controller
                     'item' => [
                         'id' => $item->id,
                         'name' => $item->name ?? $item->property_name,
-                        'original_amount' => $platformPrice, // Use platform price
+                        'original_amount' => $markup->original_amount, // Use platform price
                         'platform_price' => $platformPrice, // Explicit platform price
-                        'final_amount' => $platformPrice + $markup->profit,
+                        'final_amount' =>  $markup->final_amount,
                         'image' => $this->getItemImage($item),
                         'location' => $item->location ?? $item->location_address,
                         'features' => $this->getItemFeatures($item),
@@ -951,8 +923,6 @@ class MarkupBookingController extends Controller
                 ->with('error', 'Only hosts can browse properties for markup.');
         }
 
-        \Log::info('Browse Properties Request:', $request->all());
-
         $query = Property::with(['user', 'initialGallery'])
             ->orderBy('created_at', 'desc');
 
@@ -993,7 +963,6 @@ class MarkupBookingController extends Controller
 
         // Debug: Get total count before pagination
         $totalCount = $query->count();
-        \Log::info("Total properties found: {$totalCount}");
 
         $properties = $query->paginate(12);
 
@@ -1007,8 +976,6 @@ class MarkupBookingController extends Controller
 
             return $property;
         });
-
-        \Log::info("Properties after transformation: " . $properties->count());
 
         if ($request->wantsJson()) {
             return response()->json([

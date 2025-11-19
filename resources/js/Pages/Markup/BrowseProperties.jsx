@@ -7,6 +7,41 @@ import 'react-toastify/dist/ReactToastify.css';
 import AddMarkupModal from '@/Components/AddMarkupModal';
 import './browse-properties.css';
 
+// SafeImage component (you can also move this to a separate file)
+const SafeImage = ({
+  src,
+  alt,
+  fallbackSrc = '/images/placeholder-property.jpg',
+  className = '',
+  ...props
+}) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  // Reset when src changes
+  useEffect(() => {
+    setImgSrc(src);
+    setHasError(false);
+  }, [src]);
+
+  const handleError = () => {
+    if (!hasError && imgSrc !== fallbackSrc) {
+      setImgSrc(fallbackSrc);
+      setHasError(true);
+    }
+  };
+
+  return (
+    <img
+      src={imgSrc}
+      alt={alt}
+      className={className}
+      onError={handleError}
+      {...props}
+    />
+  );
+};
+
 const BrowseProperties = ({ auth, properties: initialProperties, pagination: initialPagination, filters: initialFilters }) => {
     const { props } = usePage();
 
@@ -37,7 +72,9 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
         if (propertiesData && propertiesData.length > 0) {
             const propertiesWithStatus = propertiesData.map(property => ({
                 ...property,
-                has_user_markup: property.has_user_markup || false
+                has_user_markup: property.has_user_markup || false,
+                // Ensure primary_image has a fallback
+                primary_image: property.primary_image || '/images/placeholder-property.jpg'
             }));
             setPropertiesWithMarkupStatus(propertiesWithStatus);
         } else {
@@ -78,12 +115,10 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
     };
 
     const handleAddMarkup = (property) => {
-        // Use platform_price for markup calculations instead of amount
         const propertyWithPlatformPrice = {
             ...property,
-            // Ensure we're using platform_price for markup calculations
             platform_price: property.platform_price || property.price_per_night,
-            base_price: property.platform_price || property.price_per_night // Add base_price for clarity
+            base_price: property.platform_price || property.price_per_night
         };
 
         setSelectedProperty(propertyWithPlatformPrice);
@@ -105,10 +140,8 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
         setSearchTerm('');
     };
 
-    // Update markup status when modal closes (after successful markup addition/update)
     const handleMarkupModalClose = (success = false) => {
         if (success && selectedProperty) {
-            // Update the local state to reflect the new markup status
             setPropertiesWithMarkupStatus(prevProperties =>
                 prevProperties.map(property =>
                     property.id === selectedProperty.id
@@ -129,7 +162,12 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
                 only: ['properties', 'pagination'],
                 onSuccess: (page) => {
                     const newProperties = page.props.properties?.data || [];
-                    setPropertiesWithMarkupStatus(newProperties);
+                    // Ensure images have fallbacks for new properties
+                    const propertiesWithSafeImages = newProperties.map(property => ({
+                        ...property,
+                        primary_image: property.primary_image || '/images/placeholder-property.jpg'
+                    }));
+                    setPropertiesWithMarkupStatus(propertiesWithSafeImages);
                     setPagination(page.props.pagination || {});
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
@@ -290,15 +328,13 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
                             <div className="browse-properties-grid p-6">
                                 {propertiesWithMarkupStatus?.map((property) => (
                                     <div key={property.id} className="browse-properties-card">
-                                        {/* Property Image */}
+                                        {/* Property Image - Using SafeImage */}
                                         <div className="browse-properties-image-container">
-                                            <img
-                                                src={property.primary_image || '/images/placeholder-property.jpg'}
+                                            <SafeImage
+                                                src={property.primary_image}
                                                 alt={property.property_name}
                                                 className="browse-properties-image"
-                                                onError={(e) => {
-                                                    e.target.src = '/images/placeholder-property.jpg';
-                                                }}
+                                                fallbackSrc="/images/placeholder-property.jpg"
                                             />
                                             {hasExistingMarkup(property.id) && (
                                                 <div className="browse-properties-markup-badge">
@@ -451,7 +487,7 @@ const BrowseProperties = ({ auth, properties: initialProperties, pagination: ini
                     itemType="properties"
                     onSuccess={() => {
                         handleMarkupModalClose(true);
-                        handleFilterChange(); // Refresh the list
+                        handleFilterChange();
                     }}
                 />
             )}

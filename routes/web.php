@@ -243,6 +243,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/reload', [ProfileController::class, 'reload'])->name('profile.reload');
     Route::get('/wallet', [HomeController::class, 'hostWallet'])->name('wallet');
 
+
+    Route::get('/markup-earnings', [HomeController::class, 'getMarkupEarnings'])->name('markup-earnings');
+    Route::get('/complete-financial-summary', [HomeController::class, 'getCompleteFinancialSummary'])->name('complete-financial-summary');
+    Route::get('/platform-earnings', [HomeController::class, 'getPlatformEarnings'])->name('platform-earnings');
+
     // Company & Employee Routes
     Route::resource('companies', CompanyController::class);
     Route::get('/companies/list', [CompanyController::class, 'list'])->name('companies.list');

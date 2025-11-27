@@ -757,6 +757,11 @@ class User extends Authenticatable
         return in_array($this->role_id, [2]); // Role ID 2 is host
     }
 
+    public function isAdmin()
+    {
+        return $this->role_id === 1 || $this->role_id === "1";
+    }
+
     /**
      * Check if user can add markup (must be host - can markup any property/car)
      */

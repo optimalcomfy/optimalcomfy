@@ -6,7 +6,7 @@ import {
 import {
   Home, Users, Calendar, Star, DollarSign, Loader, Check, Car, Plus,
   Wallet, Settings, MapPin, Briefcase, CreditCard, Activity, AlertTriangle,
-  TrendingDown, TrendingUp
+  TrendingDown, TrendingUp, Tag, UserCheck, Building
 } from 'lucide-react';
 import { usePage, useForm } from '@inertiajs/react';
 import { LayoutContext } from '@/Layouts/layout/context/layoutcontext';
@@ -27,7 +27,12 @@ const Dashboard = () => {
     recentTransactions,
     hostsWithOverdrafts: overdraftData,
     auth,
-    flash
+    flash,
+    earnings_type,
+    description,
+    platform_percentage,
+    host_percentage,
+    repaymentAmount
   } = usePage().props;
 
   const { data, setData, get, processing } = useForm({
@@ -40,6 +45,9 @@ const Dashboard = () => {
   const roleId = parseInt(auth.user?.role_id);
   const isDarkMode = layoutConfig.colorScheme === 'dark';
   const [isLoading, setIsLoading] = useState(false);
+  const [markupEarnings, setMarkupEarnings] = useState(null);
+  const [completeSummary, setCompleteSummary] = useState(null);
+  const [platformEarnings, setPlatformEarnings] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -50,6 +58,30 @@ const Dashboard = () => {
       preserveScroll: true,
     });
   };
+
+  // Fetch additional earnings data
+  useEffect(() => {
+    // Fetch markup earnings for hosts
+    if (roleId === 2) {
+      fetch(route('markup-earnings'))
+        .then(response => response.json())
+        .then(data => setMarkupEarnings(data.markup_earnings))
+        .catch(error => console.error('Error fetching markup earnings:', error));
+
+      fetch(route('complete-financial-summary'))
+        .then(response => response.json())
+        .then(data => setCompleteSummary(data.complete_financial_summary))
+        .catch(error => console.error('Error fetching complete summary:', error));
+    }
+
+    // Fetch platform earnings for admin
+    if (roleId === 1) {
+      fetch(route('platform-earnings'))
+        .then(response => response.json())
+        .then(data => setPlatformEarnings(data.platform_earnings))
+        .catch(error => console.error('Error fetching platform earnings:', error));
+    }
+  }, [roleId]);
 
   // Theme setup for charts
   const applyLightTheme = () => {
@@ -83,12 +115,12 @@ const Dashboard = () => {
     setLineOptions(lineOptions);
   };
 
-    const formatCurrency = (amount) => {
-        if (typeof amount === 'string') {
-            amount = parseFloat(amount);
-        }
-        return `KES ${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    };
+  const formatCurrency = (amount) => {
+    if (typeof amount === 'string') {
+      amount = parseFloat(amount);
+    }
+    return `KES ${amount?.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) || '0'}`;
+  };
 
   const applyDarkTheme = () => {
     const lineOptions = {
@@ -150,23 +182,38 @@ const Dashboard = () => {
   };
 
   // Custom InfoCard component
-  const InfoCard = ({ title, value, icon, iconColor, description, trend, isNegative }) => {
+  const InfoCard = ({ title, value, icon, iconColor, description, trend, isNegative, isPositive, isWarning, isInfo }) => {
     const Icon = icon;
     const trendColor = trend?.value > 0 ? 'green' : trend?.value < 0 ? 'red' : 'gray';
     const trendIcon = trend?.value > 0 ? '↑' : trend?.value < 0 ? '↓' : '→';
 
     return (
       <div className="flex-1 p-3 min-w-[250px]">
-        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} ${isNegative ? 'border-l-4 border-red-500' : ''}`}>
+        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}
+          ${isNegative ? 'border-l-4 border-red-500' : ''}
+          ${isPositive ? 'border-l-4 border-green-500' : ''}
+          ${isWarning ? 'border-l-4 border-yellow-500' : ''}
+          ${isInfo ? 'border-l-4 border-[#db5528]' : ''}`}>
           <div className="flex justify-between gap-4 items-center mb-3">
             <h3 className="text-lg font-semibold">{title}</h3>
-            <div className={`p-2 rounded-full ${isNegative ? 'bg-red-100 text-red-500' : `bg-${iconColor}-100 text-${iconColor}-500`}`}>
+            <div className={`p-2 rounded-full ${
+              isNegative ? 'bg-red-100 text-red-500' :
+              isPositive ? 'bg-green-100 text-green-500' :
+              isWarning ? 'bg-yellow-100 text-yellow-500' :
+              isInfo ? 'bg-gray-100 text-blue-500' :
+              `bg-${iconColor}-100 text-${iconColor}-500`
+            }`}>
               <Icon size={20} />
             </div>
           </div>
           <div className="mt-2">
-            <span className={`text-2xl font-bold ${isNegative ? 'text-red-500' : ''}`}>
-              {isNegative && '-'}{value}
+            <span className={`text-2xl font-bold ${
+              isNegative ? 'text-red-500' :
+              isPositive ? 'text-green-500' :
+              isWarning ? 'text-yellow-500' :
+              isInfo ? 'text-blue-500' : ''
+            }`}>
+              {isNegative && '-'}{typeof value === 'number' ? value.toLocaleString() : value}
             </span>
             {trend && (
               <span className={`ml-2 text-sm text-${trendColor}-500`}>
@@ -174,6 +221,137 @@ const Dashboard = () => {
               </span>
             )}
             <p className="text-sm text-gray-500 mt-1">{description}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Earnings Type Badge
+  const EarningsTypeBadge = () => {
+    if (earnings_type === 'direct_host_earnings') {
+      return (
+        <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-blue-800 rounded-full text-sm">
+          <Home size={14} />
+          Direct Host Earnings
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Platform Earnings Card (for admin)
+  const PlatformEarningsCard = () => {
+    if (!platformEarnings || roleId !== 1) return null;
+
+    return (
+      <div className="p-3 min-w-[300px]">
+        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} border-l-4 border-[#db5528]`}>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-indigo-600">
+            <Building size={18} />
+            Platform Earnings
+          </h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Total Platform Earnings</span>
+              <span className="font-bold text-indigo-600">{formatCurrency(platformEarnings.total_platform_earnings)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">From Property Bookings</span>
+              <span className="font-bold">{formatCurrency(platformEarnings.breakdown.from_property_bookings)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">From Car Bookings</span>
+              <span className="font-bold">{formatCurrency(platformEarnings.breakdown.from_car_bookings)}</span>
+            </div>
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500">Direct Bookings</span>
+                <span>{formatCurrency(platformEarnings.breakdown.from_direct_bookings)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm mt-1">
+                <span className="text-gray-500">Markup Bookings</span>
+                <span>{formatCurrency(platformEarnings.breakdown.from_markup_bookings)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Markup Earnings Card (for hosts)
+  const MarkupEarningsCard = () => {
+    if (!markupEarnings || roleId !== 2) return null;
+
+    return (
+      <div className="p-3 min-w-[300px]">
+        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} border-l-4 border-purple-500`}>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-purple-600">
+            <Tag size={18} />
+            Markup & Referral Earnings
+          </h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Available Balance</span>
+              <span className="font-bold text-green-500">{formatCurrency(markupEarnings.available_markup_balance)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Pending Markup Earnings</span>
+              <span className="font-bold text-yellow-500">{formatCurrency(markupEarnings.pending_markup_earnings)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">From Markups</span>
+              <span className="font-bold">{formatCurrency(markupEarnings.earnings_from_markups)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">From Referrals</span>
+              <span className="font-bold">{formatCurrency(markupEarnings.earnings_from_referrals)}</span>
+            </div>
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center font-semibold">
+                <span>Total Markup Earnings</span>
+                <span className="text-purple-600">{formatCurrency(markupEarnings.total_markup_earnings)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Combined Earnings Summary (for hosts)
+  const CombinedEarningsSummary = () => {
+    if (!completeSummary || roleId !== 2) return null;
+
+    return (
+      <div className="p-3 min-w-[300px]">
+        <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} border-l-4 border-green-500`}>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-green-600">
+            <DollarSign size={18} />
+            Combined Earnings Summary
+          </h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Direct Host Earnings</span>
+              <span className="font-bold text-blue-500">{formatCurrency(completeSummary.direct_host_earnings.total_direct_earnings)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Markup & Referral Earnings</span>
+              <span className="font-bold text-purple-500">{formatCurrency(completeSummary.markup_referral_earnings.total_markup_referral_earnings)}</span>
+            </div>
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center font-semibold">
+                <span>Total All Earnings</span>
+                <span className="text-green-600">{formatCurrency(completeSummary.combined_totals.total_all_earnings)}</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Net Available Balance</span>
+              <span className={`font-bold ${completeSummary.combined_totals.net_available_balance < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                {formatCurrency(completeSummary.combined_totals.net_available_balance)}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -229,6 +407,8 @@ const Dashboard = () => {
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">Email</th>
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">Properties</th>
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">Vehicles</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Direct Earnings</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Markup Earnings</th>
                     <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Available Balance</th>
                     <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Overdraft Amount</th>
                     <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Status</th>
@@ -241,6 +421,8 @@ const Dashboard = () => {
                       <td className="py-3 px-3 text-sm">{host.email}</td>
                       <td className="py-3 px-3 text-sm">{host.properties_count}</td>
                       <td className="py-3 px-3 text-sm">{host.cars_count}</td>
+                      <td className="py-3 px-3 text-sm text-right">{formatCurrency(host.direct_host_earnings)}</td>
+                      <td className="py-3 px-3 text-sm text-right">{formatCurrency(host.markup_earnings)}</td>
                       <td className="py-3 px-3 text-sm text-right font-medium text-red-500">
                         -{formatCurrency(Math.abs(host.available_balance))}
                       </td>
@@ -273,8 +455,8 @@ const Dashboard = () => {
       name: host.name.split(' ')[0], // First name only
       overdraft: Math.abs(host.overdraft_amount),
       balance: Math.abs(host.available_balance),
-      properties: host.properties_count,
-      cars: host.cars_count
+      directEarnings: host.direct_host_earnings,
+      markupEarnings: host.markup_earnings
     }));
 
     return (
@@ -292,7 +474,8 @@ const Dashboard = () => {
                 />
                 <Legend />
                 <Bar dataKey="overdraft" fill="#EF4444" name="Overdraft Amount" />
-                <Bar dataKey="balance" fill="#F59E0B" name="Negative Balance" />
+                <Bar dataKey="directEarnings" fill="#3B82F6" name="Direct Earnings" />
+                <Bar dataKey="markupEarnings" fill="#8B5CF6" name="Markup Earnings" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -310,13 +493,13 @@ const Dashboard = () => {
             <img
               src={`/storage/${auth.user.profile_picture}`}
               alt="Profile"
-              className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
+              className="w-16 h-16 rounded-full object-cover border-2 border-[#db5528]"
             />
             <div>
               <h3 className="text-xl font-bold">{auth.user.name}</h3>
               {parseInt(auth.user?.role_id) !== 1 ?
                 <p className="text-sm text-gray-500">
-                    {auth.user.user_type === 'host' ? 'Property Host' : 'Traveler'} • {auth.user.current_location}
+                  {auth.user.user_type === 'host' ? 'Property Host' : 'Traveler'} • {auth.user.current_location}
                 </p>
                 :
                <p className="text-sm text-gray-500">
@@ -325,7 +508,7 @@ const Dashboard = () => {
               }
 
               <div className="flex gap-2 mt-2">
-                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                <span className="text-xs px-2 py-1 bg-gray-100 text-blue-800 rounded-full">
                   {auth.user.nationality}
                 </span>
                 {auth.user.languages && JSON.parse(auth.user.languages).map((lang, index) => (
@@ -337,11 +520,20 @@ const Dashboard = () => {
               <div className='flex flex-col lg:flex-row gap-2 items-center'>
                 <p className="text-sm text-gray-500 my-auto">Referral code</p>
                 <p className="text-red-500 font-bold text-2xl flex items-center gap-1">
-                    {auth.user?.referral_code}
+                  {auth.user?.referral_code}
                 </p>
               </div>
             </div>
           </div>
+          {/* Earnings Type Badge */}
+          {earnings_type && (
+            <div className="mt-3">
+              <EarningsTypeBadge />
+              {description && (
+                <p className="text-xs text-gray-500 mt-1">{description}</p>
+              )}
+            </div>
+          )}
           <div className="flex flex-wrap mt-4 gap-4">
             <div className="flex-1 min-w-[120px]">
               <p className="text-sm text-gray-500">Member Since</p>
@@ -367,12 +559,22 @@ const Dashboard = () => {
       { name: 'Car Rentals', value: parseFloat(carBookingTotal) || 0 },
     ];
 
-    const COLORS = ['#3B82F6', '#10B981'];
+    // Add markup earnings if available
+    if (markupEarnings) {
+      data.push(
+        { name: 'Markup Earnings', value: parseFloat(markupEarnings.earnings_from_markups) || 0 },
+        { name: 'Referral Earnings', value: parseFloat(markupEarnings.earnings_from_referrals) || 0 }
+      );
+    }
+
+    const COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
     return (
       <div className="flex-1 p-3 min-w-[300px]">
         <div className={`shadow-md rounded-lg p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
-          <h3 className="text-lg font-semibold mb-4">Earnings Breakdown</h3>
+          <h3 className="text-lg font-semibold mb-4">
+            {markupEarnings ? 'Complete Earnings Breakdown' : 'Direct Earnings Breakdown'}
+          </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -396,7 +598,7 @@ const Dashboard = () => {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex justify-center gap-4 mt-2">
+          <div className="flex flex-wrap justify-center gap-4 mt-2">
             {data.map((item, index) => (
               <div key={index} className="flex items-center">
                 <div
@@ -469,6 +671,11 @@ const Dashboard = () => {
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Activity size={18} />
             Recent Transactions
+            {earnings_type === 'direct_host_earnings' && (
+              <span className="text-xs bg-gray-100 text-blue-800 px-2 py-1 rounded-full">
+                Direct Earnings Only
+              </span>
+            )}
           </h3>
           {recentTransactions && recentTransactions.length > 0 ? (
             <div className="overflow-x-auto">
@@ -484,6 +691,7 @@ const Dashboard = () => {
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Customer Price</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Platform charges</th>
                     </>}
+                    <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Earnings Type</th>
                     <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">Status</th>
                   </tr>
                 </thead>
@@ -501,6 +709,15 @@ const Dashboard = () => {
                       <td className="px-6 py-4 whitespace-wrap">KES {formatCurrency(transaction.platform_price)}</td>
                       <td className="px-6 py-4 whitespace-wrap">KES {formatCurrency(transaction.platform_charges)}</td>
                       </>}
+                      <td className="py-3 px-3 text-sm text-right">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          transaction.earnings_type === 'direct_host'
+                            ? 'bg-gray-100 text-blue-800'
+                            : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {transaction.earnings_type === 'direct_host' ? 'Direct' : 'Markup'}
+                        </span>
+                      </td>
                       <td className="py-3 px-3 text-sm text-right">
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           transaction.status === 'completed'
@@ -548,6 +765,18 @@ const Dashboard = () => {
         <div className="flex flex-col flex-1 justify-start gap-4">
           <UserProfileCard />
           <FinancialSummary />
+
+          {/* Additional earnings cards */}
+          {roleId === 2 && (
+            <>
+              <MarkupEarningsCard />
+              <CombinedEarningsSummary />
+            </>
+          )}
+
+          {/* Platform earnings for admin */}
+          {roleId === 1 && <PlatformEarningsCard />}
+
           {/* Overdraft Summary - Only show for admin/management roles */}
           {(roleId === 1) && overdraftData.length > 0 && <OverdraftSummary />}
         </div>)}
@@ -561,8 +790,9 @@ const Dashboard = () => {
                 value={propertiesCount}
                 icon={Home}
                 iconColor="blue"
-                description="Your listed properties"
+                description="Listed properties"
                 trend={{ value: 12, period: 'this month' }}
+                isInfo={roleId === 1}
               />
             )}
             {(roleId === 1 || roleId === 2) && (
@@ -571,19 +801,32 @@ const Dashboard = () => {
                 value={carsCount}
                 icon={Car}
                 iconColor="purple"
-                description="Your listed vehicles"
+                description="Listed vehicles"
                 trend={{ value: 5, period: 'this month' }}
+                isInfo={roleId === 1}
               />
             )}
-             {(roleId !== 4) && (
-            <InfoCard
-              title="Total Bookings"
-              value={totalBookingsCount}
-              icon={Calendar}
-              iconColor="green"
-              description="All-time bookings"
-              trend={{ value: 8, period: 'this month' }}
-            />)}
+            {(roleId === 1 || roleId === 2) && (
+              <InfoCard
+                title="Total Bookings"
+                value={totalBookingsCount}
+                icon={Calendar}
+                iconColor="green"
+                description="All-time bookings"
+                trend={{ value: 8, period: 'this month' }}
+                isInfo={roleId === 1}
+              />
+            )}
+            {roleId === 1 && platformEarnings && (
+              <InfoCard
+                title="Platform Earnings"
+                value={formatCurrency(platformEarnings.total_platform_earnings)}
+                icon={Building}
+                iconColor="indigo"
+                description="Total platform revenue"
+                isInfo={true}
+              />
+            )}
           </div>
 
           {/* Overdraft Section - Only show for admin/management roles */}

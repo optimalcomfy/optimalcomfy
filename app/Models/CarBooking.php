@@ -357,7 +357,7 @@ class CarBooking extends Model
             $days = max(1, $endDate->diffInDays($startDate));
             $totalBasePrice = $carBasePrice * $days;
 
-            return max(0, $this->total_price - $platformFee - $totalBasePrice);
+            return max(0, $this->total_price - $totalBasePrice);
         }
 
         return 0;

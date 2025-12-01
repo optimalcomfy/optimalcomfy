@@ -350,7 +350,7 @@ class Booking extends Model
             $nights = $this->nights;
             $totalBasePrice = $propertyBasePrice * $nights;
 
-            return max(0, $this->total_price - $platformFee - $totalBasePrice);
+            return max(0, $this->total_price - $totalBasePrice);
         }
 
         return 0;

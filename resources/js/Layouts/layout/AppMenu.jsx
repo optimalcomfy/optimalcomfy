@@ -49,14 +49,16 @@ const AppMenu = () => {
             items: [
                 { label: 'My Markups', icon: 'pi pi-fw pi-tags', to: route('markup.index'), roles: [2] },
                 { label: 'Browse Properties', icon: 'pi pi-fw pi-home', to: route('markup.browse.properties'), roles: [2] },
-                { label: 'Browse Cars', icon: 'pi pi-fw pi-car', to: route('markup.browse.cars'), roles: [2] }
+                { label: 'Browse Cars', icon: 'pi pi-fw pi-car', to: route('markup.browse.cars'), roles: [2] },
+                { label: 'Markup Earnings', icon: 'pi pi-fw pi-dollar', to: route('bookings.markup'), roles: [2] }
             ]
         },
         {
             label: 'Payments & Reviews',
             items: [
                 { label: 'Payments', icon: 'pi pi-fw pi-credit-card', to: route('payments.index'), roles: [1] },
-                { label: 'Ristay wallet', icon: 'pi pi-fw pi-credit-card', to: route('wallet'), roles: [2,3,4] }
+                { label: 'Ristay wallet', icon: 'pi pi-fw pi-credit-card', to: route('wallet'), roles: [2,3,4] },
+                { label: 'Referral Earnings', icon: 'pi pi-fw pi-dollar', to: route('bookings.referral-earnings'), roles: [2,3,4] }
             ]
         },
         {

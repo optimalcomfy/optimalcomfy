@@ -323,6 +323,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/car-media/by-car/{carId}', [CarMediaController::class, 'getByCar']);
 
     // Booking Management
+    Route::get('/referral-earnings', [BookingController::class, 'referralEarnings'])
+        ->name('bookings.referral-earnings');
+    Route::get('/referral-earnings/export', [BookingController::class, 'exportReferralEarnings'])
+        ->name('bookings.referral-export');
+    Route::get('/bookings/markups', [BookingController::class, 'markupBookings'])->name('bookings.markup');
+    Route::get('/bookings/markups/export', [BookingController::class, 'exportMarkupBookings'])->name('bookings.markup-export');
     Route::get('/bookings/export-data', [BookingController::class, 'exportData'])->name('bookings.exportData');
     Route::resource('bookings', BookingController::class);
     Route::post('/bookings/add', [BookingController::class, 'add'])->name('bookings.add');
@@ -330,6 +336,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/bookings/{booking}/handle-refund', [RefundController::class, 'handleRefund'])->name('bookings.handle-refund');
     Route::post('/bookings/lookup', [BookingController::class, 'lookup'])->name('bookings.lookup');
     Route::get('/bookings/{booking}/extend', [BookingController::class, 'extend'])->name('bookings.extend');
+
 
     // Car Booking Management
     Route::get('/car-bookings/export-data', [CarBookingController::class, 'exportData'])->name('car-bookings.exportData');

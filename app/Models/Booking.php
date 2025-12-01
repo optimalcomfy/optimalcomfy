@@ -345,7 +345,12 @@ class Booking extends Model
             $platformFeePercentage = $this->getPlatformFeePercentage();
             $platformFee = ($this->total_price * $platformFeePercentage) / 100;
 
-            return max(0, $this->total_price - $platformFee - ($this->property->platform_price ?? $this->property->amount));
+            $propertyBasePrice = round($this->property->amount ?? 0, -2);
+
+            $nights = $this->nights;
+            $totalBasePrice = $propertyBasePrice * $nights;
+
+            return max(0, $this->total_price - $platformFee - $totalBasePrice);
         }
 
         return 0;

@@ -68,12 +68,17 @@ class BookingController extends Controller
             });
         }
 
-        // Search by user name or email
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%$search%")
-                ->orWhere('email', 'LIKE', "%$search%");
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhere('status', 'LIKE', "%$search%")
+                ->orWhere('external_booking', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('property', function ($q) use ($search) {
+                    $q->where('property_name', 'LIKE', "%$search%");
+                });
             });
         }
 

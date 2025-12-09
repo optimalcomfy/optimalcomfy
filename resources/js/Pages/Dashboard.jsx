@@ -8,7 +8,7 @@ import {
   Wallet, Settings, MapPin, Briefcase, CreditCard, Activity, AlertTriangle,
   TrendingDown, TrendingUp
 } from 'lucide-react';
-import { usePage, useForm } from '@inertiajs/react';
+import { usePage, useForm } from '@inertiajs/react'; // Keep useForm
 import { LayoutContext } from '@/Layouts/layout/context/layoutcontext';
 import Layout from "@/Layouts/layout/layout.jsx";
 
@@ -27,10 +27,12 @@ const Dashboard = () => {
     recentTransactions,
     hostsWithOverdrafts: overdraftData,
     auth,
-    flash
+    flash,
+    errors // Add errors from props
   } = usePage().props;
 
-  const { data, setData, get, processing } = useForm({
+  // Use useForm for POST request
+  const { data, setData, post, processing, errors: formErrors } = useForm({
     type: "",
     number: "",
   });
@@ -40,14 +42,35 @@ const Dashboard = () => {
   const roleId = parseInt(auth.user?.role_id);
   const isDarkMode = layoutConfig.colorScheme === 'dark';
   const [isLoading, setIsLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setSearchError(''); // Clear previous errors
 
-    if (!data.type || !data.number) return;
+    if (!data.type || !data.number) {
+      setSearchError('Please select booking type and enter booking number');
+      return;
+    }
 
-    get(route("bookings.lookup"), {
+    // Use post for POST request
+    post(route("bookings.lookup"), {
       preserveScroll: true,
+      preserveState: true,
+      onSuccess: () => {
+        // Reset form on successful navigation
+        setData({
+          type: "",
+          number: "",
+        });
+      },
+      onError: (errors) => {
+        if (errors.number) {
+          setSearchError(errors.number);
+        } else {
+          setSearchError('An error occurred while searching');
+        }
+      }
     });
   };
 
@@ -83,12 +106,12 @@ const Dashboard = () => {
     setLineOptions(lineOptions);
   };
 
-    const formatCurrency = (amount) => {
-        if (typeof amount === 'string') {
-            amount = parseFloat(amount);
-        }
-        return `KES ${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    };
+  const formatCurrency = (amount) => {
+    if (typeof amount === 'string') {
+      amount = parseFloat(amount);
+    }
+    return `KES ${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  };
 
   const applyDarkTheme = () => {
     const lineOptions = {
@@ -128,6 +151,13 @@ const Dashboard = () => {
       applyDarkTheme();
     }
   }, [layoutConfig.colorScheme]);
+
+  // Clear error when user starts typing
+  useEffect(() => {
+    if (searchError) {
+      setSearchError('');
+    }
+  }, [data.type, data.number]);
 
   // Loading Screen Component
   const LoadingScreen = () => {
@@ -600,13 +630,22 @@ const Dashboard = () => {
           {(roleId === 4) && (
             <div className="max-w-2xl bg-white p-6 rounded-lg shadow-md">
               <h1 className="text-lg font-bold mb-4">Find Booking</h1>
+              
+              {/* Error Message */}
+              {searchError && (
+                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+                  {searchError}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium">Booking Type</label>
+                  <label className="block text-sm font-medium mb-1">Booking Type</label>
                   <select
                     value={data.type}
                     onChange={(e) => setData("type", e.target.value)}
-                    className="w-full border px-3 py-2 rounded"
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
                   >
                     <option value="">Select Type</option>
                     <option value="property">Property</option>
@@ -615,22 +654,30 @@ const Dashboard = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium">Booking Number</label>
+                  <label className="block text-sm font-medium mb-1">Booking Number</label>
                   <input
                     type="text"
                     value={data.number}
                     onChange={(e) => setData("number", e.target.value)}
-                    className="w-full border px-3 py-2 rounded"
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g. BKG-XXXX or CAR-XXXX"
+                    required
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                  className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 disabled:bg-green-400 transition-colors"
                   disabled={processing}
                 >
-                  {processing ? "Searching..." : "Search Booking"}
+                  {processing ? (
+                    <span className="flex items-center justify-center">
+                      <Loader size={18} className="animate-spin mr-2" />
+                      Searching...
+                    </span>
+                  ) : (
+                    "Search Booking"
+                  )}
                 </button>
               </form>
             </div>

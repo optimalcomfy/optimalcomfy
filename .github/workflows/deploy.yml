@@ -109,7 +109,7 @@ jobs:
         run: composer install --no-dev --optimize-autoloader
 
       - name: Install Node.js dependencies
-        run: npm ci
+        run: npm i -f
 
       - name: Build React assets
         run: npm run build

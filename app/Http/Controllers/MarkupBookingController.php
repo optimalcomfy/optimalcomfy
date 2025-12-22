@@ -691,7 +691,7 @@ class MarkupBookingController extends Controller
     }
 
     /**
-     * Remove markup
+     * Remove markup - FIXED constraint violation issue
      */
     public function removeMarkup($markupId)
     {
@@ -702,7 +702,17 @@ class MarkupBookingController extends Controller
         DB::beginTransaction();
 
         try {
-            $markup->deactivate();
+            // Use direct update with proper locking to avoid constraint violations
+            $deactivated = DB::table('markups')
+                ->where('id', $markup->id)
+                ->where('is_active', 1) // Only update if currently active
+                ->update(['is_active' => 0, 'updated_at' => now()]);
+
+            if (!$deactivated) {
+                // Markup was already inactive or doesn't exist
+                DB::commit();
+                return response()->json(['message' => 'Markup already removed']);
+            }
 
             DB::commit();
 
@@ -711,6 +721,20 @@ class MarkupBookingController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error("Markup removal failed: " . $e->getMessage());
+
+            // Check if it's a constraint violation
+            if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                // Force delete the markup if constraint violation persists
+                try {
+                    $markup->delete();
+                    return response()->json(['message' => 'Markup removed successfully']);
+                } catch (\Exception $deleteError) {
+                    \Log::error("Markup deletion failed: " . $deleteError->getMessage());
+                    return response()->json([
+                        'error' => 'Failed to remove markup due to system constraint. Please try again.'
+                    ], 400);
+                }
+            }
 
             return response()->json([
                 'error' => 'Failed to remove markup. Please try again.'

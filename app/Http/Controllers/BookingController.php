@@ -105,6 +105,329 @@ class BookingController extends Controller
         ]);
     }
 
+
+    public function markupBookings(Request $request)
+    {
+        $user = Auth::user();
+
+        // Get property bookings
+        $propertyQuery = Booking::with(['user', 'property.user', 'payments'])
+            ->where('markup_user_id', $user->id)
+            ->orderBy('created_at', 'desc');
+
+        // Get car bookings
+        $carQuery = CarBooking::with(['user', 'car.user', 'payments'])
+            ->where('markup_user_id', $user->id)
+            ->orderBy('created_at', 'desc');
+
+        // Apply status filter
+        if ($request->has('status') && $request->status != 'all') {
+            $propertyQuery->where('status', $request->status);
+            $carQuery->where('status', $request->status);
+        }
+
+        // Apply date filter
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+
+            $propertyQuery->whereBetween('created_at', [$startDate, $endDate]);
+            $carQuery->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        // Search functionality
+        if ($request->has('search')) {
+            $search = $request->search;
+
+            $propertyQuery->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('property', function ($q) use ($search) {
+                    $q->where('property_name', 'LIKE', "%$search%");
+                });
+            });
+
+            $carQuery->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('car', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                });
+            });
+        }
+
+        $perPage = $request->get('per_page', 10);
+
+        // Get paginated results
+        $propertyBookings = $propertyQuery->paginate($perPage);
+        $carBookings = $carQuery->paginate($perPage);
+
+        // Transform property bookings data - FIXED
+        $transformedPropertyBookings = $propertyBookings->map(function ($booking) {
+            $nights = $booking->nights;
+            $markupProfit = $booking->markup_profit; // This is already TOTAL profit for entire stay
+
+            // FIX: markup_profit is already the total, don't multiply by nights
+            $totalEarnings = $markupProfit;
+
+            return [
+                'id' => $booking->id,
+                'type' => 'property',
+                'booking_type' => 'property',
+                'number' => $booking->number,
+                'user' => $booking->user ? [
+                    'name' => $booking->user->name,
+                    'email' => $booking->user->email,
+                ] : null,
+                'property' => $booking->property ? [
+                    'property_name' => $booking->property->property_name,
+                    'platform_price' => $booking->property->platform_price,
+                    'amount' => $booking->property->amount,
+                    'user' => $booking->property->user ? [
+                        'name' => $booking->property->user->name,
+                    ] : null,
+                ] : null,
+                'car' => null,
+                'check_in_date' => $booking->check_in_date,
+                'check_out_date' => $booking->check_out_date,
+                'start_date' => $booking->check_in_date,
+                'end_date' => $booking->check_out_date,
+                'duration' => $nights,
+                'duration_type' => 'nights',
+                'markup_profit' => $markupProfit,
+                'total_earnings' => $totalEarnings, // Fixed
+                'total_price' => $booking->total_price,
+                'host_price' => $booking->host_price,
+                'platform_fee' => $booking->platform_fee,
+                'status' => $booking->status,
+                'stay_status' => $booking->stay_status,
+                'external_booking' => $booking->external_booking,
+                'created_at' => $booking->created_at,
+                'payment' => $booking->payment,
+            ];
+        });
+
+        // Transform car bookings data - FIXED
+        $transformedCarBookings = $carBookings->map(function ($booking) {
+            // Calculate days for car bookings
+            $startDate = Carbon::parse($booking->start_date);
+            $endDate = Carbon::parse($booking->end_date);
+            $days = max(1, $endDate->diffInDays($startDate));
+
+            $markupProfit = $booking->markup_profit; // This is already TOTAL profit for entire rental
+
+            // FIX: markup_profit is already the total, don't multiply by days
+            $totalEarnings = $markupProfit;
+
+            return [
+                'id' => $booking->id,
+                'type' => 'car',
+                'booking_type' => 'car',
+                'number' => $booking->number,
+                'user' => $booking->user ? [
+                    'name' => $booking->user->name,
+                    'email' => $booking->user->email,
+                ] : null,
+                'property' => null,
+                'car' => $booking->car ? [
+                    'name' => $booking->car->name,
+                    'platform_price' => $booking->car->platform_price ?? $booking->car->price_per_day ?? 0,
+                    'amount' => $booking->car->amount ?? $booking->car->price_per_day ?? 0,
+                    'user' => $booking->car->user ? [
+                        'name' => $booking->car->user->name,
+                    ] : null,
+                ] : null,
+                'check_in_date' => $booking->start_date,
+                'check_out_date' => $booking->end_date,
+                'start_date' => $booking->start_date,
+                'end_date' => $booking->end_date,
+                'duration' => $days,
+                'duration_type' => 'days',
+                'markup_profit' => $markupProfit,
+                'total_earnings' => $totalEarnings, // Fixed
+                'total_price' => $booking->total_price,
+                'host_price' => $booking->host_price,
+                'platform_fee' => $booking->platform_fee,
+                'status' => $booking->status,
+                'ride_status' => $booking->ride_status,
+                'external_booking' => $booking->external_booking,
+                'created_at' => $booking->created_at,
+                'payment' => $booking->payment,
+            ];
+        });
+
+        // Combine all bookings
+        $allBookings = $transformedPropertyBookings->concat($transformedCarBookings)
+            ->sortByDesc('created_at')
+            ->values();
+
+        // Create paginator
+        $currentPage = $propertyBookings->currentPage();
+        $perPage = $propertyBookings->perPage();
+        $total = $propertyBookings->total() + $carBookings->total();
+
+        $paginatedBookings = new \Illuminate\Pagination\LengthAwarePaginator(
+            $allBookings,
+            $total,
+            $perPage,
+            $currentPage,
+            [
+                'path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]
+        );
+
+        return Inertia::render('Bookings/Markups', [
+            'bookings' => $paginatedBookings->items(),
+            'pagination' => $paginatedBookings,
+            'flash' => session('flash'),
+        ]);
+    }
+
+    public function exportMarkupBookings(Request $request)
+    {
+        $user = Auth::user();
+
+        // Get property bookings
+        $propertyQuery = Booking::with(['user', 'property.user', 'payments'])
+            ->where('markup_user_id', $user->id)
+            ->orderBy('created_at', 'desc');
+
+        // Get car bookings
+        $carQuery = CarBooking::with(['user', 'car.user', 'payments'])
+            ->where('markup_user_id', $user->id)
+            ->orderBy('created_at', 'desc');
+
+        // Apply filters
+        if ($request->has('status') && $request->status != 'all') {
+            $propertyQuery->where('status', $request->status);
+            $carQuery->where('status', $request->status);
+        }
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+
+            $propertyQuery->whereBetween('created_at', [$startDate, $endDate]);
+            $carQuery->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+
+            $propertyQuery->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('property', function ($q) use ($search) {
+                    $q->where('property_name', 'LIKE', "%$search%");
+                });
+            });
+
+            $carQuery->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('car', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                });
+            });
+        }
+
+        $propertyBookings = $propertyQuery->get();
+        $carBookings = $carQuery->get();
+
+        // Process property bookings - FIXED
+        $propertyExportData = $propertyBookings->map(function ($booking) {
+            $nights = $booking->nights;
+            $markupProfit = $booking->markup_profit;
+
+            // FIX: markup_profit is already total, don't multiply by nights
+            $totalEarnings = $markupProfit;
+
+            return [
+                'id' => $booking->id,
+                'type' => 'Property Stay',
+                'booking_type' => 'property',
+                'booking_number' => $booking->number,
+                'guest_name' => $booking->user->name ?? 'N/A',
+                'guest_email' => $booking->user->email ?? 'N/A',
+                'property_name' => $booking->property->property_name ?? 'N/A',
+                'host_name' => $booking->property->user->name ?? 'N/A',
+                'check_in_date' => Carbon::parse($booking->check_in_date)->format('Y-m-d'),
+                'check_out_date' => Carbon::parse($booking->check_out_date)->format('Y-m-d'),
+                'duration' => $nights,
+                'duration_unit' => 'nights',
+                'markup_profit' => $markupProfit, // This is total markup profit
+                'total_earnings' => $totalEarnings, // Fixed - same as markup_profit
+                'total_price' => $booking->total_price,
+                'host_price' => $booking->host_price,
+                'platform_fee' => $booking->platform_fee,
+                'status' => $booking->status,
+                'external_booking' => $booking->external_booking ? 'Yes' : 'No',
+                'booking_date' => $booking->created_at->format('Y-m-d H:i:s'),
+            ];
+        });
+
+        // Process car bookings - FIXED
+        $carExportData = $carBookings->map(function ($booking) {
+            $startDate = Carbon::parse($booking->start_date);
+            $endDate = Carbon::parse($booking->end_date);
+            $days = max(1, $endDate->diffInDays($startDate));
+
+            $markupProfit = $booking->markup_profit;
+
+            // FIX: markup_profit is already total, don't multiply by days
+            $totalEarnings = $markupProfit;
+
+            return [
+                'id' => $booking->id,
+                'type' => 'Car Rental',
+                'booking_type' => 'car',
+                'booking_number' => $booking->number,
+                'guest_name' => $booking->user->name ?? 'N/A',
+                'guest_email' => $booking->user->email ?? 'N/A',
+                'car_name' => $booking->car->name ?? 'N/A',
+                'host_name' => $booking->car->user->name ?? 'N/A',
+                'start_date' => Carbon::parse($booking->start_date)->format('Y-m-d'),
+                'end_date' => Carbon::parse($booking->end_date)->format('Y-m-d'),
+                'duration' => $days,
+                'duration_unit' => 'days',
+                'markup_profit' => $markupProfit, // This is total markup profit
+                'total_earnings' => $totalEarnings, // Fixed - same as markup_profit
+                'total_price' => $booking->total_price,
+                'host_price' => $booking->host_price,
+                'platform_fee' => $booking->platform_fee,
+                'status' => $booking->status,
+                'external_booking' => $booking->external_booking ? 'Yes' : 'No',
+                'booking_date' => $booking->created_at->format('Y-m-d H:i:s'),
+            ];
+        });
+
+        // Combine data
+        $exportData = $propertyExportData->concat($carExportData);
+
+        // Calculate summary
+        $totalEarnings = $exportData->sum('total_earnings');
+        $totalBookings = $exportData->count();
+        $averageEarnings = $totalBookings > 0 ? $totalEarnings / $totalBookings : 0;
+
+        return response()->json([
+            'data' => $exportData,
+            'summary' => [
+                'totalEarnings' => $totalEarnings,
+                'totalBookings' => $totalBookings,
+                'averageEarnings' => $averageEarnings,
+            ]
+        ]);
+    }
+
     public function exportData(Request $request): JsonResponse
     {
         $user = Auth::user();
@@ -195,6 +518,343 @@ class BookingController extends Controller
         });
 
         return response()->json($exportData);
+    }
+
+
+    /**
+     * Show referral earnings for the logged-in user
+     */
+    public function referralEarnings(Request $request)
+    {
+        $user = Auth::user();
+        $company = Company::first();
+
+        // Platform commission percentage
+        $platformPercentage = $company->percentage ?? 10;
+
+        // Referrer gets X% of the platform commission (percentage of percentage)
+        $referralPercentage = $company->referral_percentage ?? 20;
+
+        // Guest discount percentage (for those using referral codes)
+        $guestDiscountPercentage = $company->booking_referral_percentage ?? 2;
+
+        // Get bookings where this user's referral code was used
+        $propertyQuery = Booking::with(['user', 'property.user', 'payments'])
+            ->where('referral_code', $user->referral_code)
+            ->whereNotNull('referral_code')
+            ->where('status', 'paid') // Only paid bookings count for earnings
+            ->orderBy('created_at', 'desc');
+
+        // Get car bookings where this user's referral code was used
+        $carQuery = CarBooking::with(['user', 'car.user', 'payments'])
+            ->where('referral_code', $user->referral_code)
+            ->whereNotNull('referral_code')
+            ->where('status', 'paid') // Only paid bookings count for earnings
+            ->orderBy('created_at', 'desc');
+
+
+        // Apply date filter
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+
+            $propertyQuery->whereBetween('created_at', [$startDate, $endDate]);
+            $carQuery->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        // Search functionality
+        if ($request->has('search')) {
+            $search = $request->search;
+
+            $propertyQuery->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('property', function ($q) use ($search) {
+                    $q->where('property_name', 'LIKE', "%$search%");
+                });
+            });
+
+            $carQuery->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('car', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                });
+            });
+        }
+
+        $perPage = $request->get('per_page', 10);
+
+        // Get paginated results
+        $propertyBookings = $propertyQuery->paginate($perPage);
+        $carBookings = $carQuery->paginate($perPage);
+
+        // Transform property bookings data with referral profit
+        $transformedPropertyBookings = $propertyBookings->map(function ($booking) use ($user, $platformPercentage, $referralPercentage) {
+            // Calculate platform commission
+            $platformFee = ($booking->total_price * $platformPercentage) / 100;
+
+            // Calculate referrer earnings (percentage of platform commission)
+            $referralProfit = ($platformFee * $referralPercentage) / 100;
+
+            return [
+                'booking_type' => 'property',
+                'booking_id' => $booking->id,
+                'booking_number' => $booking->number,
+                'referrer_name' => $user->name,
+                'referrer_email' => $user->email,
+                'guest_name' => $booking->user->name ?? 'N/A',
+                'guest_email' => $booking->user->email ?? 'N/A',
+                'item_name' => $booking->property->property_name ?? 'N/A',
+                'host_name' => $booking->property->user->name ?? 'N/A',
+                'start_date' => $booking->check_in_date,
+                'end_date' => $booking->check_out_date,
+                'duration' => $booking->nights,
+                'booking_amount' => $booking->total_price,
+                'platform_percentage' => $platformPercentage,
+                'platform_fee' => $platformFee,
+                'referral_percentage' => $referralPercentage,
+                'referral_profit' => $referralProfit,
+                'booking_status' => $booking->status,
+                'stay_status' => $booking->stay_status,
+                'booking_date' => $booking->created_at,
+                'calculation_method' => 'percentage_of_platform_commission'
+            ];
+        });
+
+        // Transform car bookings data with referral profit
+        $transformedCarBookings = $carBookings->map(function ($booking) use ($user, $platformPercentage, $referralPercentage) {
+            // Calculate platform commission
+            $platformFee = ($booking->total_price * $platformPercentage) / 100;
+
+            // Calculate referrer earnings (percentage of platform commission)
+            $referralProfit = ($platformFee * $referralPercentage) / 100;
+
+            return [
+                'booking_type' => 'car',
+                'booking_id' => $booking->id,
+                'booking_number' => $booking->number,
+                'referrer_name' => $user->name,
+                'referrer_email' => $user->email,
+                'guest_name' => $booking->user->name ?? 'N/A',
+                'guest_email' => $booking->user->email ?? 'N/A',
+                'item_name' => $booking->car->name ?? 'N/A',
+                'host_name' => $booking->car->user->name ?? 'N/A',
+                'start_date' => $booking->start_date,
+                'end_date' => $booking->end_date,
+                'duration' => max(1, Carbon::parse($booking->start_date)->diffInDays(Carbon::parse($booking->end_date))),
+                'booking_amount' => $booking->total_price,
+                'platform_percentage' => $platformPercentage,
+                'platform_fee' => $platformFee,
+                'referral_percentage' => $referralPercentage,
+                'referral_profit' => $referralProfit,
+                'booking_status' => $booking->status,
+                'ride_status' => $booking->ride_status,
+                'booking_date' => $booking->created_at,
+                'calculation_method' => 'percentage_of_platform_commission'
+            ];
+        });
+
+        // Combine all bookings
+        $allReferrals = $transformedPropertyBookings->concat($transformedCarBookings)
+            ->sortByDesc('booking_date')
+            ->values();
+
+        // Create paginator
+        $currentPage = $propertyBookings->currentPage();
+        $perPage = $propertyBookings->perPage();
+        $total = $propertyBookings->total() + $carBookings->total();
+
+        $paginatedReferrals = new \Illuminate\Pagination\LengthAwarePaginator(
+            $allReferrals,
+            $total,
+            $perPage,
+            $currentPage,
+            [
+                'path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]
+        );
+
+        return Inertia::render('Bookings/ReferralEarnings', [
+            'referrals' => $paginatedReferrals->items(),
+            'pagination' => $paginatedReferrals,
+            'flash' => session('flash'),
+            'auth' => ['user' => $user],
+            'company_settings' => [
+                'platform_percentage' => $platformPercentage,
+                'referral_percentage' => $referralPercentage,
+                'guest_discount_percentage' => $guestDiscountPercentage,
+            ]
+        ]);
+    }
+
+    /**
+     * Export referral earnings data
+     */
+    public function exportReferralEarnings(Request $request)
+    {
+        $user = Auth::user();
+        $company = Company::first();
+
+        // Platform commission percentage
+        $platformPercentage = $company->percentage ?? 10;
+
+        // Referrer gets X% of the platform commission
+        $referralPercentage = $company->referral_percentage ?? 20;
+
+        // Get property bookings with this user's referral code
+        $propertyQuery = Booking::with(['user', 'property.user'])
+            ->where('referral_code', $user->referral_code)
+            ->whereNotNull('referral_code')
+            ->where('status', 'paid') // Only paid bookings
+            ->orderBy('created_at', 'desc');
+
+        // Get car bookings with this user's referral code
+        $carQuery = CarBooking::with(['user', 'car.user'])
+            ->where('referral_code', $user->referral_code)
+            ->whereNotNull('referral_code')
+            ->where('status', 'paid') // Only paid bookings
+            ->orderBy('created_at', 'desc');
+
+        // Apply filters
+        if ($request->has('type') && $request->type != 'all') {
+            if ($request->type === 'property') {
+                $carQuery = CarBooking::whereRaw('1=0');
+            } else {
+                $propertyQuery = Booking::whereRaw('1=0');
+            }
+        }
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+
+            $propertyQuery->whereBetween('created_at', [$startDate, $endDate]);
+            $carQuery->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+
+            $propertyQuery->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('property', function ($q) use ($search) {
+                    $q->where('property_name', 'LIKE', "%$search%");
+                });
+            });
+
+            $carQuery->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('car', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                });
+            });
+        }
+
+        $propertyBookings = $propertyQuery->get();
+        $carBookings = $carQuery->get();
+
+        // Process property bookings
+        $propertyExportData = $propertyBookings->map(function ($booking) use ($platformPercentage, $referralPercentage, $user) {
+            // Calculate platform commission
+            $platformFee = ($booking->total_price * $platformPercentage) / 100;
+
+            // Calculate referrer earnings (percentage of platform commission)
+            $referralProfit = ($platformFee * $referralPercentage) / 100;
+
+            return [
+                'type' => 'Property Booking',
+                'booking_type' => 'property',
+                'booking_id' => $booking->id,
+                'booking_number' => $booking->number,
+                'referrer_name' => $user->name,
+                'referrer_email' => $user->email,
+                'guest_name' => $booking->user->name ?? 'N/A',
+                'guest_email' => $booking->user->email ?? 'N/A',
+                'item_name' => $booking->property->property_name ?? 'N/A',
+                'host_name' => $booking->property->user->name ?? 'N/A',
+                'check_in_date' => Carbon::parse($booking->check_in_date)->format('Y-m-d'),
+                'check_out_date' => Carbon::parse($booking->check_out_date)->format('Y-m-d'),
+                'duration' => $booking->nights,
+                'duration_unit' => 'nights',
+                'booking_amount' => $booking->total_price,
+                'platform_percentage' => $platformPercentage,
+                'platform_fee' => $platformFee,
+                'referral_percentage' => $referralPercentage,
+                'referral_profit' => $referralProfit,
+                'booking_status' => $booking->status,
+                'stay_status' => $booking->stay_status,
+                'booking_date' => $booking->created_at->format('Y-m-d H:i:s'),
+                'calculation_explanation' => "Referrer gets {$referralPercentage}% of platform commission ({$platformPercentage}% of booking amount)"
+            ];
+        });
+
+        // Process car bookings
+        $carExportData = $carBookings->map(function ($booking) use ($platformPercentage, $referralPercentage, $user) {
+            // Calculate platform commission
+            $platformFee = ($booking->total_price * $platformPercentage) / 100;
+
+            // Calculate referrer earnings (percentage of platform commission)
+            $referralProfit = ($platformFee * $referralPercentage) / 100;
+
+            $days = max(1, Carbon::parse($booking->start_date)->diffInDays(Carbon::parse($booking->end_date)));
+
+            return [
+                'type' => 'Car Rental',
+                'booking_type' => 'car',
+                'booking_id' => $booking->id,
+                'booking_number' => $booking->number,
+                'referrer_name' => $user->name,
+                'referrer_email' => $user->email,
+                'guest_name' => $booking->user->name ?? 'N/A',
+                'guest_email' => $booking->user->email ?? 'N/A',
+                'item_name' => $booking->car->name ?? 'N/A',
+                'host_name' => $booking->car->user->name ?? 'N/A',
+                'start_date' => Carbon::parse($booking->start_date)->format('Y-m-d'),
+                'end_date' => Carbon::parse($booking->end_date)->format('Y-m-d'),
+                'duration' => $days,
+                'duration_unit' => 'days',
+                'booking_amount' => $booking->total_price,
+                'platform_percentage' => $platformPercentage,
+                'platform_fee' => $platformFee,
+                'referral_percentage' => $referralPercentage,
+                'referral_profit' => $referralProfit,
+                'booking_status' => $booking->status,
+                'ride_status' => $booking->ride_status,
+                'booking_date' => $booking->created_at->format('Y-m-d H:i:s'),
+                'calculation_explanation' => "Referrer gets {$referralPercentage}% of platform commission ({$platformPercentage}% of booking amount)"
+            ];
+        });
+
+        // Combine data
+        $exportData = $propertyExportData->concat($carExportData);
+
+        // Calculate summary
+        $totalEarnings = $exportData->sum('referral_profit');
+        $totalReferrals = $exportData->count();
+        $averageEarnings = $totalReferrals > 0 ? $totalEarnings / $totalReferrals : 0;
+
+        return response()->json([
+            'data' => $exportData,
+            'summary' => [
+                'totalEarnings' => $totalEarnings,
+                'totalReferrals' => $totalReferrals,
+                'averageEarnings' => $averageEarnings,
+                'platform_percentage' => $platformPercentage,
+                'referral_percentage' => $referralPercentage,
+            ]
+        ]);
     }
 
     public function create()

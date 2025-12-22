@@ -157,8 +157,7 @@ class User extends Authenticatable
         return $this->hasMany('App\Models\CarBooking', 'referral_code', 'referral_code')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
-                    ->whereNotNull("checked_in")
-                    ->whereNotNull("checked_out");
+                    ->whereNotNull("checked_in");
     }
 
     /**
@@ -168,8 +167,7 @@ class User extends Authenticatable
         return $this->hasMany('App\Models\Booking', 'referral_code', 'referral_code')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
-                    ->whereNotNull("checked_in")
-                    ->whereNotNull("checked_out");
+                    ->whereNotNull("checked_in");
     }
 
     /**
@@ -179,8 +177,7 @@ class User extends Authenticatable
         return $this->hasMany('App\Models\CarBooking', 'referral_code', 'referral_code')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
-                    ->whereNotNull("checked_in")
-                    ->whereNull("checked_out");
+                    ->whereNotNull("checked_in");
     }
 
     /**
@@ -190,8 +187,7 @@ class User extends Authenticatable
         return $this->hasMany('App\Models\Booking', 'referral_code', 'referral_code')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
-                    ->whereNotNull("checked_in")
-                    ->whereNull("checked_out");
+                    ->whereNotNull("checked_in");
     }
 
     /**
@@ -223,8 +219,7 @@ class User extends Authenticatable
         return $this->hasMany(Booking::class, 'markup_user_id')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
-                    ->whereNotNull("checked_in")
-                    ->whereNotNull("checked_out");
+                    ->whereNotNull("checked_in");
     }
 
     /**
@@ -236,8 +231,7 @@ class User extends Authenticatable
         return $this->hasMany(CarBooking::class, 'markup_user_id')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
-                    ->whereNotNull("checked_in")
-                    ->whereNotNull("checked_out");
+                    ->whereNotNull("checked_in");
     }
 
     /**
@@ -249,8 +243,7 @@ class User extends Authenticatable
         return $this->hasMany(Booking::class, 'markup_user_id')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
-                    ->whereNotNull("checked_in")
-                    ->whereNull("checked_out");
+                    ->whereNotNull("checked_in");
     }
 
     /**
@@ -262,8 +255,7 @@ class User extends Authenticatable
         return $this->hasMany(CarBooking::class, 'markup_user_id')
                     ->whereNull("external_booking")
                     ->where("status", "paid")
-                    ->whereNotNull("checked_in")
-                    ->whereNull("checked_out");
+                    ->whereNotNull("checked_in");
     }
 
     /**
@@ -298,7 +290,7 @@ class User extends Authenticatable
     /**
      * Get the first company with referral percentage
      */
-    protected function getFirstCompanyWithReferralPercentage()
+    public function getFirstCompanyWithReferralPercentage()
     {
         // First try user's own company
         if ($this->company && $this->company->referral_percentage) {
@@ -309,11 +301,13 @@ class User extends Authenticatable
         return Company::whereNotNull('referral_percentage')->first();
     }
 
-    /**
-     * Calculate referral earnings based on platform commission
-     */
-    protected function calculateReferralEarnings($bookingTotal, $referralPercentage, $platformPercentage = 15)
+    protected function calculateReferralEarnings($bookingTotal, $referralPercentage, $platformPercentage = null)
     {
+        if (!$platformPercentage) {
+            $company = $this->getFirstCompanyWithReferralPercentage();
+            $platformPercentage = $company ? $company->percentage : 15;
+        }
+
         // First calculate platform commission
         $platformCommission = ($bookingTotal * $platformPercentage) / 100;
 
@@ -755,6 +749,11 @@ class User extends Authenticatable
     public function isHost()
     {
         return in_array($this->role_id, [2]); // Role ID 2 is host
+    }
+
+    public function isAdmin()
+    {
+        return $this->role_id === 1 || $this->role_id === "1";
     }
 
     /**

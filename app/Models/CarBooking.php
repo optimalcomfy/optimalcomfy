@@ -343,11 +343,21 @@ class CarBooking extends Model
             $platformFeeOnMarkup = ($markupProfit * $platformFeePercentage) / 100;
             return $markupProfit - $platformFeeOnMarkup;
         }
+
         if ($this->markup_user_id) {
             $platformFeePercentage = $this->getPlatformFeePercentage();
             $platformFee = ($this->total_price * $platformFeePercentage) / 100;
 
-            return max(0, $this->total_price - $platformFee - ($this->car->platform_price ?? $this->car->amount));
+            $carBasePrice = round($this->car->amount ?? 0, -2);
+
+
+            // Calculate total base price for the entire rental period
+            $startDate = Carbon::parse($this->start_date);
+            $endDate = Carbon::parse($this->end_date);
+            $days = max(1, $endDate->diffInDays($startDate));
+            $totalBasePrice = $carBasePrice * $days;
+
+            return max(0, $this->total_price - $totalBasePrice);
         }
 
         return 0;

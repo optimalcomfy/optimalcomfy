@@ -1,21 +1,66 @@
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useForm, router, usePage } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { CreditCard, TrendingUp, Calendar, Clock, DollarSign, Eye, EyeOff, ArrowDownToLine, Wallet as WalletIcon, RefreshCw } from 'lucide-react';
+import {
+  CreditCard,
+  TrendingUp,
+  Calendar,
+  Clock,
+  DollarSign,
+  Eye,
+  EyeOff,
+  ArrowDownToLine,
+  Wallet as WalletIcon,
+  RefreshCw,
+  Home,
+  Car,
+  TrendingUp as TrendingIcon,
+  Users,
+  Filter,
+  Download
+} from 'lucide-react';
 import Swal from "sweetalert2";
 
 const Wallet = ({ user }) => {
-    const { flash, availableBalance, recentTransactions, pendingPayouts, totalEarnings, auth } = usePage().props;
+    const {
+      flash,
+      summary,
+      breakdown,
+      transactions,
+      totalTransactions,
+      carsCount,
+      propertiesCount,
+      isAdmin,
+      platform_percentage,
+      host_percentage,
+      referral_percentage,
+      auth
+    } = usePage().props;
+
     const [balanceVisible, setBalanceVisible] = useState(true);
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
-    const [currentBalance] = useState(availableBalance);
     const [verificationStep, setVerificationStep] = useState(false);
     const [verificationCode, setVerificationCode] = useState('');
     const [isResending, setIsResending] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [activeFilter, setActiveFilter] = useState('all');
+    const [filteredTransactions, setFilteredTransactions] = useState(transactions);
+
     const roleId = parseInt(auth.user?.role_id);
+
+    // Filter transactions based on active filter
+    useEffect(() => {
+      if (activeFilter === 'all') {
+        setFilteredTransactions(transactions);
+      } else {
+        setFilteredTransactions(
+          transactions.filter(tx => tx.type === activeFilter || tx.subtype === activeFilter)
+        );
+      }
+    }, [activeFilter, transactions]);
+
     const toggleBalanceVisibility = () => {
         setBalanceVisible(!balanceVisible);
     };
@@ -37,7 +82,7 @@ const Wallet = ({ user }) => {
             return;
         }
 
-        if (!withdrawAmount || amount <= 0 || amount > currentBalance) {
+        if (!withdrawAmount || amount <= 0 || amount > summary.availableBalance) {
             Swal.fire('Error', 'Please enter a valid amount', 'error');
             return;
         }
@@ -77,6 +122,7 @@ const Wallet = ({ user }) => {
             {
                 preserveScroll: true,
                 onSuccess: (page) => {
+                    // Handled in router callback
                 },
                 onError: (errors) => {
                     Swal.fire('Error', errors.message || 'Failed to process withdrawal', 'error');
@@ -107,6 +153,74 @@ const Wallet = ({ user }) => {
         });
     };
 
+    // Export earnings report
+    const exportEarningsReport = () => {
+        Swal.fire({
+            title: 'Export Earnings Report',
+            text: 'Select date range and type to export',
+            input: 'select',
+            inputOptions: {
+                'all': 'All Earnings',
+                'direct_property': 'Direct Property Earnings',
+                'direct_car': 'Direct Car Earnings',
+                'markup_property': 'Markup Property Earnings',
+                'markup_car': 'Markup Car Earnings',
+                'referral': 'Referral Earnings'
+            },
+            inputPlaceholder: 'Select type',
+            showCancelButton: true,
+            confirmButtonText: 'Export',
+            showLoaderOnConfirm: true,
+            preConfirm: (type) => {
+                const startDate = prompt('Start Date (YYYY-MM-DD):', '2025-01-01');
+                const endDate = prompt('End Date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+
+                if (!startDate || !endDate) {
+                    Swal.showValidationMessage('Please enter both dates');
+                    return false;
+                }
+
+                return router.get(route('wallet.earnings-report'), {
+                    start_date: startDate,
+                    end_date: endDate,
+                    type: type
+                }, {
+                    preserveScroll: true,
+                    onSuccess: (response) => {
+                        const data = response.props.data;
+                        const csvContent = convertToCSV(data);
+                        downloadCSV(csvContent, `earnings_report_${type}_${startDate}_to_${endDate}.csv`);
+                    }
+                });
+            }
+        });
+    };
+
+    const convertToCSV = (data) => {
+        if (!data || data.length === 0) return '';
+
+        const headers = Object.keys(data[0]);
+        const csvRows = [
+            headers.join(','),
+            ...data.map(row =>
+                headers.map(header =>
+                    JSON.stringify(row[header] || '')
+                ).join(',')
+            )
+        ];
+
+        return csvRows.join('\n');
+    };
+
+    const downloadCSV = (csvContent, filename) => {
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
 
     const startResendTimer = () => {
         setResendTimer(120); // 2 minutes
@@ -122,11 +236,14 @@ const Wallet = ({ user }) => {
     };
 
     const formatCurrency = (amount) => {
+        if (amount === null || amount === undefined) return 'KES 0';
         if (typeof amount === 'string') {
             amount = parseFloat(amount);
         }
+        if (isNaN(amount)) return 'KES 0';
+
         return balanceVisible
-            ? `KES ${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+            ? `KES ${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
             : '••••••';
     };
 
@@ -136,14 +253,59 @@ const Wallet = ({ user }) => {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // Calculate last booking payment (most recent transaction)
-    const lastBookingPayment = recentTransactions.length > 0 ? parseFloat(recentTransactions[0].net_amount) : 0;
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
 
-    // Calculate next payout (pendingPayouts)
-    const nextPayout = pendingPayouts;
+    const getTransactionIcon = (type) => {
+        switch(type) {
+            case 'property_booking':
+            case 'property_markup':
+                return <Home size={16} />;
+            case 'car_booking':
+            case 'car_markup':
+                return <Car size={16} />;
+            case 'referral':
+                return <Users size={16} />;
+            default:
+                return <DollarSign size={16} />;
+        }
+    };
 
-    // Calculate pending amount (total earnings minus available balance)
-    const pendingAmount = pendingPayouts;
+    const getTransactionColor = (type) => {
+        switch(type) {
+            case 'property_booking':
+                return 'bg-green-100 text-green-800';
+            case 'car_booking':
+                return 'bg-blue-100 text-blue-800';
+            case 'property_markup':
+            case 'car_markup':
+                return 'bg-purple-100 text-purple-800';
+            case 'referral':
+                return 'bg-pink-100 text-pink-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch(status) {
+            case 'available':
+            case 'completed':
+                return 'bg-green-100 text-green-800';
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    };
 
     return (
         <Layout>
@@ -154,20 +316,41 @@ const Wallet = ({ user }) => {
                         <div className="wallet-header">
                             <div className="header-content">
                                 <WalletIcon size={28} className="header-icon" />
-                                <h1 className="wallet-title">
-                                    Your Earnings Dashboard
-                                </h1>
+                                <div>
+                                    <h1 className="wallet-title">
+                                        Your Earnings Dashboard
+                                    </h1>
+                                    {isAdmin && (
+                                        <div className="admin-badge">
+                                            Admin View
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <p className="wallet-subtitle">
                                 Track your earnings, manage withdrawals, and monitor your financial activity
                             </p>
+                            <div className="commission-info">
+                                <div className="commission-item">
+                                    <span className="commission-label">Platform Fee:</span>
+                                    <span className="commission-value">{platform_percentage}%</span>
+                                </div>
+                                <div className="commission-item">
+                                    <span className="commission-label">Your Share:</span>
+                                    <span className="commission-value">{host_percentage}%</span>
+                                </div>
+                                <div className="commission-item">
+                                    <span className="commission-label">Referral Commission:</span>
+                                    <span className="commission-value">{referral_percentage}%</span>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Balance Cards */}
-                        <div className="balance-cards-grid">
-                            {/* Current Balance Card */}
-                            <div className="balance-card current-balance">
-                                <div className="balance-card-header">
+                        {/* Summary Cards */}
+                        <div className="summary-cards-grid">
+                            {/* Available Balance */}
+                            <div className="summary-card available-balance">
+                                <div className="summary-card-header">
                                     <div className="icon-wrapper">
                                         <CreditCard size={24} />
                                     </div>
@@ -179,39 +362,236 @@ const Wallet = ({ user }) => {
                                         {balanceVisible ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
-                                <h3 className="balance-card-label">
+                                <h3 className="summary-card-label">
                                     Available Balance
                                 </h3>
-                                <div className="balance-amount">
-                                    {formatCurrency(currentBalance)}
+                                <div className="summary-amount">
+                                    {formatCurrency(summary.availableBalance)}
                                 </div>
-                                <div className="balance-subtext">
+                                <div className="summary-subtext">
                                     Ready for immediate withdrawal
                                 </div>
                                 <button
                                     onClick={handleWithdraw}
                                     className="withdraw-button"
+                                    disabled={summary.availableBalance < 100}
                                 >
                                     <ArrowDownToLine size={16} />
                                     Withdraw Now
                                 </button>
                             </div>
 
-                            {/* Pending Earnings Card */}
-                            <div className="balance-card pending-earnings">
-                                <div className="balance-card-header">
+                            {/* Total Earnings */}
+                            <div className="summary-card total-earnings">
+                                <div className="summary-card-header">
+                                    <div className="icon-wrapper">
+                                        <TrendingUp size={24} />
+                                    </div>
+                                </div>
+                                <h3 className="summary-card-label">
+                                    Total Earnings
+                                </h3>
+                                <div className="summary-amount">
+                                    {formatCurrency(summary.totalEarnings)}
+                                </div>
+                                <div className="summary-subtext">
+                                    All-time combined earnings
+                                </div>
+                            </div>
+
+                            {/* Pending Payouts */}
+                            <div className="summary-card pending-payouts">
+                                <div className="summary-card-header">
                                     <div className="icon-wrapper">
                                         <Clock size={24} />
                                     </div>
                                 </div>
-                                <h3 className="balance-card-label">
-                                    Processing
+                                <h3 className="summary-card-label">
+                                    Processing Payouts
                                 </h3>
-                                <div className="balance-amount">
-                                    {formatCurrency(pendingAmount)}
+                                <div className="summary-amount">
+                                    {formatCurrency(summary.pendingPayouts)}
                                 </div>
-                                <div className="balance-subtext">
-                                    Payments being processed for next payout
+                                <div className="summary-subtext">
+                                    Awaiting guest check-in
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Earnings Breakdown */}
+                        <div className="breakdown-section">
+                            <div className="section-header">
+                                <h2 className="section-title">
+                                    Earnings Breakdown
+                                </h2>
+                                <button
+                                    onClick={exportEarningsReport}
+                                    className="export-button"
+                                >
+                                    <Download size={16} />
+                                    Export Report
+                                </button>
+                            </div>
+
+                            <div className="breakdown-grid">
+                                {/* Direct Property Earnings */}
+                                <div className="breakdown-card">
+                                    <div className="breakdown-header">
+                                        <div className={`breakdown-icon ${getTransactionColor('property_booking')}`}>
+                                            <Home size={20} />
+                                        </div>
+                                        <h3 className="breakdown-title">
+                                            Direct Property
+                                        </h3>
+                                    </div>
+                                    <div className="breakdown-stats">
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Total:</span>
+                                            <span className="stat-value">
+                                                {formatCurrency(breakdown.direct_property.total)}
+                                            </span>
+                                        </div>
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Available:</span>
+                                            <span className="stat-value available">
+                                                {formatCurrency(breakdown.direct_property.available)}
+                                            </span>
+                                        </div>
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Pending:</span>
+                                            <span className="stat-value pending">
+                                                {formatCurrency(breakdown.direct_property.pending)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Direct Car Earnings */}
+                                <div className="breakdown-card">
+                                    <div className="breakdown-header">
+                                        <div className={`breakdown-icon ${getTransactionColor('car_booking')}`}>
+                                            <Car size={20} />
+                                        </div>
+                                        <h3 className="breakdown-title">
+                                            Direct Car
+                                        </h3>
+                                    </div>
+                                    <div className="breakdown-stats">
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Total:</span>
+                                            <span className="stat-value">
+                                                {formatCurrency(breakdown.direct_car.total)}
+                                            </span>
+                                        </div>
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Available:</span>
+                                            <span className="stat-value available">
+                                                {formatCurrency(breakdown.direct_car.available)}
+                                            </span>
+                                        </div>
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Pending:</span>
+                                            <span className="stat-value pending">
+                                                {formatCurrency(breakdown.direct_car.pending)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Markup Property Earnings */}
+                                <div className="breakdown-card">
+                                    <div className="breakdown-header">
+                                        <div className={`breakdown-icon ${getTransactionColor('property_markup')}`}>
+                                            <TrendingIcon size={20} />
+                                        </div>
+                                        <h3 className="breakdown-title">
+                                            Markup Property
+                                        </h3>
+                                    </div>
+                                    <div className="breakdown-stats">
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Total:</span>
+                                            <span className="stat-value">
+                                                {formatCurrency(breakdown.markup_property.total)}
+                                            </span>
+                                        </div>
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Available:</span>
+                                            <span className="stat-value available">
+                                                {formatCurrency(breakdown.markup_property.available)}
+                                            </span>
+                                        </div>
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Pending:</span>
+                                            <span className="stat-value pending">
+                                                {formatCurrency(breakdown.markup_property.pending)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Markup Car Earnings */}
+                                <div className="breakdown-card">
+                                    <div className="breakdown-header">
+                                        <div className={`breakdown-icon ${getTransactionColor('car_markup')}`}>
+                                            <TrendingIcon size={20} />
+                                        </div>
+                                        <h3 className="breakdown-title">
+                                            Markup Car
+                                        </h3>
+                                    </div>
+                                    <div className="breakdown-stats">
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Total:</span>
+                                            <span className="stat-value">
+                                                {formatCurrency(breakdown.markup_car.total)}
+                                            </span>
+                                        </div>
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Available:</span>
+                                            <span className="stat-value available">
+                                                {formatCurrency(breakdown.markup_car.available)}
+                                            </span>
+                                        </div>
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Pending:</span>
+                                            <span className="stat-value pending">
+                                                {formatCurrency(breakdown.markup_car.pending)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Referral Earnings */}
+                                <div className="breakdown-card">
+                                    <div className="breakdown-header">
+                                        <div className={`breakdown-icon ${getTransactionColor('referral')}`}>
+                                            <Users size={20} />
+                                        </div>
+                                        <h3 className="breakdown-title">
+                                            Referral Earnings
+                                        </h3>
+                                    </div>
+                                    <div className="breakdown-stats">
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Total:</span>
+                                            <span className="stat-value">
+                                                {formatCurrency(breakdown.referral.total)}
+                                            </span>
+                                        </div>
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Available:</span>
+                                            <span className="stat-value available">
+                                                {formatCurrency(breakdown.referral.available)}
+                                            </span>
+                                        </div>
+                                        <div className="breakdown-stat">
+                                            <span className="stat-label">Pending:</span>
+                                            <span className="stat-value pending">
+                                                {formatCurrency(breakdown.referral.pending)}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -239,13 +619,13 @@ const Wallet = ({ user }) => {
                                                     Available for Withdrawal
                                                 </div>
                                                 <div className="balance-amount-modal">
-                                                    {formatCurrency(currentBalance)}
+                                                    {formatCurrency(summary.availableBalance)}
                                                 </div>
                                             </div>
 
                                             <div className="input-group">
                                                 <label className="input-label">
-                                                    Amount to Withdraw (Above KES 100)
+                                                    Amount to Withdraw (Minimum KES 100)
                                                 </label>
                                                 <div className="input-wrapper">
                                                     <span className="currency-prefix">KES</span>
@@ -255,11 +635,20 @@ const Wallet = ({ user }) => {
                                                         onChange={(e) => setWithdrawAmount(e.target.value)}
                                                         placeholder="0.00"
                                                         className="amount-input"
-                                                        min="0"
+                                                        min="100"
                                                         step="0.01"
+                                                        max={summary.availableBalance}
                                                     />
                                                 </div>
-                                                {withdrawAmount && parseFloat(withdrawAmount) > currentBalance && (
+                                                <div className="amount-hint">
+                                                    Minimum: KES 100
+                                                </div>
+                                                {withdrawAmount && parseFloat(withdrawAmount) < 100 && (
+                                                    <div className="error-message">
+                                                        Minimum withdrawal is KES 100
+                                                    </div>
+                                                )}
+                                                {withdrawAmount && parseFloat(withdrawAmount) > summary.availableBalance && (
                                                     <div className="error-message">
                                                         Amount exceeds available balance
                                                     </div>
@@ -280,9 +669,8 @@ const Wallet = ({ user }) => {
                                                     onClick={initiateWithdrawal}
                                                     disabled={
                                                         !withdrawAmount ||
-                                                        parseFloat(withdrawAmount) <= 0 ||
                                                         parseFloat(withdrawAmount) < 100 ||
-                                                        parseFloat(withdrawAmount) > currentBalance ||
+                                                        parseFloat(withdrawAmount) > summary.availableBalance ||
                                                         isProcessing
                                                     }
                                                     className="confirm-button"
@@ -352,98 +740,113 @@ const Wallet = ({ user }) => {
                             </div>
                         )}
 
-                        {/* Quick Stats */}
-                        <div className="stats-grid">
-                            {roleId === 2 &&
-                            <div className="stat-card">
-                                <div className="stat-icon-wrapper green">
-                                    <DollarSign size={20} />
-                                </div>
-                                <div className="stat-content">
-                                    <div className="stat-amount">
-                                        {formatCurrency(lastBookingPayment)}
-                                    </div>
-                                    <div className="stat-label">
-                                        Latest Payment Received
-                                    </div>
-                                </div>
-                            </div>}
-
-                            <div className="stat-card">
-                                <div className="stat-icon-wrapper blue">
-                                    <Calendar size={20} />
-                                </div>
-                                <div className="stat-content">
-                                    <div className="stat-amount">
-                                        {formatCurrency(nextPayout)}
-                                    </div>
-                                    <div className="stat-label">
-                                        Next Scheduled Payout
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="stat-card">
-                                <div className="stat-icon-wrapper orange">
-                                    <Clock size={20} />
-                                </div>
-                                <div className="stat-content">
-                                    <div className="stat-amount">
-                                        {formatCurrency(pendingAmount)}
-                                    </div>
-                                    <div className="stat-label">
-                                        Amount Under Review
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Recent Activity */}
+                        {/* Recent Transactions */}
                         <div className="transactions-container">
                             <div className="transactions-section">
                                 <div className="section-header">
-                                    <h2 className="section-title">
-                                        Recent Activity
-                                    </h2>
-                                    <span className="section-count">
-                                        {recentTransactions.length} transactions
-                                    </span>
+                                    <div>
+                                        <h2 className="section-title">
+                                            Recent Transactions
+                                        </h2>
+                                        <span className="section-count">
+                                            {filteredTransactions.length} of {totalTransactions} transactions
+                                        </span>
+                                    </div>
+
+                                    <div className="filter-buttons">
+                                        <button
+                                            className={`filter-button ${activeFilter === 'all' ? 'active' : ''}`}
+                                            onClick={() => setActiveFilter('all')}
+                                        >
+                                            All
+                                        </button>
+                                        <button
+                                            className={`filter-button ${activeFilter === 'property_booking' ? 'active' : ''}`}
+                                            onClick={() => setActiveFilter('property_booking')}
+                                        >
+                                            Direct Property
+                                        </button>
+                                        <button
+                                            className={`filter-button ${activeFilter === 'car_booking' ? 'active' : ''}`}
+                                            onClick={() => setActiveFilter('car_booking')}
+                                        >
+                                            Direct Car
+                                        </button>
+                                        <button
+                                            className={`filter-button ${activeFilter.includes('markup') ? 'active' : ''}`}
+                                            onClick={() => setActiveFilter('markup_profit')}
+                                        >
+                                            Markup
+                                        </button>
+                                        <button
+                                            className={`filter-button ${activeFilter === 'referral' ? 'active' : ''}`}
+                                            onClick={() => setActiveFilter('referral')}
+                                        >
+                                            Referral
+                                        </button>
+                                    </div>
                                 </div>
 
-                                {recentTransactions.length > 0 ? (
+                                {filteredTransactions.length > 0 ? (
                                     <div className="transactions-list">
-                                        {recentTransactions?.map((transaction, index) => (
+                                        {filteredTransactions.map((transaction, index) => (
                                             <div key={index} className="transaction-item">
+                                                <div className="transaction-icon">
+                                                    {getTransactionIcon(transaction.type)}
+                                                </div>
                                                 <div className="transaction-details">
-                                                    <div className="transaction-title">
-                                                        Booking: {transaction.title}
+                                                    <div className="transaction-header">
+                                                        <div className="transaction-title">
+                                                            {transaction.title}
+                                                        </div>
+                                                        <span className={`transaction-type ${getTransactionColor(transaction.type)}`}>
+                                                            {transaction.subtype === 'direct_host' ? 'Direct Host' :
+                                                             transaction.subtype === 'markup_profit' ? 'Markup Profit' :
+                                                             transaction.subtype === 'referral_commission' ? 'Referral' :
+                                                             transaction.subtype}
+                                                        </span>
                                                     </div>
-                                                    <div className="transaction-guest">
-                                                        Guest: {transaction.guest}
+
+                                                    <div className="transaction-meta">
+                                                        {transaction.booking_number && (
+                                                            <span className="meta-item">
+                                                                Booking: {transaction.booking_number}
+                                                            </span>
+                                                        )}
+                                                        {transaction.guest && (
+                                                            <span className="meta-item">
+                                                                Guest: {transaction.guest}
+                                                            </span>
+                                                        )}
+                                                        {transaction.referrer && (
+                                                            <span className="meta-item">
+                                                                Referrer: {transaction.referrer}
+                                                            </span>
+                                                        )}
+                                                        {transaction.original_host && (
+                                                            <span className="meta-item">
+                                                                Original Host: {transaction.original_host}
+                                                            </span>
+                                                        )}
+                                                        {transaction.markup_user && (
+                                                            <span className="meta-item">
+                                                                Markup Added By: {transaction.markup_user}
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                    {transaction.referral_code &&
-                                                    <div className="transaction-guest">
-                                                        This is a referred booking!
-                                                    </div>}
+
                                                     <div className="transaction-date">
-                                                        {new Date(transaction.date).toLocaleDateString('en-US', {
-                                                            weekday: 'short',
-                                                            month: 'short',
-                                                            day: 'numeric',
-                                                            year: 'numeric'
-                                                        })}
+                                                        {formatDate(transaction.date)}
                                                     </div>
                                                 </div>
                                                 <div className="transaction-amount">
-                                                    {roleId === 2 &&
                                                     <div className="amount-value">
-                                                        {formatCurrency(transaction.net_amount)}
-                                                    </div>}
-                                                    <div className="amount-value">
-                                                        Referral amount: {formatCurrency(transaction.referral_amount)}
+                                                        {formatCurrency(transaction.amount)}
                                                     </div>
-                                                    <div className={`status-badge ${transaction.status === 'Paid' ? 'paid' : 'pending'}`}>
-                                                        {transaction.status === 'completed' ? 'Completed' : 'Processing'}
+                                                    <div className={`status-badge ${getStatusColor(transaction.status)}`}>
+                                                        {transaction.status === 'available' ? 'Available' :
+                                                         transaction.status === 'pending' ? 'Processing' :
+                                                         transaction.status}
                                                     </div>
                                                 </div>
                                             </div>
@@ -452,8 +855,8 @@ const Wallet = ({ user }) => {
                                 ) : (
                                     <div className="empty-state">
                                         <WalletIcon size={48} className="empty-icon" />
-                                        <h3>No transactions yet</h3>
-                                        <p>Your transaction history will appear here once you receive payments</p>
+                                        <h3>No transactions found</h3>
+                                        <p>Try changing your filter or check back later</p>
                                     </div>
                                 )}
                             </div>
@@ -467,8 +870,7 @@ const Wallet = ({ user }) => {
                         width: 100%;
                         background: #fafbfc;
                         min-height: 100vh;
-                        padding: 4rem 0;
-                        border-radius: 20px;
+                        padding: 2rem 0;
                     }
 
                     .wallet-content {
@@ -479,7 +881,7 @@ const Wallet = ({ user }) => {
                     }
 
                     .wallet-inner {
-                        max-width: 1200px;
+                        max-width: 1400px;
                         margin: 0 auto;
                     }
 
@@ -500,6 +902,17 @@ const Wallet = ({ user }) => {
                         margin-bottom: 0.5rem;
                     }
 
+                    .admin-badge {
+                        display: inline-block;
+                        background: linear-gradient(135deg, #f06826, #ffe077);
+                        color: white;
+                        padding: 0.25rem 0.75rem;
+                        border-radius: 20px;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        margin-top: 0.25rem;
+                    }
+
                     .header-icon {
                         color: #f06826;
                     }
@@ -515,21 +928,47 @@ const Wallet = ({ user }) => {
                     .wallet-subtitle {
                         color: #6b7280;
                         font-size: 1rem;
-                        margin: 0;
+                        margin: 0 0 1rem 0;
                         font-weight: 400;
                     }
 
-                    /* Balance Cards */
-                    .balance-cards-grid {
+                    .commission-info {
+                        display: flex;
+                        gap: 1.5rem;
+                        flex-wrap: wrap;
+                        padding-top: 1rem;
+                        border-top: 1px solid #e5e7eb;
+                    }
+
+                    .commission-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                    }
+
+                    .commission-label {
+                        font-size: 0.875rem;
+                        color: #6b7280;
+                        font-weight: 500;
+                    }
+
+                    .commission-value {
+                        font-size: 0.875rem;
+                        color: #059669;
+                        font-weight: 600;
+                    }
+
+                    /* Summary Cards */
+                    .summary-cards-grid {
                         display: grid;
                         grid-template-columns: 1fr;
-                        gap: 1.25rem;
+                        gap: 1rem;
                         margin-bottom: 2rem;
                     }
 
-                    .balance-card {
+                    .summary-card {
                         border-radius: 16px;
-                        padding: 2rem;
+                        padding: 1.5rem;
                         color: white;
                         position: relative;
                         overflow: hidden;
@@ -538,7 +977,7 @@ const Wallet = ({ user }) => {
                         box-shadow: 0 8px 32px rgba(0,0,0,0.12);
                     }
 
-                    .current-balance {
+                    .available-balance {
                         background: linear-gradient(135deg, #f06826, #ffe077);
                     }
 
@@ -546,15 +985,15 @@ const Wallet = ({ user }) => {
                         background: linear-gradient(135deg, #059669, #10b981);
                     }
 
-                    .pending-earnings {
+                    .pending-payouts {
                         background: linear-gradient(135deg, #f59e0b, #f97316);
                     }
 
-                    .balance-card-header {
+                    .summary-card-header {
                         display: flex;
                         justify-content: space-between;
                         align-items: flex-start;
-                        margin-bottom: 1.5rem;
+                        margin-bottom: 1rem;
                     }
 
                     .icon-wrapper {
@@ -583,26 +1022,26 @@ const Wallet = ({ user }) => {
                         transform: scale(1.05);
                     }
 
-                    .balance-card-label {
+                    .summary-card-label {
                         font-size: 0.875rem;
                         font-weight: 500;
-                        margin-bottom: 0.75rem;
+                        margin-bottom: 0.5rem;
                         opacity: 0.9;
                         text-transform: uppercase;
                         letter-spacing: 0.05em;
                     }
 
-                    .balance-amount {
-                        font-size: 2.25rem;
+                    .summary-amount {
+                        font-size: 1.75rem;
                         font-weight: 800;
-                        margin-bottom: 0.75rem;
+                        margin-bottom: 0.5rem;
                         letter-spacing: -0.025em;
                     }
 
-                    .balance-subtext {
+                    .summary-subtext {
                         font-size: 0.875rem;
                         opacity: 0.8;
-                        margin-bottom: 1.5rem;
+                        margin-bottom: 1rem;
                         font-weight: 400;
                     }
 
@@ -610,7 +1049,7 @@ const Wallet = ({ user }) => {
                         background: rgba(255,255,255,0.15);
                         border: 1px solid rgba(255,255,255,0.25);
                         border-radius: 12px;
-                        padding: 0.875rem 1.5rem;
+                        padding: 0.75rem 1rem;
                         color: white;
                         font-size: 0.875rem;
                         font-weight: 600;
@@ -622,13 +1061,134 @@ const Wallet = ({ user }) => {
                         backdrop-filter: blur(10px);
                         width: 100%;
                         justify-content: center;
-                        text-transform: none;
                     }
 
-                    .withdraw-button:hover {
+                    .withdraw-button:hover:not(:disabled) {
                         background: rgba(255,255,255,0.25);
                         transform: translateY(-1px);
                         box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+                    }
+
+                    .withdraw-button:disabled {
+                        opacity: 0.5;
+                        cursor: not-allowed;
+                    }
+
+                    /* Breakdown Section */
+                    .breakdown-section {
+                        background: white;
+                        border-radius: 16px;
+                        padding: 2rem;
+                        margin-bottom: 2rem;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        border: 1px solid #e5e7eb;
+                    }
+
+                    .breakdown-section .section-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 1.5rem;
+                    }
+
+                    .section-title {
+                        font-size: 1.25rem;
+                        font-weight: 700;
+                        color: #111827;
+                        margin: 0;
+                        letter-spacing: -0.025em;
+                    }
+
+                    .export-button {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        padding: 0.5rem 1rem;
+                        background: #f3f4f6;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 8px;
+                        color: #374151;
+                        font-size: 0.875rem;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                    }
+
+                    .export-button:hover {
+                        background: #e5e7eb;
+                    }
+
+                    .breakdown-grid {
+                        display: grid;
+                        grid-template-columns: 1fr;
+                        gap: 1rem;
+                    }
+
+                    .breakdown-card {
+                        padding: 1.25rem;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 12px;
+                        background: #fafbfc;
+                        transition: all 0.2s ease;
+                    }
+
+                    .breakdown-card:hover {
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                        transform: translateY(-2px);
+                    }
+
+                    .breakdown-header {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        margin-bottom: 1rem;
+                    }
+
+                    .breakdown-icon {
+                        padding: 0.5rem;
+                        border-radius: 8px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    .breakdown-title {
+                        font-size: 0.875rem;
+                        font-weight: 600;
+                        color: #374151;
+                        margin: 0;
+                    }
+
+                    .breakdown-stats {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.5rem;
+                    }
+
+                    .breakdown-stat {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+
+                    .stat-label {
+                        font-size: 0.75rem;
+                        color: #6b7280;
+                        font-weight: 500;
+                    }
+
+                    .stat-value {
+                        font-size: 0.875rem;
+                        font-weight: 600;
+                        color: #111827;
+                    }
+
+                    .stat-value.available {
+                        color: #059669;
+                    }
+
+                    .stat-value.pending {
+                        color: #d97706;
                     }
 
                     /* Modal Styles */
@@ -743,7 +1303,13 @@ const Wallet = ({ user }) => {
 
                     .amount-input:focus {
                         border-color: #f06826;
-                        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+                        box-shadow: 0 0 0 3px rgba(240, 104, 38, 0.1);
+                    }
+
+                    .amount-hint {
+                        font-size: 0.75rem;
+                        color: #6b7280;
+                        margin-top: 0.25rem;
                     }
 
                     .error-message {
@@ -797,84 +1363,11 @@ const Wallet = ({ user }) => {
 
                     .confirm-button:not(:disabled):hover {
                         transform: translateY(-1px);
-                        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
-                    }
-
-                    /* Stats Cards */
-                    .stats-grid {
-                        display: grid;
-                        grid-template-columns: 1fr;
-                        gap: 1.25rem;
-                        margin-bottom: 2rem;
-                    }
-
-                    .stat-card {
-                        background-color: white;
-                        border-radius: 16px;
-                        padding: 1.5rem;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                        border: 1px solid #e5e7eb;
-                        display: flex;
-                        align-items: center;
-                        gap: 1rem;
-                        transition: all 0.2s ease;
-                    }
-
-                    .stat-card:hover {
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                        transform: translateY(-2px);
-                    }
-
-                    .stat-icon-wrapper {
-                        padding: 0.75rem;
-                        border-radius: 12px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        flex-shrink: 0;
-                    }
-
-                    .stat-icon-wrapper.green {
-                        background: #dcfce7;
-                        color: #166534;
-                    }
-
-                    .stat-icon-wrapper.blue {
-                        background: #dbeafe;
-                        color: #1d4ed8;
-                    }
-
-                    .stat-icon-wrapper.orange {
-                        background: #fed7aa;
-                        color: #c2410c;
-                    }
-
-                    .stat-content {
-                        flex: 1;
-                    }
-
-                    .stat-amount {
-                        font-size: 1.125rem;
-                        font-weight: 700;
-                        color: #111827;
-                        margin-bottom: 0.25rem;
-                        letter-spacing: -0.025em;
-                    }
-
-                    .stat-label {
-                        font-size: 0.875rem;
-                        color: #6b7280;
-                        font-weight: 500;
+                        box-shadow: 0 8px 25px rgba(240, 104, 38, 0.3);
                     }
 
                     /* Transactions Section */
                     .transactions-container {
-                        display: grid;
-                        grid-template-columns: 1fr;
-                        gap: 1.25rem;
-                    }
-
-                    .transactions-section {
                         background-color: white;
                         border-radius: 16px;
                         padding: 2rem;
@@ -882,28 +1375,45 @@ const Wallet = ({ user }) => {
                         border: 1px solid #e5e7eb;
                     }
 
-                    .section-header {
+                    .transactions-section .section-header {
                         display: flex;
-                        justify-content: space-between;
-                        align-items: center;
+                        flex-direction: column;
+                        gap: 1rem;
                         margin-bottom: 1.5rem;
-                    }
-
-                    .section-title {
-                        font-size: 1.25rem;
-                        font-weight: 700;
-                        color: #111827;
-                        margin: 0;
-                        letter-spacing: -0.025em;
                     }
 
                     .section-count {
                         font-size: 0.875rem;
                         color: #6b7280;
-                        background: #f3f4f6;
-                        padding: 0.25rem 0.75rem;
-                        border-radius: 16px;
                         font-weight: 500;
+                    }
+
+                    .filter-buttons {
+                        display: flex;
+                        gap: 0.5rem;
+                        flex-wrap: wrap;
+                    }
+
+                    .filter-button {
+                        padding: 0.5rem 1rem;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 20px;
+                        background: #f3f4f6;
+                        color: #374151;
+                        font-size: 0.75rem;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                    }
+
+                    .filter-button:hover {
+                        background: #e5e7eb;
+                    }
+
+                    .filter-button.active {
+                        background: #f06826;
+                        color: white;
+                        border-color: #f06826;
                     }
 
                     .transactions-list {
@@ -913,8 +1423,8 @@ const Wallet = ({ user }) => {
 
                     .transaction-item {
                         display: flex;
-                        justify-content: space-between;
                         align-items: flex-start;
+                        gap: 1rem;
                         padding: 1.25rem 0;
                         border-bottom: 1px solid #f3f4f6;
                         transition: all 0.2s ease;
@@ -931,23 +1441,54 @@ const Wallet = ({ user }) => {
                         border-bottom: none;
                     }
 
+                    .transaction-icon {
+                        padding: 0.75rem;
+                        border-radius: 8px;
+                        background: #f3f4f6;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex-shrink: 0;
+                    }
+
                     .transaction-details {
                         flex: 1;
-                        margin-right: 1rem;
+                    }
+
+                    .transaction-header {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        margin-bottom: 0.5rem;
+                        flex-wrap: wrap;
                     }
 
                     .transaction-title {
                         font-size: 0.875rem;
                         font-weight: 600;
                         color: #111827;
-                        margin-bottom: 0.25rem;
                         line-height: 1.4;
                     }
 
-                    .transaction-guest {
-                        font-size: 0.875rem;
+                    .transaction-type {
+                        font-size: 0.625rem;
+                        padding: 0.125rem 0.5rem;
+                        border-radius: 12px;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        letter-spacing: 0.05em;
+                    }
+
+                    .transaction-meta {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 0.75rem;
+                        margin-bottom: 0.5rem;
+                    }
+
+                    .meta-item {
+                        font-size: 0.75rem;
                         color: #6b7280;
-                        margin-bottom: 0.25rem;
                         font-weight: 500;
                     }
 
@@ -959,7 +1500,7 @@ const Wallet = ({ user }) => {
 
                     .transaction-amount {
                         text-align: right;
-                        min-width: 8rem;
+                        min-width: 6rem;
                     }
 
                     .amount-value {
@@ -977,16 +1518,6 @@ const Wallet = ({ user }) => {
                         display: inline-block;
                         font-weight: 600;
                         text-transform: capitalize;
-                    }
-
-                    .paid {
-                        background-color: #dcfce7;
-                        color: #166534;
-                    }
-
-                    .pending {
-                        background-color: #fef3c7;
-                        color: #92400e;
                     }
 
                     /* Empty State */
@@ -1097,11 +1628,11 @@ const Wallet = ({ user }) => {
                             padding: 0 1.5rem;
                         }
 
-                        .balance-cards-grid {
+                        .summary-cards-grid {
                             grid-template-columns: repeat(2, 1fr);
                         }
 
-                        .stats-grid {
+                        .breakdown-grid {
                             grid-template-columns: repeat(2, 1fr);
                         }
 
@@ -1109,8 +1640,8 @@ const Wallet = ({ user }) => {
                             font-size: 2rem;
                         }
 
-                        .balance-amount {
-                            font-size: 2.5rem;
+                        .summary-amount {
+                            font-size: 2rem;
                         }
                     }
 
@@ -1119,29 +1650,21 @@ const Wallet = ({ user }) => {
                             padding: 0 2rem;
                         }
 
-                        .balance-cards-grid {
+                        .summary-cards-grid {
                             grid-template-columns: repeat(3, 1fr);
                             gap: 1.5rem;
                             margin-bottom: 2.5rem;
                         }
 
-                        .stats-grid {
+                        .breakdown-grid {
                             grid-template-columns: repeat(3, 1fr);
                             gap: 1.5rem;
-                            margin-bottom: 2.5rem;
                         }
 
-                        .transactions-container {
-                            grid-template-columns: 1fr;
-                            gap: 1.5rem;
-                        }
-
-                        .wallet-header {
-                            padding: 2.5rem;
-                        }
-
-                        .transactions-section {
-                            padding: 2.5rem;
+                        .transactions-section .section-header {
+                            flex-direction: row;
+                            justify-content: space-between;
+                            align-items: center;
                         }
                     }
 
@@ -1150,16 +1673,22 @@ const Wallet = ({ user }) => {
                             padding: 0 2rem;
                         }
 
-                        .balance-amount {
-                            font-size: 2.75rem;
+                        .summary-amount {
+                            font-size: 2.25rem;
                         }
 
                         .wallet-title {
                             font-size: 2.25rem;
                         }
 
-                        .transaction-item {
-                            align-items: center;
+                        .breakdown-grid {
+                            grid-template-columns: repeat(5, 1fr);
+                        }
+                    }
+
+                    @media (min-width: 1280px) {
+                        .wallet-content {
+                            padding: 0;
                         }
                     }
 
@@ -1182,7 +1711,7 @@ const Wallet = ({ user }) => {
                         background: #94a3b8;
                     }
 
-                    /* Loading states and micro-interactions */
+                    /* Animations */
                     @keyframes fadeIn {
                         from {
                             opacity: 0;
@@ -1194,40 +1723,23 @@ const Wallet = ({ user }) => {
                         }
                     }
 
-                    .balance-card {
+                    .summary-card, .breakdown-card, .transaction-item {
                         animation: fadeIn 0.5s ease-out forwards;
-                    }
-
-                    .balance-card:nth-child(2) {
-                        animation-delay: 0.1s;
-                    }
-
-                    .balance-card:nth-child(3) {
-                        animation-delay: 0.2s;
-                    }
-
-                    .stat-card {
-                        animation: fadeIn 0.5s ease-out forwards;
-                    }
-
-                    .stat-card:nth-child(2) {
-                        animation-delay: 0.1s;
-                    }
-
-                    .stat-card:nth-child(3) {
-                        animation-delay: 0.2s;
                     }
 
                     /* Focus styles for accessibility */
                     .withdraw-button:focus,
                     .balance-visibility-toggle:focus,
                     .cancel-button:focus,
-                    .confirm-button:focus {
+                    .confirm-button:focus,
+                    .filter-button:focus,
+                    .export-button:focus {
                         outline: 2px solid #f06826;
                         outline-offset: 2px;
                     }
 
-                    .amount-input:focus {
+                    .amount-input:focus,
+                    .verification-input:focus {
                         outline: none;
                     }
                 `}</style>

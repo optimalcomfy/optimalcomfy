@@ -34,7 +34,7 @@ jobs:
         run: composer install --no-dev --optimize-autoloader
 
       - name: Install Node.js dependencies
-        run: npm ci
+        run: npm i -f
 
       - name: Build React assets
         run: npm run build
@@ -132,7 +132,7 @@ jobs:
             
             # Install dependencies and build
             composer install --no-dev --optimize-autoloader
-            npm ci
+            npm i -f
             npm run build
             
             # Use test .env if exists, otherwise create

@@ -6,6 +6,10 @@ on:
       - main
       - dev
 
+env:
+  PHP_VERSION: '8.4'
+  NODE_VERSION: '18'
+
 jobs:
   deploy-production:
     if: github.ref == 'refs/heads/main'
@@ -15,34 +19,72 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Set up PHP
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.3 
-          extensions: mbstring, bcmath, openssl, pdo, pdo_mysql
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, bcmath, openssl, pdo, pdo_mysql, tokenizer, xml, ctype, json, fileinfo
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16 
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Install PHP dependencies
         run: composer install --no-dev --optimize-autoloader
 
       - name: Install Node.js dependencies
-        run: npm install -f
+        run: npm ci
 
-      - name: Build React application
+      - name: Build React assets
         run: npm run build
 
-      - name: Deploy to Production via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: Deploy to Production via SSH
+        uses: appleboy/ssh-action@v0.1.8
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: /public_html/
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # Create deployment directory
+            DEPLOY_DIR="/var/www/optimalcomfy/deploy_$(date +%Y%m%d_%H%M%S)"
+            mkdir -p $DEPLOY_DIR
+            
+            # Clone the repository
+            cd $DEPLOY_DIR
+            git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git .
+            
+            # Install dependencies and build
+            composer install --no-dev --optimize-autoloader
+            npm ci
+            npm run build
+            
+            # Copy .env from current live if exists
+            if [ -f "/var/www/optimalcomfy/live/.env" ]; then
+              cp /var/www/optimalcomfy/live/.env $DEPLOY_DIR/
+            fi
+            
+            # Set permissions
+            chown -R www-data:www-data $DEPLOY_DIR
+            chmod -R 755 $DEPLOY_DIR/storage
+            chmod -R 755 $DEPLOY_DIR/bootstrap/cache
+            
+            # Switch to new deployment
+            ln -sfn $DEPLOY_DIR /var/www/optimalcomfy/live
+            
+            # Clear Laravel caches
+            cd /var/www/optimalcomfy/live
+            php artisan config:clear
+            php artisan cache:clear
+            php artisan route:clear
+            php artisan view:clear
+            
+            # Restart services
+            sudo systemctl reload php8.4-fpm
+            sudo systemctl reload nginx
+            
+            echo "✅ Production deployment completed!"
 
   deploy-test:
     if: github.ref == 'refs/heads/dev'
@@ -52,31 +94,86 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Set up PHP
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.3 
-          extensions: mbstring, bcmath, openssl, pdo, pdo_mysql
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, bcmath, openssl, pdo, pdo_mysql, tokenizer, xml, ctype, json, fileinfo
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16 
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Install PHP dependencies
         run: composer install --no-dev --optimize-autoloader
 
       - name: Install Node.js dependencies
-        run: npm install -f
+        run: npm ci
 
-      - name: Build React application
+      - name: Build React assets
         run: npm run build
 
-      - name: Deploy to Test via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: Deploy to Test via SSH
+        uses: appleboy/ssh-action@v0.1.8
         with:
-          server: ${{ secrets.FTP_SERVER_TEST }}
-          username: ${{ secrets.FTP_USERNAME_TEST }}
-          password: ${{ secrets.FTP_PASSWORD_TEST }}
-          local-dir: ./
-          server-dir: /public_html/
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # Create deployment directory
+            DEPLOY_DIR="/var/www/optimalcomfy-test/deploy_$(date +%Y%m%d_%H%M%S)"
+            mkdir -p $DEPLOY_DIR
+            
+            # Clone the repository
+            cd $DEPLOY_DIR
+            git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git .
+            
+            # Install dependencies and build
+            composer install --no-dev --optimize-autoloader
+            npm ci
+            npm run build
+            
+            # Use test .env if exists, otherwise create
+            if [ -f "/var/www/optimalcomfy-test/live/.env" ]; then
+              cp /var/www/optimalcomfy-test/live/.env $DEPLOY_DIR/
+            else
+              # Create test .env
+              cat > .env << 'EOF'
+            APP_NAME="Ristay Test"
+            APP_ENV=testing
+            APP_KEY=
+            APP_DEBUG=true
+            APP_URL=http://77.42.72.54:8081
+
+            DB_CONNECTION=mysql
+            DB_HOST=127.0.0.1
+            DB_PORT=3306
+            DB_DATABASE=test
+            DB_USERNAME=root
+            DB_PASSWORD="emsjT4de9TqMRsWvwRNRistay"
+            EOF
+              php artisan key:generate
+            fi
+            
+            # Set permissions
+            chown -R www-data:www-data $DEPLOY_DIR
+            chmod -R 755 $DEPLOY_DIR/storage
+            chmod -R 755 $DEPLOY_DIR/bootstrap/cache
+            
+            # Switch to new deployment
+            ln -sfn $DEPLOY_DIR /var/www/optimalcomfy-test/live
+            
+            # Clear Laravel caches
+            cd /var/www/optimalcomfy-test/live
+            php artisan config:clear
+            php artisan cache:clear
+            php artisan route:clear
+            php artisan view:clear
+            
+            # Restart services
+            sudo systemctl reload php8.4-fpm
+            sudo systemctl reload nginx
+            
+            echo "✅ Test deployment completed!"

@@ -80,7 +80,7 @@ jobs:
             
             # Install Node.js dependencies and build
             echo "🔧 Installing Node.js dependencies..."
-            sudo -u www-data npm install --force --legacy-peer-deps
+            sudo -u www-data npm i -f
             
             echo "🔨 Building React assets..."
             sudo -u www-data npm run build
@@ -189,7 +189,7 @@ jobs:
             
             # Install Node.js dependencies and build
             echo "🔧 Installing Node.js dependencies..."
-            sudo -u www-data npm install --force --legacy-peer-deps
+            sudo -u www-data npm i -f
             
             echo "🔨 Building React assets..."
             sudo -u www-data npm run build

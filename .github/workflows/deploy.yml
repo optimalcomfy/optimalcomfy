@@ -18,8 +18,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Fetch all history for git operations
       
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -51,48 +49,72 @@ jobs:
           script: |
             # Set deployment directory
             DEPLOY_DIR="/var/www/optimalcomfy"
+            echo "🚀 Starting production deployment to $DEPLOY_DIR"
             
-            # Navigate to deployment directory
-            cd $DEPLOY_DIR
+            # Fix git ownership issue
+            sudo git config --global --add safe.directory "$DEPLOY_DIR"
             
-            # Pull latest changes
-            git fetch --all
-            git reset --hard origin/main
-            git pull origin main
+            # Go to deployment directory
+            cd "$DEPLOY_DIR"
             
-            # Install PHP dependencies
-            composer install --no-dev --optimize-autoloader --no-interaction --no-progress
-            
-            # Install Node.js dependencies and build
-            npm ci --force
-            npm run build
-            
-            # Preserve .env if exists
-            if [ -f "$DEPLOY_DIR/.env" ]; then
-              echo ".env file preserved"
-            else
-              if [ -f "$DEPLOY_DIR/.env.example" ]; then
-                cp .env.example .env
-                php artisan key:generate
-              fi
+            # Backup .env file
+            if [ -f ".env" ]; then
+              echo "📦 Backing up .env file..."
+              sudo cp .env /tmp/prod.env.backup
             fi
             
-            # Set permissions
-            sudo chown -R www-data:www-data $DEPLOY_DIR
-            sudo chmod -R 755 $DEPLOY_DIR/storage
-            sudo chmod -R 755 $DEPLOY_DIR/bootstrap/cache
+            # Clean directory (except storage and .env)
+            echo "🧹 Cleaning directory (keeping storage and .env)..."
+            sudo find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.env' ! -name 'storage' ! -name '.git' -exec rm -rf {} + 2>/dev/null || true
             
-            # Run Laravel maintenance commands
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            php artisan optimize
+            # Pull latest changes
+            echo "📥 Pulling latest code from main branch..."
+            sudo -u www-data git fetch origin main
+            sudo -u www-data git reset --hard origin/main
+            sudo -u www-data git pull origin main
+            
+            # Restore .env if it exists
+            if [ -f "/tmp/prod.env.backup" ]; then
+              echo "📋 Restoring .env file..."
+              sudo cp /tmp/prod.env.backup .env
+            elif [ -f ".env.example" ]; then
+              echo "📝 Creating .env from example..."
+              sudo cp .env.example .env
+              sudo -u www-data php artisan key:generate
+            fi
+            
+            # Install dependencies
+            echo "📦 Installing PHP dependencies..."
+            sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+            
+            echo "📦 Installing Node.js dependencies..."
+            sudo -u www-data npm ci --force
+            
+            echo "🔨 Building React assets..."
+            sudo -u www-data npm run build
+            
+            # Set permissions
+            echo "🔒 Setting permissions..."
+            sudo chown -R www-data:www-data "$DEPLOY_DIR"
+            sudo chmod -R 755 storage
+            sudo chmod -R 755 bootstrap/cache
+            
+            # Run Laravel commands
+            echo "⚡ Running Laravel optimizations..."
+            sudo -u www-data php artisan config:cache
+            sudo -u www-data php artisan route:cache
+            sudo -u www-data php artisan view:cache
+            sudo -u www-data php artisan storage:link
             
             # Restart services
+            echo "🔄 Restarting services..."
             sudo systemctl restart php8.4-fpm
             sudo systemctl restart nginx
             
-            echo "✅ Production deployment completed to $DEPLOY_DIR!"
+            echo "✅ Production deployment completed successfully!"
+            echo "📁 Directory: $DEPLOY_DIR"
+            echo "🌐 URL: http://77.42.72.54"
+            echo "📅 Deployment time: $(date)"
 
   deploy-test:
     if: github.ref == 'refs/heads/dev'
@@ -101,8 +123,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -134,25 +154,37 @@ jobs:
           script: |
             # Set deployment directory
             DEPLOY_DIR="/var/www/optimalcomfy-test"
+            echo "🚀 Starting test deployment to $DEPLOY_DIR"
             
-            # Navigate to deployment directory
-            cd $DEPLOY_DIR
+            # Fix git ownership issue
+            sudo git config --global --add safe.directory "$DEPLOY_DIR"
+            
+            # Go to deployment directory
+            cd "$DEPLOY_DIR"
+            
+            # Backup .env file
+            if [ -f ".env" ]; then
+              echo "📦 Backing up .env file..."
+              sudo cp .env /tmp/test.env.backup
+            fi
+            
+            # Clean directory (except storage and .env)
+            echo "🧹 Cleaning directory (keeping storage and .env)..."
+            sudo find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.env' ! -name 'storage' ! -name '.git' -exec rm -rf {} + 2>/dev/null || true
             
             # Pull latest changes
-            git fetch --all
-            git reset --hard origin/dev
-            git pull origin dev
+            echo "📥 Pulling latest code from dev branch..."
+            sudo -u www-data git fetch origin dev
+            sudo -u www-data git reset --hard origin/dev
+            sudo -u www-data git pull origin dev
             
-            # Install PHP dependencies
-            composer install --no-dev --optimize-autoloader --no-interaction --no-progress
-            
-            # Install Node.js dependencies and build
-            npm ci --force
-            npm run build
-            
-            # Check if .env exists, otherwise create test .env
-            if [ ! -f "$DEPLOY_DIR/.env" ]; then
-              cat > .env << EOF
+            # Restore or create .env
+            if [ -f "/tmp/test.env.backup" ]; then
+              echo "📋 Restoring .env file..."
+              sudo cp /tmp/test.env.backup .env
+            else
+              echo "📝 Creating test .env..."
+              sudo cat > .env << 'EOF'
             APP_NAME="OptimalComfy Test"
             APP_ENV=local
             APP_DEBUG=true
@@ -165,22 +197,42 @@ jobs:
             DB_USERNAME=root
             DB_PASSWORD="emsjT4de9TqMRsWvwRNRistay"
             EOF
-              php artisan key:generate
+              sudo -u www-data php artisan key:generate
             fi
             
-            # Set permissions
-            sudo chown -R www-data:www-data $DEPLOY_DIR
-            sudo chmod -R 755 $DEPLOY_DIR/storage
-            sudo chmod -R 755 $DEPLOY_DIR/bootstrap/cache
+            # Install dependencies
+            echo "📦 Installing PHP dependencies..."
+            sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
             
-            # Run Laravel maintenance commands
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            php artisan optimize
+            echo "📦 Installing Node.js dependencies..."
+            sudo -u www-data npm ci --force
+            
+            echo "🔨 Building React assets..."
+            sudo -u www-data npm run build
+            
+            # Run migrations for test environment
+            echo "🔄 Running migrations..."
+            sudo -u www-data php artisan migrate --force
+            
+            # Set permissions
+            echo "🔒 Setting permissions..."
+            sudo chown -R www-data:www-data "$DEPLOY_DIR"
+            sudo chmod -R 755 storage
+            sudo chmod -R 755 bootstrap/cache
+            
+            # Run Laravel commands
+            echo "⚡ Running Laravel optimizations..."
+            sudo -u www-data php artisan config:cache
+            sudo -u www-data php artisan route:cache
+            sudo -u www-data php artisan view:cache
+            sudo -u www-data php artisan storage:link
             
             # Restart services
+            echo "🔄 Restarting services..."
             sudo systemctl restart php8.4-fpm
             sudo systemctl restart nginx
             
-            echo "✅ Test deployment completed to $DEPLOY_DIR!"
+            echo "✅ Test deployment completed successfully!"
+            echo "📁 Directory: $DEPLOY_DIR"
+            echo "🌐 URL: http://77.42.72.54/test"
+            echo "📅 Deployment time: $(date)"

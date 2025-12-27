@@ -1,3 +1,4 @@
+# OPTIMIZED VERSION - Build only on server
 name: Deploy Laravel React App
 
 on:
@@ -19,26 +20,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION }}
-          extensions: mbstring, bcmath, openssl, pdo, pdo_mysql, tokenizer, xml, ctype, json, fileinfo
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install PHP dependencies
-        run: composer install --no-dev --optimize-autoloader
-
-      - name: Install Node.js dependencies
-        run: npm ci --force
-
-      - name: Build React assets
-        run: npm run build
-
       - name: Deploy to Production via SSH
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -83,7 +64,7 @@ jobs:
               sudo -u www-data php artisan key:generate
             fi
             
-            # Install dependencies
+            # Install PHP dependencies
             echo "📦 Installing PHP dependencies..."
             sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
             
@@ -114,125 +95,4 @@ jobs:
             echo "✅ Production deployment completed successfully!"
             echo "📁 Directory: $DEPLOY_DIR"
             echo "🌐 URL: http://77.42.72.54"
-            echo "📅 Deployment time: $(date)"
-
-  deploy-test:
-    if: github.ref == 'refs/heads/dev'
-    runs-on: ubuntu-latest
-    name: Deploy to Test
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION }}
-          extensions: mbstring, bcmath, openssl, pdo, pdo_mysql, tokenizer, xml, ctype, json, fileinfo
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install PHP dependencies
-        run: composer install --no-dev --optimize-autoloader
-
-      - name: Install Node.js dependencies
-        run: npm ci --force
-
-      - name: Build React assets
-        run: npm run build
-
-      - name: Deploy to Test via SSH
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            # Set deployment directory
-            DEPLOY_DIR="/var/www/optimalcomfy-test"
-            echo "🚀 Starting test deployment to $DEPLOY_DIR"
-            
-            # Fix git ownership issue
-            sudo git config --global --add safe.directory "$DEPLOY_DIR"
-            
-            # Go to deployment directory
-            cd "$DEPLOY_DIR"
-            
-            # Backup .env file
-            if [ -f ".env" ]; then
-              echo "📦 Backing up .env file..."
-              sudo cp .env /tmp/test.env.backup
-            fi
-            
-            # Clean directory (except storage and .env)
-            echo "🧹 Cleaning directory (keeping storage and .env)..."
-            sudo find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.env' ! -name 'storage' ! -name '.git' -exec rm -rf {} + 2>/dev/null || true
-            
-            # Pull latest changes
-            echo "📥 Pulling latest code from dev branch..."
-            sudo -u www-data git fetch origin dev
-            sudo -u www-data git reset --hard origin/dev
-            sudo -u www-data git pull origin dev
-            
-            # Restore or create .env
-            if [ -f "/tmp/test.env.backup" ]; then
-              echo "📋 Restoring .env file..."
-              sudo cp /tmp/test.env.backup .env
-            else
-              echo "📝 Creating test .env..."
-              sudo cat > .env << 'EOF'
-            APP_NAME="OptimalComfy Test"
-            APP_ENV=local
-            APP_DEBUG=true
-            APP_URL=http://77.42.72.54/test
-
-            DB_CONNECTION=mysql
-            DB_HOST=127.0.0.1
-            DB_PORT=3306
-            DB_DATABASE=optimalcomfy_test
-            DB_USERNAME=root
-            DB_PASSWORD="emsjT4de9TqMRsWvwRNRistay"
-            EOF
-              sudo -u www-data php artisan key:generate
-            fi
-            
-            # Install dependencies
-            echo "📦 Installing PHP dependencies..."
-            sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
-            
-            echo "📦 Installing Node.js dependencies..."
-            sudo -u www-data npm ci --force
-            
-            echo "🔨 Building React assets..."
-            sudo -u www-data npm run build
-            
-            # Run migrations for test environment
-            echo "🔄 Running migrations..."
-            sudo -u www-data php artisan migrate --force
-            
-            # Set permissions
-            echo "🔒 Setting permissions..."
-            sudo chown -R www-data:www-data "$DEPLOY_DIR"
-            sudo chmod -R 755 storage
-            sudo chmod -R 755 bootstrap/cache
-            
-            # Run Laravel commands
-            echo "⚡ Running Laravel optimizations..."
-            sudo -u www-data php artisan config:cache
-            sudo -u www-data php artisan route:cache
-            sudo -u www-data php artisan view:cache
-            sudo -u www-data php artisan storage:link
-            
-            # Restart services
-            echo "🔄 Restarting services..."
-            sudo systemctl restart php8.4-fpm
-            sudo systemctl restart nginx
-            
-            echo "✅ Test deployment completed successfully!"
-            echo "📁 Directory: $DEPLOY_DIR"
-            echo "🌐 URL: http://77.42.72.54/test"
             echo "📅 Deployment time: $(date)"

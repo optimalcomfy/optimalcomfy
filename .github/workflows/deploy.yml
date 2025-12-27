@@ -166,7 +166,6 @@ jobs:
         run: |
           # Remove development files
           rm -rf node_modules
-          rm -f .env.example
           rm -rf tests
           rm -f phpunit.xml
           

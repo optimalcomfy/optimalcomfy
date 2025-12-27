@@ -61,8 +61,8 @@ jobs:
             npm run build
             
             # Copy .env from current live if exists
-            if [ -f "/var/www/optimalcomfy/live/.env" ]; then
-              cp /var/www/optimalcomfy/live/.env $DEPLOY_DIR/
+            if [ -f "/var/www/optimalcomfy/.env" ]; then
+              cp /var/www/optimalcomfy/.env $DEPLOY_DIR/
             fi
             
             # Set permissions
@@ -71,10 +71,10 @@ jobs:
             chmod -R 755 $DEPLOY_DIR/bootstrap/cache
             
             # Switch to new deployment
-            ln -sfn $DEPLOY_DIR /var/www/optimalcomfy/live
+            ln -sfn $DEPLOY_DIR /var/www/optimalcomfy
             
             # Clear Laravel caches
-            cd /var/www/optimalcomfy/live
+            cd /var/www/optimalcomfy
             php artisan config:clear
             php artisan cache:clear
             php artisan route:clear
@@ -136,8 +136,8 @@ jobs:
             npm run build
             
             # Use test .env if exists, otherwise create
-            if [ -f "/var/www/optimalcomfy-test/live/.env" ]; then
-              cp /var/www/optimalcomfy-test/live/.env $DEPLOY_DIR/
+            if [ -f "/var/www/optimalcomfy-test/.env" ]; then
+              cp /var/www/optimalcomfy-test/.env $DEPLOY_DIR/
             else
               # Create test .env
               cat > .env << 'EOF'
@@ -163,10 +163,10 @@ jobs:
             chmod -R 755 $DEPLOY_DIR/bootstrap/cache
             
             # Switch to new deployment
-            ln -sfn $DEPLOY_DIR /var/www/optimalcomfy-test/live
+            ln -sfn $DEPLOY_DIR /var/www/optimalcomfy-test
             
             # Clear Laravel caches
-            cd /var/www/optimalcomfy-test/live
+            cd /var/www/optimalcomfy-test
             php artisan config:clear
             php artisan cache:clear
             php artisan route:clear

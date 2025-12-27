@@ -19,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Fetch all history for git operations
       
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -38,15 +38,8 @@ jobs:
       - name: Install Node.js dependencies
         run: npm ci --force
 
-      - name: Build assets
+      - name: Build React assets
         run: npm run build
-
-      - name: Prepare for deployment
-        run: |
-          # Remove development files
-          rm -rf node_modules
-          rm -rf tests
-          rm -f phpunit.xml
 
       - name: Deploy to Production via SSH
         uses: appleboy/ssh-action@v0.1.8
@@ -56,75 +49,50 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            # Direct deployment directory
+            # Set deployment directory
             DEPLOY_DIR="/var/www/optimalcomfy"
             
-            echo "🚀 Deploying to: $DEPLOY_DIR"
-            
-            # Create directory if it doesn't exist
-            mkdir -p $DEPLOY_DIR
-            
-            # Clean the directory (keep .env if exists)
-            if [ -f "$DEPLOY_DIR/.env" ]; then
-              echo "💾 Preserving existing .env file..."
-              BACKUP_ENV="/tmp/.env.backup"
-              cp $DEPLOY_DIR/.env $BACKUP_ENV
-            fi
-            
-            # Remove all contents except storage if exists
-            if [ -d "$DEPLOY_DIR/storage" ]; then
-              echo "💾 Preserving storage directory..."
-              BACKUP_STORAGE="/tmp/storage.backup"
-              cp -r $DEPLOY_DIR/storage $BACKUP_STORAGE
-            fi
-            
-            # Clean target directory
-            rm -rf $DEPLOY_DIR/*
-            
-            # Restore .env if it existed
-            if [ -f "$BACKUP_ENV" ]; then
-              cp $BACKUP_ENV $DEPLOY_DIR/.env
-              rm -f $BACKUP_ENV
-            fi
-            
-            # Restore storage if it existed
-            if [ -d "$BACKUP_STORAGE" ]; then
-              cp -r $BACKUP_STORAGE/* $DEPLOY_DIR/storage/ 2>/dev/null || true
-              rm -rf $BACKUP_STORAGE
-            fi
-            
-            echo "📦 Copying files..."
-            # Copy all files from GitHub
-            tar -cf - --exclude='.git' --exclude='node_modules' . | ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd $DEPLOY_DIR && tar -xf -"
-            
-            echo "🔐 Setting permissions..."
-            chown -R www-data:www-data $DEPLOY_DIR
-            chmod -R 755 $DEPLOY_DIR
-            chmod -R 775 $DEPLOY_DIR/storage
-            chmod -R 775 $DEPLOY_DIR/bootstrap/cache
-            
-            echo "📦 Installing dependencies..."
+            # Navigate to deployment directory
             cd $DEPLOY_DIR
-            composer install --no-dev --optimize-autoloader --no-interaction
-            npm ci --only=production --force
             
-            echo "🔗 Creating storage symlink..."
-            rm -f public/storage
-            php artisan storage:link
+            # Pull latest changes
+            git fetch --all
+            git reset --hard origin/main
+            git pull origin main
             
-            echo "🧹 Clearing caches..."
-            php artisan optimize:clear
-            php artisan config:clear
-            php artisan cache:clear
-            php artisan route:clear
-            php artisan view:clear
+            # Install PHP dependencies
+            composer install --no-dev --optimize-autoloader --no-interaction --no-progress
             
-            echo "🔄 Restarting services..."
-            sudo systemctl reload php8.4-fpm
-            sudo systemctl reload nginx
+            # Install Node.js dependencies and build
+            npm ci --force
+            npm run build
             
-            echo "✅ Production deployment completed!"
-            echo "📁 Deployed to: $DEPLOY_DIR"
+            # Preserve .env if exists
+            if [ -f "$DEPLOY_DIR/.env" ]; then
+              echo ".env file preserved"
+            else
+              if [ -f "$DEPLOY_DIR/.env.example" ]; then
+                cp .env.example .env
+                php artisan key:generate
+              fi
+            fi
+            
+            # Set permissions
+            sudo chown -R www-data:www-data $DEPLOY_DIR
+            sudo chmod -R 755 $DEPLOY_DIR/storage
+            sudo chmod -R 755 $DEPLOY_DIR/bootstrap/cache
+            
+            # Run Laravel maintenance commands
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan optimize
+            
+            # Restart services
+            sudo systemctl restart php8.4-fpm
+            sudo systemctl restart nginx
+            
+            echo "✅ Production deployment completed to $DEPLOY_DIR!"
 
   deploy-test:
     if: github.ref == 'refs/heads/dev'
@@ -153,33 +121,8 @@ jobs:
       - name: Install Node.js dependencies
         run: npm ci --force
 
-      - name: Build assets
+      - name: Build React assets
         run: npm run build
-
-      - name: Prepare for deployment
-        run: |
-          # Remove development files
-          rm -rf node_modules
-          rm -rf tests
-          rm -f phpunit.xml
-          
-          # Create test .env if it doesn't exist
-          if [ ! -f ".env" ]; then
-            cat > .env << 'EOF'
-          APP_NAME="OptimalComfy Test"
-          APP_ENV=testing
-          APP_KEY=
-          APP_DEBUG=true
-          APP_URL=http://your-test-domain.com
-
-          DB_CONNECTION=mysql
-          DB_HOST=127.0.0.1
-          DB_PORT=3306
-          DB_DATABASE=optimalcomfy_test
-          DB_USERNAME=root
-          DB_PASSWORD="your-test-password"
-          EOF
-          fi
 
       - name: Deploy to Test via SSH
         uses: appleboy/ssh-action@v0.1.8
@@ -189,77 +132,55 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            # Direct deployment directory
+            # Set deployment directory
             DEPLOY_DIR="/var/www/optimalcomfy-test"
             
-            echo "🚀 Deploying to: $DEPLOY_DIR"
-            
-            # Create directory if it doesn't exist
-            mkdir -p $DEPLOY_DIR
-            
-            # Clean the directory (keep .env if exists)
-            if [ -f "$DEPLOY_DIR/.env" ]; then
-              echo "💾 Preserving existing .env file..."
-              BACKUP_ENV="/tmp/.env.test.backup"
-              cp $DEPLOY_DIR/.env $BACKUP_ENV
-            fi
-            
-            # Remove all contents except storage if exists
-            if [ -d "$DEPLOY_DIR/storage" ]; then
-              echo "💾 Preserving storage directory..."
-              BACKUP_STORAGE="/tmp/storage.test.backup"
-              cp -r $DEPLOY_DIR/storage $BACKUP_STORAGE
-            fi
-            
-            # Clean target directory
-            rm -rf $DEPLOY_DIR/*
-            
-            # Restore .env if it existed
-            if [ -f "$BACKUP_ENV" ]; then
-              cp $BACKUP_ENV $DEPLOY_DIR/.env
-              rm -f $BACKUP_ENV
-            fi
-            
-            # Restore storage if it existed
-            if [ -d "$BACKUP_STORAGE" ]; then
-              cp -r $BACKUP_STORAGE/* $DEPLOY_DIR/storage/ 2>/dev/null || true
-              rm -rf $BACKUP_STORAGE
-            fi
-            
-            echo "📦 Copying files..."
-            # Copy all files from GitHub
-            tar -cf - --exclude='.git' --exclude='node_modules' . | ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd $DEPLOY_DIR && tar -xf -"
-            
-            echo "🔐 Setting permissions..."
-            chown -R www-data:www-data $DEPLOY_DIR
-            chmod -R 755 $DEPLOY_DIR
-            chmod -R 775 $DEPLOY_DIR/storage
-            chmod -R 775 $DEPLOY_DIR/bootstrap/cache
-            
-            echo "📦 Installing dependencies..."
+            # Navigate to deployment directory
             cd $DEPLOY_DIR
-            composer install --no-dev --optimize-autoloader --no-interaction
-            npm ci --only=production --force
             
-            # Generate app key if .env is new
-            if [ ! -f "$DEPLOY_DIR/.env.backup" ]; then
+            # Pull latest changes
+            git fetch --all
+            git reset --hard origin/dev
+            git pull origin dev
+            
+            # Install PHP dependencies
+            composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+            
+            # Install Node.js dependencies and build
+            npm ci --force
+            npm run build
+            
+            # Check if .env exists, otherwise create test .env
+            if [ ! -f "$DEPLOY_DIR/.env" ]; then
+              cat > .env << EOF
+            APP_NAME="OptimalComfy Test"
+            APP_ENV=local
+            APP_DEBUG=true
+            APP_URL=http://77.42.72.54/test
+
+            DB_CONNECTION=mysql
+            DB_HOST=127.0.0.1
+            DB_PORT=3306
+            DB_DATABASE=optimalcomfy_test
+            DB_USERNAME=root
+            DB_PASSWORD="emsjT4de9TqMRsWvwRNRistay"
+            EOF
               php artisan key:generate
             fi
             
-            echo "🔗 Creating storage symlink..."
-            rm -f public/storage
-            php artisan storage:link
+            # Set permissions
+            sudo chown -R www-data:www-data $DEPLOY_DIR
+            sudo chmod -R 755 $DEPLOY_DIR/storage
+            sudo chmod -R 755 $DEPLOY_DIR/bootstrap/cache
             
-            echo "🧹 Clearing caches..."
-            php artisan optimize:clear
-            php artisan config:clear
-            php artisan cache:clear
-            php artisan route:clear
-            php artisan view:clear
+            # Run Laravel maintenance commands
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan optimize
             
-            echo "🔄 Restarting services..."
-            sudo systemctl reload php8.4-fpm
-            sudo systemctl reload nginx
+            # Restart services
+            sudo systemctl restart php8.4-fpm
+            sudo systemctl restart nginx
             
-            echo "✅ Test deployment completed!"
-            echo "📁 Deployed to: $DEPLOY_DIR"
+            echo "✅ Test deployment completed to $DEPLOY_DIR!"

@@ -78,7 +78,7 @@ jobs:
             echo "📦 Installing PHP dependencies..."
             sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
             
-            # Install Node.js dependencies and build (like you just did)
+            # Install Node.js dependencies and build
             echo "🔧 Installing Node.js dependencies..."
             sudo -u www-data npm install --force --legacy-peer-deps
             
@@ -105,4 +105,118 @@ jobs:
             sudo systemctl restart nginx
             
             echo "✅ Production deployment completed!"
+            echo "🌐 URL: http://77.42.72.54"
+            echo "✅ Build succeeded! Assets in public/build/"
+
+  deploy-test:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    name: Deploy to Test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, bcmath, openssl, pdo, pdo_mysql, tokenizer, xml, ctype, json, fileinfo
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Deploy to Test via SSH
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # Set deployment directory
+            DEPLOY_DIR="/var/www/optimalcomfy-test"
+            echo "🚀 Deploying test to $DEPLOY_DIR"
+            
+            # Fix git ownership issue
+            sudo git config --global --add safe.directory "$DEPLOY_DIR"
+            
+            # Go to deployment directory
+            cd "$DEPLOY_DIR"
+            
+            # Backup .env file
+            if [ -f ".env" ]; then
+              echo "📦 Backing up .env file..."
+              sudo cp .env /tmp/test.env.backup
+            fi
+            
+            # Clean directory (except storage, .env, and node_modules)
+            echo "🧹 Cleaning directory..."
+            sudo find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.env' ! -name 'storage' ! -name '.git' ! -name 'node_modules' -exec rm -rf {} + 2>/dev/null || true
+            
+            # Pull latest changes
+            echo "📥 Pulling latest code from dev branch..."
+            sudo -u www-data git fetch origin dev
+            sudo -u www-data git reset --hard origin/dev
+            sudo -u www-data git pull origin dev
+            
+            # Restore or create .env for test
+            if [ -f "/tmp/test.env.backup" ]; then
+              echo "📋 Restoring .env file..."
+              sudo cp /tmp/test.env.backup .env
+            else
+              echo "📝 Creating test .env..."
+              sudo bash -c 'cat > .env << "EOF"
+            APP_NAME="Ristay Test"
+            APP_ENV=local
+            APP_DEBUG=true
+            APP_URL=http://77.42.72.54/test
+
+            DB_CONNECTION=mysql
+            DB_HOST=127.0.0.1
+            DB_PORT=3306
+            DB_DATABASE=optimalcomfy_test
+            DB_USERNAME=root
+            DB_PASSWORD="emsjT4de9TqMRsWvwRNRistay"
+            EOF'
+              sudo -u www-data php artisan key:generate
+            fi
+            
+            # Install PHP dependencies
+            echo "📦 Installing PHP dependencies..."
+            sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+            
+            # Install Node.js dependencies and build
+            echo "🔧 Installing Node.js dependencies..."
+            sudo -u www-data npm install --force --legacy-peer-deps
+            
+            echo "🔨 Building React assets..."
+            sudo -u www-data npm run build
+            
+            # Run migrations for test environment
+            echo "🔄 Running migrations..."
+            sudo -u www-data php artisan migrate --force
+            
+            # Set permissions
+            echo "🔒 Setting permissions..."
+            sudo chown -R www-data:www-data "$DEPLOY_DIR"
+            sudo chmod -R 755 storage
+            sudo chmod -R 755 bootstrap/cache
+            sudo chmod -R 755 public/build 2>/dev/null || true
+            
+            # Run Laravel commands
+            echo "⚡ Running Laravel optimizations..."
+            sudo -u www-data php artisan config:cache
+            sudo -u www-data php artisan route:clear
+            sudo -u www-data php artisan view:cache
+            sudo -u www-data php artisan storage:link
+            
+            # Restart services
+            echo "🔄 Restarting services..."
+            sudo systemctl restart php8.4-fpm
+            sudo systemctl restart nginx
+            
+            echo "✅ Test deployment completed!"
+            echo "🌐 URL: http://77.42.72.54:8081"
             echo "✅ Build succeeded! Assets in public/build/"

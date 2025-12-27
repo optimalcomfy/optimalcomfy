@@ -732,7 +732,6 @@ img {
 		border-radius: 16px;
 		display: grid;
 		grid-template-columns: auto auto;
-		gap: 30px;
 		overflow: hidden;
 	}
 

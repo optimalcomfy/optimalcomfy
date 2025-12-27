@@ -39,7 +39,6 @@
 .img__collage {
   flex: 1;
   display: grid;
-  gap: 20px 0px;
   min-width: 50%;
   max-width: 50%;
 }

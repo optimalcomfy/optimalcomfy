@@ -9,6 +9,9 @@ on:
 env:
   PHP_VERSION: '8.4'
   NODE_VERSION: '18'
+  COMPOSER_PROCESS_TIMEOUT: 300
+  COMPOSER_NO_INTERACTION: 1
+  COMPOSER_NO_AUDIT: 1
 
 jobs:
   deploy-production:
@@ -37,6 +40,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          timeout: 300
           script: |
             # Set deployment directory
             DEPLOY_DIR="/var/www/optimalcomfy"
@@ -54,9 +58,21 @@ jobs:
               sudo cp .env /tmp/prod.env.backup
             fi
             
-            # Clean directory (except storage, .env, and node_modules)
+            # Clean directory (preserve essential files)
             echo "🧹 Cleaning directory..."
-            sudo find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.env' ! -name 'storage' ! -name '.git' ! -name 'node_modules' -exec rm -rf {} + 2>/dev/null || true
+            sudo find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.env' ! -name 'storage' ! -name '.git' ! -name 'node_modules' ! -name 'public' -exec rm -rf {} + 2>/dev/null || true
+            
+            # Preserve public/build directory if exists
+            if [ -d "public/build" ]; then
+              echo "📁 Preserving existing build assets..."
+              sudo mv public/build /tmp/build_backup 2>/dev/null || true
+            fi
+            
+            # Clean public directory except storage link
+            if [ -d "public" ]; then
+              echo "🧹 Cleaning public directory..."
+              sudo find public -maxdepth 1 ! -name '.' ! -name '..' ! -name 'storage' -exec rm -rf {} + 2>/dev/null || true
+            fi
             
             # Pull latest changes
             echo "📥 Pulling latest code from main branch..."
@@ -74,16 +90,29 @@ jobs:
               sudo -u www-data php artisan key:generate
             fi
             
+            # Fix npm permissions and cache
+            echo "🔧 Fixing npm permissions..."
+            sudo chown -R www-data:www-data /var/www/.npm 2>/dev/null || true
+            sudo chown -R www-data:www-data "$DEPLOY_DIR/node_modules" 2>/dev/null || true
+            sudo -u www-data npm cache clean --force 2>/dev/null || true
+            
             # Install PHP dependencies
             echo "📦 Installing PHP dependencies..."
             sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
             
             # Install Node.js dependencies and build
             echo "🔧 Installing Node.js dependencies..."
-            sudo -u www-data npm install --force --legacy-peer-deps
+            sudo rm -rf node_modules package-lock.json 2>/dev/null || true
+            sudo -u www-data npm install --force --legacy-peer-deps --no-audit
             
             echo "🔨 Building React assets..."
             sudo -u www-data npm run build
+            
+            # Restore backup build assets if new build failed
+            if [ ! -d "public/build" ] && [ -d "/tmp/build_backup" ]; then
+              echo "⚠️ Build may have failed, restoring backup assets..."
+              sudo mv /tmp/build_backup public/build 2>/dev/null || true
+            fi
             
             # Set permissions
             echo "🔒 Setting permissions..."
@@ -94,18 +123,29 @@ jobs:
             
             # Run Laravel commands
             echo "⚡ Running Laravel optimizations..."
+            sudo -u www-data php artisan config:clear
+            sudo -u www-data php artisan cache:clear
             sudo -u www-data php artisan config:cache
             sudo -u www-data php artisan route:clear
+            sudo -u www-data php artisan view:clear
             sudo -u www-data php artisan view:cache
             sudo -u www-data php artisan storage:link
+            
+            # Fix PHP xml module warning (optional)
+            echo "🔧 Fixing PHP warnings..."
+            sudo sed -i 's/^extension=xml$/;extension=xml/g' /etc/php/8.4/fpm/php.ini 2>/dev/null || true
             
             # Restart services
             echo "🔄 Restarting services..."
             sudo systemctl restart php8.4-fpm
             sudo systemctl restart nginx
             
+            # Cleanup
+            sudo rm -f /tmp/prod.env.backup 2>/dev/null || true
+            sudo rm -rf /tmp/build_backup 2>/dev/null || true
+            
             echo "✅ Production deployment completed!"
-            echo "🌐 URL: http://77.42.72.54"
+            echo "🌐 URL: http://ristay.co.ke"
             echo "✅ Build succeeded! Assets in public/build/"
 
   deploy-test:
@@ -134,6 +174,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          timeout: 300
           script: |
             # Set deployment directory
             DEPLOY_DIR="/var/www/optimalcomfy-test"
@@ -151,9 +192,21 @@ jobs:
               sudo cp .env /tmp/test.env.backup
             fi
             
-            # Clean directory (except storage, .env, and node_modules)
+            # Clean directory (preserve essential files)
             echo "🧹 Cleaning directory..."
-            sudo find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.env' ! -name 'storage' ! -name '.git' ! -name 'node_modules' -exec rm -rf {} + 2>/dev/null || true
+            sudo find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.env' ! -name 'storage' ! -name '.git' ! -name 'node_modules' ! -name 'public' -exec rm -rf {} + 2>/dev/null || true
+            
+            # Preserve public/build directory if exists
+            if [ -d "public/build" ]; then
+              echo "📁 Preserving existing build assets..."
+              sudo mv public/build /tmp/test_build_backup 2>/dev/null || true
+            fi
+            
+            # Clean public directory except storage link
+            if [ -d "public" ]; then
+              echo "🧹 Cleaning public directory..."
+              sudo find public -maxdepth 1 ! -name '.' ! -name '..' ! -name 'storage' -exec rm -rf {} + 2>/dev/null || true
+            fi
             
             # Pull latest changes
             echo "📥 Pulling latest code from dev branch..."
@@ -171,7 +224,7 @@ jobs:
               APP_NAME="OptimalComfy Test"
               APP_ENV=local
               APP_DEBUG=true
-              APP_URL=http://77.42.72.54/test
+              APP_URL=http://test.ristay.co.ke
 
               DB_CONNECTION=mysql
               DB_HOST=127.0.0.1
@@ -183,20 +236,29 @@ jobs:
               sudo -u www-data php artisan key:generate
             fi
             
+            # Fix npm permissions and cache
+            echo "🔧 Fixing npm permissions..."
+            sudo chown -R www-data:www-data /var/www/.npm 2>/dev/null || true
+            sudo chown -R www-data:www-data "$DEPLOY_DIR/node_modules" 2>/dev/null || true
+            sudo -u www-data npm cache clean --force 2>/dev/null || true
+            
             # Install PHP dependencies
             echo "📦 Installing PHP dependencies..."
             sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
             
             # Install Node.js dependencies and build
             echo "🔧 Installing Node.js dependencies..."
-            sudo -u www-data npm install --force --legacy-peer-deps
+            sudo rm -rf node_modules package-lock.json 2>/dev/null || true
+            sudo -u www-data npm install --force --legacy-peer-deps --no-audit
             
             echo "🔨 Building React assets..."
             sudo -u www-data npm run build
             
-            # Run migrations for test environment
-            echo "🔄 Running migrations..."
-            sudo -u www-data php artisan migrate --force
+            # Restore backup build assets if new build failed
+            if [ ! -d "public/build" ] && [ -d "/tmp/test_build_backup" ]; then
+              echo "⚠️ Build may have failed, restoring backup assets..."
+              sudo mv /tmp/test_build_backup public/build 2>/dev/null || true
+            fi
             
             # Set permissions
             echo "🔒 Setting permissions..."
@@ -205,18 +267,33 @@ jobs:
             sudo chmod -R 755 bootstrap/cache
             sudo chmod -R 755 public/build 2>/dev/null || true
             
+            # Run migrations for test environment
+            echo "🔄 Running migrations..."
+            sudo -u www-data php artisan migrate --force
+            
             # Run Laravel commands
             echo "⚡ Running Laravel optimizations..."
+            sudo -u www-data php artisan config:clear
+            sudo -u www-data php artisan cache:clear
             sudo -u www-data php artisan config:cache
             sudo -u www-data php artisan route:clear
+            sudo -u www-data php artisan view:clear
             sudo -u www-data php artisan view:cache
             sudo -u www-data php artisan storage:link
+            
+            # Fix PHP xml module warning (optional)
+            echo "🔧 Fixing PHP warnings..."
+            sudo sed -i 's/^extension=xml$/;extension=xml/g' /etc/php/8.4/fpm/php.ini 2>/dev/null || true
             
             # Restart services
             echo "🔄 Restarting services..."
             sudo systemctl restart php8.4-fpm
             sudo systemctl restart nginx
             
+            # Cleanup
+            sudo rm -f /tmp/test.env.backup 2>/dev/null || true
+            sudo rm -rf /tmp/test_build_backup 2>/dev/null || true
+            
             echo "✅ Test deployment completed!"
-            echo "🌐 URL: http://77.42.72.54/test"
+            echo "🌐 URL: http://test.ristay.co.ke"
             echo "✅ Build succeeded! Assets in public/build/"

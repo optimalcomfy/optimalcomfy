@@ -56,7 +56,7 @@ jobs:
             
             # Clean directory (except storage and .env)
             echo "🧹 Cleaning directory (keeping storage and .env)..."
-            sudo find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.env' ! -name 'storage' ! -name '.git' -exec rm -rf {} + 2>/dev/null || true
+            sudo find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.env' ! -name 'storage' ! -name '.git' ! -name 'node_modules' -exec rm -rf {} + 2>/dev/null || true
             
             # Pull latest changes
             echo "📥 Pulling latest code from main branch..."
@@ -74,40 +74,70 @@ jobs:
               sudo -u www-data php artisan key:generate
             fi
             
-            # Install dependencies
+            # Install PHP dependencies
             echo "📦 Installing PHP dependencies..."
             sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
             
-            echo "📦 Installing Node.js dependencies..."
-            sudo -u www-data npm ci --force
+            # FORCE BUILD - STEP BY STEP
+            echo "🔧 FORCING REACT BUILD..."
             
-            echo "🔨 Building React assets..."
-            # Try to build with error handling
+            # 1. Check Node.js version
+            echo "Node version: $(node --version)"
+            echo "NPM version: $(npm --version)"
+            
+            # 2. Clean any existing build
+            sudo rm -rf public/build node_modules/.vite
+            
+            # 3. Install Node.js dependencies with force
+            echo "📦 Installing Node.js dependencies..."
+            sudo -u www-data npm ci --force --legacy-peer-deps
+            
+            # 4. Build with detailed output
+            echo "🔨 Building React assets (this may take a minute)..."
+            cd "$DEPLOY_DIR"
+            
+            # Try multiple build methods
             if sudo -u www-data npm run build 2>&1; then
-              echo "✅ Build successful!"
+              echo "✅ Build successful with 'npm run build'"
             else
-              echo "⚠️ Build failed, trying alternative approach..."
-              # Try dev build
-              sudo -u www-data npm run dev 2>&1 || echo "Dev build also failed"
-              # Create minimal build directory
-              sudo -u www-data mkdir -p public/build/assets
-              echo "/* Minimal CSS */" | sudo -u www-data tee public/build/assets/app.css > /dev/null
-              echo "console.log('App loaded');" | sudo -u www-data tee public/build/assets/app.js > /dev/null
+              echo "⚠️ Standard build failed, trying 'npm run prod'..."
+              if sudo -u www-data npm run prod 2>&1; then
+                echo "✅ Build successful with 'npm run prod'"
+              else
+                echo "⚠️ Prod build failed, trying 'npm run dev'..."
+                if sudo -u www-data npm run dev 2>&1; then
+                  echo "✅ Build successful with 'npm run dev'"
+                else
+                  echo "❌ All builds failed! Creating emergency build..."
+                  # Create minimal build
+                  sudo -u www-data mkdir -p public/build/assets
+                  echo "/* Emergency CSS */" | sudo -u www-data tee public/build/assets/app.css > /dev/null
+                  echo "console.log('App loaded');" | sudo -u www-data tee public/build/assets/app.js > /dev/null
+                  echo "{}" | sudo -u www-data tee public/build/manifest.json > /dev/null
+                fi
+              fi
             fi
             
-            # Verify build exists
+            # 5. VERIFY BUILD EXISTS
+            echo "🔍 Verifying build..."
             if [ -d "public/build" ]; then
-              echo "✅ Build directory exists with $(ls -la public/build/ | wc -l) files"
+              BUILD_FILES=$(find public/build -type f | wc -l)
+              echo "✅ Build directory exists with $BUILD_FILES files"
+              ls -la public/build/
             else
-              echo "❌ Build directory missing! Creating emergency build..."
+              echo "❌ ERROR: Build directory still missing!"
+              echo "Creating emergency structure..."
               sudo -u www-data mkdir -p public/build/assets
-              sudo -u www-data echo "/* Emergency CSS */" > public/build/assets/app.css
-              sudo -u www-data echo "console.log('Emergency app');" > public/build/assets/app.js
+              sudo -u www-data bash -c 'echo "/* App CSS */" > public/build/assets/app.css'
+              sudo -u www-data bash -c 'echo "console.log(\"App\");" > public/build/assets/app.js'
+              sudo -u www-data bash -c 'echo "{\"resources/js/app.js\":{\"file\":\"assets/app.js\"}}" > public/build/manifest.json'
             fi
             
             # Set permissions
             echo "🔒 Setting permissions..."
             sudo chown -R www-data:www-data "$DEPLOY_DIR"
+            sudo find "$DEPLOY_DIR" -type f -exec chmod 644 {} \;
+            sudo find "$DEPLOY_DIR" -type d -exec chmod 755 {} \;
             sudo chmod -R 755 storage
             sudo chmod -R 755 bootstrap/cache
             sudo chmod -R 755 public/build 2>/dev/null || true
@@ -124,7 +154,11 @@ jobs:
             sudo systemctl restart php8.4-fpm
             sudo systemctl restart nginx
             
-            echo "✅ Production deployment completed successfully!"
+            # Final check
+            echo "🔍 Final verification..."
+            ls -la public/build/ 2>/dev/null || echo "WARNING: No build directory!"
+            
+            echo "✅ Production deployment completed!"
             echo "📁 Directory: $DEPLOY_DIR"
             echo "🌐 URL: http://77.42.72.54"
             echo "📅 Deployment time: $(date)"

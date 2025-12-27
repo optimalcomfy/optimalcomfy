@@ -8,6 +8,7 @@ use App\Http\Controllers\MpesaStkController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CarBookingController;
 use App\Http\Controllers\RefundController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CarRefundController;
 
 /*
@@ -20,6 +21,10 @@ use App\Http\Controllers\CarRefundController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+
+Route::get('/properties/{property}/gallery', [HomeController::class, 'getPropertyGallery']);
+Route::get('/cars/{property}/gallery', [HomeController::class, 'getCarGallery']);
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

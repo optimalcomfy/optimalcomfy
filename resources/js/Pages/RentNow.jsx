@@ -95,23 +95,10 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
           </Head>
 
           <HomeLayout>
-            <div className="py-8 max-w-6xl mx-auto px-4">
+            <div className="py-8 max-w-8xl mx-auto px-4">
               {/* Car Header with Share Button */}
-              <div className="property-header flex justify-between items-start mb-6">
+              <div className="property-header flex justify-between items-start mb-6 max-w-7xl mx-auto">
                 <div className="property-title-section">
-                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-                    {car?.brand} {car?.model} {car?.year} - {car?.category?.name}
-                  </h1>
-                  <div className="property-rating text-gray-600">
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(car?.location_address)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-gray-900 hover:underline"
-                    >
-                      {car?.location_address}
-                    </a>
-                  </div>
                 </div>
 
                 <div className="header-actions">

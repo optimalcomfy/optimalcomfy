@@ -15,7 +15,7 @@
 /* Multiple images styles */
 .hero-images {
   display: flex;
-  gap: 1rem;
+  gap: 30px;
   width: 100%;
   height: 400px;
   margin-top: 1rem;
@@ -39,7 +39,7 @@
 .img__collage {
   flex: 1;
   display: grid;
-  gap: 0.5rem;
+  gap: 20px 0px;
   min-width: 50%;
   max-width: 50%;
 }

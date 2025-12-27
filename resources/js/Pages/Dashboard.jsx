@@ -7,7 +7,9 @@ import {
   Home, Users, Calendar, Star, DollarSign, Loader, Check, Car, Plus,
   Wallet, Settings, MapPin, Briefcase, CreditCard, Activity, AlertTriangle,
   TrendingDown, TrendingUp, Tag, UserCheck, Building, TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon, ArrowUpRight, ArrowDownRight, Eye, Package
+  TrendingDown as TrendingDownIcon, ArrowUpRight, ArrowDownRight, Eye, Package,
+  Building2,
+  Info
 } from 'lucide-react';
 import { usePage, useForm } from '@inertiajs/react';
 import { LayoutContext } from '@/Layouts/layout/context/layoutcontext';
@@ -60,7 +62,6 @@ const Dashboard = () => {
 
   // Fetch complete financial summary for hosts
   useEffect(() => {
-    if (roleId === 2) {
       setLoadingCompleteSummary(true);
       // Simulate API call with provided data
       setTimeout(() => {
@@ -89,8 +90,7 @@ const Dashboard = () => {
         });
         setLoadingCompleteSummary(false);
       }, 500);
-    }
-  }, [roleId]);
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -253,7 +253,7 @@ const Dashboard = () => {
 
   // Quick Stats Cards for Hosts
   const HostQuickStats = () => {
-    if (roleId !== 2) return null;
+    if (roleId !== 2 && roleId !== 1) return null;
 
     return (
       <div className="flex flex-wrap -mx-3 mb-6">
@@ -329,12 +329,12 @@ const Dashboard = () => {
         />
         {repaymentAmount > 0 && (
           <InfoCard
-            title="Loan Repayments"
+            title="Withdrawals"
             value={repaymentAmount}
             icon={CreditCard}
             iconColor="bg-red-100"
             textColor="text-red-600"
-            description="Pending loan repayments"
+            description="Approved withdrawals"
             isNegative={true}
           />
         )}
@@ -344,70 +344,153 @@ const Dashboard = () => {
 
   // Detailed Earnings Breakdown for Hosts
   const DetailedEarningsBreakdown = () => {
-    if (roleId !== 2) return null;
+
+    const percentageSections = [
+      { label: "Platform Fee", value: `${platform_percentage}%`, color: "text-red-500", bgColor: "bg-red-50 dark:bg-red-900/20" },
+      { label: "Host Share", value: `${host_percentage}%`, color: "text-green-500", bgColor: "bg-green-50 dark:bg-green-900/20" },
+      { label: "Referral Rate", value: `${referral_percentage}%`, color: "text-blue-500", bgColor: "bg-blue-50 dark:bg-blue-900/20" },
+    ];
 
     return (
-      <div className="flex flex-wrap -mx-3 mb-6">
-        <div className="w-full p-3">
-          <div className={`rounded-xl p-5 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <DollarSign size={20} />
-              Earnings Breakdown
+      <div className="mb-8">
+        <div className={`rounded-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg overflow-hidden border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          {/* Header */}
+          <div className={`px-6 py-4 border-b ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50'}`}>
+            <h3 className="text-xl font-bold flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+                <DollarSign size={22} className={isDarkMode ? 'text-blue-300' : 'text-blue-600'} />
+              </div>
+              <span>Earnings Breakdown</span>
+              <span className="ml-auto text-sm font-normal px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                Detailed View
+              </span>
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Property Earnings</span>
-                  <span className="font-bold">{formatCurrencyWithDecimal(earnings_breakdown.direct_property_earnings || 0)}</span>
+          </div>
+
+          <div className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Direct Earnings Card */}
+              <div className={`rounded-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} p-5`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-bold text-lg">Direct Earnings</h4>
+                  <div className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-sm font-medium">
+                    Primary Income
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Car Earnings</span>
-                  <span className="font-bold">{formatCurrencyWithDecimal(earnings_breakdown.direct_car_earnings || 0)}</span>
-                </div>
-                <div className="pt-2 border-t">
-                  <div className="flex justify-between items-center font-semibold">
-                    <span>Total Direct</span>
-                    <span className="text-blue-600">{formatCurrencyWithDecimal(earnings_breakdown.total_direct_earnings || 0)}</span>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-md bg-blue-100 dark:bg-blue-900">
+                        <Building2 size={18} className="text-blue-600 dark:text-blue-300" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Property</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Direct bookings</p>
+                      </div>
+                    </div>
+                    <span className="font-bold text-lg">
+                      {formatCurrencyWithDecimal(earnings_breakdown.direct_property_earnings || 0)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-md bg-indigo-100 dark:bg-indigo-900">
+                        <Car size={18} className="text-indigo-600 dark:text-indigo-300" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Car Rentals</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Direct bookings</p>
+                      </div>
+                    </div>
+                    <span className="font-bold text-lg">
+                      {formatCurrencyWithDecimal(earnings_breakdown.direct_car_earnings || 0)}
+                    </span>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg">
+                      <span className="font-bold">Total Direct Earnings</span>
+                      <span className="font-bold text-xl text-blue-600 dark:text-blue-400">
+                        {formatCurrencyWithDecimal(earnings_breakdown.total_direct_earnings || 0)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Markup Earnings</span>
-                  <span className="font-bold text-purple-600">{formatCurrencyWithDecimal(earnings_breakdown.markup_earnings || 0)}</span>
+              {/* Bonus Earnings Card */}
+              <div className={`rounded-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} p-5`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-bold text-lg">Bonus Earnings</h4>
+                  <div className="px-3 py-1 rounded-full bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-sm font-medium">
+                    Additional Income
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Referral Earnings</span>
-                  <span className="font-bold text-green-600">{formatCurrencyWithDecimal(earnings_breakdown.referral_earnings || 0)}</span>
-                </div>
-                <div className="pt-2 border-t">
-                  <div className="flex justify-between items-center font-semibold">
-                    <span>Total Bonus</span>
-                    <span className="text-purple-600">{formatCurrencyWithDecimal(earnings_breakdown.total_markup_referral_earnings || 0)}</span>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-md bg-purple-100 dark:bg-purple-900">
+                        <TrendingUp size={18} className="text-purple-600 dark:text-purple-300" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Markup Earnings</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Service fees</p>
+                      </div>
+                    </div>
+                    <span className="font-bold text-lg text-purple-600 dark:text-purple-400">
+                      {formatCurrencyWithDecimal(earnings_breakdown.markup_earnings || 0)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-md bg-green-100 dark:bg-green-900">
+                        <Users size={18} className="text-green-600 dark:text-green-300" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Referral Earnings</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Network commissions</p>
+                      </div>
+                    </div>
+                    <span className="font-bold text-lg text-green-600 dark:text-green-400">
+                      {formatCurrencyWithDecimal(earnings_breakdown.referral_earnings || 0)}
+                    </span>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-center p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg">
+                      <span className="font-bold">Total Bonus</span>
+                      <span className="font-bold text-xl text-purple-600 dark:text-purple-400">
+                        {formatCurrencyWithDecimal(earnings_breakdown.total_markup_referral_earnings || 0)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Platform Fee</span>
-                  <span className="font-bold text-red-500">{platform_percentage}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Host Share</span>
-                  <span className="font-bold text-green-500">{host_percentage}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Referral Rate</span>
-                  <span className="font-bold text-blue-500">{referral_percentage}%</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="text-sm text-gray-500 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                  <p className="font-medium mb-1">Commission Structure:</p>
-                  <p className="text-xs">{referral_calculation_explanation}</p>
+              {/* Total Summary Bar */}
+              <div className={`mt-6 p-4 flex flex-col rounded-lg ${isDarkMode ? 'bg-gradient-to-r from-gray-800 to-gray-900' : 'bg-gradient-to-r from-blue-50 to-indigo-50'} border ${isDarkMode ? 'border-gray-700' : 'border-blue-200'}`}>
+                <div className="flex flex-col lg:m-auto sm:flex-row items-center justify-between">
+                  <div className="flex items-center gap-3 mb-3 sm:mb-0">
+                    <div>
+                      <p className="font-bold text-lg">Total Combined Earnings</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Direct + Bonus earnings</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {formatCurrencyWithDecimal(
+                        (earnings_breakdown.total_direct_earnings || 0) + 
+                        (earnings_breakdown.total_markup_referral_earnings || 0)
+                      )}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      All income sources combined
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -416,6 +499,7 @@ const Dashboard = () => {
       </div>
     );
   };
+
 
   // Monthly Earnings Chart
   const MonthlyEarningsChart = () => {
@@ -813,7 +897,7 @@ const Dashboard = () => {
                     <action.icon size={20} />
                   </div>
                   <div>
-                    <h4 className="font-semibold">{action.title}</h4>
+                    <h4 className="font-semibold text-sm">{action.title}</h4>
                     <p className="text-sm text-gray-500">{action.description}</p>
                   </div>
                 </div>
@@ -847,9 +931,7 @@ const Dashboard = () => {
         <ProfileCard />
 
         {/* Role-specific Content */}
-        {roleId === 2 && (
           <>
-            {/* Quick Stats for Hosts */}
             <HostQuickStats />
 
             {/* Financial Overview */}
@@ -861,7 +943,6 @@ const Dashboard = () => {
             {/* Quick Actions */}
             <QuickActions />
           </>
-        )}
 
         {/* Find Booking Form (Role 4) */}
         {roleId === 4 && <FindBookingForm />}

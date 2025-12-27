@@ -110,23 +110,10 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
           </Head>
 
           <HomeLayout>
-            <div className="py-8 max-w-6xl mx-auto px-4">
+            <div className="py-8 max-w-8xl mx-auto px-4">
               {/* Property Header with Share Button */}
-              <div className="property-header">
+              <div className="property-header max-w-7xl mx-auto">
                 <div className="property-title-section">
-                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-                    {property?.property_name} - {property?.type}
-                  </h1>
-                  <div className="property-rating">
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property?.location)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-gray-600 hover:text-gray-900 hover:underline"
-                    >
-                      {property?.location}
-                    </a>
-                  </div>
                 </div>
 
                 <div className="header-actions">

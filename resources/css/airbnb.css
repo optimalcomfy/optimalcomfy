@@ -732,7 +732,7 @@ img {
 		border-radius: 16px;
 		display: grid;
 		grid-template-columns: auto auto;
-		gap: 10px;
+		gap: 30px;
 		overflow: hidden;
 	}
 
@@ -767,7 +767,7 @@ img {
 	.img__collage {
 		display: grid;
 		grid-template-columns: auto auto;
-		gap: 10px;
+		gap: 10px 0px;
 	}
 
 	.img__container--hero img {

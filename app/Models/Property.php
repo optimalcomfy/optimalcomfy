@@ -70,6 +70,11 @@ class Property extends Model
         return $this->hasMany(Variation::class);
     }
 
+    public function gallery()
+    {
+        return $this->hasMany(PropertyGallery::class);
+    }
+
     public function initialGallery()
     {
         return $this->hasMany(PropertyGallery::class);

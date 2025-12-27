@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Services\ImageOptimizer;
+use Illuminate\Support\Facades\Storage;
 
 class HomeController extends Controller
 {
@@ -66,7 +67,18 @@ class HomeController extends Controller
                     return file_exists($storagePath) && is_file($storagePath);
                 })->values(); // Reset keys
 
-                $property->setRelation('initialGallery', $validGallery);
+                // Add the first image from the gallery
+                $property->first_image = $validGallery->first();
+                
+                // Add the count of images in the initial gallery
+                $property->gallery_image_count = $validGallery->count();
+                
+                // Remove the initialGallery relation to reduce payload size
+                $property->unsetRelation('initialGallery');
+            } else {
+                // If no gallery, set defaults
+                $property->first_image = null;
+                $property->gallery_image_count = 0;
             }
 
             return $property;
@@ -77,6 +89,39 @@ class HomeController extends Controller
             "canRegister" => Route::has("register"),
             "properties" => $properties,
             "flash" => session("flash"),
+        ]);
+    }
+
+
+    public function getPropertyGallery(Request $request, $propertyId)
+    {
+        $property = Property::with(['initialGallery'])->findOrFail($propertyId);
+        
+        $validGallery = collect($property->initialGallery)->filter(function ($image) {
+            if (empty($image['path']) && empty($image['image'])) {
+                return false;
+            }
+
+            $imagePath = $image['path'] ?? $image['image'];
+
+            if (empty($imagePath)) {
+                return false;
+            }
+
+            if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
+                return true;
+            }
+
+            $storagePath = str_starts_with($imagePath, 'public/')
+                ? storage_path('app/' . $imagePath)
+                : storage_path('app/public/' . $imagePath);
+
+            return file_exists($storagePath) && is_file($storagePath);
+        })->values();
+
+        return response()->json([
+            'images' => $validGallery,
+            'total' => $validGallery->count()
         ]);
     }
 
@@ -110,7 +155,7 @@ class HomeController extends Controller
         ->get();
 
         $cars->transform(function ($car) {
-            // First, filter and validate the initialGallery images
+            // Process gallery to get first image and count (just like in index())
             if ($car->relationLoaded('initialGallery') && $car->initialGallery) {
                 $validGallery = collect($car->initialGallery)->filter(function ($image) {
                     if (empty($image['path']) && empty($image['image'])) {
@@ -137,21 +182,26 @@ class HomeController extends Controller
                     return file_exists($storagePath) && is_file($storagePath);
                 })->values(); // Reset keys
 
-                $car->setRelation('initialGallery', $validGallery);
+                // Add the first image from the gallery
+                $car->first_image = $validGallery->first();
+                
+                // Add the count of images in the initial gallery
+                $car->gallery_image_count = $validGallery->count();
+                
+                // Remove the initialGallery relation to reduce payload size
+                $car->unsetRelation('initialGallery');
+            } else {
+                // If no gallery, set defaults
+                $car->first_image = null;
+                $car->gallery_image_count = 0;
             }
 
-            // Then create optimized gallery from the validated images
-            if ($car->initialGallery && count($car->initialGallery) > 0) {
-                $optimizedGallery = [];
-                foreach ($car->initialGallery as $image) {
-                    if (isset($image['path'])) {
-                        $optimizedGallery[] = [
-                            'original' => $image['path'],
-                            'optimized' => ImageOptimizer::getOptimizedUrl($image['path'])
-                        ];
-                    }
+            // Optional: Store the first image path directly if needed
+            if ($car->first_image) {
+                $imagePath = $car->first_image['path'] ?? $car->first_image['image'];
+                if (isset($imagePath)) {
+                    $car->first_image_url = $imagePath;
                 }
-                $car->optimizedGallery = $optimizedGallery;
             }
 
             return $car;
@@ -165,6 +215,39 @@ class HomeController extends Controller
             "flash" => session("flash"),
             "cars" => $cars,
         ]);
+    }
+
+
+    public function getCarGallery(Request $request, $carId)
+    {
+        try {
+            $images = Car::find($carId)->media()
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->map(function ($media) {
+                    return [
+                        'id' => $media->id,
+                        'image' => $media->image,
+                        'media_type' => $media->media_type,
+                        'car_id' => $media->car_id,
+                        'created_at' => $media->created_at,
+                        'updated_at' => $media->updated_at,
+                        'image_url' => $media->image ? Storage::disk('public')->url($media->image) : null
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'images' => $images,
+                'total' => $images->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch gallery images',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function searchCars(Request $request)
@@ -234,9 +317,9 @@ class HomeController extends Controller
 
         $cars = $query->get();
 
-        // Optimize car images with validation
+        // Apply the same transformation pattern
         $cars->transform(function ($car) {
-            // First, filter and validate the initialGallery images
+            // Process gallery to get first image and count
             if ($car->relationLoaded('initialGallery') && $car->initialGallery) {
                 $validGallery = collect($car->initialGallery)->filter(function ($image) {
                     if (empty($image['path']) && empty($image['image'])) {
@@ -263,30 +346,21 @@ class HomeController extends Controller
                     return file_exists($storagePath) && is_file($storagePath);
                 })->values(); // Reset keys
 
-                $car->setRelation('initialGallery', $validGallery);
+                // Add the first image from the gallery
+                $car->first_image = $validGallery->first();
+                
+                // Add the count of images in the initial gallery
+                $car->gallery_image_count = $validGallery->count();
+                
+                // Remove the initialGallery relation to reduce payload size
+                $car->unsetRelation('initialGallery');
+            } else {
+                // If no gallery, set defaults
+                $car->first_image = null;
+                $car->gallery_image_count = 0;
             }
 
-            // Then create simple gallery from the validated images (without ImageOptimizer)
-            if ($car->initialGallery && count($car->initialGallery) > 0) {
-                $simpleGallery = [];
-                foreach ($car->initialGallery as $image) {
-                    $imagePath = $image['path'] ?? $image['image'];
-                    if (isset($imagePath)) {
-                        $simpleGallery[] = [
-                            'original' => $imagePath,
-                            'optimized' => $imagePath, // Use original as fallback
-                            'responsive' => [
-                                'small' => $imagePath,
-                                'medium' => $imagePath,
-                                'large' => $imagePath
-                            ]
-                        ];
-                    }
-                }
-                $car->optimizedGallery = $simpleGallery;
-            }
-
-            // Also handle the primary image if it exists and is valid (without ImageOptimizer)
+            // Handle the primary image if it exists and is valid
             if ($car->image) {
                 $imagePath = $car->image;
                 $isValid = false;
@@ -1961,7 +2035,6 @@ class HomeController extends Controller
         $latitude = null;
         $longitude = null;
 
-        // 🌍 If location is provided, get coordinates
         if (!empty($input["location"])) {
             $location = $input["location"];
             $coordinates = $this->getCoordinatesFromLocation($location);
@@ -1971,7 +2044,6 @@ class HomeController extends Controller
             }
         }
 
-        // ✅ Availability Check - Fixed version
         if ($request->filled(["checkIn", "checkOut"])) {
             $checkIn = Carbon::parse($input["checkIn"]);
             $checkOut = Carbon::parse($input["checkOut"]);
@@ -1980,28 +2052,24 @@ class HomeController extends Controller
                 $bookingQuery->where(function ($q) use ($checkIn, $checkOut) {
                     $q->where("check_in_date", "<", $checkOut)
                     ->where("check_out_date", ">", $checkIn)
-                    ->whereIn('status', ['Paid', 'paid']); // Only consider paid bookings
+                    ->whereIn('status', ['Paid', 'paid']); 
                 });
             });
         }
 
-        // 👥 Guests Filter (adults + children)
         if ($request->filled(["adults", "children"])) {
             $adults = (int) $input["adults"];
             $children = (int) $input["children"];
             $totalGuests = $adults + $children;
 
             $query->where(function ($q) use ($adults, $children, $totalGuests) {
-                // Filter by maximum capacity
                 $q->where(function ($subQ) use ($adults, $children, $totalGuests) {
                     $subQ->where('max_adults', '>=', $adults)
                         ->where('max_children', '>=', $children);
                 });
-
             });
         }
 
-        // 📍 Distance Filter (only if lat/lng found)
         $query->when($latitude && $longitude, function ($query) use ($latitude, $longitude) {
             $radius = 10; // km
 
@@ -2020,9 +2088,7 @@ class HomeController extends Controller
 
         $properties = $query->limit(56)->get();
 
-        // Optimize property images with validation
         $properties->transform(function ($property) {
-            // First, filter and validate the initialGallery images
             if ($property->relationLoaded('initialGallery') && $property->initialGallery) {
                 $validGallery = collect($property->initialGallery)->filter(function ($image) {
                     if (empty($image['path']) && empty($image['image'])) {
@@ -2030,49 +2096,31 @@ class HomeController extends Controller
                     }
 
                     $imagePath = $image['path'] ?? $image['image'];
-
-                    // Skip if path is null or empty
                     if (empty($imagePath)) {
                         return false;
                     }
 
-                    // Handle both relative paths and full URLs
                     if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
-                        return true; // External URL, assume it exists
+                        return true;
                     }
 
-                    // Local storage path
                     $storagePath = str_starts_with($imagePath, 'public/')
                         ? storage_path('app/' . $imagePath)
                         : storage_path('app/public/' . $imagePath);
 
                     return file_exists($storagePath) && is_file($storagePath);
-                })->values(); // Reset keys
+                })->values();
 
-                $property->setRelation('initialGallery', $validGallery);
+                $property->first_image = $validGallery->first();
+                
+                $property->gallery_image_count = $validGallery->count();
+                
+                $property->unsetRelation('initialGallery');
+            } else {
+                $property->first_image = null;
+                $property->gallery_image_count = 0;
             }
 
-            // Then create simple gallery without optimization
-            if ($property->initialGallery && count($property->initialGallery) > 0) {
-                $simpleGallery = [];
-                foreach ($property->initialGallery as $image) {
-                    $imagePath = $image['path'] ?? $image['image'];
-                    if (isset($imagePath)) {
-                        $simpleGallery[] = [
-                            'original' => $imagePath,
-                            'optimized' => $imagePath, // Fallback to original
-                            'responsive' => [
-                                'small' => $imagePath,
-                                'medium' => $imagePath,
-                                'large' => $imagePath
-                            ]
-                        ];
-                    }
-                }
-                $property->optimizedGallery = $simpleGallery;
-            }
-
-            // Also handle the primary image
             if ($property->image) {
                 $property->optimizedImage = $property->image;
                 $property->responsiveImages = [

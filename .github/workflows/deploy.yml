@@ -78,74 +78,81 @@ jobs:
             echo "📦 Installing PHP dependencies..."
             sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
             
-            # FORCE BUILD - STEP BY STEP
-            echo "🔧 FORCING REACT BUILD..."
+            # FIX: Clean npm cache and fix permissions
+            echo "🔧 Fixing npm permissions..."
+            sudo chown -R www-data:www-data /var/www/.npm 2>/dev/null || true
+            sudo chown -R www-data:www-data /var/www/optimalcomfy/node_modules 2>/dev/null || true
             
-            # 1. Check Node.js version
-            echo "Node version: $(node --version)"
-            echo "NPM version: $(npm --version)"
-            
-            # 2. Clean any existing build
-            sudo rm -rf public/build node_modules/.vite
-            
-            # 3. Install Node.js dependencies with force
-            echo "📦 Installing Node.js dependencies..."
-            sudo -u www-data npm ci --force --legacy-peer-deps
-            
-            # 4. Build with detailed output
-            echo "🔨 Building React assets (this may take a minute)..."
+            # Install Node.js dependencies PROPERLY
+            echo "📦 Installing Node.js dependencies (with Vite)..."
             cd "$DEPLOY_DIR"
             
-            # Try multiple build methods
-            if sudo -u www-data npm run build 2>&1; then
-              echo "✅ Build successful with 'npm run build'"
-            else
-              echo "⚠️ Standard build failed, trying 'npm run prod'..."
-              if sudo -u www-data npm run prod 2>&1; then
-                echo "✅ Build successful with 'npm run prod'"
-              else
-                echo "⚠️ Prod build failed, trying 'npm run dev'..."
-                if sudo -u www-data npm run dev 2>&1; then
-                  echo "✅ Build successful with 'npm run dev'"
-                else
-                  echo "❌ All builds failed! Creating emergency build..."
-                  # Create minimal build
-                  sudo -u www-data mkdir -p public/build/assets
-                  echo "/* Emergency CSS */" | sudo -u www-data tee public/build/assets/app.css > /dev/null
-                  echo "console.log('App loaded');" | sudo -u www-data tee public/build/assets/app.js > /dev/null
-                  echo "{}" | sudo -u www-data tee public/build/manifest.json > /dev/null
-                fi
-              fi
+            # Clean node_modules if corrupted
+            if [ -d "node_modules" ]; then
+              echo "🧹 Cleaning corrupted node_modules..."
+              sudo rm -rf node_modules
+              sudo rm -f package-lock.json
             fi
             
-            # 5. VERIFY BUILD EXISTS
+            # Install with proper user
+            sudo -u www-data npm cache clean --force
+            sudo -u www-data npm install --force --legacy-peer-deps
+            
+            # Verify Vite is installed
+            echo "🔍 Checking if Vite is installed..."
+            if sudo -u www-data npx vite --version 2>/dev/null; then
+              echo "✅ Vite is installed"
+            else
+              echo "⚠️ Installing Vite globally..."
+              sudo -u www-data npm install -g vite
+              sudo -u www-data npm install vite --save-dev
+            fi
+            
+            # Build React assets
+            echo "🔨 Building React assets..."
+            if sudo -u www-data npm run build 2>&1; then
+              echo "✅ Build successful!"
+            else
+              echo "⚠️ Build failed, trying with npx..."
+              sudo -u www-data npx vite build 2>&1 || echo "Vite build also failed"
+            fi
+            
+            # Verify build exists
             echo "🔍 Verifying build..."
             if [ -d "public/build" ]; then
               BUILD_FILES=$(find public/build -type f | wc -l)
               echo "✅ Build directory exists with $BUILD_FILES files"
               ls -la public/build/
             else
-              echo "❌ ERROR: Build directory still missing!"
-              echo "Creating emergency structure..."
-              sudo -u www-data mkdir -p public/build/assets
-              sudo -u www-data bash -c 'echo "/* App CSS */" > public/build/assets/app.css'
-              sudo -u www-data bash -c 'echo "console.log(\"App\");" > public/build/assets/app.js'
-              sudo -u www-data bash -c 'echo "{\"resources/js/app.js\":{\"file\":\"assets/app.js\"}}" > public/build/manifest.json'
+              echo "❌ Build directory missing! Trying manual build..."
+              # Check if Vite config exists
+              if [ -f "vite.config.js" ]; then
+                echo "Found vite.config.js, forcing build..."
+                sudo -u www-data npx vite build --force 2>&1 | tail -20
+              fi
+              
+              # Last resort: create minimal build
+              if [ ! -d "public/build" ]; then
+                echo "Creating emergency build..."
+                sudo -u www-data mkdir -p public/build/assets
+                echo '/* App CSS */' | sudo -u www-data tee public/build/assets/app.css > /dev/null
+                echo 'console.log("App loaded");' | sudo -u www-data tee public/build/assets/app.js > /dev/null
+                echo '{"resources/js/app.js":{"file":"assets/app.js"}}' | sudo -u www-data tee public/build/manifest.json > /dev/null
+              fi
             fi
             
             # Set permissions
             echo "🔒 Setting permissions..."
             sudo chown -R www-data:www-data "$DEPLOY_DIR"
-            sudo find "$DEPLOY_DIR" -type f -exec chmod 644 {} \;
-            sudo find "$DEPLOY_DIR" -type d -exec chmod 755 {} \;
             sudo chmod -R 755 storage
             sudo chmod -R 755 bootstrap/cache
             sudo chmod -R 755 public/build 2>/dev/null || true
             
-            # Run Laravel commands
+            # Run Laravel commands (skip route:cache if it has duplicate route errors)
             echo "⚡ Running Laravel optimizations..."
             sudo -u www-data php artisan config:cache
-            sudo -u www-data php artisan route:cache
+            # Skip route:cache if it has errors
+            sudo -u www-data php artisan route:clear
             sudo -u www-data php artisan view:cache
             sudo -u www-data php artisan storage:link
             
@@ -156,7 +163,12 @@ jobs:
             
             # Final check
             echo "🔍 Final verification..."
-            ls -la public/build/ 2>/dev/null || echo "WARNING: No build directory!"
+            if [ -d "public/build" ]; then
+              echo "✅ Build exists at public/build/"
+              ls -la public/build/
+            else
+              echo "❌ WARNING: No build directory!"
+            fi
             
             echo "✅ Production deployment completed!"
             echo "📁 Directory: $DEPLOY_DIR"

@@ -48,7 +48,7 @@ jobs:
           port: 22
           script: |
             # Create deployment directory
-            DEPLOY_DIR="/var/www/optimalcomfy/deploy_$(date +%Y%m%d_%H%M%S)"
+            DEPLOY_DIR="/var/www/optimalcomfy"
             mkdir -p $DEPLOY_DIR
             
             # Clone the repository
@@ -123,7 +123,7 @@ jobs:
           port: 22
           script: |
             # Create deployment directory
-            DEPLOY_DIR="/var/www/optimalcomfy-test/deploy_$(date +%Y%m%d_%H%M%S)"
+            DEPLOY_DIR="/var/www/optimalcomfy-test"
             mkdir -p $DEPLOY_DIR
             
             # Clone the repository

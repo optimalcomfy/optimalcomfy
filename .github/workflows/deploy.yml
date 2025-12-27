@@ -45,14 +45,8 @@ jobs:
         run: |
           # Remove development files
           rm -rf node_modules
-          rm -f .env.example
           rm -rf tests
           rm -f phpunit.xml
-          
-          # Create .env if it doesn't exist (for first deployment)
-          if [ ! -f ".env" ]; then
-            cp .env.example .env
-          fi
 
       - name: Deploy to Production via SSH
         uses: appleboy/ssh-action@v0.1.8

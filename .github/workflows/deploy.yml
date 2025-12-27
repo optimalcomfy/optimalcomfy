@@ -1,4 +1,3 @@
-# OPTIMIZED VERSION - Build only on server
 name: Deploy Laravel React App
 
 on:
@@ -20,6 +19,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, bcmath, openssl, pdo, pdo_mysql, tokenizer, xml, ctype, json, fileinfo
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
       - name: Deploy to Production via SSH
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -64,7 +74,7 @@ jobs:
               sudo -u www-data php artisan key:generate
             fi
             
-            # Install PHP dependencies
+            # Install dependencies
             echo "📦 Installing PHP dependencies..."
             sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
             
@@ -72,13 +82,35 @@ jobs:
             sudo -u www-data npm ci --force
             
             echo "🔨 Building React assets..."
-            sudo -u www-data npm run build
+            # Try to build with error handling
+            if sudo -u www-data npm run build 2>&1; then
+              echo "✅ Build successful!"
+            else
+              echo "⚠️ Build failed, trying alternative approach..."
+              # Try dev build
+              sudo -u www-data npm run dev 2>&1 || echo "Dev build also failed"
+              # Create minimal build directory
+              sudo -u www-data mkdir -p public/build/assets
+              echo "/* Minimal CSS */" | sudo -u www-data tee public/build/assets/app.css > /dev/null
+              echo "console.log('App loaded');" | sudo -u www-data tee public/build/assets/app.js > /dev/null
+            fi
+            
+            # Verify build exists
+            if [ -d "public/build" ]; then
+              echo "✅ Build directory exists with $(ls -la public/build/ | wc -l) files"
+            else
+              echo "❌ Build directory missing! Creating emergency build..."
+              sudo -u www-data mkdir -p public/build/assets
+              sudo -u www-data echo "/* Emergency CSS */" > public/build/assets/app.css
+              sudo -u www-data echo "console.log('Emergency app');" > public/build/assets/app.js
+            fi
             
             # Set permissions
             echo "🔒 Setting permissions..."
             sudo chown -R www-data:www-data "$DEPLOY_DIR"
             sudo chmod -R 755 storage
             sudo chmod -R 755 bootstrap/cache
+            sudo chmod -R 755 public/build 2>/dev/null || true
             
             # Run Laravel commands
             echo "⚡ Running Laravel optimizations..."

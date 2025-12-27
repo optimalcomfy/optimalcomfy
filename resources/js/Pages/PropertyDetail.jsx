@@ -110,9 +110,9 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
           </Head>
 
           <HomeLayout>
-            <div className="py-8 max-w-8xl mx-auto px-4">
+            <div className="py-8 max-w-6xl mx-auto px-4">
               {/* Property Header with Share Button */}
-              <div className="property-header max-w-7xl mx-auto">
+              <div className="property-header mx-auto">
                 <div className="property-title-section">
                 </div>
 

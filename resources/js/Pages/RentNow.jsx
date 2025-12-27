@@ -95,9 +95,9 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
           </Head>
 
           <HomeLayout>
-            <div className="py-8 max-w-8xl mx-auto px-4">
+            <div className="py-8 max-w-6xl mx-auto px-4">
               {/* Car Header with Share Button */}
-              <div className="property-header flex justify-between items-start mb-6 max-w-7xl mx-auto">
+              <div className="property-header flex justify-between items-start mb-6 mx-auto">
                 <div className="property-title-section">
                 </div>
 

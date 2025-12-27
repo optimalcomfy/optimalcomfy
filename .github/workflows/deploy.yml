@@ -40,7 +40,7 @@ jobs:
           script: |
             # Set deployment directory
             DEPLOY_DIR="/var/www/optimalcomfy"
-            echo "🚀 Starting production deployment to $DEPLOY_DIR"
+            echo "🚀 Deploying production to $DEPLOY_DIR"
             
             # Fix git ownership issue
             sudo git config --global --add safe.directory "$DEPLOY_DIR"
@@ -54,8 +54,8 @@ jobs:
               sudo cp .env /tmp/prod.env.backup
             fi
             
-            # Clean directory (except storage and .env)
-            echo "🧹 Cleaning directory (keeping storage and .env)..."
+            # Clean directory (except storage, .env, and node_modules)
+            echo "🧹 Cleaning directory..."
             sudo find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.env' ! -name 'storage' ! -name '.git' ! -name 'node_modules' -exec rm -rf {} + 2>/dev/null || true
             
             # Pull latest changes
@@ -78,68 +78,12 @@ jobs:
             echo "📦 Installing PHP dependencies..."
             sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction --no-progress
             
-            # FIX: Clean npm cache and fix permissions
-            echo "🔧 Fixing npm permissions..."
-            sudo chown -R www-data:www-data /var/www/.npm 2>/dev/null || true
-            sudo chown -R www-data:www-data /var/www/optimalcomfy/node_modules 2>/dev/null || true
-            
-            # Install Node.js dependencies PROPERLY
-            echo "📦 Installing Node.js dependencies (with Vite)..."
-            cd "$DEPLOY_DIR"
-            
-            # Clean node_modules if corrupted
-            if [ -d "node_modules" ]; then
-              echo "🧹 Cleaning corrupted node_modules..."
-              sudo rm -rf node_modules
-              sudo rm -f package-lock.json
-            fi
-            
-            # Install with proper user
-            sudo -u www-data npm cache clean --force
+            # Install Node.js dependencies and build (like you just did)
+            echo "🔧 Installing Node.js dependencies..."
             sudo -u www-data npm install --force --legacy-peer-deps
             
-            # Verify Vite is installed
-            echo "🔍 Checking if Vite is installed..."
-            if sudo -u www-data npx vite --version 2>/dev/null; then
-              echo "✅ Vite is installed"
-            else
-              echo "⚠️ Installing Vite globally..."
-              sudo -u www-data npm install -g vite
-              sudo -u www-data npm install vite --save-dev
-            fi
-            
-            # Build React assets
             echo "🔨 Building React assets..."
-            if sudo -u www-data npm run build 2>&1; then
-              echo "✅ Build successful!"
-            else
-              echo "⚠️ Build failed, trying with npx..."
-              sudo -u www-data npx vite build 2>&1 || echo "Vite build also failed"
-            fi
-            
-            # Verify build exists
-            echo "🔍 Verifying build..."
-            if [ -d "public/build" ]; then
-              BUILD_FILES=$(find public/build -type f | wc -l)
-              echo "✅ Build directory exists with $BUILD_FILES files"
-              ls -la public/build/
-            else
-              echo "❌ Build directory missing! Trying manual build..."
-              # Check if Vite config exists
-              if [ -f "vite.config.js" ]; then
-                echo "Found vite.config.js, forcing build..."
-                sudo -u www-data npx vite build --force 2>&1 | tail -20
-              fi
-              
-              # Last resort: create minimal build
-              if [ ! -d "public/build" ]; then
-                echo "Creating emergency build..."
-                sudo -u www-data mkdir -p public/build/assets
-                echo '/* App CSS */' | sudo -u www-data tee public/build/assets/app.css > /dev/null
-                echo 'console.log("App loaded");' | sudo -u www-data tee public/build/assets/app.js > /dev/null
-                echo '{"resources/js/app.js":{"file":"assets/app.js"}}' | sudo -u www-data tee public/build/manifest.json > /dev/null
-              fi
-            fi
+            sudo -u www-data npm run build
             
             # Set permissions
             echo "🔒 Setting permissions..."
@@ -148,10 +92,9 @@ jobs:
             sudo chmod -R 755 bootstrap/cache
             sudo chmod -R 755 public/build 2>/dev/null || true
             
-            # Run Laravel commands (skip route:cache if it has duplicate route errors)
+            # Run Laravel commands
             echo "⚡ Running Laravel optimizations..."
             sudo -u www-data php artisan config:cache
-            # Skip route:cache if it has errors
             sudo -u www-data php artisan route:clear
             sudo -u www-data php artisan view:cache
             sudo -u www-data php artisan storage:link
@@ -161,16 +104,5 @@ jobs:
             sudo systemctl restart php8.4-fpm
             sudo systemctl restart nginx
             
-            # Final check
-            echo "🔍 Final verification..."
-            if [ -d "public/build" ]; then
-              echo "✅ Build exists at public/build/"
-              ls -la public/build/
-            else
-              echo "❌ WARNING: No build directory!"
-            fi
-            
             echo "✅ Production deployment completed!"
-            echo "📁 Directory: $DEPLOY_DIR"
-            echo "🌐 URL: http://77.42.72.54"
-            echo "📅 Deployment time: $(date)"
+            echo "✅ Build succeeded! Assets in public/build/"

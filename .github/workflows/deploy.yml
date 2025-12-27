@@ -168,18 +168,18 @@ jobs:
             else
               echo "📝 Creating test .env..."
               sudo bash -c 'cat > .env << "EOF"
-            APP_NAME="Ristay Test"
-            APP_ENV=local
-            APP_DEBUG=true
-            APP_URL=http://77.42.72.54/test
+              APP_NAME="OptimalComfy Test"
+              APP_ENV=local
+              APP_DEBUG=true
+              APP_URL=http://77.42.72.54/test
 
-            DB_CONNECTION=mysql
-            DB_HOST=127.0.0.1
-            DB_PORT=3306
-            DB_DATABASE=optimalcomfy_test
-            DB_USERNAME=root
-            DB_PASSWORD="emsjT4de9TqMRsWvwRNRistay"
-            EOF'
+              DB_CONNECTION=mysql
+              DB_HOST=127.0.0.1
+              DB_PORT=3306
+              DB_DATABASE=optimalcomfy_test
+              DB_USERNAME=root
+              DB_PASSWORD="emsjT4de9TqMRsWvwRNRistay"
+              EOF'
               sudo -u www-data php artisan key:generate
             fi
             
@@ -218,5 +218,5 @@ jobs:
             sudo systemctl restart nginx
             
             echo "✅ Test deployment completed!"
-            echo "🌐 URL: http://77.42.72.54:8081"
+            echo "🌐 URL: http://77.42.72.54/test"
             echo "✅ Build succeeded! Assets in public/build/"

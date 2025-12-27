@@ -53,7 +53,7 @@ jobs:
             
             # Clone the repository
             cd $DEPLOY_DIR
-            git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git .
+            git clone https://github.com/optimalcomfy/optimalcomfy.git .
             
             # Install dependencies and build
             composer install --no-dev --optimize-autoloader
@@ -128,7 +128,7 @@ jobs:
             
             # Clone the repository
             cd $DEPLOY_DIR
-            git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git .
+            git clone https://github.com/optimalcomfy/optimalcomfy.git .
             
             # Install dependencies and build
             composer install --no-dev --optimize-autoloader

@@ -388,7 +388,7 @@ class HomeController extends Controller
             return $car;
         });
 
-        $keys = env("VITE_GOOGLE_MAP_API");
+        $keys = env("GOOGLE_MAP_API");
 
         return Inertia::render("SearchCars", [
             "canLogin" => Route::has("login"),
@@ -2133,7 +2133,7 @@ class HomeController extends Controller
             return $property;
         });
 
-        $keys = env("VITE_GOOGLE_MAP_API");
+        $keys = env("GOOGLE_MAP_API");
 
         return Inertia::render("Properties", [
             "properties" => $properties,

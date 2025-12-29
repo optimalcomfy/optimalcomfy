@@ -733,6 +733,7 @@ img {
 		display: grid;
 		grid-template-columns: auto auto;
 		overflow: hidden;
+		gap: 10px;
 	}
 
 	.image__link {
@@ -766,7 +767,7 @@ img {
 	.img__collage {
 		display: grid;
 		grid-template-columns: auto auto;
-		gap: 10px 0px;
+		gap: 10px;
 	}
 
 	.img__container--hero img {

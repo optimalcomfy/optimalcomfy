@@ -47,6 +47,7 @@
 .img__collage--1 {
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
+  gap: 10px;
 }
 
 .img__collage--2 {
@@ -119,6 +120,7 @@
   .img__collage--1 {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
+    gap: 10px;
   }
 
   .img__collage--2 {
@@ -161,6 +163,7 @@
   .img__collage--4 {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr;
+    gap: 10px;
   }
 
   .img__collage--3 .img__container:nth-child(n+3),

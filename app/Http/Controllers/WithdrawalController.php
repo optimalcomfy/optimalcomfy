@@ -49,36 +49,18 @@ class WithdrawalController extends Controller
         $this->smsService = $smsService;
     }
 
-    public function waitingPage()
+    public function waitingPage(Request $request)
     {
-        // Clear any cached data
-        \Cache::forget('withdrawal_repayment_' . auth()->id());
-        
-        // Get the latest repayment FORCE fresh from database
-        $repayment = \App\Models\Repayment::where('user_id', auth()->id())
-            ->latest('updated_at')
+        $user = Auth::user();
+
+        $repayment = Repayment::where('user_id', $user->id)
+            ->whereIn('status', ['Pending', 'Approved', 'Failed'])
+            ->latest()
             ->first();
-        
-        \Log::info('WaitingForCallback - Fresh repayment data:', [
-            'user_id' => auth()->id(),
-            'repayment_id' => $repayment ? $repayment->id : null,
-            'status' => $repayment ? $repayment->status : 'none',
-            'amount' => $repayment ? $repayment->amount : 0,
-            'updated_at' => $repayment ? $repayment->updated_at : null,
-        ]);
-        
-        if (!$repayment) {
-            return redirect()->route('wallet');
-        }
-        
-        // If already approved, show success immediately
-        if ($repayment->status === 'Approved') {
-            \Log::info('Repayment already approved, showing success');
-        }
-        
+
         return Inertia::render('Wallet/WaitingForCallback', [
-            'amount' => $repayment->amount,
-            'repayment' => $repayment, // This should now show "Approved"
+            'amount' => $request->amount,
+            'repayment' => $repayment
         ]);
     }
 

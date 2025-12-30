@@ -281,7 +281,7 @@ class PropertyController extends Controller
 
         $amenities = Amenity::all();
 
-        $keys = env('VITE_GOOGLE_MAP_API');
+        $keys = env('GOOGLE_MAP_API');
 
         return Inertia::render('Properties/Show', [
             'property' => $property,

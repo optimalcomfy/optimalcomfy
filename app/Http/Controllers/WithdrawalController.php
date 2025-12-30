@@ -188,6 +188,24 @@ class WithdrawalController extends Controller
         ], 200);
     }
 
+    public function checkStatus(Repayment $repayment)
+    {
+        $user = Auth::user();
+        
+        // Ensure the repayment belongs to the authenticated user
+        if ($repayment->user_id !== $user->id) {
+            return response()->json([
+                'error' => 'Unauthorized'
+            ], 403);
+        }
+        
+        // Return the current status
+        return response()->json([
+            'status' => $repayment->status,
+            'repayment' => $repayment
+        ]);
+    }
+
     /**
      * Extract repayment ID from M-Pesa conversation ID
      * This depends on how you format the conversation ID in your MpesaService

@@ -6,30 +6,62 @@ import { Loader2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 const WaitingForCallback = ({ amount, repayment = null }) => {
     const [status, setStatus] = useState('processing');
     const [elapsedTime, setElapsedTime] = useState(0);
+    const [currentRepayment, setCurrentRepayment] = useState(repayment);
+
+    // Function to check repayment status
+    const checkRepaymentStatus = async () => {
+        if (!currentRepayment) return;
+        
+        try {
+            const response = await fetch(route('repayment.status', { repayment: currentRepayment.id }), {
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+            
+            if (!response.ok) throw new Error('Failed to check status');
+            
+            const data = await response.json();
+            setCurrentRepayment(data.repayment);
+            
+            if (data.status === 'Approved') {
+                setStatus('success');
+            } else if (data.status === 'Failed') {
+                setStatus('failed');
+            }
+        } catch (error) {
+            console.error('Error checking repayment status:', error);
+        }
+    };
 
     // Poll for status updates
     useEffect(() => {
+        // Initial check
+        if (currentRepayment) {
+            checkRepaymentStatus();
+        }
+
         const interval = setInterval(() => {
             setElapsedTime(prev => prev + 1);
-
-            router.reload({ only: ['repayment'] }, {
-                preserveScroll: true,
-                preserveState: true,
-            });
+            
+            if (currentRepayment && status === 'processing') {
+                checkRepaymentStatus();
+            }
         }, 3000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [currentRepayment, status]);
 
+    // Initialize status based on initial repayment data
     useEffect(() => {
-        if (repayment) {
-            if (repayment.status === 'Approved') {
+        if (currentRepayment) {
+            if (currentRepayment.status === 'Approved') {
                 setStatus('success');
-            } else if (repayment.status === 'Failed') {
+            } else if (currentRepayment.status === 'Failed') {
                 setStatus('failed');
             }
         }
-    }, [repayment]);
+    }, [currentRepayment]);
 
     const handleRetry = () => {
         router.visit(route('wallet'));

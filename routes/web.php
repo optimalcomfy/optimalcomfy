@@ -365,6 +365,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/withdraw/initiate', [WithdrawalController::class, 'initiateWithdrawal'])->name('withdraw.initiate');
     Route::post('/withdraw/verify', [WithdrawalController::class, 'verifyAndWithdraw'])->name('withdraw.verify');
     Route::post('/withdraw/resend-code', [WithdrawalController::class, 'resendVerificationCode'])->name('withdraw.resend-code');
+    Route::get('/api/repayment/status/{repayment}', [WithdrawalController::class, 'checkStatus'])->name('repayment.status');
 
     // Payment Initiation
     Route::post('/mpesa/stk/initiate', [MpesaStkController::class, 'initiatePayment']);

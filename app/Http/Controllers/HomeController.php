@@ -2060,12 +2060,15 @@ class HomeController extends Controller
         if ($request->filled(["adults", "children"])) {
             $adults = (int) $input["adults"];
             $children = (int) $input["children"];
-            $totalGuests = $adults + $children;
 
-            $query->where(function ($q) use ($adults, $children, $totalGuests) {
-                $q->where(function ($subQ) use ($adults, $children, $totalGuests) {
+            $query->where(function ($q) use ($adults, $children) {
+                $q->where(function ($subQ) use ($adults) {
                     $subQ->where('max_adults', '>=', $adults)
-                        ->where('max_children', '>=', $children);
+                        ->orWhereNull('max_adults');
+                })
+                ->where(function ($subQ) use ($children) {
+                    $subQ->where('max_children', '>=', $children)
+                        ->orWhereNull('max_children');
                 });
             });
         }

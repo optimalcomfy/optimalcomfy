@@ -109,7 +109,8 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
       property_name: data.property_name,
       type: data.type,
       location: data.location,
-      amount: data.amount
+      amount: data.amount,
+      max_adults: data.max_adults
     };
 
     for (const [field, value] of Object.entries(requiredFields)) {
@@ -309,6 +310,31 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                     required
                   />
                 </div>
+                
+                {/* ADD MAX ADULTS INPUT */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Max Adults*</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={data.max_adults}
+                    onChange={(e) => setData("max_adults", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                </div>
+                
+                {/* ADD MAX CHILDREN INPUT */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Max Children</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={data.max_children}
+                    onChange={(e) => setData("max_children", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                  />
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -371,7 +397,7 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                 type="button"
                 onClick={() => setStep(2)}
                 className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 flex items-center"
-                disabled={!data.property_name || !data.type || !data.location || !data.amount}
+                disabled={!data.property_name || !data.type || !data.location || !data.amount || !data.max_adults}
               >
                 Next: Property Details <ChevronRight className="ml-2" />
               </button>

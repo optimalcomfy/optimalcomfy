@@ -16,6 +16,7 @@ const Show = ({ user }) => {
   const lightBg = '#fdf6f2';
 
   const { auth } = usePage().props;
+  const roleId = parseInt(auth.user?.role_id);
 
   // Role mapping
   const roleMap = {
@@ -262,6 +263,7 @@ const Show = ({ user }) => {
                   )
                 )}
 
+                {roleId === 1 &&
                 <Link
                   href={route('users.index')}
                   className="px-4 py-2 bg-white rounded border transition text-sm text-center"
@@ -271,7 +273,7 @@ const Show = ({ user }) => {
                   }}
                 >
                   Back to Users
-                </Link>
+                </Link>}
               </div>
             </div>
           </div>

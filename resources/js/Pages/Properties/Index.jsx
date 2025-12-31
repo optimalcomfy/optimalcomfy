@@ -360,6 +360,7 @@ const IndexProperties = () => {
               Stays
             </h1>
 
+            {roleId === 1 &&
             <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">
 
               <button
@@ -391,7 +392,7 @@ const IndexProperties = () => {
                     {excelLoading ? 'Generating...' : 'Excel (All)'}
                   </span>
               </button>
-            </div>
+            </div>}
           </div>
 
           {/* Search and Date Range Controls */}

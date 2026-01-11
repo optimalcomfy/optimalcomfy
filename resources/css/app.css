@@ -200,8 +200,31 @@ body {
 }
 
 
+.p-dialog {
+  background: white !important;
+}
+
 @media (max-width: 768px) {
     .mobile-search-trigger {
         padding: 0 0 !important;
     }
+
+    .p-dialog {
+      max-width: 85% !important;
+      max-height: 55vh !important;
+      max-height: fit-content !important;
+    }
+
+    .gallery-main-image {
+        max-height: 35vh !important;
+    }
+
+    .gallery-main-image img {
+     height: 30vh !important;
+    }
+
+    .gallery-container {
+      max-height: fit-content !important;
+    }
 }
+

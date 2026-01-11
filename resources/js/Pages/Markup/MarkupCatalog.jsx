@@ -190,31 +190,6 @@ const MarkupCatalog = () => {
                                         )}
                                     </div>
                                 </div>
-
-                                {/* Contact Info */}
-                                <div className="bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl p-4 sm:p-6 min-w-[280px] sm:min-w-[300px]">
-                                    <h3 className="font-semibold mb-2 sm:mb-3 text-sm sm:text-base text-[#d15026]">Contact Host</h3>
-                                    <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
-                                        {host?.phone && (
-                                            <div className="flex items-center gap-2">
-                                                <Phone className="h-3 sm:h-4" />
-                                                <span>{host.phone}</span>
-                                            </div>
-                                        )}
-                                        {host?.email && (
-                                            <div className="flex items-center gap-2">
-                                                <Mail className="h-3 sm:h-4" />
-                                                <span className="truncate">{host.email}</span>
-                                            </div>
-                                        )}
-                                        {host?.user_type && (
-                                            <div className="flex items-center gap-2 text-green-300">
-                                                <User className="h-3 sm:h-4" />
-                                                <span className="capitalize">{host.user_type}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>

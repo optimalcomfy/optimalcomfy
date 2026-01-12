@@ -251,13 +251,54 @@ const Dashboard = () => {
     );
   };
 
+
+  const InformationCard = ({ title, value, icon: Icon, iconColor, description, trend, isNegative, isPositive, isWarning, isInfo, bgColor, textColor }) => {
+    const trendIcon = trend?.value > 0 ? <ArrowUpRight size={14} /> : trend?.value < 0 ? <ArrowDownRight size={14} /> : null;
+
+    return (
+      <div className="flex-1 p-3 min-w-[250px]">
+        <div className={`
+          rounded-xl p-5 transition-all duration-200 hover:shadow-lg
+          ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}
+          ${isNegative ? 'border-l-4 border-red-500' : ''}
+          ${isPositive ? 'border-l-4 border-green-500' : ''}
+          ${isWarning ? 'border-l-4 border-yellow-500' : ''}
+          ${isInfo ? 'border-l-4 border-blue-500' : ''}
+          ${bgColor ? bgColor : ''}
+          shadow-md
+        `}>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300">{title}</h3>
+              <div className="flex items-end gap-2 mt-1">
+                <span className={`text-2xl font-bold ${textColor || ''} ${isNegative ? 'text-red-500' : isPositive ? 'text-green-500' : ''}`}>
+                  {value}
+                </span>
+                {trend && (
+                  <span className={`flex items-center text-sm mb-1 ${trend.value > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {trendIcon}
+                    {Math.abs(trend.value)}%
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className={`p-3 rounded-full ${iconColor || 'bg-blue-100'} ${isDarkMode ? 'bg-opacity-20' : ''}`}>
+              <Icon size={24} className={textColor || 'text-blue-600'} />
+            </div>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{description}</p>
+        </div>
+      </div>
+    );
+  };
+
   // Quick Stats Cards for Hosts
   const HostQuickStats = () => {
     if (roleId !== 2 && roleId !== 1) return null;
 
     return (
       <div className="flex flex-wrap -mx-3 mb-6">
-        <InfoCard
+        <InformationCard
           title="Properties Listed"
           value={propertiesCount}
           icon={Home}
@@ -265,7 +306,7 @@ const Dashboard = () => {
           description="Active property listings"
           isPositive={propertiesCount > 0}
         />
-        <InfoCard
+        <InformationCard
           title="Vehicles Listed"
           value={carsCount}
           icon={Car}
@@ -273,7 +314,7 @@ const Dashboard = () => {
           description="Available vehicles for rent"
           isPositive={carsCount > 0}
         />
-        <InfoCard
+        <InformationCard
           title="Total Bookings"
           value={totalBookingsCount}
           icon={Calendar}

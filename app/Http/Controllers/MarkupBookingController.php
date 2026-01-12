@@ -904,6 +904,7 @@ class MarkupBookingController extends Controller
             'host' => [
                 'id' => $user->id,
                 'name' => $user->name,
+                'display_name' => $user->display_name,
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'profile_picture' => $user->profile_picture,

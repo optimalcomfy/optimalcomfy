@@ -149,7 +149,7 @@ const MarkupCatalog = () => {
     return (
         <PrimeReactProvider>
             <LayoutProvider>
-                <Head title={`${host?.name}'s Exclusive Offers`} />
+                <Head title={`${host?.display_name}'s Exclusive Offers`} />
                 <ToastContainer position="top-right" autoClose={3000} />
 
                 <div className="min-h-screen" style={{ backgroundColor: colors.background }}>
@@ -162,7 +162,7 @@ const MarkupCatalog = () => {
                                     <div className="relative">
                                         <img
                                             src={host?.profile_picture ? `/storage/${host.profile_picture}` : '/images/default-avatar.png'}
-                                            alt={host?.name}
+                                            alt={host?.display_name}
                                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white shadow-lg object-cover"
                                             onError={(e) => {
                                                 e.target.src = '/images/default-avatar.png';
@@ -178,7 +178,7 @@ const MarkupCatalog = () => {
                                     </div>
                                     <div>
                                         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 leading-tight text-[#d15026]">
-                                            {host?.name}'s Exclusive Offers
+                                            {host?.display_name}'s Exclusive Offers
                                         </h1>
                                         <p className="text-blue-100 text-sm sm:text-base">
                                             {host?.user_type === 'host' ? 'Premium host' : 'Verified partner'} with special pricing
@@ -418,7 +418,7 @@ const MarkupCatalog = () => {
 
                                                 {/* Quick Info */}
                                                 <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
-                                                    <span>Exclusive offer from {host?.name}</span>
+                                                    <span>Exclusive offer from {host?.display_name}</span>
                                                     {markup.item.rating && (
                                                         <div className="flex items-center gap-1">
                                                             <Star className="h-3 fill-yellow-400 text-yellow-400" />
@@ -437,7 +437,7 @@ const MarkupCatalog = () => {
                         {filteredMarkups.length > 0 && (
                             <div className="mt-8 sm:mt-12 text-center">
                                 <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 border border-gray-200">
-                                    <h3 className="font-semibold text-gray-900 mb-3 sm:mb-4 text-base sm:text-lg">Why Book With {host?.name}?</h3>
+                                    <h3 className="font-semibold text-gray-900 mb-3 sm:mb-4 text-base sm:text-lg">Why Book With {host?.display_name}?</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-xs sm:text-sm text-gray-600 justify-center">
                                         <div className="flex flex-col items-center">
                                             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${colors.primary}15` }}>

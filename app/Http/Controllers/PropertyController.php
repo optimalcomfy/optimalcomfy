@@ -29,7 +29,6 @@ class PropertyController extends Controller
 
         $query = Property::with([
             'bookings',
-            'initialGallery',
             'propertyAmenities',
             'propertyFeatures',
             'PropertyServices',

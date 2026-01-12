@@ -35,16 +35,7 @@ class ProfileController extends Controller
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'address' => $user->address,
-                'profile_picture' => $user->profile_picture,
-                'id_verification' => $user->id_verification,
-                'email_verified_at' => $user->email_verified_at,
-            ],
+            'user' => $user,
         ]);
     }
 
@@ -74,19 +65,30 @@ class ProfileController extends Controller
 
     /**
      * Update the user's profile information.
-     */
+        */
     public function update(Request $request): RedirectResponse
     {
         try {
             $user = $request->user();
             
-            // Validate the request
+            // Validate the request with all fields
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
+                'display_name' => ['nullable', 'string', 'max:255'],
                 'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
                 'phone' => ['nullable', 'string', 'max:20'],
+                'date_of_birth' => ['nullable', 'date', 'before:today'],
+                'nationality' => ['nullable', 'string', 'max:100'],
+                'passport_number' => ['nullable', 'string', 'max:50'],
                 'address' => ['nullable', 'string', 'max:500'],
-                'profile_picture' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+                'city' => ['nullable', 'string', 'max:100'],
+                'country' => ['nullable', 'string', 'max:2'], // Country code (2 letters)
+                'postal_code' => ['nullable', 'string', 'max:20'],
+                'bio' => ['nullable', 'string', 'max:2000'],
+                'preferred_payment_method' => ['nullable', 'string', 'max:50'],
+                'emergency_contact' => ['nullable', 'string', 'max:255'],
+                'contact_phone' => ['nullable', 'string', 'max:20'],
+                'profile_picture' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
                 'id_verification' => ['nullable', 'file', 'mimes:pdf,jpeg,png,jpg', 'max:5120'],
             ]);
 
@@ -134,11 +136,22 @@ class ProfileController extends Controller
                 // $user->sendEmailVerificationNotification();
             }
 
-            // Update user data
+            // Update user data with all fields
             $user->name = $validated['name'];
+            $user->display_name = $validated['display_name'] ?? null;
             $user->email = $validated['email'];
-            $user->phone = $validated['phone'];
-            $user->address = $validated['address'];
+            $user->phone = $validated['phone'] ?? null;
+            $user->date_of_birth = $validated['date_of_birth'] ?? null;
+            $user->nationality = $validated['nationality'] ?? null;
+            $user->passport_number = $validated['passport_number'] ?? null;
+            $user->address = $validated['address'] ?? null;
+            $user->city = $validated['city'] ?? null;
+            $user->country = $validated['country'] ?? null;
+            $user->postal_code = $validated['postal_code'] ?? null;
+            $user->bio = $validated['bio'] ?? null;
+            $user->preferred_payment_method = $validated['preferred_payment_method'] ?? null;
+            $user->emergency_contact = $validated['emergency_contact'] ?? null;
+            $user->contact_phone = $validated['contact_phone'] ?? null;
             
             $user->save();
 

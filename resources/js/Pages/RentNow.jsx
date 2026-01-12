@@ -205,7 +205,7 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                     <div className="heading">
                       <div className="heading__title flex flex-col items-start gap-2">
                         <h3 className="content-title">
-                            Owned by {car?.user?.name}
+                            Owned by {car?.user?.display_name}
                         </h3>
                         {car?.user?.ristay_verified === "1" && (
                             <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">

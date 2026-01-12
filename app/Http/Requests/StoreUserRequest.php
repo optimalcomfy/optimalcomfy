@@ -23,6 +23,8 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'name' => 'nullable',
+            'display_name' => 'nullable',
+            'emergency_contact_phone' => 'nullable',
             'phone' => 'nullable',
             'role_id' => 'nullable',
             'position' => 'nullable',

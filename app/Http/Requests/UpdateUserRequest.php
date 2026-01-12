@@ -23,6 +23,7 @@ class UpdateUserRequest extends FormRequest
     {
         return [
             'name' => 'nullable',
+            'display_name' => 'nullable',
             'phone' => 'nullable',
             'role_id' => 'nullable',
             'position' => 'nullable',

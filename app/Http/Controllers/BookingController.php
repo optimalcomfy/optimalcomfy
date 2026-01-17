@@ -18,15 +18,23 @@ use App\Http\Controllers\PesapalController;
 use App\Http\Controllers\MpesaStkController;
 use App\Services\PesapalService;
 use App\Traits\Mpesa;
+
+// Email imports
 use App\Mail\BookingConfirmation;
 use App\Mail\CarBookingConfirmation;
-use Illuminate\Support\Facades\Mail;
+use App\Mail\BookingRequestNotification;
+use App\Mail\BookingRequestConfirmation;
+use App\Mail\NewBookingNotification;
+use App\Mail\PaymentInstructions;
+use App\Mail\BookingRejected;
 use App\Mail\RefundNotification;
-use Illuminate\Http\JsonResponse;
-use Carbon\Carbon;
 use App\Mail\CheckInVerification;
 use App\Mail\CheckOutVerification;
 use App\Mail\BookingCancelled;
+
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Http\JsonResponse;
+use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Services\SmsService;
 
@@ -964,7 +972,7 @@ class BookingController extends Controller
         }
     }
 
-    public function store(Request $request, SmsService $smsService, PesapalService $pesapalService)
+   public function store(Request $request, SmsService $smsService, PesapalService $pesapalService)
     {
         $request->validate([
             'property_id' => 'required|exists:properties,id',
@@ -973,10 +981,51 @@ class BookingController extends Controller
             'total_price' => 'required|numeric|min:1',
             'variation_id' => 'nullable',
             'referral_code' => 'nullable',
-            'payment_method' => 'required|in:mpesa,pesapal'
+            'payment_method' => 'required|in:mpesa,pesapal',
+            'phone' => 'required',
+            'status' => 'nullable|string',
+            'message' => 'nullable|string|max:1000'
         ]);
 
         $user = Auth::user();
+        
+        // Get the property to check default_availability
+        $property = Property::with('user')->find($request->property_id);
+        
+        // Determine booking status based on property settings
+        $bookingStatus = 'pending';
+        $shouldProcessPayment = false;
+        
+        if ($property->default_available == 1 || $property->default_available === true) {
+            // Instant booking - confirm immediately
+            $bookingStatus = 'Booked';
+            $shouldProcessPayment = true;
+        } else {
+            // Request-to-book - needs host confirmation
+            $bookingStatus = 'pending';
+            $shouldProcessPayment = false;
+        }
+
+        // Check for booking conflicts
+        $conflictingBooking = Booking::where('property_id', $request->property_id)
+            ->where('variation_id', $request->variation_id)
+            ->where(function($query) use ($request) {
+                $query->whereBetween('check_in_date', [$request->check_in_date, $request->check_out_date])
+                    ->orWhereBetween('check_out_date', [$request->check_in_date, $request->check_out_date])
+                    ->orWhere(function($q) use ($request) {
+                        $q->where('check_in_date', '<=', $request->check_in_date)
+                            ->where('check_out_date', '>=', $request->check_out_date);
+                    });
+            })
+            ->whereIn('status', ['Booked', 'confirmed', 'pending'])
+            ->first();
+
+        if ($conflictingBooking) {
+            // Return Inertia error response instead of JSON
+            return back()->withErrors([
+                'dates' => 'These dates are already booked. Please select different dates.'
+            ]);
+        }
 
         $booking = Booking::create([
             'user_id' => $user->id,
@@ -984,36 +1033,119 @@ class BookingController extends Controller
             'check_in_date' => $request->check_in_date,
             'check_out_date' => $request->check_out_date,
             'total_price' => $request->total_price,
-            'checked_in' => $request->is_extension ? now() : null,
-            'status' => 'pending',
+            'checked_in' => null,
+            'status' => $bookingStatus,
             'variation_id' => $request->variation_id,
             'referral_code' => $request->referral_code,
-            'payment_method' => $request->payment_method
+            'payment_method' => $request->payment_method,
+            'guest_message' => $request->message,
+            'guest_phone' => $request->phone
         ]);
 
         try {
-            // Send booking confirmation SMS
-            $this->sendBookingConfirmationSms($booking, 'pending', $smsService);
+            if ($property->default_available == 1) {
+                $this->sendBookingConfirmationSms($booking, 'Booked', $smsService);
+                $this->sendBookingEmailToGuest($booking);
+                
+                // Also notify host about the new booking
+                $this->sendNewBookingNotificationToHost($booking);
+                
+                // Process payment for instant bookings
+                if ($shouldProcessPayment) {
+                    $company = Company::first();
 
-            $company = Company::first();
+                    $finalAmount = $request->referral_code ? 
+                        ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : 
+                        $booking->total_price;
+                    $finalAmount = ceil($finalAmount);
 
-            $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
-            $finalAmount = ceil($finalAmount);
-
-            // Handle different payment methods
-            if ($request->payment_method === 'mpesa') {
-                return $this->processMpesaPayment($booking, $request->phone, $finalAmount);
-            } elseif ($request->payment_method === 'pesapal') {
-                return $this->processPesapalPayment($booking, $user, $finalAmount, $pesapalService);
+                    // Handle different payment methods
+                    if ($request->payment_method === 'mpesa') {
+                        return $this->processMpesaPayment($booking, $request->phone, $finalAmount);
+                    } elseif ($request->payment_method === 'pesapal') {
+                        return $this->processPesapalPayment($booking, $user, $finalAmount, $pesapalService);
+                    }
+                }
+            } else {
+                $this->sendBookingRequestToHost($booking);
+                
+                // Send pending confirmation to guest
+                $this->sendBookingConfirmationSms($booking, 'pending', $smsService);
+                $this->sendBookingRequestConfirmationToGuest($booking);
+                
+                // Return Inertia response for request-to-book
+                return redirect()->route('bookings.index')->with([
+                    'success' => 'Booking request sent successfully. Please wait for host confirmation.',
+                    'booking' => $booking,
+                    'requires_confirmation' => true
+                ]);
             }
 
         } catch (\Exception $e) {
-            Log::error('Payment initiation failed: ' . $e->getMessage());
+            Log::error('Booking creation failed: ' . $e->getMessage());
             $booking->update(['status' => 'failed']);
 
             return back()
                 ->withInput()
-                ->withErrors(['payment' => 'Payment initiation failed due to a system error.']);
+                ->withErrors(['booking' => 'Booking creation failed due to a system error.']);
+        }
+    }
+
+
+    // Add these helper methods to the BookingController:
+
+    private function sendBookingRequestToHost($booking)
+    {
+        try {
+            $host = $booking->property->user;
+            
+            Mail::to($host->email)->send(new BookingRequestNotification($booking));
+            
+            // Also send SMS if host has phone
+            if ($host->phone) {
+                $smsService = new SmsService();
+                $message = "New booking request for {$booking->property->property_name} from {$booking->user->name}. Check your email or dashboard to confirm.";
+                $smsService->sendSms($host->phone, $message);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send booking request to host: ' . $e->getMessage());
+        }
+    }
+
+    private function sendBookingEmailToGuest($booking)
+    {
+        try {
+            $user = $booking->user;
+            
+            Mail::to($user->email)->send(new BookingConfirmation($booking));
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send booking confirmation to guest: ' . $e->getMessage());
+        }
+    }
+
+    private function sendBookingRequestConfirmationToGuest($booking)
+    {
+        try {
+            $user = $booking->user;
+            
+            Mail::to($user->email)->send(new \App\Mail\BookingRequestConfirmation($booking));
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send booking request confirmation to guest: ' . $e->getMessage());
+        }
+    }
+
+    private function sendNewBookingNotificationToHost($booking)
+    {
+        try {
+            $host = $booking->property->user;
+            
+            Mail::to($host->email)->send(new NewBookingNotification($booking));
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send new booking notification to host: ' . $e->getMessage());
         }
     }
 
@@ -1747,11 +1879,15 @@ class BookingController extends Controller
 
             switch ($type) {
                 case 'pending':
-                    $message = "Hello {$user->name}, your booking at {$property->property_name} is pending payment. Amount: KES {$booking->total_price}. Check-in: {$checkIn}";
+                    $message = "Hello {$user->name}, your booking request at {$property->property_name} has been sent to the host. You'll be notified once they confirm. Amount: KES {$booking->total_price}. Check-in: {$checkIn}";
+                    break;
+
+                case 'Booked':
+                    $message = "Hello {$user->name}, your booking at {$property->property_name} is confirmed! Booking #{$booking->number}. Check-in: {$checkIn}, Check-out: {$checkOut}. Thank you for choosing Ristay!";
                     break;
 
                 case 'confirmed':
-                    $message = "Hello {$user->name}, your booking at {$property->property_name} is confirmed! Booking #{$booking->number}. Check-in: {$checkIn}, Check-out: {$checkOut}. Thank you for choosing Ristay!";
+                    $message = "Hello {$user->name}, your booking request for {$property->property_name} has been approved! Please complete payment to confirm your booking.";
                     break;
 
                 case 'external':
@@ -1769,22 +1905,24 @@ class BookingController extends Controller
         }
     }
 
-    private function sendPaymentFailureSms(Booking $booking, string $reason = '', SmsService $smsService)
+    private function sendBookingRequestSmsToHost(Booking $booking, SmsService $smsService)
     {
         try {
-            $user = $booking->user;
-            $property = $booking->property;
-
-            $message = "Hello {$user->name}, your payment for booking at {$property->property_name} failed. Please try again or contact support.";
-
-            if (!empty($reason)) {
-                $message .= " Reason: {$reason}";
+            $host = $booking->property->user;
+            
+            if ($host->phone) {
+                $guestName = $booking->user->name;
+                $propertyName = $booking->property->property_name;
+                $checkIn = Carbon::parse($booking->check_in_date)->format('M j, Y');
+                $checkOut = Carbon::parse($booking->check_out_date)->format('M j, Y');
+                
+                $message = "Hello {$host->name}, you have a new booking request from {$guestName} for {$propertyName}. Dates: {$checkIn} to {$checkOut}. Please check your email to approve or reject.";
+                
+                $smsService->sendSms($host->phone, $message);
             }
-
-            $smsService->sendSms($user->phone, $message);
-
+            
         } catch (\Exception $e) {
-            Log::error('Payment failure SMS failed: ' . $e->getMessage());
+            Log::error('Booking request SMS to host failed: ' . $e->getMessage());
         }
     }
 
@@ -1984,5 +2122,211 @@ class BookingController extends Controller
                 'ResultDesc' => 'Error processing callback'
             ], 500);
         }
+    }
+
+
+    public function hostBookings(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Only hosts can access this
+        if ($user->role_id != 2) {
+            abort(403, 'Unauthorized');
+        }
+        
+        $query = Booking::with(['user', 'property'])
+            ->whereHas('property', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc');
+        
+        // Search functionality
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('property', function ($q) use ($search) {
+                    $q->where('property_name', 'LIKE', "%$search%");
+                });
+            });
+        }
+        
+        $bookings = $query->paginate(10);
+        
+        return Inertia::render('Bookings/HostRequests', [
+            'bookings' => $bookings->items(),
+            'pagination' => $bookings,
+            'flash' => session('flash'),
+        ]);
+    }
+
+    /**
+     * Confirm booking request (for host)
+     */
+
+    public function confirmBooking(Request $request, $id, SmsService $smsService)
+    {
+        $booking = Booking::with(['user', 'property.user'])->findOrFail($id);
+        $user = Auth::user();
+        
+        // Check if user is the property owner
+        if ($user->id !== $booking->property->user_id) {
+            abort(403, 'Unauthorized');
+        }
+        
+        // Check if booking is still pending
+        if ($booking->status !== 'pending') {
+            return redirect()->back()->with('error', 'This booking is no longer pending.');
+        }
+        
+        // Update booking status
+        $booking->update([
+            'status' => 'confirmed',
+            'confirmed_at' => now()
+        ]);
+        
+        // Send payment instructions to guest
+        $this->sendPaymentInstructions($booking);
+        
+        // Send confirmation SMS to guest
+        $this->sendBookingConfirmationSms($booking, 'confirmed', $smsService);
+        
+        return redirect()->back()->with('success', 'Booking confirmed successfully. Guest has been notified to complete payment.');
+    }
+
+    /**
+     * Reject booking request (for host)
+     */
+    public function rejectBooking(Request $request, $id, SmsService $smsService)
+    {
+        $booking = Booking::with(['user', 'property.user'])->findOrFail($id);
+        $user = Auth::user();
+        
+        // Check if user is the property owner
+        if ($user->id !== $booking->property->user_id) {
+            abort(403, 'Unauthorized');
+        }
+        
+        // Check if booking is still pending
+        if ($booking->status !== 'pending') {
+            return redirect()->back()->with('error', 'This booking is no longer pending.');
+        }
+        
+        $request->validate([
+            'reason' => 'required|string|min:10|max:500'
+        ]);
+        
+        // Update booking status
+        $booking->update([
+            'status' => 'rejected',
+            'rejection_reason' => $request->reason,
+            'rejected_at' => now()
+        ]);
+        
+        // Send rejection notification to guest
+        $this->sendBookingRejectionNotification($booking, $smsService);
+        
+        return redirect()->back()->with('success', 'Booking request rejected successfully.');
+    }
+
+    private function sendPaymentInstructions($booking)
+    {
+        try {
+            $user = $booking->user;
+            
+            Mail::to($user->email)->send(new \App\Mail\PaymentInstructions($booking));
+            
+            // Also send SMS with payment instructions
+            $smsService = new SmsService();
+            $message = "Hello {$user->name}, your booking request for {$booking->property->property_name} has been approved! Please login to complete payment and confirm your booking.";
+            $smsService->sendSms($user->phone, $message);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send payment instructions: ' . $e->getMessage());
+        }
+    }
+
+    private function sendBookingRejectionNotification($booking, SmsService $smsService)
+    {
+        try {
+            $user = $booking->user;
+            
+            Mail::to($user->email)->send(new \App\Mail\BookingRejected($booking));
+            
+            // Send rejection SMS
+            $message = "Hello {$user->name}, your booking request for {$booking->property->property_name} has been declined by the host. Reason: {$booking->rejection_reason}";
+            $smsService->sendSms($user->phone, $message);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send booking rejection notification: ' . $e->getMessage());
+        }
+    }
+
+
+    /**
+     * Show payment page for confirmed booking
+     */
+    public function showPayBooking(Booking $booking)
+    {
+        // Only allow payment for bookings that are confirmed but not paid
+        if ($booking->status !== 'confirmed') {
+            return redirect()->back()->with('error', 'This booking cannot be paid.');
+        }
+        
+        $booking->load(['user', 'property']);
+        $company = Company::first();
+        
+        return Inertia::render('Bookings/PayBooking', [
+            'booking' => $booking,
+            'auth' => ['user' => Auth::user()],
+            'company' => $company,
+        ]);
+    }
+
+    /**
+     * Process payment for confirmed booking
+     */
+    public function processPayment(Request $request, Booking $booking, SmsService $smsService, PesapalService $pesapalService)
+    {
+        // Validate
+        if ($booking->status !== 'confirmed') {
+            return back()->withErrors(['payment' => 'This booking cannot be paid.']);
+        }
+        
+        $request->validate([
+            'payment_method' => 'required|in:mpesa,pesapal',
+            'phone' => 'required_if:payment_method,mpesa'
+        ]);
+        
+        $user = Auth::user();
+        $company = Company::first();
+        
+        // Calculate final amount with referral discount if applicable
+        $finalAmount = $booking->total_price;
+        
+        if ($booking->referral_code && $company) {
+            $discount = ($booking->total_price * $company->booking_referral_percentage) / 100;
+            $finalAmount = $booking->total_price - $discount;
+        }
+        
+        $finalAmount = ceil($finalAmount);
+        
+        // Update booking with payment method
+        $booking->update([
+            'payment_method' => $request->payment_method,
+            'guest_phone' => $request->phone
+        ]);
+        
+        // Process payment based on method
+        if ($request->payment_method === 'mpesa') {
+            return $this->processMpesaPayment($booking, $request->phone, $finalAmount);
+        } elseif ($request->payment_method === 'pesapal') {
+            return $this->processPesapalPayment($booking, $user, $finalAmount, $pesapalService);
+        }
+        
+        return back()->withErrors(['payment' => 'Invalid payment method.']);
     }
 }

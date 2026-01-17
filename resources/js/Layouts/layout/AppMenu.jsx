@@ -14,13 +14,22 @@ const AppMenu = () => {
             items: [
                 { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: route('dashboard'), roles: [1, 2, 3, 4] },
                 { label: 'Users', icon: 'pi pi-fw pi-users', to: route('users.index'), roles: [1, 2] },
-                { label: 'Profile', icon: 'pi pi-fw pi-user', to: route('profile.edit'), roles: [1, 2, 3, 4] }
+                { label: 'Profile', icon: 'pi pi-fw pi-user', to: route('profile.edit'), roles: [1, 2, 3, 4] },
+                { label: 'Pending Profiles', icon: 'pi pi-fw pi-user', to: route('admin.pending-profiles'), roles: [1] }
+            ]
+        },
+        {
+            label: 'Checklist Management',
+            items: [
+                { label: 'Checklist Templates', icon: 'pi pi-fw pi-check-square', to: route('checklists.index'), roles: [1] },
+                { label: 'Checklist Responses', icon: 'pi pi-fw pi-check-square', to: route('checklist-responses.index'), roles: [1, 2] },
             ]
         },
         {
             label: 'Stays Management',
             items: [
                 { label: 'Stays', icon: 'pi pi-fw pi-building', to: route('properties.index'), roles: [1, 2] },
+                { label: 'Waiting confirmations', icon: 'pi pi-fw pi-calendar', to: route('host.bookings'), roles: [2] },
                 { label: 'Stays Bookings', icon: 'pi pi-fw pi-calendar', to: route('bookings.index'), roles: [1, 2,3] },
                 { label: 'Failed reservation', icon: 'pi pi-fw pi-calendar', to: route('bookings.index', {status: 'failed'}), roles: [1, 2,3] },
                 { label: 'Pending pay reservation', icon: 'pi pi-fw pi-calendar', to: route('bookings.index', {status: 'pending'}), roles: [1, 2,3] },
@@ -34,6 +43,7 @@ const AppMenu = () => {
             label: 'Ride hire Management',
             items: [
                 { label: 'Rides', icon: 'pi pi-fw pi-car', to: route('main-cars.index'), roles: [1, 2] },
+                { label: 'Waiting confirmations', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.host-requests'), roles: [2] },
                 { label: 'Ride Categories', icon: 'pi pi-fw pi-tags', to: route('car-categories.index'), roles: [1] },
                 { label: 'Ride Bookings', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index'), roles: [1, 2, 3] },
                 { label: 'Failed reservation', icon: 'pi pi-fw pi-calendar', to: route('car-bookings.index', {status: 'failed'}), roles: [1, 2,3] },

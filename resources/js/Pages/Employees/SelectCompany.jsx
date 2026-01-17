@@ -146,7 +146,7 @@ const SelectCompany = () => {
                                 key={step} 
                                 className={`flex items-center space-x-2 ${active ? 'text-blue-600' : ''}`}
                             >
-                                {active && <CheckCircle className="w-6 h-6" />}
+                                {active && <CheckCircle className="h-6" />}
                                 <span>{step}. {label}</span>
                             </li>
                         ))}

@@ -133,11 +133,11 @@ const Employees = () => {
           >
             {mobileFiltersOpen ? (
               <>
-                <X className="w-5 h-5 mr-2" /> Close Filters
+                <X className="h-5 mr-2" /> Close Filters
               </>
             ) : (
               <>
-                <Filter className="w-5 h-5 mr-2" /> Open Filters
+                <Filter className="h-5 mr-2" /> Open Filters
               </>
             )}
           </button>
@@ -158,7 +158,7 @@ const Employees = () => {
                 href={route('employees.create')}
                 className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
               >
-                <Plus className="w-4 h-4 mr-2 my-auto" />
+                <Plus className="h-4 mr-2 my-auto" />
                 <span className='my-auto'>
                 Create
                 </span>
@@ -168,7 +168,7 @@ const Employees = () => {
                 disabled={employees?.length === 0}
                 className="flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
               >
-                <FileText className="w-4 h-4 mr-2 my-auto" />
+                <FileText className="h-4 mr-2 my-auto" />
                 <span className='my-auto'>
                   PDF
                 </span>
@@ -178,7 +178,7 @@ const Employees = () => {
                 disabled={employees?.length === 0}
                 className="inline-flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
               >
-                <FileSpreadsheet className="w-4 h-4 mr-2 my-auto" />
+                <FileSpreadsheet className="h-4 mr-2 my-auto" />
                 <span className='my-auto'>
                   Excel
                 </span>
@@ -264,7 +264,7 @@ const Employees = () => {
                             disabled={processing}
                             className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200 disabled:opacity-50"
                           >
-                            <Check className="w-4 h-4 mr-2" /> Approve
+                            <Check className="h-4 mr-2" /> Approve
                           </button>}
 
                         {(employee.approved !== 'Declined' && roleId !== 3) &&
@@ -273,7 +273,7 @@ const Employees = () => {
                           disabled={processing}
                           className="inline-flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200 disabled:opacity-50"
                         >
-                          <XCircle className="w-4 h-4 mr-2" /> Decline
+                          <XCircle className="h-4 mr-2" /> Decline
                         </button>}
                         </>}
                       </div>

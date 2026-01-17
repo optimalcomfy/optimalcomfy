@@ -50,7 +50,7 @@ const PropertySlider = ({ children, className }) => {
         disabled={page === 0}
         ref={prevButton}
       >
-        <img src={ArrowIcon} alt="Left" className="rotate-180 w-6 h-6 m-auto" />
+        <img src={ArrowIcon} alt="Left" className="rotate-180 h-6 m-auto" />
       </button>
       <div
         ref={slider}
@@ -65,7 +65,7 @@ const PropertySlider = ({ children, className }) => {
         disabled={page === nextLimit}
         ref={nextButton}
       >
-        <img src={ArrowIcon} alt="Right" className="w-6 h-6 m-auto" />
+        <img src={ArrowIcon} alt="Right" className="h-6 m-auto" />
       </button>
     </div>
   );

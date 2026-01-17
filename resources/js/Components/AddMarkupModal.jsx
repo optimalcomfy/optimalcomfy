@@ -124,7 +124,7 @@ const AddMarkupModal = ({ isOpen, onClose, item, itemType }) => {
                                         : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                                 }`}
                             >
-                                <Percent className="w-4 h-4 mr-2" />
+                                <Percent className="h-4 mr-2" />
                                 Percentage
                             </button>
                             <button
@@ -136,7 +136,7 @@ const AddMarkupModal = ({ isOpen, onClose, item, itemType }) => {
                                         : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                                 }`}
                             >
-                                <DollarSign className="w-4 h-4 mr-2" />
+                                <DollarSign className="h-4 mr-2" />
                                 Fixed Amount
                             </button>
                         </div>
@@ -239,7 +239,7 @@ const AddMarkupModal = ({ isOpen, onClose, item, itemType }) => {
                             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                         >
                             {loading ? (
-                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                <Loader2 className="h-4 animate-spin mr-2" />
                             ) : null}
                             Add Markup
                         </button>

@@ -61,11 +61,11 @@ const Index = () => {
           >
             {mobileFiltersOpen ? (
               <>
-                <X className="w-5 h-5 mr-2" /> Close Filters
+                <X className="h-5 mr-2" /> Close Filters
               </>
             ) : (
               <>
-                <Filter className="w-5 h-5 mr-2" /> Open Filters
+                <Filter className="h-5 mr-2" /> Open Filters
               </>
             )}
           </button>
@@ -85,7 +85,7 @@ const Index = () => {
                 href={route('users.create')}
                 className="flex items-center justify-center px-4 py-2 bg-peachDark text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
               >
-                <Plus className="w-4 h-4 mr-2 my-auto" />
+                <Plus className="h-4 mr-2 my-auto" />
                 <span className='my-auto'>Create</span>
               </Link>
             </div>

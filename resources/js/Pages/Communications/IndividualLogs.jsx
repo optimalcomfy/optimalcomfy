@@ -12,22 +12,22 @@ const IndividualLogs = ({ logs }) => {
     const getStatusIcon = (status) => {
         switch (status) {
             case 'sent':
-                return <CheckCircle className="w-4 h-4 text-green-500" />;
+                return <CheckCircle className="h-4 text-green-500" />;
             case 'failed':
-                return <XCircle className="w-4 h-4 text-red-500" />;
+                return <XCircle className="h-4 text-red-500" />;
             default:
-                return <Clock className="w-4 h-4 text-yellow-500" />;
+                return <Clock className="h-4 text-yellow-500" />;
         }
     };
 
     const getTypeIcon = (type) => {
         switch (type) {
             case 'individual_email':
-                return <Mail className="w-4 h-4 text-blue-500" />;
+                return <Mail className="h-4 text-blue-500" />;
             case 'individual_sms':
-                return <MessageSquare className="w-4 h-4 text-green-500" />;
+                return <MessageSquare className="h-4 text-green-500" />;
             default:
-                return <MessageSquare className="w-4 h-4 text-gray-500" />;
+                return <MessageSquare className="h-4 text-gray-500" />;
         }
     };
 
@@ -93,7 +93,7 @@ const IndividualLogs = ({ logs }) => {
                                 href={route('communications.index')}
                                 className="flex items-center text-gray-500 hover:text-gray-700"
                             >
-                                <ArrowLeft className="w-5 h-5 mr-2" />
+                                <ArrowLeft className="h-5 mr-2" />
                                 Back to Communications
                             </Link>
                             <div>
@@ -147,7 +147,7 @@ const IndividualLogs = ({ logs }) => {
                     <div className="flex flex-col md:flex-row gap-4">
                         <div className="flex-1">
                             <div className="relative">
-                                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                <Search className="h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                 <input
                                     type="text"
                                     value={searchTerm}
@@ -210,7 +210,7 @@ const IndividualLogs = ({ logs }) => {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div>
                                                     <div className="flex items-center">
-                                                        <User className="w-4 h-4 text-gray-400 mr-2" />
+                                                        <User className="h-4 text-gray-400 mr-2" />
                                                         <div className="text-sm font-medium text-gray-900">
                                                             {log.user?.name || log.metadata?.recipient_name || 'Custom Recipient'}
                                                         </div>
@@ -265,7 +265,7 @@ const IndividualLogs = ({ logs }) => {
                                                     }}
                                                     className="text-blue-600 hover:text-blue-900"
                                                 >
-                                                    <Eye className="w-4 h-4" />
+                                                    <Eye className="h-4" />
                                                 </button>
                                             </td>
                                         </tr>

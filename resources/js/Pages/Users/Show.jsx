@@ -71,9 +71,9 @@ const Show = ({ user }) => {
 
   // Only include files that exist
   const files = [
-    user.id_verification && {
+    user.id_front && {
       name: 'ID Verification',
-      value: `/storage/${user.id_verification}`,
+      value: `/storage/${user.id_front}`,
       icon: <FiShield className="text-[#d15623]" />
     },
     user.profile_picture && {

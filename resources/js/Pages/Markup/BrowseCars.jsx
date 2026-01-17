@@ -372,19 +372,19 @@ const BrowseCars = () => {
                                             {/* Car Specifications */}
                                             <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
                                                 <div className="flex items-center">
-                                                    <Fuel className="w-4 h-4 mr-1 text-gray-400" />
+                                                    <Fuel className="h-4 mr-1 text-gray-400" />
                                                     <span>{getFuelTypeLabel(car.fuel_type)}</span>
                                                 </div>
                                                 <div className="flex items-center">
-                                                    <Calendar className="w-4 h-4 mr-1 text-gray-400" />
+                                                    <Calendar className="h-4 mr-1 text-gray-400" />
                                                     <span>{getTransmissionLabel(car.transmission)}</span>
                                                 </div>
                                                 <div className="flex items-center">
-                                                    <Users className="w-4 h-4 mr-1 text-gray-400" />
+                                                    <Users className="h-4 mr-1 text-gray-400" />
                                                     <span>{car.seats} seats</span>
                                                 </div>
                                                 <div className="flex items-center">
-                                                    <Car className="w-4 h-4 mr-1 text-gray-400" />
+                                                    <Car className="h-4 mr-1 text-gray-400" />
                                                     <span>{car.doors} doors</span>
                                                 </div>
                                             </div>

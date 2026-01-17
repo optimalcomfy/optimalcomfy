@@ -797,7 +797,7 @@ const PropertyExtendPayForm = () => {
                         className="w-full p-3 rounded-lg border border-gray-300"
                       />
                       {referralData.isLoading && (
-                        <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin" />
+                        <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 animate-spin" />
                       )}
                       {referralData.isValid && (
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500">
@@ -817,7 +817,7 @@ const PropertyExtendPayForm = () => {
 
                   <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                     <div className="flex items-center gap-3 text-blue-800">
-                      <Shield className="w-5 h-5" />
+                      <Shield className="h-5" />
                       <div className="text-sm">
                         <p className="font-medium">Your payment is protected</p>
                       </div>
@@ -866,12 +866,12 @@ const PropertyExtendPayForm = () => {
                       >
                         {processing ? (
                           <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <Loader2 className="h-5 animate-spin" />
                             Processing extension...
                           </>
                         ) : (
                           <>
-                            <CreditCard className="w-5 h-5" />
+                            <CreditCard className="h-5" />
                             Pay with M-Pesa
                           </>
                         )}
@@ -888,12 +888,12 @@ const PropertyExtendPayForm = () => {
                       >
                         {processing ? (
                           <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <Loader2 className="h-5 animate-spin" />
                             Redirecting to Pesapal...
                           </>
                         ) : (
                           <>
-                            <CreditCard className="w-5 h-5" />
+                            <CreditCard className="h-5" />
                             Pay with Pesapal
                           </>
                         )}

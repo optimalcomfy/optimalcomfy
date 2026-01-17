@@ -34,7 +34,7 @@ const Analytics = ({ stats, messageTrends, topTemplates, recentActivity, timeRan
                     )}
                 </div>
                 <div className={`p-3 rounded-full ${trend ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
-                    <Icon className="w-6 h-6" />
+                    <Icon className="h-6" />
                 </div>
             </div>
         </div>
@@ -64,7 +64,7 @@ const Analytics = ({ stats, messageTrends, topTemplates, recentActivity, timeRan
                                 <option value="1y">Last year</option>
                             </select>
                             <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                                <Download className="w-4 h-4" />
+                                <Download className="h-4" />
                                 Export
                             </button>
                         </div>
@@ -195,7 +195,7 @@ const Analytics = ({ stats, messageTrends, topTemplates, recentActivity, timeRan
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-semibold text-gray-900">{template.total_recipients}</p>
+                                            <p className="font-semibold text-gray-900 text-xl">{template.total_recipients}</p>
                                             <p className="text-xs text-gray-500">recipients</p>
                                         </div>
                                     </div>

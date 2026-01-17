@@ -266,7 +266,7 @@ const CreateBooking = () => {
         {showSuccess && (
           <div className="fixed top-4 right-4 z-50 animate-fade-in-down">
             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl shadow-lg flex items-center">
-              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               <span>Booking created successfully!</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Star, X, Loader2, MapPin, Calendar, User, CreditCard, Eye, Check, Mail, Shield, Phone } from 'lucide-react';
+import { ArrowLeft, Star, X, Loader2, MapPin, Calendar, User, CreditCard, Eye, Check, Mail, Shield, Phone, Clock, Zap } from 'lucide-react';
 import { Link, Head, router, usePage } from "@inertiajs/react";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -36,7 +36,7 @@ const PropertyBookingForm = () => {
     check_out_date: checkOutDate || '',
     total_price: 0,
     nights: 0,
-    status: 'Booked',
+    status: 'pending',
     variation_id: variationId || null,
 
     // User fields
@@ -57,6 +57,9 @@ const PropertyBookingForm = () => {
     is_registered: false,
     user_type: 'guest'
   });
+
+  // Check if property allows instant booking
+  const isInstantBooking = property.default_available === 1 || property.default_available === true;
 
   // Location suggestions state
   const [locationSuggestions, setLocationSuggestions] = useState([]);
@@ -150,6 +153,15 @@ const PropertyBookingForm = () => {
     Swal.fire({
       icon: 'error',
       title: 'Booking Conflict',
+      text: message,
+      confirmButtonColor: '#f97316',
+    });
+  };
+
+  const showSuccessAlert = (title, message) => {
+    Swal.fire({
+      icon: 'success',
+      title: title,
       text: message,
       confirmButtonColor: '#f97316',
     });
@@ -348,7 +360,6 @@ const PropertyBookingForm = () => {
     }
   }, [auth])
 
-  // Handle Pesapal payment submission
   const handlePesapalSubmit = async (e) => {
     e.preventDefault();
     setProcessing(true);
@@ -360,27 +371,49 @@ const PropertyBookingForm = () => {
     }
 
     try {
+      let userId = auth.user?.id;
+
+      if (userId) {
+        updateData('user_id', userId);
+      }
+
       const bookingData = {
         ...data,
         referral_discount: referralData.discountAmount,
         final_price: finalPrice,
-        payment_method: 'pesapal'
+        payment_method: 'pesapal',
+        phone: data.phone || auth.user?.phone,
+        status: isInstantBooking ? 'Booked' : 'pending'
       };
 
       router.post(route('bookings.store'), bookingData, {
-        onSuccess: () => {
-          window.open(result.redirect_url, 'pesapal_payment', 'width=800,height=600,scrollbars=yes');
-
-          Swal.fire({
-            icon: 'success',
-            title: 'Redirecting to Pesapal',
-            text: 'Please complete your payment in the new window.',
-            confirmButtonColor: '#f97316',
-          });
+        onSuccess: (response) => {
+          if (isInstantBooking) {
+            if (response.props.redirect_url) {
+              window.open(response.props.redirect_url, 'pesapal_payment', 'width=800,height=600,scrollbars=yes');
+              
+              showSuccessAlert(
+                'Redirecting to Pesapal',
+                'Please complete your payment in the new window.'
+              );
+            }
+          } else {
+            showSuccessAlert(
+              'Booking Request Sent!',
+              'Your booking request has been sent to the host. You will be notified once they confirm availability.'
+            ).then(() => {
+              window.location.href = route('dashboard');
+            });
+          }
         },
         onError: (errors) => {
           console.error('Booking creation failed:', errors);
-          showErrorAlert('Booking creation failed. Please try again.');
+          
+          if (errors.dates) {
+            showErrorAlert(errors.dates);
+          } else {
+            showErrorAlert('Booking creation failed. Please try again.');
+          }
         }
       });
     } catch (error) {
@@ -413,16 +446,40 @@ const PropertyBookingForm = () => {
         ...data,
         referral_discount: referralData.discountAmount,
         final_price: finalPrice,
-        payment_method: 'mpesa'
+        payment_method: 'mpesa',
+        phone: data.phone || auth.user?.phone,
+        status: isInstantBooking ? 'Booked' : 'pending'
       };
 
       router.post(route('bookings.store'), bookingData, {
-        onSuccess: () => {
-          // Handle success
+        onSuccess: (response) => {
+          if (isInstantBooking) {
+            // Instant booking - show payment success
+            showSuccessAlert(
+              'Booking Confirmed!',
+              'Your booking has been confirmed and payment is being processed.'
+            ).then(() => {
+              window.location.href = route('dashboard');
+            });
+          } else {
+            // Request-to-book - show pending confirmation
+            showSuccessAlert(
+              'Booking Request Sent!',
+              'Your booking request has been sent to the host for confirmation. You will receive an email/SMS once approved.'
+            ).then(() => {
+              window.location.href = route('dashboard');
+            });
+          }
         },
         onError: (errors) => {
           console.error('Booking creation failed:', errors);
-          showErrorAlert('Booking creation failed. Please try again.');
+          
+          // Check for date conflict error
+          if (errors.dates) {
+            showErrorAlert(errors.dates);
+          } else {
+            showErrorAlert('Booking creation failed. Please try again.');
+          }
         }
       });
     } catch (error) {
@@ -482,9 +539,38 @@ const PropertyBookingForm = () => {
             onClick={() => window.history.back()}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="h-6" />
           </button>
-          <h1 className="text-2xl font-semibold">Request to book</h1>
+          <h1 className="text-2xl font-semibold">
+            {isInstantBooking ? 'Complete Your Booking' : 'Request to Book'}
+          </h1>
+        </div>
+
+        {/* Booking Type Banner */}
+        <div className={`mb-6 p-4 rounded-xl border ${isInstantBooking ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+          <div className="flex items-center gap-3">
+            {isInstantBooking ? (
+              <>
+                <Zap className="h-5 text-green-600" />
+                <div>
+                  <p className="font-medium text-green-800">Instant Booking Available</p>
+                  <p className="text-sm text-green-700">
+                    Book and pay immediately. Your booking will be confirmed instantly.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <Clock className="h-5 text-amber-600" />
+                <div>
+                  <p className="font-medium text-amber-800">Request to Book Required</p>
+                  <p className="text-sm text-amber-700">
+                    Request booking first. Host will confirm availability before you pay.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row justify-center lg:grid-cols-2 gap-8">
@@ -684,43 +770,63 @@ const PropertyBookingForm = () => {
                 <StepIndicator
                   step={3}
                   currentStep={currentStep}
-                  title="Confirm and pay"
+                  title={isInstantBooking ? "Confirm and Pay" : "Review and Request"}
                 />
 
                 <div className="space-y-6">
-                  {/* Payment Method Selection */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Payment Method</label>
-                    <div className="flex flex-col lg:flex-row gap-2">
-                      {/* M-Pesa Option */}
-                      <div
-                        className={`p-3 rounded-lg cursor-pointer transition-colors border ${paymentMethod === 'mpesa'
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:bg-gray-50'
-                          }`}
-                        onClick={() => setPaymentMethod('mpesa')}
-                      >
-                        <div className="flex items-center gap-3">
-                          <img src="/image/mpesa.jpg" className="h-5" alt="M-Pesa" />
-                          <span className="font-medium">M-Pesa</span>
-                        </div>
+                  {/* Booking Type Summary */}
+                  <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Booking Type</p>
+                        <p className="text-sm text-gray-600">
+                          {isInstantBooking ? 
+                            'Instant Booking - Confirm & Pay Now' : 
+                            'Request to Book - Await Host Confirmation'
+                          }
+                        </p>
                       </div>
-
-                      {/* Pesapal Option */}
-                      <div
-                        className={`p-3 rounded-lg cursor-pointer transition-colors border ${paymentMethod === 'pesapal'
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:bg-gray-50'
-                          }`}
-                        onClick={() => setPaymentMethod('pesapal')}
-                      >
-                        <div className="flex items-center gap-3">
-                          <img src="/image/pesapal.png" className="h-5" alt="Pesapal" />
-                          <span className="font-medium">Pesapal</span>
-                        </div>
+                      <div className={`px-3 py-1 rounded-full text-sm font-medium ${isInstantBooking ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                        {isInstantBooking ? 'Instant' : 'Request'}
                       </div>
                     </div>
                   </div>
+
+                  {/* Payment Method Selection - Only show for instant booking */}
+                  {isInstantBooking && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Payment Method</label>
+                      <div className="flex flex-col lg:flex-row gap-2">
+                        {/* M-Pesa Option */}
+                        <div
+                          className={`p-3 rounded-lg cursor-pointer transition-colors border ${paymentMethod === 'mpesa'
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 hover:bg-gray-50'
+                            }`}
+                          onClick={() => setPaymentMethod('mpesa')}
+                        >
+                          <div className="flex items-center gap-3">
+                            <img src="/image/mpesa.jpg" className="h-5" alt="M-Pesa" />
+                            <span className="font-medium">M-Pesa</span>
+                          </div>
+                        </div>
+
+                        {/* Pesapal Option */}
+                        <div
+                          className={`p-3 rounded-lg cursor-pointer transition-colors border ${paymentMethod === 'pesapal'
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 hover:bg-gray-50'
+                            }`}
+                          onClick={() => setPaymentMethod('pesapal')}
+                        >
+                          <div className="flex items-center gap-3">
+                            <img src="/image/pesapal.png" className="h-5" alt="Pesapal" />
+                            <span className="font-medium">Pesapal</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Referral Code Section */}
                   <div>
@@ -734,7 +840,7 @@ const PropertyBookingForm = () => {
                         className="w-full p-3 rounded-lg border border-gray-300"
                       />
                       {referralData.isLoading && (
-                        <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin" />
+                        <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 animate-spin" />
                       )}
                       {referralData.isValid && (
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500">
@@ -754,18 +860,117 @@ const PropertyBookingForm = () => {
 
                   <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                     <div className="flex items-center gap-3 text-blue-800">
-                      <Shield className="w-5 h-5" />
+                      <Shield className="h-5" />
                       <div className="text-sm">
-                        <p className="font-medium">Your payment is protected</p>
+                        <p className="font-medium">Your {isInstantBooking ? 'payment' : 'booking request'} is protected</p>
                       </div>
                     </div>
                   </div>
 
-                  {paymentMethod === 'mpesa' && (
+                  {isInstantBooking ? (
+                    // Instant Booking Forms
+                    <>
+                      {paymentMethod === 'mpesa' && (
+                        <form onSubmit={handleMpesaSubmit}>
+                          <div className="mb-4">
+                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                              Phone Number
+                            </label>
+                            <div className="relative flex gap-1">
+                              <div className="border rounded-tl-lg px-1 border-gray-300 rounded-bl-lg inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                                +254
+                              </div>
+                              <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                className="pl-14 w-full px-4 py-3 rounded-tr-lg border-gray-300 rounded-br-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition-all"
+                                placeholder="712345678"
+                                pattern="[0-9]{9}"
+                                maxLength="9"
+                                required
+                                inputMode="numeric"
+                                value={data.phone.replace(/^254/, '')}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/\D/g, '');
+
+                                  setData({
+                                    ...data,
+                                    phone: '254' + value
+                                  });
+                                  e.target.value = value;
+                                }}
+                              />
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">Enter your 9-digit phone number after 254</p>
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={processing}
+                            className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                          >
+                            {processing ? (
+                              <>
+                                <Loader2 className="h-5 animate-spin" />
+                                Processing booking...
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className="h-5" />
+                                Pay with M-Pesa
+                              </>
+                            )}
+                          </button>
+                        </form>
+                      )}
+
+                      {paymentMethod === 'pesapal' && (
+                        <form onSubmit={handlePesapalSubmit}>
+                          <button
+                            type="submit"
+                            disabled={processing}
+                            className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                          >
+                            {processing ? (
+                              <>
+                                <Loader2 className="h-5 animate-spin" />
+                                Redirecting to Pesapal...
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className="h-5" />
+                                Pay with Pesapal
+                              </>
+                            )}
+                          </button>
+                          <p className="text-sm text-gray-600 mt-2 text-center">
+                            You will be redirected to Pesapal to complete your payment securely.
+                          </p>
+                        </form>
+                      )}
+                    </>
+                  ) : (
+                    // Request to Book Form
                     <form onSubmit={handleMpesaSubmit}>
                       <div className="mb-4">
+                        <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                          Message to Host (Optional)
+                        </label>
+                        <textarea
+                          id="message"
+                          name="message"
+                          rows="3"
+                          className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition-all"
+                          placeholder="Tell the host about your trip, ask questions, or provide additional information..."
+                          value={data.message}
+                          onChange={(e) => updateData('message', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="mb-4">
                         <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                          Phone Number
+                          Contact Phone Number
                         </label>
                         <div className="relative flex gap-1">
                           <div className="border rounded-tl-lg px-1 border-gray-300 rounded-bl-lg inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
@@ -793,50 +998,28 @@ const PropertyBookingForm = () => {
                             }}
                           />
                         </div>
-                        <p className="mt-1 text-xs text-gray-500">Enter your 9-digit phone number after 254</p>
+                        <p className="mt-1 text-xs text-gray-500">Host will contact you on this number</p>
                       </div>
 
                       <button
                         type="submit"
                         disabled={processing}
-                        className="w-full py-4 bg-gradient-to-r from-orange-400 to-rose-400 hover:from-orange-500 hover:to-rose-500 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
                       >
                         {processing ? (
                           <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Processing booking...
+                            <Loader2 className="h-5 animate-spin" />
+                            Sending request...
                           </>
                         ) : (
                           <>
-                            <CreditCard className="w-5 h-5" />
-                            Pay with M-Pesa
-                          </>
-                        )}
-                      </button>
-                    </form>
-                  )}
-
-                  {paymentMethod === 'pesapal' && (
-                    <form onSubmit={handlePesapalSubmit}>
-                      <button
-                        type="submit"
-                        disabled={processing}
-                        className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {processing ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Redirecting to Pesapal...
-                          </>
-                        ) : (
-                          <>
-                            <CreditCard className="w-5 h-5" />
-                            Pay with Pesapal
+                            <Mail className="h-5" />
+                            Request to Book
                           </>
                         )}
                       </button>
                       <p className="text-sm text-gray-600 mt-2 text-center">
-                        You will be redirected to Pesapal to complete your payment securely.
+                        Your booking request will be sent to the host for confirmation. You'll be notified once they respond.
                       </p>
                     </form>
                   )}
@@ -861,8 +1044,21 @@ const PropertyBookingForm = () => {
                 <div className="flex-1">
                   <p className="text-sm text-gray-600 mb-1">{property.type}</p>
                   <h3 className="font-semibold text-lg mb-2">{property.property_name}</h3>
+                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${property.default_available ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                    {property.default_available ? (
+                      <>
+                        <Zap className="w-3 h-3" />
+                        Instant Booking
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="w-3 h-3" />
+                        Request to Book
+                      </>
+                    )}
+                  </div>
                   {selectedVariation && (
-                    <p className="text-sm text-gray-600">{selectedVariation.type}</p>
+                    <p className="text-sm text-gray-600 mt-1">{selectedVariation.type}</p>
                   )}
                 </div>
               </div>
@@ -929,6 +1125,38 @@ const PropertyBookingForm = () => {
                   </div>
                 </div>
               )}
+
+              {/* Booking Process Info */}
+              <div className={`p-4 rounded-xl border ${isInstantBooking ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+                <div className="flex items-center gap-3">
+                  {isInstantBooking ? (
+                    <>
+                      <Zap className="h-5 text-green-600" />
+                      <div className="text-sm">
+                        <p className="font-medium text-green-800">Instant Booking Process</p>
+                        <p className="text-green-700 mt-1">
+                          1. Complete payment<br/>
+                          2. Booking confirmed immediately<br/>
+                          3. Receive confirmation details
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-5 text-amber-600" />
+                      <div className="text-sm">
+                        <p className="font-medium text-amber-800">Request to Book Process</p>
+                        <p className="text-amber-700 mt-1">
+                          1. Submit booking request<br/>
+                          2. Host confirms availability<br/>
+                          3. You complete payment<br/>
+                          4. Booking confirmed
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
 
               {/* Rare Find Badge */}
               <div className="p-4 bg-pink-50 rounded-xl border border-pink-200">

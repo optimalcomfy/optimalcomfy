@@ -42,7 +42,12 @@ class StorePropertyRequest extends FormRequest
             'block' => 'nullable',
             'house_number' => 'nullable',
             'lock_box_location' => 'nullable',
-            'wifi_name' => 'nullable'
+            'wifi_name' => 'nullable',
+            'default_available' => 'nullable',
+
+            'rooms' => 'nullable|integer|min:0',
+            'beds' => 'nullable|integer|min:0',
+            'baths' => 'nullable|integer|min:0'
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\MorphMany; 
 use Carbon\Carbon;
 
 class Booking extends Model
@@ -62,6 +63,12 @@ class Booking extends Model
 
         static::creating(function ($booking) {
             $booking->number = self::generateUniqueNumber();
+        });
+
+        static::created(function ($booking) {
+            if (in_array($booking->status, ['paid', 'confirmed', 'pending'])) {
+                self::createChecklistForBooking($booking);
+            }
         });
     }
 
@@ -354,5 +361,49 @@ class Booking extends Model
         }
 
         return 0;
+    }
+
+
+    protected static function createChecklistForBooking(Booking $booking)
+    {
+        try {
+            $template = \App\Models\ChecklistTemplate::where('type', 'property')
+                ->where('is_active', true)
+                ->first();
+            
+            if ($template) {
+                $checklist = \App\Models\ChecklistResponse::create([
+                    'checklistable_type' => get_class($booking),
+                    'checklistable_id' => $booking->id,
+                    'checklist_template_id' => $template->id,
+                    'status' => 'pending',
+                ]);
+                
+                foreach ($template->items as $item) {
+                    \App\Models\ChecklistResponseItem::create([
+                        'checklist_response_id' => $checklist->id,
+                        'checklist_item_id' => $item->id,
+                        'is_checked' => false,
+                    ]);
+                }
+                
+                return $checklist;
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to create checklist for booking: ' . $e->getMessage());
+        }
+        
+        return null;
+    }
+
+
+    public function checklists(): MorphMany
+    {
+        return $this->morphMany(ChecklistResponse::class, 'checklistable');
+    }
+    
+    public function activeChecklist()
+    {
+        return $this->checklists()->where('status', '!=', 'completed')->first();
     }
 }

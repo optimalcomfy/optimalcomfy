@@ -14,7 +14,11 @@ import {
   Check, 
   X,
   Calendar,
-  Gauge
+  Gauge,
+  Zap,
+  Clock,
+  Truck,
+  Package
 } from 'lucide-react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import './Edit.css'; // Import custom CSS
@@ -61,11 +65,15 @@ const EditCar = ({ car, categories, company }) => {
     interior_color: car.interior_color || '',
     host_earnings: car.host_earnings || '',
     price_per_day: car.price_per_day || '',
+    minimum_rental_days: car.minimum_rental_days || 1, // Added missing field
+    delivery_toggle: car.delivery_toggle || false, // Added missing field
+    delivery_fee: car.delivery_fee || '', // Added missing field
     description: car.description || '',
     is_available: car.is_available || false,
     location_address: car.location_address || '',
     latitude: car.latitude || '',
     longitude: car.longitude || '',
+    default_available: car.default_available || false,
   });
 
   const [locationAddressSuggestions, setlocationAddressSuggestions] = useState([]);
@@ -359,7 +367,159 @@ const EditCar = ({ car, categories, company }) => {
                 </div>
               </div>
   
-              {/* Section 4: Pricing and Availability */}
+              {/* Section 4: Rental Details */}
+              <div className="form-section">
+                <h3 className="section-title">
+                  <Package className="section-icon" />
+                  Rental Details
+                </h3>
+                
+                <div className="rental-details-grid">
+                  <div className="form-field">
+                    <label className="form-label">
+                      <Calendar className="form-field-icon" />
+                      Minimum Rental Days*
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={data.minimum_rental_days}
+                      onChange={(e) => setData('minimum_rental_days', e.target.value)}
+                      className="form-input"
+                      required
+                    />
+                    <div className="field-help-text">
+                      Minimum number of days guests must book
+                    </div>
+                    {errors.minimum_rental_days && <div className="form-error">{errors.minimum_rental_days}</div>}
+                  </div>
+                  
+                  <div className="form-field">
+                    <label className="form-label">
+                      <Truck className="form-field-icon" />
+                      Delivery Options
+                    </label>
+                    <div className="delivery-toggle-container">
+                      <label className="delivery-toggle-label">
+                        <span className="delivery-toggle-text">Offer Delivery Service</span>
+                        <div className="relative">
+                          <input
+                            type="checkbox"
+                            checked={data.delivery_toggle}
+                            onChange={(e) => {
+                              setData('delivery_toggle', e.target.checked);
+                              if (!e.target.checked) {
+                                setData('delivery_fee', '');
+                              }
+                            }}
+                            className="sr-only"
+                          />
+                          <div className={`toggle-track ${data.delivery_toggle ? 'toggle-track-active' : 'toggle-track-inactive'}`}>
+                            <div className={`toggle-thumb ${data.delivery_toggle ? 'toggle-thumb-active' : 'toggle-thumb-inactive'}`}></div>
+                          </div>
+                        </div>
+                      </label>
+                      <p className="delivery-toggle-description">
+                        Enable if you offer delivery of the car to customers
+                      </p>
+                    </div>
+                    {errors.delivery_toggle && <div className="form-error">{errors.delivery_toggle}</div>}
+                  </div>
+                  
+                  {data.delivery_toggle && (
+                    <div className="form-field">
+                      <label className="form-label">
+                        <DollarSign className="form-field-icon" />
+                        Delivery Fee (KES)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={data.delivery_fee}
+                        onChange={(e) => setData('delivery_fee', e.target.value)}
+                        className="form-input"
+                        placeholder="Enter delivery fee"
+                        required={data.delivery_toggle}
+                      />
+                      <div className="field-help-text">
+                        Fee for delivering the car to customer's location
+                      </div>
+                      {errors.delivery_fee && <div className="form-error">{errors.delivery_fee}</div>}
+                    </div>
+                  )}
+                </div>
+              </div>
+  
+              {/* Section 5: Booking Settings */}
+              <div className="form-section">
+                <h3 className="section-title">
+                  <Zap className="section-icon" />
+                  Booking Settings
+                </h3>
+                
+                <div className="booking-settings-section">
+                  <div className="form-field">
+                    <div className="flex items-start">
+                      <div className="flex items-center h-5">
+                        <input
+                          id="default_available"
+                          name="default_available"
+                          type="checkbox"
+                          checked={data.default_available}
+                          onChange={(e) => setData('default_available', e.target.checked)}
+                          className="h-4 text-green-600 focus:ring-green-500 border-gray-500 rounded"
+                        />
+                      </div>
+                      <div className="ml-3">
+                        <label htmlFor="default_available" className="font-medium text-gray-700 block">
+                          Enable Instant Booking
+                        </label>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Allow guests to book and pay immediately without waiting for your approval.
+                          Uncheck this box if you want to manually approve each booking request.
+                        </p>
+                      </div>
+                    </div>
+                    {errors.default_available && <div className="form-error">{errors.default_available}</div>}
+                  </div>
+                  
+                  <div className={`booking-status-info ${data.default_available ? 'instant-booking' : 'request-booking'}`}>
+                    <div className="flex items-start">
+                      {data.default_available ? (
+                        <>
+                          <Zap className="h-5 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-green-800">Instant Booking Enabled</p>
+                            <p className="text-sm text-green-700 mt-1">
+                              Guests can book and pay immediately. You will be notified of new bookings.
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="h-5 text-amber-600 mt-0.5 mr-2 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-amber-800">Request to Book Enabled</p>
+                            <p className="text-sm text-amber-700 mt-1">
+                              Guests must request to book. You will need to manually approve each booking before payment.
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="booking-settings-note">
+                    <p className="text-xs text-gray-500">
+                      <span className="font-medium">Note:</span> This setting controls whether guests can book immediately 
+                      or need to wait for your approval. Changing this setting affects all future bookings.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 6: Pricing and Availability */}
               <div className="form-section">
                 <h3 className="section-title">
                   <DollarSign className="section-icon" />
@@ -424,7 +584,7 @@ const EditCar = ({ car, categories, company }) => {
                 </div>
               </div>
               
-              {/* Section 5: Location */}
+              {/* Section 7: Location */}
               <div className="form-section">
                 <h3 className="section-title">
                   <MapPin className="section-icon" />
@@ -467,7 +627,7 @@ const EditCar = ({ car, categories, company }) => {
                 </div>
               </div>
               
-              {/* Section 6: Description */}
+              {/* Section 8: Description */}
               <div className="form-section">
                 <h3 className="section-title">
                   <Info className="section-icon" />

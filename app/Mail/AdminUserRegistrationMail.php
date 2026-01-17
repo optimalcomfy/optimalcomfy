@@ -5,58 +5,56 @@ namespace App\Mail;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Storage;
 
 class AdminUserRegistrationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $user;
-    public $cvPath;
-    public $coverLetterPath;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(User $user, $cvPath = null, $coverLetterPath = null)
+    public function __construct(User $user)
     {
         $this->user = $user;
-        $this->cvPath = $cvPath;
-        $this->coverLetterPath = $coverLetterPath;
     }
 
     /**
-     * Build the message.
+     * Get the message envelope.
      */
-    public function build()
+    public function envelope(): Envelope
     {
-        $email = $this->subject('New User Registration')
-            ->view('emails.admin_user_registration')
-            ->with([
-                'user' => $this->user,
-            ]);
-    
-        // Attach CV if available
-        if ($this->cvPath && file_exists($this->cvPath)) {
-            $email->attach($this->cvPath, [
-                'as' => 'CV_' . $this->user->name . '.' . pathinfo($this->cvPath, PATHINFO_EXTENSION),
-                'mime' => mime_content_type($this->cvPath),
-            ]);
-        }
-    
-        // Attach Cover Letter if available
-        if ($this->coverLetterPath && file_exists($this->coverLetterPath)) {
-            $email->attach($this->coverLetterPath, [
-                'as' => 'GoodConduct_' . $this->user->name . '.' . pathinfo($this->coverLetterPath, PATHINFO_EXTENSION),
-                'mime' => mime_content_type($this->coverLetterPath),
-            ]);
-        }
-    
-        return $email;
+        return new Envelope(
+            subject: 'New User Registration - ' . $this->user->name,
+        );
     }
-    
-    
-}
 
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.admin-user-registration',
+            with: [
+                'user' => $this->user,
+                'createdAt' => $this->user->created_at->format('Y-m-d H:i:s'),
+                'userType' => $this->user->role_id == 2 ? 'Host' : ($this->user->role_id == 3 ? 'Guest' : 'Unknown'),
+            ],
+        );
+    }
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [];
+    }
+}

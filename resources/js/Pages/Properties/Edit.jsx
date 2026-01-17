@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useForm, router, usePage } from "@inertiajs/react";
 import Layout from "@/Layouts/layout/layout.jsx";
-import { MapPin, Wifi, Key, Utensils, Sparkles, Phone } from 'lucide-react';
+import { 
+  MapPin, 
+  Wifi, 
+  Key, 
+  Utensils, 
+  Sparkles, 
+  Phone, 
+  CheckCircle, 
+  Clock,
+  DoorClosed,
+  Bed,
+  Bath,
+  Users,
+  Baby,
+  Home
+} from 'lucide-react';
 
 const EditProperty = ({ property, errors }) => {
   const [existingImages, setExistingImages] = useState(
@@ -16,10 +31,14 @@ const EditProperty = ({ property, errors }) => {
   const { data, setData, processing } = useForm({
     property_name: property.property_name,
     type: property.type,
-    amount: property.amount, // Calculate original amount
+    amount: property.amount,
     price_per_night: property.price_per_night,
     max_adults: property.max_adults,
     max_children: property.max_children,
+    total_rooms: property.total_rooms || 1,
+    rooms: property.rooms || 1, // Added missing field
+    beds: property.beds || 1, // Added missing field
+    baths: property.baths || 1, // Added missing field
     status: property.status,
     location: property.location || "",
     wifi_password: property.wifi_password || "",
@@ -32,6 +51,7 @@ const EditProperty = ({ property, errors }) => {
     house_number: property.house_number || "",
     lock_box_location: property.lock_box_location || "",
     wifi_name: property.wifi_name || "",
+    default_available: property.default_available || false,
   });
 
   // Calculate host earnings whenever amount changes
@@ -47,6 +67,14 @@ const EditProperty = ({ property, errors }) => {
       setData('price_per_night', "");
     }
   }, [data.amount, company.percentage]);
+
+  // Update total_rooms when rooms or beds change
+  useEffect(() => {
+    const bedsValue = parseInt(data.beds) || 0;
+    const roomsValue = parseInt(data.rooms) || 0;
+    const totalRoomsValue = Math.max(bedsValue, roomsValue);
+    setData('total_rooms', totalRoomsValue);
+  }, [data.beds, data.rooms]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -113,9 +141,9 @@ const EditProperty = ({ property, errors }) => {
       <div className="max-w-4xl bg-white p-6 rounded-lg shadow-md">
         <h1 className="text-2xl font-bold mb-6 text-gray-800">Edit Property Listing</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Property Basic Information */}
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Property Basic Information */}
-            <div className="space-y-6 flex-1">
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Property Name</label>
                 <input
@@ -147,7 +175,7 @@ const EditProperty = ({ property, errors }) => {
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-2" />
+                    <MapPin className="h-4 mr-2" />
                     <span>Location</span>
                   </div>
                 </label>
@@ -183,12 +211,137 @@ const EditProperty = ({ property, errors }) => {
               </div>
             </div>
 
-            {/* Pricing Information */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-medium text-gray-800 mb-3">Pricing Details</h3>
+            {/* Property Details Section */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-800">Property Details</h3>
               
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Listing Price (KES)</label>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                    <DoorClosed className="h-4 mr-1 text-blue-500" />
+                    Rooms
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={data.rooms}
+                    onChange={(e) => setData("rooms", e.target.value)}
+                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
+                  />
+                  {errors.rooms && <p className="text-red-500 text-sm mt-1">{errors.rooms}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                    <Bed className="h-4 mr-1 text-green-500" />
+                    Beds
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={data.beds}
+                    onChange={(e) => setData("beds", e.target.value)}
+                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
+                  />
+                  {errors.beds && <p className="text-red-500 text-sm mt-1">{errors.beds}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                    <Bath className="h-4 mr-1 text-purple-500" />
+                    Baths
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    step="0.5"
+                    value={data.baths}
+                    onChange={(e) => setData("baths", e.target.value)}
+                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
+                  />
+                  {errors.baths && <p className="text-red-500 text-sm mt-1">{errors.baths}</p>}
+                </div>
+              </div>
+
+              {/* Capacity Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                    <Users className="h-4 mr-1 text-orange-500" />
+                    Max Adults
+                  </label>
+                  <input
+                    type="number"
+                    value={data.max_adults}
+                    onChange={(e) => setData("max_adults", e.target.value)}
+                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
+                    min="1"
+                  />
+                  {errors.max_adults && <p className="text-red-500 text-sm mt-1">{errors.max_adults}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                    <Baby className="h-4 mr-1 text-pink-500" />
+                    Max Children
+                  </label>
+                  <input
+                    type="number"
+                    value={data.max_children}
+                    onChange={(e) => setData("max_children", e.target.value)}
+                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
+                    min="0"
+                  />
+                  {errors.max_children && <p className="text-red-500 text-sm mt-1">{errors.max_children}</p>}
+                </div>
+              </div>
+
+              {/* Property Summary */}
+              <div className="bg-blue-50 p-3 rounded-lg mt-2">
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div>
+                    <div className="flex items-center justify-center text-blue-600 mb-1">
+                      <DoorClosed className="h-4" />
+                    </div>
+                    <div className="text-sm font-semibold">{data.rooms}</div>
+                    <div className="text-xs text-gray-600">Rooms</div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-center text-green-600 mb-1">
+                      <Bed className="h-4" />
+                    </div>
+                    <div className="text-sm font-semibold">{data.beds}</div>
+                    <div className="text-xs text-gray-600">Beds</div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-center text-purple-600 mb-1">
+                      <Bath className="h-4" />
+                    </div>
+                    <div className="text-sm font-semibold">{data.baths}</div>
+                    <div className="text-xs text-gray-600">Baths</div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-center text-orange-600 mb-1">
+                      <Users className="h-4" />
+                    </div>
+                    <div className="text-sm font-semibold">{data.max_adults}</div>
+                    <div className="text-xs text-gray-600">Adults</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pricing Information */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="font-medium text-gray-800 mb-3">Pricing Details</h3>
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Your Desired Earnings (KES)</label>
                 <input
                   type="number"
                   value={data.amount}
@@ -196,13 +349,6 @@ const EditProperty = ({ property, errors }) => {
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
                 />
                 {errors.amount && <p className="text-red-500 text-sm mt-1">{errors.amount}</p>}
-              </div>
-
-              <div className="bg-white p-3 rounded-md border border-gray-200 mb-4">
-                <div className="flex justify-between text-sm font-medium text-gray-800">
-                  <span>You'll receive:</span>
-                  <span className="text-green-600">KES {data.amount}</span>
-                </div>
               </div>
 
               <div>
@@ -213,35 +359,81 @@ const EditProperty = ({ property, errors }) => {
                   readOnly
                   className="w-full border border-gray-300 bg-gray-100 px-4 py-2 rounded-lg cursor-not-allowed"
                 />
-                <p className="text-xs text-gray-500 mt-1">This is the price guests will pay after platform fees</p>
+                <p className="text-xs text-gray-500 mt-1">Includes platform fee of {company.percentage}%</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-3 rounded-md border border-gray-200 mt-4">
+              <div className="flex justify-between text-sm font-medium text-gray-800">
+                <span>You'll receive per night:</span>
+                <span className="text-green-600">KES {data.amount}</span>
               </div>
             </div>
           </div>
 
-          {/* Capacity Information */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Max Adults</label>
-              <input
-                type="number"
-                value={data.max_adults}
-                onChange={(e) => setData("max_adults", e.target.value)}
-                className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
-                min="1"
-              />
-              {errors.max_adults && <p className="text-red-500 text-sm mt-1">{errors.max_adults}</p>}
-            </div>
-
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Max Children</label>
-              <input
-                type="number"
-                value={data.max_children}
-                onChange={(e) => setData("max_children", e.target.value)}
-                className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
-                min="0"
-              />
-              {errors.max_children && <p className="text-red-500 text-sm mt-1">{errors.max_children}</p>}
+          {/* Booking Settings Section */}
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">Booking Settings</h3>
+            
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="mb-4">
+                <div className="flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="default_available"
+                      name="default_available"
+                      type="checkbox"
+                      checked={data.default_available}
+                      onChange={(e) => setData('default_available', e.target.checked)}
+                      className="h-4 text-green-600 focus:ring-green-500 border-gray-500 rounded"
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <label htmlFor="default_available" className="font-medium text-gray-700">
+                      Enable Instant Booking
+                    </label>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Allow guests to book and pay immediately without waiting for your approval.
+                      Uncheck this box if you want to manually approve each booking request.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className={`p-3 rounded-md border ${data.default_available ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+                <div className="flex items-start">
+                  {data.default_available ? (
+                    <>
+                      <CheckCircle className="h-5 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium text-green-800">Instant Booking Enabled</p>
+                        <p className="text-sm text-green-700 mt-1">
+                          Your property is set to "Confirmed - Ready for automatic booking and payment."
+                          Guests can complete bookings immediately without waiting for your approval.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-5 text-amber-600 mt-0.5 mr-2 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium text-amber-800">Request to Book Enabled</p>
+                        <p className="text-sm text-amber-700 mt-1">
+                          Your property is set to "Needs host confirmation before payment."
+                          You must manually approve each booking request before guests can pay.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-3 text-xs text-gray-500">
+                <p>
+                  <span className="font-medium">Note:</span> This setting controls whether guests can book immediately 
+                  or need to wait for your approval. Changing this setting affects all future bookings.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -250,11 +442,11 @@ const EditProperty = ({ property, errors }) => {
             <h3 className="text-lg font-medium text-gray-800 mb-4">Additional Information</h3>
             
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="lg:w-[46%]">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
-                    <Wifi className="w-4 h-4 mr-2" />
-                    <span>WiFi name</span>
+                    <Wifi className="h-4 mr-2" />
+                    <span>WiFi Name</span>
                   </div>
                 </label>
                 <input
@@ -266,10 +458,10 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div className="lg:w-[46%]">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
-                    <Wifi className="w-4 h-4 mr-2" />
+                    <Wifi className="h-4 mr-2" />
                     <span>WiFi Password</span>
                   </div>
                 </label>
@@ -282,11 +474,11 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div className="lg:w-[46%]">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
-                    <Key className="w-4 h-4 mr-2" />
-                    <span>Apartment name</span>
+                    <Key className="h-4 mr-2" />
+                    <span>Apartment Name</span>
                   </div>
                 </label>
                 <input
@@ -294,14 +486,14 @@ const EditProperty = ({ property, errors }) => {
                   value={data.apartment_name}
                   onChange={(e) => setData("apartment_name", e.target.value)}
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
-                  placeholder="Where guests can find the key"
+                  placeholder="Building or complex name"
                 />
               </div>
 
-              <div className="lg:w-[46%]">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
-                    <Key className="w-4 h-4 mr-2" />
+                    <Key className="h-4 mr-2" />
                     <span>Block</span>
                   </div>
                 </label>
@@ -310,16 +502,15 @@ const EditProperty = ({ property, errors }) => {
                   value={data.block}
                   onChange={(e) => setData("block", e.target.value)}
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
-                  placeholder="Where guests can find the key"
+                  placeholder="Block number or letter"
                 />
               </div>
 
-
-              <div className="lg:w-[46%]">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
-                    <Key className="w-4 h-4 mr-2" />
-                    <span>House number</span>
+                    <Key className="h-4 mr-2" />
+                    <span>House Number</span>
                   </div>
                 </label>
                 <input
@@ -327,15 +518,15 @@ const EditProperty = ({ property, errors }) => {
                   value={data.house_number}
                   onChange={(e) => setData("house_number", e.target.value)}
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
-                  placeholder="Where guests can find the key"
+                  placeholder="House/Unit number"
                 />
               </div>
 
-              <div className="lg:w-[46%]">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
-                    <Key className="w-4 h-4 mr-2" />
-                    <span>Lock box location</span>
+                    <Key className="h-4 mr-2" />
+                    <span>Lock Box Location</span>
                   </div>
                 </label>
                 <input
@@ -343,14 +534,14 @@ const EditProperty = ({ property, errors }) => {
                   value={data.lock_box_location}
                   onChange={(e) => setData("lock_box_location", e.target.value)}
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
-                  placeholder="Where guests can find the key"
+                  placeholder="Location of lock box (if applicable)"
                 />
               </div>
 
-              <div className="lg:w-[46%]">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
-                    <Key className="w-4 h-4 mr-2" />
+                    <Key className="h-4 mr-2" />
                     <span>Key Location</span>
                   </div>
                 </label>
@@ -359,14 +550,14 @@ const EditProperty = ({ property, errors }) => {
                   value={data.key_location}
                   onChange={(e) => setData("key_location", e.target.value)}
                   className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-peach focus:border-transparent"
-                  placeholder="Where guests can find the key"
+                  placeholder="Where guests can find the keys"
                 />
               </div>
 
-              <div className="lg:w-[46%]">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
-                    <Utensils className="w-4 h-4 mr-2" />
+                    <Utensils className="h-4 mr-2" />
                     <span>Cook Available</span>
                   </div>
                 </label>
@@ -379,10 +570,10 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div className="lg:w-[46%]">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
-                    <Sparkles className="w-4 h-4 mr-2" />
+                    <Sparkles className="h-4 mr-2" />
                     <span>Cleaner Available</span>
                   </div>
                 </label>
@@ -395,10 +586,10 @@ const EditProperty = ({ property, errors }) => {
                 />
               </div>
 
-              <div className="lg:w-[46%]">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center">
-                    <Phone className="w-4 h-4 mr-2" />
+                    <Phone className="h-4 mr-2" />
                     <span>Emergency Contact</span>
                   </div>
                 </label>

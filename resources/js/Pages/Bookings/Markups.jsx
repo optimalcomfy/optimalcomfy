@@ -356,9 +356,9 @@ const MarkupBookings = () => {
                 className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {pdfLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 mr-2 animate-spin" />
                 ) : (
-                  <FileText className="w-4 h-4 mr-2" />
+                  <FileText className="h-4 mr-2" />
                 )}
                 Export PDF
               </button>
@@ -369,9 +369,9 @@ const MarkupBookings = () => {
                 className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {excelLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 mr-2 animate-spin" />
                 ) : (
-                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  <FileSpreadsheet className="h-4 mr-2" />
                 )}
                 Export Excel
               </button>

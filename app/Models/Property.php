@@ -38,7 +38,12 @@ class Property extends Model
         'cook',
         'cleaner',
         'emergency_contact',
-        'key_location'
+        'key_location',
+        'default_available',
+
+        'rooms',
+        'beds',
+        'baths',
     ];
 
     protected $casts = [

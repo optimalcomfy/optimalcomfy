@@ -56,11 +56,11 @@ const Indexcategories = () => {
           >
             {mobileFiltersOpen ? (
               <>
-                <X className="w-5 h-5 mr-2" /> Close Filters
+                <X className="h-5 mr-2" /> Close Filters
               </>
             ) : (
               <>
-                <Filter className="w-5 h-5 mr-2" /> Open Filters
+                <Filter className="h-5 mr-2" /> Open Filters
               </>
             )}
           </button>
@@ -70,7 +70,7 @@ const Indexcategories = () => {
             href={route('car-categories.create')}
             className="inline-flex ml-auto my-4 items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
             >
-            <Plus className="w-5 h-5 mr-2" />
+            <Plus className="h-5 mr-2" />
             Add New Category
             </Link>
 
@@ -130,7 +130,7 @@ const Indexcategories = () => {
                           onClick={() => handleDelete(category.id)}
                           className="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition duration-200"
                         >
-                          <Trash2 className="w-4 h-4 mr-1" />
+                          <Trash2 className="h-4 mr-1" />
                           Delete
                         </button>
                       </div>

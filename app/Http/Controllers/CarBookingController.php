@@ -33,6 +33,13 @@ use App\Mail\CarCheckInVerification;
 use App\Mail\CarCheckOutVerification;
 use App\Services\SmsService;
 
+use App\Mail\CarBookingRequestNotification;
+use App\Mail\CarBookingRequestConfirmation;
+use App\Mail\NewCarBookingNotification;
+use App\Mail\CarPaymentInstructions;
+use App\Mail\CarBookingRejected;
+use App\Mail\CarBookingCancelled;
+
 class CarBookingController extends Controller
 {
     use Mpesa;
@@ -301,11 +308,41 @@ class CarBookingController extends Controller
 
         $car = Car::findOrFail($request->car_id);
 
-        // Calculate number of days
-        $startDate = Carbon::parse($request->start_date);
-        $endDate = Carbon::parse($request->end_date);
-        $days = $startDate->diffInDays($endDate);
-        $days = max($days, 1);
+        // Determine booking status based on car settings
+        $bookingStatus = 'pending';
+        $shouldProcessPayment = false;
+        
+        if ($car->default_available == 1 || $car->default_available === true) {
+            // Instant booking - confirm immediately
+            $bookingStatus = 'Booked';
+            $shouldProcessPayment = true;
+        } else {
+            // Request-to-book - needs host confirmation
+            $bookingStatus = 'pending';
+            $shouldProcessPayment = false;
+        }
+
+        // Check for booking conflicts
+        $conflictingBooking = CarBooking::where('car_id', $request->car_id)
+            ->where(function($query) use ($request) {
+                $start = Carbon::parse($request->start_date);
+                $end = Carbon::parse($request->end_date);
+                
+                $query->whereBetween('start_date', [$start, $end])
+                    ->orWhereBetween('end_date', [$start, $end])
+                    ->orWhere(function($q) use ($start, $end) {
+                        $q->where('start_date', '<=', $start)
+                            ->where('end_date', '>=', $end);
+                    });
+            })
+            ->whereIn('status', ['Booked', 'confirmed', 'pending'])
+            ->first();
+
+        if ($conflictingBooking) {
+            return back()->withErrors([
+                'dates' => 'These dates are already booked. Please select different dates.'
+            ]);
+        }
 
         $booking = CarBooking::create([
             'user_id'         => $user->id,
@@ -315,46 +352,63 @@ class CarBookingController extends Controller
             'total_price'     => $request->total_price,
             'pickup_location' => $request->pickup_location,
             'dropoff_location'=> $request->pickup_location,
-            'checked_in' => $request->is_extension ? now() : null,
-            'status'          => 'pending',
+            'checked_in' => null,
+            'status'          => $bookingStatus,
             'special_requests'=> $request->special_requests,
             'referral_code'   => $request->referral_code,
-            'payment_method'  => $request->payment_method
+            'payment_method'  => $request->payment_method,
+            'guest_message'   => $request->message,
+            'guest_phone'     => $request->phone
         ]);
 
         try {
-            // Send booking confirmation SMS
-            $this->sendCarBookingConfirmationSms($booking, 'pending', $smsService);
+            if ($car->default_available == 1) {
+                // Instant booking flow
+                $this->sendCarBookingConfirmationSms($booking, 'Booked', $smsService);
+                $this->sendCarConfirmationEmails($booking);
+                
+                // Also notify host about the new booking
+                $this->sendNewCarBookingNotificationToHost($booking);
+                
+                // Process payment for instant bookings
+                if ($shouldProcessPayment) {
+                    $company = Company::first();
 
-            // Handle different payment methods
-            if ($request->payment_method === 'mpesa') {
-                $company = Company::first();
-                $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
-                $finalAmount = ceil($finalAmount);
+                    $finalAmount = $request->referral_code ? 
+                        ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : 
+                        $booking->total_price;
+                    $finalAmount = ceil($finalAmount);
 
-                return $this->processCarMpesaPayment($booking, $request->phone, $finalAmount);
-
-            } elseif ($request->payment_method === 'pesapal') {
-                $company = Company::first();
-                $finalAmount = $request->referral_code ? ($booking->total_price - (($booking->total_price * $company->booking_referral_percentage) / 100)) : $booking->total_price;
-                $finalAmount = ceil($finalAmount);
-
-                return $this->processCarPesapalPayment($booking, $user, $finalAmount, $pesapalService);
+                    // Handle different payment methods
+                    if ($request->payment_method === 'mpesa') {
+                        return $this->processCarMpesaPayment($booking, $request->phone, $finalAmount);
+                    } elseif ($request->payment_method === 'pesapal') {
+                        return $this->processCarPesapalPayment($booking, $user, $finalAmount, $pesapalService);
+                    }
+                }
+            } else {
+                // Request-to-book flow
+                $this->sendCarBookingRequestToHost($booking);
+                
+                // Send pending confirmation to guest
+                $this->sendCarBookingConfirmationSms($booking, 'pending', $smsService);
+                $this->sendCarBookingRequestConfirmationToGuest($booking);
+                
+                // Return Inertia response for request-to-book
+                return redirect()->route('car-bookings.index')->with([
+                    'success' => 'Booking request sent successfully. Please wait for host confirmation.',
+                    'booking' => $booking,
+                    'requires_confirmation' => true
+                ]);
             }
 
         } catch (\Exception $e) {
-            \Log::error('Payment initiation failed: ' . $e->getMessage());
-            $booking->update([
-                'status' => 'failed',
-                'checked_in' => null
-            ]);
-
-            // Send payment failure SMS
-            $this->sendCarPaymentFailureSms($booking, $e->getMessage(), $smsService);
+            \Log::error('Car booking creation failed: ' . $e->getMessage());
+            $booking->update(['status' => 'failed']);
 
             return back()
                 ->withInput()
-                ->withErrors(['payment' => 'Payment initiation failed due to a system error.']);
+                ->withErrors(['booking' => 'Booking creation failed due to a system error.']);
         }
     }
 
@@ -1300,5 +1354,268 @@ class CarBookingController extends Controller
             'message' => 'Payment was cancelled. You can try again.',
             'booking_type' => 'car'
         ]);
+    }
+
+    public function hostCarBookings(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Only hosts can access this
+        if ($user->role_id != 2) {
+            abort(403, 'Unauthorized');
+        }
+        
+        $query = CarBooking::with(['user', 'car'])
+            ->whereHas('car', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc');
+        
+        // Search functionality
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('number', 'LIKE', "%$search%")
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                })
+                ->orWhereHas('car', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%$search%");
+                });
+            });
+        }
+        
+        $bookings = $query->paginate(10);
+        
+        return Inertia::render('CarBookings/HostRequests', [
+            'bookings' => $bookings->items(),
+            'pagination' => $bookings,
+            'flash' => session('flash'),
+        ]);
+    }
+
+    /**
+     * Confirm car booking request (for host)
+     */
+    public function confirmCarBooking(Request $request, $id, SmsService $smsService)
+    {
+        $booking = CarBooking::with(['user', 'car.user'])->findOrFail($id);
+        $user = Auth::user();
+        
+        // Check if user is the car owner
+        if ($user->id !== $booking->car->user_id) {
+            abort(403, 'Unauthorized');
+        }
+        
+        // Check if booking is still pending
+        if ($booking->status !== 'pending') {
+            return redirect()->back()->with('error', 'This booking is no longer pending.');
+        }
+        
+        // Update booking status
+        $booking->update([
+            'status' => 'confirmed',
+            'confirmed_at' => now()
+        ]);
+        
+        // Send payment instructions to guest
+        $this->sendCarPaymentInstructions($booking, $smsService);
+        
+        return redirect()->back()->with('success', 'Car booking confirmed successfully. Guest has been notified to complete payment.');
+    }
+
+    /**
+     * Reject car booking request (for host)
+     */
+    public function rejectCarBooking(Request $request, $id, SmsService $smsService)
+    {
+        $booking = CarBooking::with(['user', 'car.user'])->findOrFail($id);
+        $user = Auth::user();
+        
+        // Check if user is the car owner
+        if ($user->id !== $booking->car->user_id) {
+            abort(403, 'Unauthorized');
+        }
+        
+        // Check if booking is still pending
+        if ($booking->status !== 'pending') {
+            return redirect()->back()->with('error', 'This booking is no longer pending.');
+        }
+        
+        $request->validate([
+            'reason' => 'required|string|min:10|max:500'
+        ]);
+        
+        // Update booking status
+        $booking->update([
+            'status' => 'rejected',
+            'rejection_reason' => $request->reason,
+            'rejected_at' => now()
+        ]);
+        
+        // Send rejection notification to guest
+        $this->sendCarBookingRejectionNotification($booking, $smsService);
+        
+        return redirect()->back()->with('success', 'Car booking request rejected successfully.');
+    }
+
+    /**
+     * Send car payment instructions
+     */
+    private function sendCarPaymentInstructions($booking, SmsService $smsService)
+    {
+        try {
+            $user = $booking->user;
+            
+            Mail::to($user->email)->send(new CarPaymentInstructions($booking));
+            
+            // Also send SMS with payment instructions
+            $message = "Hello {$user->name}, your car booking request for {$booking->car->name} has been approved! Please login to complete payment and confirm your booking.";
+            $smsService->sendSms($user->phone, $message);
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to send car payment instructions: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send car booking rejection notification
+     */
+    private function sendCarBookingRejectionNotification($booking, SmsService $smsService)
+    {
+        try {
+            $user = $booking->user;
+            
+            Mail::to($user->email)->send(new CarBookingRejected($booking));
+            
+            // Send rejection SMS
+            $message = "Hello {$user->name}, your car booking request for {$booking->car->name} has been declined by the host. Reason: {$booking->rejection_reason}";
+            $smsService->sendSms($user->phone, $message);
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to send car booking rejection notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send car booking request to host
+     */
+    private function sendCarBookingRequestToHost($booking)
+    {
+        try {
+            $host = $booking->car->user;
+            
+            Mail::to($host->email)->send(new CarBookingRequestNotification($booking));
+            
+            // Also send SMS if host has phone
+            if ($host->phone) {
+                $smsService = new SmsService();
+                $message = "New car booking request for {$booking->car->name} from {$booking->user->name}. Check your email or dashboard to confirm.";
+                $smsService->sendSms($host->phone, $message);
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to send car booking request to host: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send car booking request confirmation to guest
+     */
+    private function sendCarBookingRequestConfirmationToGuest($booking)
+    {
+        try {
+            $user = $booking->user;
+            
+            Mail::to($user->email)->send(new CarBookingRequestConfirmation($booking));
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to send car booking request confirmation to guest: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send new car booking notification to host
+     */
+    private function sendNewCarBookingNotificationToHost($booking)
+    {
+        try {
+            $host = $booking->car->user;
+            
+            Mail::to($host->email)->send(new NewCarBookingNotification($booking));
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to send new car booking notification to host: ' . $e->getMessage());
+        }
+    }
+
+    public function showPayCarBooking($carBooking)
+    {
+        $booking = CarBooking::with([
+            'car',
+            'user',
+            'car.category',
+            'car.initialGallery',
+            'car.carFeatures.feature',
+            'car.user',
+            'payment',
+            'refunds'
+        ])->find($carBooking);
+
+        if ($booking->status !== 'confirmed') {
+            return redirect()->back()->with('error', 'This booking cannot be paid.');
+        }
+        
+        $booking->load([
+            'car',
+            'user',
+            'car.category',
+            'car.initialGallery',
+            'car.carFeatures.feature',
+            'car.user',
+            'payment',
+            'refunds'
+        ]);
+
+        $company = Company::first();
+        
+        return Inertia::render('CarBookings/PayBooking', [
+            'booking' => $booking,
+            'auth' => ['user' => Auth::user()],
+            'company' => $company,
+        ]);
+    }
+
+    /**
+     * Process car booking payment
+     */
+    public function processCarPayment(Request $request, CarBooking $carBooking, PesapalService $pesapalService)
+    {
+        $request->validate([
+            'payment_method' => 'required|in:mpesa,pesapal',
+            'phone' => 'required_if:payment_method,mpesa'
+        ]);
+
+        $user = Auth::user();
+        $company = Company::first();
+
+        // Calculate final amount
+        $finalAmount = $carBooking->referral_code ? 
+            ($carBooking->total_price - (($carBooking->total_price * $company->booking_referral_percentage) / 100)) : 
+            $carBooking->total_price;
+        $finalAmount = ceil($finalAmount);
+
+        // Update booking with payment method
+        $carBooking->update([
+            'payment_method' => $request->payment_method
+        ]);
+        
+        if ($request->payment_method === 'mpesa') {
+            return $this->processCarMpesaPayment($carBooking, $request->phone, $finalAmount);
+        } elseif ($request->payment_method === 'pesapal') {
+            return $this->processCarPesapalPayment($carBooking, $user, $finalAmount, $pesapalService);
+        }
+
+        return back()->withErrors(['payment_method' => 'Invalid payment method']);
     }
 }

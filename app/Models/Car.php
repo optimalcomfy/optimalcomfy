@@ -42,7 +42,12 @@ class Car extends Model
         'latitude',
         'longitude',
         'user_id',
-        'license_plate'
+        'license_plate',
+        'default_available',
+
+        'minimum_rental_days',
+        'delivery_toggle',
+        'delivery_fee'
     ];
 
     protected $casts = [

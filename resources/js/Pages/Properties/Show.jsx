@@ -145,6 +145,13 @@ const ShowProperty = ({ property }) => {
                       <span className="text-sm sm:text-base text-gray-600">Max Children</span>
                       <span className="text-sm sm:text-base font-medium text-gray-800">{property.max_children}</span>
                     </div>
+
+                    <div className="flex justify-between border-b border-gray-200 pb-2 gap-2 sm:gap-4">
+                      <span className="text-sm sm:text-base text-gray-600">Booking Availability</span>
+                      <span className="text-sm sm:text-base font-medium text-gray-800">
+                        {property.default_available ? "Confirmed - Ready for automatic booking and payment" : "Needs host confirmation before payment"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

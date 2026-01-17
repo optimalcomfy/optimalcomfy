@@ -18,6 +18,13 @@
         .status.failed { background-color: #dc3545; }
         .footer { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 0.9em; text-align: center; }
         .host-notes { background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 5px solid #ffc107; }
+        .checklist-reminder { background-color: #d1ecf1; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 5px solid #0dcaf0; }
+        .btn { display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 10px 0; }
+        .btn:hover { background-color: #0056b3; }
+        .btn-checklist { background-color: #198754; }
+        .btn-checklist:hover { background-color: #157347; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -93,6 +100,32 @@
     </div>
 
     @if($recipientType === 'host')
+    <!-- CHECKLIST REMINDER FOR HOST -->
+    <div class="checklist-reminder">
+        <h3>✅ Important: Property Setup Checklist Required</h3>
+        <p><strong>Please complete the property setup checklist before guest arrival:</strong></p>
+        
+        <div style="margin: 15px 0;">
+            <a href="{{ route('bookings.checklist', $booking->id) }}" class="btn btn-checklist">
+                🗒️ Open & Complete Property Checklist
+            </a>
+        </div>
+        
+        <p><strong>Checklist includes:</strong></p>
+        <ul>
+            <li>Property cleanliness and readiness verification</li>
+            <li>Amenities check (electricity, water, WiFi)</li>
+            <li>Safety equipment verification (fire extinguisher, first aid)</li>
+            <li>Key handover arrangements confirmation</li>
+            <li>Emergency contact information review</li>
+            <li>Required services setup (cleaner, cook if applicable)</li>
+        </ul>
+        
+        <p style="margin-top: 10px; font-weight: bold; color: #0a58ca;">
+            📋 <strong>Important:</strong> The checklist must be completed and marked as "Done" before the guest's check-in time.
+        </p>
+    </div>
+
     <div class="host-notes">
         <h3>Host Reminders</h3>
         <ul>
@@ -104,6 +137,7 @@
             @if($booking->property->cook)
             <li>Cook service required</li>
             @endif
+            <li><strong>Complete the property checklist (link above)</strong></li>
         </ul>
     </div>
     @else

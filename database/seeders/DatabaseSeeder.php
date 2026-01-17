@@ -33,7 +33,8 @@ class DatabaseSeeder extends Seeder
             ReviewSeeder::class,
             CarCategorySeeder::class,
             FeatureSeeder::class,
-            CarFeatureSeeder::class
+            CarFeatureSeeder::class,
+            ChecklistTemplatesSeeder::class
         ]);
     }
 }

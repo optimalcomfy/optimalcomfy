@@ -3,6 +3,7 @@ import { Link, usePage, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import { FaCalendarAlt, FaMapMarkerAlt, FaEye, FaUser, FaCar, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaSignInAlt, FaSignOutAlt, FaCalendarPlus } from 'react-icons/fa';
 import Swal from 'sweetalert2';
+import { ClipboardCheck, Clock } from 'lucide-react';
 
 const CarBookingShow = () => {
   const { carBooking: booking, auth, errors, max_refundable_amount } = usePage().props;
@@ -771,7 +772,7 @@ const CarBookingShow = () => {
     <Layout>
       <div className="max-w-7xl p-4">
         {/* Header with back button */}
-        <div className="flex gap-4 items-center mb-6">
+        <div className="flex flex-col lg:flex-row gap-4 items-center mb-6">
           {roleId !== 4 &&
           <Link
             href={route('car-bookings.index')}
@@ -780,6 +781,13 @@ const CarBookingShow = () => {
             <FaArrowLeft className="mr-2" /> Back to Car Bookings
           </Link>}
           <h1 className="text-3xl font-bold text-gray-800">Car Rental Details</h1>
+          <Link
+              href={route('car-bookings.checklist', booking.id)}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+              <ClipboardCheck className="h-4 mr-2" />
+              View Checklist
+          </Link>
             {booking.checked_in && !booking.checked_out && booking.status !== 'cancelled' && booking.status !== 'failed' && (
                 <button
                     onClick={handleExtendRental}
@@ -788,6 +796,27 @@ const CarBookingShow = () => {
                     <FaCalendarPlus className="mr-2" />
                     Extend Rental
                 </button>
+            )}
+            {booking.status === 'confirmed' && (
+                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <Clock className="h-5 text-yellow-600" />
+                            <div>
+                                <p className="font-medium text-yellow-800">Payment Required</p>
+                                <p className="text-sm text-yellow-700">
+                                    Complete payment to confirm your booking.
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            href={route('car-bookings.pay', booking.id)}
+                            className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium"
+                        >
+                            Pay Now
+                        </Link>
+                    </div>
+                </div>
             )}
         </div>
 

@@ -19,11 +19,12 @@ use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Mail\WelcomeMail;
+use App\Mail\PendingVerificationMail;
+use App\Mail\AdminUserRegistrationMail;
 use Illuminate\Support\Facades\Mail;
 
 use Spatie\Permission\Models\Role;
 
-use App\Mail\AdminUserRegistrationMail;
 use Illuminate\Support\Facades\Storage;
 
 use Illuminate\Support\Facades\Log;
@@ -35,6 +36,11 @@ use Illuminate\Support\Facades\DB;
 
 class RegisteredUserController extends Controller
 {
+    /**
+     * Ristay verification email
+     */
+    const RISTAY_PROFILES_EMAIL = 'profiles@ristay.co.ke';
+
     /**
      * Display the registration view.
      */
@@ -111,9 +117,14 @@ class RegisteredUserController extends Controller
                 $validated['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
             }
 
-            // Handle ID verification upload
-            if ($request->hasFile('id_verification')) {
-                $validated['id_verification'] = $request->file('id_verification')->store('id_verifications', 'public');
+            // Handle ID verification upload - front
+            if ($request->hasFile('id_front')) {
+                $validated['id_front'] = $request->file('id_front')->store('id_fronts', 'public');
+            }
+
+            // Handle ID verification upload - back (NEW)
+            if ($request->hasFile('id_back')) {
+                $validated['id_back'] = $request->file('id_back')->store('id_backs', 'public');
             }
 
             // Hash the password if provided
@@ -126,13 +137,19 @@ class RegisteredUserController extends Controller
                 $validated['role_id'] = $validated['user_type'] === 'guest' ? 3 : 2;
             }
 
+            // Set default profile status
+            $validated['profile_status'] = 'pending'; // Default status for new users
+
             // Create the user
             $user = User::create($validated);
 
-            // 🔐 Log the user in immediately
+            // Log the user in immediately
             Auth::login($user);
 
-            // ✅ Redirect to the intended or home page
+            // Send verification emails
+            $this->sendRegistrationNotifications($user);
+
+            // Redirect to the intended or home page
             return redirect()->intended(RouteServiceProvider::HOME);
 
         } catch (\Exception $e) {
@@ -163,8 +180,13 @@ class RegisteredUserController extends Controller
                 $validated['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
             }
 
-            if ($request->hasFile('id_verification')) {
-                $validated['id_verification'] = $request->file('id_verification')->store('id_verifications', 'public');
+            if ($request->hasFile('id_front')) {
+                $validated['id_front'] = $request->file('id_front')->store('id_fronts', 'public');
+            }
+
+            // Handle ID back upload (NEW)
+            if ($request->hasFile('id_back')) {
+                $validated['id_back'] = $request->file('id_back')->store('id_backs', 'public');
             }
 
             // Hash password if provided
@@ -175,11 +197,17 @@ class RegisteredUserController extends Controller
             // Set role
             $validated['role_id'] = $validated['user_type'] === 'guest' ? 3 : 2;
 
+            // Set default profile status
+            $validated['profile_status'] = 'pending';
+
             // Create user
             $user = User::create($validated);
 
             // Log in the new user
             Auth::login($user);
+
+            // Send verification emails
+            $this->sendRegistrationNotifications($user);
 
             return Inertia::render('Auth/CustomerRegistration', ['success' => true]);
 
@@ -211,8 +239,13 @@ class RegisteredUserController extends Controller
                 $validated['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
             }
 
-            if ($request->hasFile('id_verification')) {
-                $validated['id_verification'] = $request->file('id_verification')->store('id_verifications', 'public');
+            if ($request->hasFile('id_front')) {
+                $validated['id_front'] = $request->file('id_front')->store('id_fronts', 'public');
+            }
+
+            // Handle ID back upload (NEW)
+            if ($request->hasFile('id_back')) {
+                $validated['id_back'] = $request->file('id_back')->store('id_backs', 'public');
             }
 
             // Hash password if provided
@@ -223,11 +256,17 @@ class RegisteredUserController extends Controller
             // Set role
             $validated['role_id'] = $validated['user_type'] === 'guest' ? 3 : 2;
 
+            // Set default profile status
+            $validated['profile_status'] = 'pending';
+
             // Create user
             $user = User::create($validated);
 
             // Log in the new user
             Auth::login($user);
+
+            // Send verification emails
+            $this->sendRegistrationNotifications($user);
 
             return Inertia::render('Auth/CRRegistration', ['success' => true]);
 
@@ -241,6 +280,65 @@ class RegisteredUserController extends Controller
         }
     }
 
-     
-    
+    /**
+     * Send registration notifications to user and admin
+     */
+    private function sendRegistrationNotifications(User $user): void
+    {
+        try {
+            // Send pending verification email to user
+            Mail::to($user->email)->send(new PendingVerificationMail($user));
+            
+            Log::info('Pending verification email sent to user', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'type' => 'pending_verification'
+            ]);
+
+            // Send welcome email (optional)
+            Mail::to($user->email)->send(new WelcomeMail($user));
+            
+            Log::info('Welcome email sent to user', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'type' => 'welcome'
+            ]);
+
+            // Send notification to Ristay admin about new user registration
+            $this->sendAdminRegistrationNotification($user);
+            
+            Log::info('Admin notification sent for new user registration', [
+                'user_id' => $user->id,
+                'admin_email' => self::RISTAY_PROFILES_EMAIL
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send registration notifications: ' . $e->getMessage(), [
+                'user_id' => $user->id
+            ]);
+        }
+    }
+
+    /**
+     * Send admin notification about new user registration
+     */
+    private function sendAdminRegistrationNotification(User $user): void
+    {
+        try {
+            // Create a virtual user for the Ristay admin email
+            $adminUser = new User;
+            $adminUser->email = self::RISTAY_PROFILES_EMAIL;
+            $adminUser->name = 'Ristay Admin';
+            
+            // Send admin notification email
+            Mail::to($adminUser)->send(new AdminUserRegistrationMail($user));
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send admin registration notification: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'email' => self::RISTAY_PROFILES_EMAIL
+            ]);
+            throw $e;
+        }
+    }
 }

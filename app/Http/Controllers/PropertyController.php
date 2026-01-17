@@ -308,7 +308,14 @@ class PropertyController extends Controller
 
     public function update(UpdatePropertyRequest $request, Property $property)
     {
+
         $validatedData = $request->validated();
+
+        if($validatedData['default_available'] == '0' || $validatedData['default_available'] == "false" || $validatedData['default_available'] == false) {
+            $validatedData['default_available'] = 0;
+        }else {
+            $validatedData['default_available'] = 1;
+        }
 
         if (!empty($validatedData['location'])) {
             $coordinates = $this->getCoordinatesFromLocation($validatedData['location']);

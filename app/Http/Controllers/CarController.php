@@ -327,6 +327,13 @@ class CarController extends Controller
     {
         $validated = $request->validated();
 
+        if($validated['default_available'] == false) {
+            $validated['default_available'] = 0;
+        }else {
+            $validated['default_available'] = 1;
+        }
+
+
         // Check if an image was uploaded
         if ($request->hasFile('image')) {
             // Delete the old image if it exists

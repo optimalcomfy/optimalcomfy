@@ -4,10 +4,19 @@ import Layout from "@/Layouts/layout/layout.jsx";
 import CarGallery from './components/CarGallery';
 import CarFeature from './components/CarFeature';
 import CarMap from './components/CarMap';
+import { Calendar, Truck, Package } from 'lucide-react';
 
 const ShowCar = ({ car }) => {
   const [activeTab, setActiveTab] = useState("details");
   const { auth, features } = usePage().props;
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-KE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount || 0);
+  };
 
   return (
     <Layout>
@@ -45,6 +54,7 @@ const ShowCar = ({ car }) => {
         {/* Tab Content */}
         {activeTab === "details" && (
           <div className="space-y-3 text-sm sm:text-base">
+            {/* Basic Information */}
             <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
               <span className="text-gray-600 font-medium">Brand:</span>
               <span>{car.brand}</span>
@@ -61,6 +71,12 @@ const ShowCar = ({ car }) => {
               <span className="text-gray-600 font-medium">Mileage:</span>
               <span>{car.mileage} km</span>
             </div>
+            
+            {/* Technical Specifications */}
+            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+              <span className="text-gray-600 font-medium">Body Type:</span>
+              <span>{car.body_type}</span>
+            </div>
             <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
               <span className="text-gray-600 font-medium">Fuel Type:</span>
               <span>{car.fuel_type}</span>
@@ -70,21 +86,122 @@ const ShowCar = ({ car }) => {
               <span>{car.transmission}</span>
             </div>
             <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+              <span className="text-gray-600 font-medium">Drive Type:</span>
+              <span>{car.drive_type}</span>
+            </div>
+            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+              <span className="text-gray-600 font-medium">Engine Capacity:</span>
+              <span>{car.engine_capacity} cc</span>
+            </div>
+            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+              <span className="text-gray-600 font-medium">Fuel Economy:</span>
+              <span>{car.fuel_economy}</span>
+            </div>
+            
+            {/* Physical Characteristics */}
+            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+              <span className="text-gray-600 font-medium">Seats:</span>
+              <span>{car.seats}</span>
+            </div>
+            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+              <span className="text-gray-600 font-medium">Doors:</span>
+              <span>{car.doors}</span>
+            </div>
+            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+              <span className="text-gray-600 font-medium">Luggage Capacity:</span>
+              <span>{car.luggage_capacity} bags</span>
+            </div>
+            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+              <span className="text-gray-600 font-medium">Exterior Color:</span>
+              <span>{car.exterior_color}</span>
+            </div>
+            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+              <span className="text-gray-600 font-medium">Interior Color:</span>
+              <span>{car.interior_color}</span>
+            </div>
+
+            {/* Rental Details Section */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h3 className="font-semibold text-lg mb-3 flex items-center text-gray-800">
+                <Package className="h-5 mr-2 text-blue-600" />
+                Rental Details
+              </h3>
+              
+              <div className="space-y-2">
+                <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+                  <span className="text-gray-600 font-medium flex items-center">
+                    <Calendar className="h-4 mr-1 text-blue-500" />
+                    Minimum Rental Days:
+                  </span>
+                  <span className="font-semibold">{car.minimum_rental_days} day{car.minimum_rental_days > 1 ? 's' : ''}</span>
+                </div>
+                
+                <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+                  <span className="text-gray-600 font-medium flex items-center">
+                    <Truck className="h-4 mr-1 text-green-500" />
+                    Delivery Service:
+                  </span>
+                  <span className={`font-semibold ${car.delivery_toggle ? 'text-green-600' : 'text-gray-500'}`}>
+                    {car.delivery_toggle ? 'Available' : 'Not Available'}
+                  </span>
+                </div>
+                
+                {car.delivery_toggle && car.delivery_fee && (
+                  <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-600 font-medium">Delivery Fee:</span>
+                    <span className="font-semibold">KES {formatCurrency(car.delivery_fee)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Pricing Section */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h3 className="font-semibold text-lg mb-3 text-gray-800">Pricing</h3>
+              
+              <div className="space-y-2">
+                <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+                  <span className="text-gray-600 font-medium">Your Earnings/Day:</span>
+                  <span className="font-semibold">KES {formatCurrency(car.amount)}</span>
+                </div>
+                <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
+                  <span className="text-gray-600 font-medium">Customer Price/Day:</span>
+                  <span className="font-semibold">KES {formatCurrency(car.platform_price)}</span>
+                </div>
+                
+                {/* Daily Rate Calculation */}
+                {car.amount && car.platform_price && (
+                  <div className="bg-blue-50 p-3 rounded-lg mt-2">
+                    <p className="text-xs text-blue-700">
+                      Daily rate includes platform fee. Customer pays KES {formatCurrency(car.platform_price)} 
+                      per day, you earn KES {formatCurrency(car.amount)}.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Location */}
+            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
               <span className="text-gray-600 font-medium">Location:</span>
               <span className="text-right">{car.location_address}</span>
             </div>
-            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
-              <span className="text-gray-600 font-medium">Price/Day:</span>
-              <span className="font-semibold">KES {car.amount}</span>
+
+            {/* Booking Settings */}
+            <div className="flex justify-between border-b border-gray-200 pb-2 gap-2 sm:gap-4">
+              <span className="text-sm sm:text-base text-gray-600">Booking Type:</span>
+              <span className="text-sm sm:text-base font-medium text-gray-800">
+                {car.default_available ? 
+                  "Instant Booking (Confirmed automatically)" : 
+                  "Request to Book (Needs host confirmation)"
+                }
+              </span>
             </div>
-            <div className="flex flex-wrap justify-between border-b border-gray-100 pb-2">
-              <span className="text-gray-600 font-medium">Customer Price/Day:</span>
-              <span className="font-semibold">KES {car.platform_price}</span>
-            </div>
+            
             {car.description && (
-              <div className="pt-2">
-                <p className="text-gray-600 font-medium">Description:</p>
-                <p className="mt-1">{car.description}</p>
+              <div className="pt-4 mt-4 border-t border-gray-200">
+                <p className="text-gray-600 font-medium mb-2">Description:</p>
+                <p className="mt-1 text-gray-700 bg-gray-50 p-3 rounded-lg">{car.description}</p>
               </div>
             )}
           </div>

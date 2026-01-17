@@ -46,7 +46,7 @@ class User extends Authenticatable
         'country',
         'postal_code',
         'profile_picture',
-        'id_verification',
+        'id_front',
         'bio',
         'preferred_payment_method',
         'emergency_contact',
@@ -56,7 +56,17 @@ class User extends Authenticatable
         'withdrawal_code',
         'Phone_verification_code',
         'referral_code',
-        'ristay_verified'
+        'ristay_verified',
+        'unverified_reason',
+
+        'id_back',
+        'pending_profile_picture',
+        'pending_id_front',
+        'pending_id_back',
+        'pending_data',
+        'profile_status',
+        'profile_verified_at',
+        'rejection_reason'
     ];
 
     /**

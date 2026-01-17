@@ -87,7 +87,7 @@ const Approval = () => {
               href={route('repayments.index')}
               className="inline-flex items-center justify-center px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               Back to Repayments
@@ -98,7 +98,7 @@ const Approval = () => {
                 href="mailto:support@centiflow.com"
                 className="inline-flex items-center justify-center px-6 py-3 text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors duration-200 font-medium"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 Contact Support

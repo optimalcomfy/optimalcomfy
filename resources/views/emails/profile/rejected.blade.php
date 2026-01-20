@@ -262,7 +262,7 @@
         
         <div class="info-row">
             <span class="info-label">Verification Support:</span>
-            <span style="font-weight: 600; color: #059669;">verification@ristay.co.ke</span>
+            <span style="font-weight: 600; color: #059669;">profiles@ristay.co.ke</span>
         </div>
         
         <div class="info-row">

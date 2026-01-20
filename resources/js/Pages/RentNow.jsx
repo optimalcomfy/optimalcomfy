@@ -12,7 +12,7 @@ import CarRideForm from "@/Components/CarRideForm";
 import './Property.css'
 import { PopupGallery } from "@/Components/PopupGallery";
 import CarShareModal from "@/Components/CarShareModal";
-import { Share2 } from "lucide-react";
+import { CalendarDays, Truck, Package, User, MessageSquare, Share2 } from 'lucide-react';
 
 export default function RentNow({ auth, laravelVersion, phpVersion }) {
   const { car } = usePage().props;
@@ -216,11 +216,49 @@ export default function RentNow({ auth, laravelVersion, phpVersion }) {
                             </span>
                         )}
                         </div>
-                    </div>
-                    <hr />
+                  </div>
+                  <hr />
 
-                    <hr />
-                    {/* description paragraphs */}
+                  {car?.user?.bio && (
+                      <>
+                        <div className="flex flex-wrap gap-6 text-sm py-6">
+                          <div className="flex items-start gap-3 w-full">
+                            <MessageSquare className="h-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                            <p className="text-gray-700">{car.user.bio}</p>
+                          </div>
+                        </div>
+                        <div className="border-t border-gray-200"></div>
+                      </>
+                    )}
+
+                    {(car?.minimum_rental_days || car?.delivery_toggle || car?.delivery_fee) && (
+                      <div className="flex flex-wrap gap-6 text-sm my-6">
+                        {car.minimum_rental_days && (
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-5 text-gray-600" />
+                            <span className="text-gray-700">{car.minimum_rental_days} day minimum rental</span>
+                          </div>
+                        )}
+                        {car.delivery_toggle && (
+                          <div className="flex items-center gap-2">
+                            <Truck className="h-5 text-gray-600" />
+                            <span className="text-gray-700">Delivery available</span>
+                          </div>
+                        )}
+                        {car.delivery_fee && (
+                          <div className="flex items-center gap-2">
+                            <Package className="h-5 text-gray-600" />
+                            <span className="text-gray-700">
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: 'USD'
+                              }).format(car.delivery_fee)} delivery fee
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <p className="section__content-paragraph">
                       {car?.description}
                     </p>

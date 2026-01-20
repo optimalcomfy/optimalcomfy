@@ -12,6 +12,7 @@ import PropertyBookingForm from "@/Components/PropertyBookingForm";
 import './Property.css'
 import { PopupGallery } from "@/Components/PopupGallery";
 import ShareModal from "@/Components/ShareModal";
+import { Bed, Bath, Users, Baby } from 'lucide-react';
 
 export default function Welcome({ auth, laravelVersion, phpVersion }) {
   const { property, similarProperties, flash, pagination } = usePage().props;
@@ -238,6 +239,52 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                       </div>
                     </div>
                     <hr />
+                    {property?.user?.bio &&
+                    <div className="flex flex-wrap gap-6 text-sm py-6">
+                      <p className="text-gray-700">{property?.user?.bio}</p>
+                    </div>}
+
+                    {property?.user?.bio &&
+                    <div className="border-t border-gray-200"></div>}
+
+                    {(property.rooms || property.beds || property.baths || property.max_adults || property.max_children) && (
+                      <div className="flex flex-wrap gap-6 text-sm my-6">
+                        {property.rooms && (
+                          <div className="flex items-center gap-2">
+                            <Bed className="h-5 text-gray-600" />
+                            <span className="text-gray-700">{property.rooms} rooms</span>
+                          </div>
+                        )}
+                        {property.beds && (
+                          <div className="flex items-center gap-2">
+                            <Bed className="h-5 text-gray-600" />
+                            <span className="text-gray-700">{property.beds} beds</span>
+                          </div>
+                        )}
+                        {property.baths && (
+                          <div className="flex items-center gap-2">
+                            <Bath className="h-5 text-gray-600" />
+                            <span className="text-gray-700">{property.baths} baths</span>
+                          </div>
+                        )}
+                        {property.max_adults && (
+                          <div className="flex items-center gap-2">
+                            <Users className="h-5 text-gray-600" />
+                            <span className="text-gray-700">{property.max_adults} adults max</span>
+                          </div>
+                        )}
+                        {property.max_children && (
+                          <div className="flex items-center gap-2">
+                            <Baby className="h-5 text-gray-600" />
+                            <span className="text-gray-700">{property.max_children} children max</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!property?.user?.bio &&
+                    <div className="border-t border-gray-200"></div>}
+
                     {/* details */}
                     {property?.property_amenities?.some(amenity => amenity.amenity_id === 8) && (
                       <div className="small-detail">

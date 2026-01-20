@@ -147,11 +147,20 @@ const Show = ({ user }) => {
                   />
                 )}
                 {user.postal_code && <InfoItem icon={<FiGlobe />} label="Postal Code" value={user.postal_code} />}
-                {user.emergency_contact && (
+
+                {user.emergency_contact && roleId === 1 && (
                   <InfoItem
                     icon={<FiPhoneCall />}
-                    label="Emergency Contact"
+                    label="Emergency Contact Name"
                     value={user.emergency_contact}
+                  />
+                )}
+
+                {user.contact_phone && roleId === 1 && (
+                  <InfoItem
+                    icon={<FiPhoneCall />}
+                    label="Emergency Contact Phone"
+                    value={user.contact_phone}
                   />
                 )}
               </div>

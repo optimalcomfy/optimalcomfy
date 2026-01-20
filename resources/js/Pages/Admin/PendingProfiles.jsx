@@ -399,6 +399,17 @@ export default function PendingProfiles({ pendingUsers }) {
                                     </div>
                                 </div>
 
+                                {/* Requested Changes */}
+                                {selectedUser.pending_data && (
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 mb-3">Requested Changes</h3>
+                                        <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                                            <pre className="text-sm">
+                                                {JSON.stringify(selectedUser.pending_data, null, 2)}
+                                            </pre>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Pending Files */}
                                 {(selectedUser.pending_profile_picture || selectedUser.pending_id_front || selectedUser.pending_id_back) && (

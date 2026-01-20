@@ -11,6 +11,12 @@ const CarBookingsHostRequests = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
 
+  // Rejection reasons - ONLY THESE TWO
+  const rejectionReasons = [
+    { value: 'external_booked', label: 'Externally booked' },
+    { value: 'unavailable', label: 'Unavailable' }
+  ];
+
   const handleConfirmBooking = async (bookingId) => {
     setProcessingId(bookingId);
     
@@ -40,12 +46,18 @@ const CarBookingsHostRequests = () => {
     }
   };
 
+  const openRejectModal = (booking) => {
+    setSelectedBooking(booking);
+    setRejectReason('');
+    setShowRejectModal(true);
+  };
+
   const handleRejectBooking = async () => {
     if (!rejectReason.trim()) {
       Swal.fire({
         icon: 'warning',
         title: 'Reason Required',
-        text: 'Please provide a reason for rejecting this booking.',
+        text: 'Please select a reason for rejecting this booking.',
         confirmButtonColor: '#f59e0b',
       });
       return;
@@ -55,7 +67,7 @@ const CarBookingsHostRequests = () => {
     
     try {
       await router.post(route('car-bookings.reject', selectedBooking.id), {
-        reason: rejectReason
+        rejection_reason: rejectReason
       }, {
         onSuccess: () => {
           Swal.fire({
@@ -82,12 +94,6 @@ const CarBookingsHostRequests = () => {
     } finally {
       setProcessingId(null);
     }
-  };
-
-  const openRejectModal = (booking) => {
-    setSelectedBooking(booking);
-    setRejectReason('');
-    setShowRejectModal(true);
   };
 
   const formatDate = (dateString) => {
@@ -333,21 +339,23 @@ const CarBookingsHostRequests = () => {
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Reject Booking Request</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Are you sure you want to reject booking #{selectedBooking.number} for {selectedBooking.car?.name}?
+                Please select a reason for rejecting booking #{selectedBooking.number}
               </p>
               
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason for rejection (required)
+                  Rejection Reason *
                 </label>
-                <textarea
+                <select
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Please provide a reason for rejecting this booking request..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  rows={4}
                   required
-                />
+                >
+                  <option value="">-- Select a reason --</option>
+                  <option value="external_booked">Externally booked</option>
+                  <option value="unavailable">Unavailable</option>
+                </select>
               </div>
               
               <div className="flex justify-end gap-3">

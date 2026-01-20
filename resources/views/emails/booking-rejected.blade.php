@@ -72,9 +72,6 @@
     </div>
 
     <div class="action-buttons">
-        <a href="{{ route('properties.search') }}" class="btn">
-            🔍 Search Other Properties
-        </a>
         <a href="{{ route('dashboard') }}" class="btn" style="background-color: #6c757d;">
             📋 View All Bookings
         </a>

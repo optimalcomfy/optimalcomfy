@@ -495,6 +495,7 @@ class ProfileController extends Controller
         $user->profile_status = 'active';
         $user->profile_verified_at = Carbon::now();
         $user->rejection_reason = null;
+        $user->ristay_verified = 1;
         $user->save();
         
         // Log approval

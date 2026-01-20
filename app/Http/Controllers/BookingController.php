@@ -2216,13 +2216,13 @@ class BookingController extends Controller
         }
         
         $request->validate([
-            'reason' => 'required|string|min:10|max:500'
+            'rejection_reason' => 'required|string|min:10|max:500'
         ]);
         
         // Update booking status
         $booking->update([
             'status' => 'rejected',
-            'rejection_reason' => $request->reason
+            'rejection_reason' => $request->rejection_reason
         ]);
         
         // Send rejection notification to guest

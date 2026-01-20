@@ -16,8 +16,12 @@ import Swal from 'sweetalert2';
 
 const HostRequests = () => {
     const { bookings, pagination, auth, flash } = usePage().props;
-    const [selectedBooking, setSelectedBooking] = useState(null);
-    const [rejectReason, setRejectReason] = useState('');
+
+    // Predefined rejection reasons - ONLY THESE TWO
+    const rejectionReasons = [
+        { value: 'external_booked', label: 'External booked' },
+        { value: 'unavailable', label: 'Unavailable' }
+    ];
 
     const handleConfirmBooking = (bookingId) => {
         Swal.fire({
@@ -56,8 +60,18 @@ const HostRequests = () => {
         Swal.fire({
             title: 'Reject Booking Request',
             html: `
-                <p>Please provide a reason for rejecting this booking request:</p>
-                <textarea id="reject-reason" class="swal2-textarea mt-3" placeholder="Enter reason here (required)" rows="4" required></textarea>
+                <div class="text-left">
+                    <p class="mb-3 text-gray-700">Please select a reason for rejecting this booking request:</p>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Rejection Reason *</label>
+                        <select id="reject-reason" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-peachDark focus:border-peachDark" required>
+                            <option value="">-- Select a reason --</option>
+                            <option value="external_booked">External booked</option>
+                            <option value="unavailable">Unavailable</option>
+                        </select>
+                    </div>
+                </div>
             `,
             icon: 'warning',
             showCancelButton: true,
@@ -65,10 +79,12 @@ const HostRequests = () => {
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'Reject Booking',
             cancelButtonText: 'Cancel',
+            focusConfirm: false,
             preConfirm: () => {
                 const reason = Swal.getPopup().querySelector('#reject-reason').value;
+                
                 if (!reason || reason.trim() === '') {
-                    Swal.showValidationMessage('Please provide a rejection reason');
+                    Swal.showValidationMessage('Please select a rejection reason');
                     return false;
                 }
                 return reason;
@@ -76,7 +92,7 @@ const HostRequests = () => {
         }).then((result) => {
             if (result.isConfirmed) {
                 router.post(route('bookings.reject', booking.id), {
-                    reason: result.value
+                    rejection_reason: result.value
                 }, {
                     preserveScroll: true,
                     onSuccess: (page) => {

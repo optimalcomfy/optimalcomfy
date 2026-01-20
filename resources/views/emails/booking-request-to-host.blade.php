@@ -66,22 +66,7 @@
             <span class="info-label">Name:</span>
             <span>{{ $booking->user->name }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Email:</span>
-            <span>{{ $booking->user->email }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Phone:</span>
-            <span>{{ $booking->guest_phone ?? $booking->user->phone }}</span>
-        </div>
     </div>
-
-    @if($booking->guest_message)
-    <div class="message-box">
-        <h3>💬 Message from Guest:</h3>
-        <p>{{ $booking->guest_message }}</p>
-    </div>
-    @endif
 
     <div class="notice">
         <h3>⏰ Important Notice</h3>

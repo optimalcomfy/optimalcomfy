@@ -35,7 +35,8 @@ class Booking extends Model
         'cancelled_by_id',
         'referral_code',
         'pesapal_tracking_id',
-        'markup_user_id'
+        'markup_user_id',
+        'rejection_reason'
     ];
 
     protected $appends = [

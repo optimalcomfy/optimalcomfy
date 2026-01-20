@@ -1449,8 +1449,7 @@ class CarBookingController extends Controller
         // Update booking status
         $booking->update([
             'status' => 'rejected',
-            'rejection_reason' => $request->reason,
-            'rejected_at' => now()
+            'rejection_reason' => $request->reason
         ]);
         
         // Send rejection notification to guest

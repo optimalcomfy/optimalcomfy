@@ -498,27 +498,12 @@ class ProfileController extends Controller
         $user->ristay_verified = 1;
         $user->save();
         
-        // Log approval
-        Log::info('Admin approved pending profile changes', [
-            'admin_id' => Auth::id(),
-            'user_id' => $user->id,
-            'old_data' => $oldData,
-            'new_data' => $user->only($fieldsToUpdate),
-            'approved_at' => now()
-        ]);
-        
         try {
             // Send approval email notification to user
             Mail::to($user->email)->send(new ProfileApprovedMail($user));
             
             // Send approval SMS notification to user
             $this->sendProfileNotification($user, 'approved', $smsService);
-            
-            Log::info('Profile approval notifications sent to user', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'phone' => $user->phone
-            ]);
         } catch (\Exception $e) {
             Log::error('Failed to send profile approval notifications to user: ' . $e->getMessage(), [
                 'user_id' => $user->id

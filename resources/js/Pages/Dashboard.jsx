@@ -799,13 +799,6 @@ const Dashboard = () => {
                     {auth.user.city || 'Not specified'}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Verification</p>
-                  <p className={`font-medium flex items-center gap-1 ${auth.user.id_front ? 'text-green-600' : 'text-yellow-600'}`}>
-                    <Check size={14} />
-                    {auth.user.id_front ? 'Verified' : 'Pending'}
-                  </p>
-                </div>
               </div>
 
               <div className="flex flex-wrap gap-2">

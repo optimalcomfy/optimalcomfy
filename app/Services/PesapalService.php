@@ -99,7 +99,7 @@ class PesapalService
                 'description' => $orderData['description'] ?? 'Payment',
                 'callback_url' => $orderData['callback_url'],
                 'cancellation_url' => $orderData['cancellation_url'],
-                'notification_id' => $orderData['notification_id'] ?? config('services.pesapal.ipn_id'),
+                'notification_id' => !empty($orderData['notification_id']) ? $orderData['notification_id'] : config('services.pesapal.ipn_id'),
                 'billing_address' => $orderData['billing_address'] ?? []
             ];
 

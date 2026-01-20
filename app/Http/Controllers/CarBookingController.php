@@ -553,7 +553,7 @@ class CarBookingController extends Controller
         ])->findOrFail($carBooking->car_id);
 
         // Get the original booking's end_date for extension start
-        $extensionStartDate = $carBooking->end_date;
+        $extensionStartDate = Carbon::parse($carBooking->end_date)->format('Y-m-d');
 
         return Inertia::render('CarExtendBooking', [
             'car' => $car,
@@ -563,7 +563,7 @@ class CarBookingController extends Controller
             'extension_data' => [
                 'booking_id' => $carBooking->id,
                 'start_date' => $extensionStartDate, // Use end_date as the start for extension
-                'end_date' => $request->end_date ?? '', // Allow empty for user to select
+                'end_date' => '', // Allow empty for user to select
                 'car_id' => $request->car_id ?? $carBooking->car_id,
                 'is_extension' => true
             ]

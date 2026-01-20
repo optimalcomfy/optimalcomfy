@@ -10,8 +10,8 @@ const CarExtendPayForm = () => {
 
   // Get the original booking's end_date and set it as the minimum for extension
   const originalBooking = car.bookings.find(b => b.id === extension_data?.booking_id);
-  const originalEndDate = originalBooking?.end_date ?
-    new Date(originalBooking.end_date).toISOString().split('T')[0] : today;
+  const originalEndDate = extension_data?.start_date ?
+    new Date(extension_data.start_date).toISOString().split('T')[0] : today;
 
   const [currentStep, setCurrentStep] = useState(1);
   const [processing, setProcessing] = useState(false);

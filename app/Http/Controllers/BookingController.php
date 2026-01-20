@@ -1377,7 +1377,7 @@ class BookingController extends Controller
         ])->findOrFail($booking->property_id);
 
         // Get the original booking's check_out_date for extension start
-        $extensionStartDate = $booking->check_out_date;
+        $extensionStartDate = Carbon::parse($booking->check_out_date)->format('Y-m-d');
 
         return Inertia::render('PropertyExtendBooking', [
             'property' => $property,
@@ -1387,7 +1387,7 @@ class BookingController extends Controller
             'extension_data' => [
                 'booking_id' => $booking->id,
                 'check_in_date' => $extensionStartDate, // Use check_out_date as the start for extension
-                'check_out_date' => $request->check_out_date ?? '', // Allow empty for user to select
+                'check_out_date' => '', // Allow empty for user to select
                 'variation_id' => $request->variation_id ?? $booking->variation_id,
                 'is_extension' => true
             ]

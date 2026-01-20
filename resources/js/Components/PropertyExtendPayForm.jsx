@@ -10,8 +10,8 @@ const PropertyExtendPayForm = () => {
 
   // Get the original booking's check_out_date and set it as the minimum for extension
   const originalBooking = property.bookings.find(b => b.id === extension_data?.booking_id);
-  const originalCheckOutDate = originalBooking?.check_out_date ?
-    new Date(originalBooking.check_out_date).toISOString().split('T')[0] : today;
+  const originalCheckOutDate = extension_data?.check_in_date ?
+    new Date(extension_data.check_in_date).toISOString().split('T')[0] : today;
 
   const [currentStep, setCurrentStep] = useState(1);
   const [processing, setProcessing] = useState(false);

@@ -916,6 +916,7 @@ const BookingShow = () => {
             </div>
 
             {/* Guest details */}
+            {booking.status === "paid" &&
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                 <FaUser className="inline mr-2" /> Guest Information
@@ -941,9 +942,10 @@ const BookingShow = () => {
                   <p className="text-lg font-bold text-gray-500 flex items-center gap-2"> <FaEye /> View user kyc</p>
                 </Link>
               </div>
-            </div>
+            </div>}
 
             {/* Host details */}
+            {booking.status === "paid" &&
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                 <FaHome className="inline mr-2" /> Host Information
@@ -962,9 +964,10 @@ const BookingShow = () => {
                   <p className="font-medium">{booking.property.user.email}</p>
                 </div>
               </div>
-            </div>
+            </div>}
 
             {/* Lock box details */}
+            {booking.status === "paid" &&
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                 <FaHome className="inline mr-2" /> Lock box details
@@ -1011,7 +1014,7 @@ const BookingShow = () => {
                   <p className="font-medium">{booking.property.lock_box_location}</p>
                 </div>
               </div>
-            </div>
+            </div>}
           </div>
 
           {/* Right column - Payment summary */}
@@ -1128,7 +1131,7 @@ const BookingShow = () => {
               <p className="text-sm text-gray-600 mb-3">
                 If you have any questions about your booking, please contact our customer support.
               </p>
-              <a href={`tel:${booking.user?.contact_phone}`} className="px-8 py-2 text-center justify-center flex items-center w-full bg-peachDark hover:bg-blue-700 text-white rounded-md transition duration-150">
+              <a href="tel:+254769880088" className="px-8 py-2 text-center justify-center flex items-center w-full bg-peachDark hover:bg-blue-700 text-white rounded-md transition duration-150">
                 Contact Support
               </a>
 

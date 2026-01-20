@@ -63,15 +63,6 @@
         </div>
     </div>
 
-    @if($booking->guest_message)
-    <div class="booking-details">
-        <h2 class="section-title">Message to Host</h2>
-        <p style="padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
-            {{ $booking->guest_message }}
-        </p>
-    </div>
-    @endif
-
     <div class="booking-details">
         <h2 class="section-title">Next Steps</h2>
         <p>You will receive an email notification when:</p>

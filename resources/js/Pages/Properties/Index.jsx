@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, usePage, router, useForm } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import Swal from 'sweetalert2';
-import { Filter, X, FileText, FileSpreadsheet, Calendar, Loader2 } from 'lucide-react';
+import { Filter, X, FileText, FileSpreadsheet, Calendar, Loader2, Share2 } from 'lucide-react';
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from 'xlsx';
@@ -13,7 +13,6 @@ import { format, startOfMonth, endOfMonth, isValid } from 'date-fns';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import ShareModal from "./components/ShareModal";
 
 const IndexProperties = () => {
   const { properties, pagination, flash, auth } = usePage().props;
@@ -22,8 +21,6 @@ const IndexProperties = () => {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [excelLoading, setExcelLoading] = useState(false);
-  const [shareModalVisible, setShareModalVisible] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState(null);
   const roleId = parseInt(auth.user?.role_id);
 
   // Date range state
@@ -333,8 +330,88 @@ const IndexProperties = () => {
   };
 
   const handleShare = (property) => {
-    setSelectedProperty(property);
-    setShareModalVisible(true);
+    const shareUrl = `${window.location.origin}/property-detail?id=${property.id}`;
+    const shareText = `Check out "${property.property_name}" on Ristay - ${property.type} for KES ${property.platform_price}/night`;
+    const fullShareText = `${shareText}\n\n${shareUrl}`;
+
+    Swal.fire({
+      title: `Share "${property.property_name}"`,
+      html: `
+        <div class="text-left">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Share URL:</label>
+            <div class="flex items-center">
+              <input 
+                type="text" 
+                id="share-url" 
+                value="${shareUrl}" 
+                readonly 
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md text-sm bg-gray-50"
+                onclick="this.select()"
+              />
+              <button 
+                onclick="navigator.clipboard.writeText('${shareUrl}'); Swal.showValidationMessage('Link copied!');" 
+                class="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 text-sm"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        
+          
+          <div class="grid grid-cols-2 gap-2 mb-4">
+            <button 
+              onclick="window.open('https://wa.me/?text=${encodeURIComponent(fullShareText)}', '_blank');" 
+              class="flex items-center justify-center gap-2 px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm"
+            >
+              <span>📱</span> WhatsApp
+            </button>
+            <button 
+              onclick="window.open('https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}', '_blank');" 
+              class="flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+            >
+              <span>f</span> Facebook
+            </button>
+            <button 
+              onclick="window.open('https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}', '_blank');" 
+              class="flex items-center justify-center gap-2 px-3 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 text-sm"
+            >
+              <span>𝕏</span> Twitter
+            </button>
+            <button 
+              onclick="window.location.href='mailto:?subject=${encodeURIComponent(`Check out: ${property.property_name}`)}&body=${encodeURIComponent(fullShareText)}';" 
+              class="flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm"
+            >
+              <span>✉️</span> Email
+            </button>
+          </div>
+          
+          <div class="mt-4">
+            <a 
+              href="${shareUrl}" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-sm"
+            >
+              <span>🔗</span> Open Link
+            </a>
+          </div>
+        </div>
+      `,
+      width: 500,
+      showCloseButton: true,
+      showConfirmButton: false,
+      showCancelButton: true,
+      cancelButtonText: 'Close',
+      focusConfirm: false,
+      preConfirm: () => {
+        // Optional: Add any pre-confirm logic here
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Handle if needed
+      }
+    });
   };
 
   const getPaginatedUrl = (url) => {
@@ -558,7 +635,7 @@ const IndexProperties = () => {
                           onClick={() => handleShare(property)}
                           className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200"
                         >
-                          <span className="mr-2">🔗</span>
+                          <Share2 className="h-4 mr-2" />
                           Share
                         </button>
                         <Link
@@ -658,18 +735,6 @@ const IndexProperties = () => {
           </div>
         )}
       </div>
-
-      {/* Share Modal */}
-      {selectedProperty && (
-        <ShareModal
-          property={selectedProperty}
-          visible={shareModalVisible}
-          onHide={() => {
-            setShareModalVisible(false);
-            setSelectedProperty(null);
-          }}
-        />
-      )}
     </Layout>
   );
 };

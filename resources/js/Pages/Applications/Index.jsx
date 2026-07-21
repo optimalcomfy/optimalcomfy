@@ -101,11 +101,11 @@ const Index = () => {
             >
               {mobileFiltersOpen ? (
                 <>
-                  <X className="w-5 h-5 mr-2" /> Close Filters
+                  <X className="h-5 mr-2" /> Close Filters
                 </>
               ) : (
                 <>
-                  <Filter className="w-5 h-5 mr-2" /> Open Filters
+                  <Filter className="h-5 mr-2" /> Open Filters
                 </>
               )}
             </button>
@@ -127,7 +127,7 @@ const Index = () => {
                   disabled={applications.length === 0}
                   className="flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
                 >
-                  <FileText className="w-4 h-4 mr-2 my-auto" />
+                  <FileText className="h-4 mr-2 my-auto" />
                   <span className='my-auto'>
                     PDF
                   </span>
@@ -137,7 +137,7 @@ const Index = () => {
                   disabled={applications.length === 0}
                   className="inline-flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
                 >
-                  <FileSpreadsheet className="w-4 h-4 mr-2 my-auto" />
+                  <FileSpreadsheet className="h-4 mr-2 my-auto" />
                   <span className='my-auto'>
                     Excel
                   </span>

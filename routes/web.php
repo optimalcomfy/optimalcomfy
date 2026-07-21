@@ -48,6 +48,7 @@ use App\Http\Controllers\MpesaStkController;
 use App\Http\Controllers\RefundController;
 use App\Http\Controllers\CarRefundController;
 use App\Http\Controllers\MarkupBookingController;
+use App\Http\Controllers\ChecklistController;
 use Illuminate\Support\Facades\Auth;
 
 use App\Models\Property;
@@ -242,6 +243,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/reload', [ProfileController::class, 'reload'])->name('profile.reload');
     Route::get('/wallet', [HomeController::class, 'hostWallet'])->name('wallet');
+    Route::post('/profile/cancel-pending', [ProfileController::class, 'cancelPending'])->name('profile.cancel-pending');
 
 
     Route::get('/markup-earnings', [HomeController::class, 'getMarkupEarnings'])->name('markup-earnings');
@@ -337,6 +339,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/bookings/lookup', [BookingController::class, 'lookup'])->name('bookings.lookup');
     Route::get('/bookings/{booking}/extend', [BookingController::class, 'extend'])->name('bookings.extend');
 
+    Route::post('/bookings/{id}/confirm', [BookingController::class, 'confirmBooking'])
+        ->name('bookings.confirm');
+    
+    Route::post('/bookings/{id}/reject', [BookingController::class, 'rejectBooking'])
+        ->name('bookings.reject');
+    
+    Route::get('/host/bookings', [BookingController::class, 'hostBookings'])
+        ->name('host.bookings');
+
+    Route::get('/bookings/{booking}/pay', [BookingController::class, 'showPayBooking'])
+    ->name('bookings.pay');
+
+    Route::post('/bookings/{booking}/process-payment', [BookingController::class, 'processPayment'])
+        ->name('bookings.process-payment');
+        
+
 
     // Car Booking Management
     Route::get('/car-bookings/export-data', [CarBookingController::class, 'exportData'])->name('car-bookings.exportData');
@@ -346,6 +364,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/car-bookings/{car_booking}/refund', [CarRefundController::class, 'handleRefund'])->name('car-bookings.handle-refund');
     // In your car booking routes section
     Route::get('/car-bookings/{car_booking}/extend', [CarBookingController::class, 'extend'])->name('car-bookings.extend');
+
+
+    Route::get('/host/car-bookings', [CarBookingController::class, 'hostCarBookings'])
+        ->name('car-bookings.host-requests');
+    
+    Route::post('/car-bookings/{id}/confirm', [CarBookingController::class, 'confirmCarBooking'])
+        ->name('car-bookings.confirm');
+    
+    Route::post('/car-bookings/{id}/reject', [CarBookingController::class, 'rejectCarBooking'])
+        ->name('car-bookings.reject');
+    
+    // Payment page for confirmed bookings
+    Route::get('/car-bookings/{carBooking}/pay', [CarBookingController::class, 'showPayCarBooking'])
+        ->name('car-bookings.pay');
+    
+    Route::post('/car-bookings/{carBooking}/process-payment', [CarBookingController::class, 'processCarPayment'])
+        ->name('car-bookings.process-payment');
 
     // Food & Order Management
     Route::resource('foods', FoodController::class);
@@ -379,6 +414,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/markup-stats', [MarkupBookingController::class, 'getMarkupStats'])->name('markup.stats');
     Route::get('/markup/browse/properties', [MarkupBookingController::class, 'browseProperties'])->name('markup.browse.properties');
     Route::get('/markup/browse/cars', [MarkupBookingController::class, 'browseCars'])->name('markup.browse.cars');
+
+
+    Route::resource('checklists', ChecklistController::class);
+    
+    // Checklist items management
+    Route::post('/checklists/{checklist}/items', [ChecklistController::class, 'addItem'])->name('checklists.items.store');
+    Route::put('/checklist-items/{item}', [ChecklistController::class, 'updateItem'])->name('checklist-items.update');
+    Route::delete('/checklist-items/{item}', [ChecklistController::class, 'deleteItem'])->name('checklist-items.destroy');
+    
+    // Checklist responses
+    Route::get('/checklist-responses', [ChecklistController::class, 'responses'])->name('checklist-responses.index');
+    Route::get('/checklist-responses/{checklistResponse}', [ChecklistController::class, 'showResponse'])->name('checklist-responses.show');
+    
+    // Booking checklists
+    Route::get('/bookings/{booking}/checklist', [ChecklistController::class, 'getBookingChecklist'])->name('bookings.checklist');
+    Route::get('/car-bookings/{carBooking}/checklist', [ChecklistController::class, 'getCarBookingChecklist'])->name('car-bookings.checklist');
+    
+    // Update checklist items
+    Route::post('/checklist/{checklist}/update-item', [ChecklistController::class, 'updateChecklistItem'])->name('checklist.update-item');
+    Route::post('/checklist/{checklist}/complete', [ChecklistController::class, 'completeChecklist'])->name('checklist.complete');
+
+
+    Route::get('/admin/pending-profiles', [ProfileController::class, 'pendingProfiles'])->name('admin.pending-profiles');
+    Route::post('/admin/users/{user}/approve-pending', [ProfileController::class, 'approvePending'])->name('admin.approve-pending');
+    Route::post('/admin/users/{user}/reject-pending', [ProfileController::class, 'rejectPending'])->name('admin.reject-pending');
 });
 
 

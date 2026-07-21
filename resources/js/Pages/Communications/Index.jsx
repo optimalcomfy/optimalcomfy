@@ -707,11 +707,11 @@ const CommunicationsIndex = ({ templates, campaigns, availableVariables, flash }
                     >
                         {mobileFiltersOpen ? (
                             <>
-                                <X className="w-5 h-5 mr-2" /> Close Filters
+                                <X className="h-5 mr-2" /> Close Filters
                             </>
                         ) : (
                             <>
-                                <Filter className="w-5 h-5 mr-2" /> Open Filters
+                                <Filter className="h-5 mr-2" /> Open Filters
                             </>
                         )}
                     </button>

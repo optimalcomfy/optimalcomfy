@@ -57,6 +57,11 @@ function Footer() {
                     Rides
                   </Link>
                 </li>
+                <li className="">
+                  <a className="hover:text-primary" href="https://blogs.ristay.co.ke/" target='_blank'>
+                    Blogs
+                  </a>
+                </li>
               </ul>
 
               <ul className="flex flex-1 flex-col gap-[10px]">

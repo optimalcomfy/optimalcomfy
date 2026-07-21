@@ -64,15 +64,29 @@
         }
         .btn {
             display: inline-block;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background-color: #007bff;
             color: white;
             text-decoration: none;
             border-radius: 5px;
             margin: 10px 0;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background-color: #0056b3;
         }
         .btn-host {
             background-color: #28a745;
+        }
+        .btn-host:hover {
+            background-color: #157347;
+        }
+        .btn-checklist {
+            background-color: #0dcaf0;
+            color: #000;
+        }
+        .btn-checklist:hover {
+            background-color: #0bb4d4;
         }
         .car-info {
             background-color: #e9ecef;
@@ -87,6 +101,19 @@
             margin-top: 20px;
             font-size: 0.9em;
             color: #6c757d;
+        }
+        .checklist-reminder {
+            background-color: #d1ecf1;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 5px solid #0dcaf0;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
         }
     </style>
 </head>
@@ -197,6 +224,32 @@
             </a>
             @endif
         </div>
+
+        <!-- CHECKLIST REMINDER FOR CAR HOST -->
+        <div class="checklist-reminder">
+            <h3>✅ Important: Vehicle Setup Checklist Required</h3>
+            <p><strong>Please complete the vehicle setup checklist before customer pickup:</strong></p>
+            
+            <div style="margin: 15px 0;">
+                <a href="{{ route('car-bookings.checklist', $booking->id) }}" class="btn btn-checklist">
+                    🚗 Open & Complete Vehicle Checklist
+                </a>
+            </div>
+            
+            <p><strong>Checklist includes:</strong></p>
+            <ul>
+                <li>Vehicle cleanliness and detailing verification</li>
+                <li>Mechanical condition check (engine, brakes, lights)</li>
+                <li>Fuel level confirmation</li>
+                <li>Documentation verification (insurance, registration)</li>
+                <li>Safety equipment check (spare tire, jack, first aid kit)</li>
+                <li>Interior and exterior condition documentation</li>
+            </ul>
+            
+            <p style="margin-top: 10px; font-weight: bold; color: #0a58ca;">
+                📋 <strong>Important:</strong> The checklist must be completed and marked as "Done" before the customer's pickup time.
+            </p>
+        </div>
     @endif
 
     <div class="booking-details">
@@ -223,6 +276,7 @@
             <p>Need help? Contact our support team at support@example.com or call +254 700 000000</p>
         @else
             <p>Please prepare the vehicle for pickup at the scheduled time.</p>
+            <p><strong>Don't forget to complete the vehicle checklist!</strong></p>
             <p>For any questions, contact our host support at hosts@example.com</p>
         @endif
 

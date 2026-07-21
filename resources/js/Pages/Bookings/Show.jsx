@@ -3,6 +3,7 @@ import { Link, usePage, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import { FaCalendarAlt, FaMapMarkerAlt, FaEye, FaUser, FaHome, FaMoneyBillWave, FaCheckCircle, FaArrowLeft, FaSignInAlt, FaSignOutAlt, FaTimes, FaCalendarPlus } from 'react-icons/fa';
 import Swal from 'sweetalert2';
+import { ClipboardCheck, Clock } from 'lucide-react';
 
 const BookingShow = () => {
   const { booking, auth, errors, max_refundable_amount } = usePage().props;
@@ -766,7 +767,7 @@ const BookingShow = () => {
     <Layout>
       <div className="max-w-7xl p-4">
         {/* Header with back button */}
-        <div className="flex items-center mb-6">
+        <div className="flex flex-col lg:flex-row items-center mb-6 gap-4">
           {roleId !== 4 &&
           <Link
             href={route('bookings.index')}
@@ -775,6 +776,35 @@ const BookingShow = () => {
             <FaArrowLeft className="mr-2" /> Back to Bookings
           </Link>}
           <h1 className="text-3xl font-bold text-gray-800">Booking Details</h1>
+           {roleId === 2 &&
+          <Link
+              href={route('bookings.checklist', booking.id)}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+              <ClipboardCheck className="h-4 mr-2" />
+              View Checklist
+          </Link>}
+          {booking.status === 'confirmed' && (
+              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                          <Clock className="h-5 text-yellow-600" />
+                          <div>
+                              <p className="font-medium text-yellow-800">Payment Required</p>
+                              <p className="text-sm text-yellow-700">
+                                  Complete payment to confirm your booking.
+                              </p>
+                          </div>
+                      </div>
+                      <Link
+                          href={route('bookings.pay', booking.id)}
+                          className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium"
+                      >
+                          Pay Now
+                      </Link>
+                  </div>
+              </div>
+          )}
         </div>
 
         {/* Status banner with check-in/out buttons */}
@@ -886,6 +916,7 @@ const BookingShow = () => {
             </div>
 
             {/* Guest details */}
+            {booking.status === "paid" &&
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                 <FaUser className="inline mr-2" /> Guest Information
@@ -911,9 +942,10 @@ const BookingShow = () => {
                   <p className="text-lg font-bold text-gray-500 flex items-center gap-2"> <FaEye /> View user kyc</p>
                 </Link>
               </div>
-            </div>
+            </div>}
 
             {/* Host details */}
+            {booking.status === "paid" &&
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                 <FaHome className="inline mr-2" /> Host Information
@@ -932,9 +964,10 @@ const BookingShow = () => {
                   <p className="font-medium">{booking.property.user.email}</p>
                 </div>
               </div>
-            </div>
+            </div>}
 
             {/* Lock box details */}
+            {booking.status === "paid" &&
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                 <FaHome className="inline mr-2" /> Lock box details
@@ -981,7 +1014,7 @@ const BookingShow = () => {
                   <p className="font-medium">{booking.property.lock_box_location}</p>
                 </div>
               </div>
-            </div>
+            </div>}
           </div>
 
           {/* Right column - Payment summary */}
@@ -1098,7 +1131,7 @@ const BookingShow = () => {
               <p className="text-sm text-gray-600 mb-3">
                 If you have any questions about your booking, please contact our customer support.
               </p>
-              <a href={`tel:${booking.user?.contact_phone}`} className="px-8 py-2 text-center justify-center flex items-center w-full bg-peachDark hover:bg-blue-700 text-white rounded-md transition duration-150">
+              <a href="tel:+254769880088" className="px-8 py-2 text-center justify-center flex items-center w-full bg-peachDark hover:bg-blue-700 text-white rounded-md transition duration-150">
                 Contact Support
               </a>
 

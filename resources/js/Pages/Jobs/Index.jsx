@@ -65,10 +65,10 @@ const Index = () => {
           <h1 className="text-2xl font-semibold">Job Listings</h1>
           <div className="flex gap-2">
             <Link href={route('jobs.create')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" /> Post Job
+              <Plus className="h-4 mr-2" /> Post Job
             </Link>
             <button onClick={generatePDF} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
-              <FileText className="w-4 h-4 mr-2" /> PDF
+              <FileText className="h-4 mr-2" /> PDF
             </button>
           </div>
         </div>

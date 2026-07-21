@@ -353,11 +353,11 @@ const BookingsIndex = () => {
           >
             {mobileFiltersOpen ? (
               <>
-                <X className="w-5 h-5 mr-2" /> Close Filters
+                <X className="h-5 mr-2" /> Close Filters
               </>
             ) : (
               <>
-                <Filter className="w-5 h-5 mr-2" /> Open Filters
+                <Filter className="h-5 mr-2" /> Open Filters
               </>
             )}
           </button>
@@ -390,9 +390,9 @@ const BookingsIndex = () => {
                 className="flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
               >
                   {pdfLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 my-auto animate-spin" />
+                    <Loader2 className="h-4 mr-2 my-auto animate-spin" />
                   ) : (
-                    <FileText className="w-4 h-4 mr-2 my-auto" />
+                    <FileText className="h-4 mr-2 my-auto" />
                   )}
                   <span className='my-auto'>
                     {pdfLoading ? 'Generating...' : 'PDF (All)'}
@@ -405,9 +405,9 @@ const BookingsIndex = () => {
                 className="inline-flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
               >
                   {excelLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 my-auto animate-spin" />
+                    <Loader2 className="h-4 mr-2 my-auto animate-spin" />
                   ) : (
-                    <FileSpreadsheet className="w-4 h-4 mr-2 my-auto" />
+                    <FileSpreadsheet className="h-4 mr-2 my-auto" />
                   )}
                   <span className='my-auto'>
                     {excelLoading ? 'Generating...' : 'Excel (All)'}
@@ -440,7 +440,7 @@ const BookingsIndex = () => {
                     : 'Date Range Filter'
                   }
                 </span>
-                <Calendar className="w-5 h-5 text-gray-500" />
+                <Calendar className="h-5 text-gray-500" />
               </button>
 
               {dateFilterActive && (
@@ -448,7 +448,7 @@ const BookingsIndex = () => {
                   onClick={clearDateFilter}
                   className="absolute right-10 top-2 text-gray-400 hover:text-gray-600"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="h-5" />
                 </button>
               )}
 
@@ -500,7 +500,7 @@ const BookingsIndex = () => {
               onClick={clearDateFilter}
               className="text-blue-600 hover:text-blue-800"
             >
-              <X className="w-5 h-5" />
+              <X className="h-5" />
             </button>
           </div>
         )}

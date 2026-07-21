@@ -48,6 +48,11 @@ class UpdateCarRequest extends FormRequest
             'latitude'          => 'nullable',
             'longitude'         => 'nullable',
             'user_id'           => 'nullable',
+            'default_available' => 'nullable',
+
+            'minimum_rental_days' => 'nullable',
+            'delivery_toggle' => 'boolean',
+            'delivery_fee' => 'nullable'
         ];
     }
 }

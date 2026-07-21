@@ -200,15 +200,15 @@ const MarkupCatalog = () => {
                             <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
                                 <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm text-gray-600">
                                     <div>
-                                        <span className="font-semibold text-gray-900">{filteredMarkups.length}</span> offers available
+                                        <span className="font-semibold text-gray-900 text-xl">{filteredMarkups.length}</span> offers available
                                     </div>
                                     <div className="hidden sm:block">
-                                        <span className="font-semibold text-gray-900">
+                                        <span className="font-semibold text-gray-900 text-xl">
                                             {markups?.filter(m => m.type === 'App\\Models\\Property').length || 0}
                                         </span> properties
                                     </div>
                                     <div className="hidden sm:block">
-                                        <span className="font-semibold text-gray-900">
+                                        <span className="font-semibold text-gray-900 text-xl">
                                             {markups?.filter(m => m.type === 'App\\Models\\Car').length || 0}
                                         </span> cars
                                     </div>
@@ -281,7 +281,7 @@ const MarkupCatalog = () => {
                         {filteredMarkups.length === 0 ? (
                             <div className="text-center py-8 sm:py-12">
                                 <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                                    <Search className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
+                                    <Search className="h-6 sm:w-8 sm:h-8 text-gray-400" />
                                 </div>
                                 <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No offers found</h3>
                                 <p className="text-gray-500 text-sm sm:text-base">
@@ -441,23 +441,23 @@ const MarkupCatalog = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-xs sm:text-sm text-gray-600 justify-center">
                                         <div className="flex flex-col items-center">
                                             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${colors.primary}15` }}>
-                                                <Shield className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: colors.primary }} />
+                                                <Shield className="h-5 sm:w-6 sm:h-6" style={{ color: colors.primary }} />
                                             </div>
-                                            <span className="font-semibold text-gray-900">Secure Booking</span>
+                                            <span className="font-semibold text-gray-900 text-xl">Secure Booking</span>
                                             <span className="mt-1">Safe and protected payments</span>
                                         </div>
                                         <div className="flex flex-col items-center">
                                             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${colors.accent}15` }}>
-                                                <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: colors.accent }} />
+                                                <CreditCard className="h-5 sm:w-6 sm:h-6" style={{ color: colors.accent }} />
                                             </div>
-                                            <span className="font-semibold text-gray-900">Best Value</span>
+                                            <span className="font-semibold text-gray-900 text-xl">Best Value</span>
                                             <span className="mt-1">Competitive pricing & premium service</span>
                                         </div>
                                         <div className="flex flex-col items-center">
                                             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${colors.primary}15` }}>
-                                                <User className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: colors.primary }} />
+                                                <User className="h-5 sm:w-6 sm:h-6" style={{ color: colors.primary }} />
                                             </div>
-                                            <span className="font-semibold text-gray-900">24/7 Support</span>
+                                            <span className="font-semibold text-gray-900 text-xl">24/7 Support</span>
                                             <span className="mt-1">Always here to help you</span>
                                         </div>
                                     </div>

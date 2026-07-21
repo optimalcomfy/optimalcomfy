@@ -55,6 +55,7 @@
         "swiper": "^11.2.5",
         "use-places-autocomplete": "^4.0.1",
         "vite-plugin-svgr": "^4.3.0",
-        "xlsx": "^0.18.5"
+        "xlsx": "^0.18.5",
+        "yet-another-react-lightbox": "^3.28.0"
     }
 }

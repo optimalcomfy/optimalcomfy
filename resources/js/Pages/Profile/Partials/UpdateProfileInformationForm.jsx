@@ -8,6 +8,7 @@ import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
 import { Toast } from 'primereact/toast';
+import { Badge } from 'primereact/badge';
 import 'primeicons/primeicons.css';
 import countriesWithNationality from '@/Pages/Auth/Countries';
 
@@ -21,11 +22,20 @@ export default function UpdateProfileInformationForm({
 }) {
     const [isUploading, setIsUploading] = useState(false);
     const [profilePreview, setProfilePreview] = useState(user.profile_picture ? `/storage/${user.profile_picture}` : null);
-    const [idPreview, setIdPreview] = useState(user.id_verification ? `/storage/${user.id_verification}` : null);
+    const [idFrontPreview, setIdFrontPreview] = useState(user.id_front ? `/storage/${user.id_front}` : null);
+    const [idBackPreview, setIdBackPreview] = useState(user.id_back ? `/storage/${user.id_back}` : null);
+    const [pendingProfilePreview, setPendingProfilePreview] = useState(user.pending_profile_picture ? `/storage/${user.pending_profile_picture}` : null);
+    const [pendingIdFrontPreview, setPendingIdFrontPreview] = useState(user.pending_id_front ? `/storage/${user.pending_id_front}` : null);
+    const [pendingIdBackPreview, setPendingIdBackPreview] = useState(user.pending_id_back ? `/storage/${user.pending_id_back}` : null);
+    
     const [profileFile, setProfileFile] = useState(null);
-    const [idFile, setIdFile] = useState(null);
+    const [idFrontFile, setIdFrontFile] = useState(null);
+    const [idBackFile, setIdBackFile] = useState(null);
     const [filteredCountries, setFilteredCountries] = useState([]);
     const toast = useRef(null);
+
+    // Check if user has pending changes
+    const hasPendingChanges = user.profile_status === 'pending' || user.pending_data !== null;
 
     // Format countries for dropdown with nationality auto-fill
     const countryOptions = countriesWithNationality.map(country => ({
@@ -46,6 +56,24 @@ export default function UpdateProfileInformationForm({
         { label: 'Other', value: 'other' },
     ];
 
+    // FIXED: Handle both string JSON and object for pending_data
+    const getPendingData = () => {
+        if (!user.pending_data) return {};
+        
+        if (typeof user.pending_data === 'string') {
+            try {
+                return JSON.parse(user.pending_data);
+            } catch (e) {
+                console.error('Error parsing pending_data JSON:', e);
+                return {};
+            }
+        }
+        
+        return user.pending_data;
+    };
+
+    const pendingData = getPendingData();
+
     const { data, setData, patch, errors, processing, recentlySuccessful, reset } = useForm({
         name: user.name || '',
         display_name: user.display_name || '',
@@ -59,7 +87,8 @@ export default function UpdateProfileInformationForm({
         country: user.country || '',
         postal_code: user.postal_code || '',
         profile_picture: null,
-        id_verification: null,
+        id_front: null,
+        id_back: null,
         bio: user.bio || '',
         preferred_payment_method: user.preferred_payment_method || '',
         emergency_contact: user.emergency_contact || '',
@@ -69,29 +98,47 @@ export default function UpdateProfileInformationForm({
 
     // Update form data when user prop changes
     useEffect(() => {
+        const currentPendingData = getPendingData();
+        
         setData({
-            name: user.name || '',
-            display_name: user.display_name || '',
-            phone: user.phone || '',
+            name: hasPendingChanges ? (currentPendingData.name || user.name || '') : (user.name || ''),
+            display_name: hasPendingChanges ? (currentPendingData.display_name || user.display_name || '') : (user.display_name || ''),
+            phone: hasPendingChanges ? (currentPendingData.phone || user.phone || '') : (user.phone || ''),
             email: user.email || '',
-            date_of_birth: user.date_of_birth || '',
-            nationality: user.nationality || '',
-            passport_number: user.passport_number || '',
-            address: user.address || '',
-            city: user.city || '',
-            country: user.country || '',
-            postal_code: user.postal_code || '',
+            date_of_birth: hasPendingChanges ? (currentPendingData.date_of_birth || user.date_of_birth || '') : (user.date_of_birth || ''),
+            nationality: hasPendingChanges ? (currentPendingData.nationality || user.nationality || '') : (user.nationality || ''),
+            passport_number: hasPendingChanges ? (currentPendingData.passport_number || user.passport_number || '') : (user.passport_number || ''),
+            address: hasPendingChanges ? (currentPendingData.address || user.address || '') : (user.address || ''),
+            city: hasPendingChanges ? (currentPendingData.city || user.city || '') : (user.city || ''),
+            country: hasPendingChanges ? (currentPendingData.country || user.country || '') : (user.country || ''),
+            postal_code: hasPendingChanges ? (currentPendingData.postal_code || user.postal_code || '') : (user.postal_code || ''),
             profile_picture: null,
-            id_verification: null,
-            bio: user.bio || '',
-            preferred_payment_method: user.preferred_payment_method || '',
-            emergency_contact: user.emergency_contact || '',
-            contact_phone: user.contact_phone || '',
+            id_front: null,
+            id_back: null,
+            bio: hasPendingChanges ? (currentPendingData.bio || user.bio || '') : (user.bio || ''),
+            preferred_payment_method: hasPendingChanges ? (currentPendingData.preferred_payment_method || user.preferred_payment_method || '') : (user.preferred_payment_method || ''),
+            emergency_contact: hasPendingChanges ? (currentPendingData.emergency_contact || user.emergency_contact || '') : (user.emergency_contact || ''),
+            contact_phone: hasPendingChanges ? (currentPendingData.contact_phone || user.contact_phone || '') : (user.contact_phone || ''),
             _method: 'PATCH'
         });
-        setProfilePreview(user.profile_picture ? `/storage/${user.profile_picture}` : null);
-        setIdPreview(user.id_verification ? `/storage/${user.id_verification}` : null);
-    }, [user]);
+        
+        // Set previews based on pending or active status
+        if (hasPendingChanges) {
+            setProfilePreview(user.pending_profile_picture ? `/storage/${user.pending_profile_picture}` : (user.profile_picture ? `/storage/${user.profile_picture}` : null));
+            setIdFrontPreview(user.pending_id_front ? `/storage/${user.pending_id_front}` : (user.id_front ? `/storage/${user.id_front}` : null));
+            setIdBackPreview(user.pending_id_back ? `/storage/${user.pending_id_back}` : (user.id_back ? `/storage/${user.id_back}` : null));
+            setPendingProfilePreview(user.pending_profile_picture ? `/storage/${user.pending_profile_picture}` : null);
+            setPendingIdFrontPreview(user.pending_id_front ? `/storage/${user.pending_id_front}` : null);
+            setPendingIdBackPreview(user.pending_id_back ? `/storage/${user.pending_id_back}` : null);
+        } else {
+            setProfilePreview(user.profile_picture ? `/storage/${user.profile_picture}` : null);
+            setIdFrontPreview(user.id_front ? `/storage/${user.id_front}` : null);
+            setIdBackPreview(user.id_back ? `/storage/${user.id_back}` : null);
+            setPendingProfilePreview(null);
+            setPendingIdFrontPreview(null);
+            setPendingIdBackPreview(null);
+        }
+    }, [user, hasPendingChanges]);
 
     // Handle country selection - auto-fill nationality
     const handleCountryChange = (e) => {
@@ -137,32 +184,38 @@ export default function UpdateProfileInformationForm({
         });
         
         formData.append('_method', 'PATCH');
+        formData.append('is_pending_update', 'true'); // Flag for pending updates
         
         // Append files if they exist
         if (profileFile) {
             formData.append('profile_picture', profileFile);
         }
         
-        if (idFile) {
-            formData.append('id_verification', idFile);
+        if (idFrontFile) {
+            formData.append('id_front', idFrontFile);
+        }
+        
+        if (idBackFile) {
+            formData.append('id_back', idBackFile);
         }
 
         try {
             await router.post(route('profile.update'), formData, {
                 preserveScroll: true,
                 onSuccess: () => {
-                    if (onSuccess) onSuccess('Profile updated successfully!');
+                    if (onSuccess) onSuccess('Profile update submitted for verification! It will be reviewed by our team.');
                     
                     // Clear file inputs and reset state
                     setProfileFile(null);
-                    setIdFile(null);
+                    setIdFrontFile(null);
+                    setIdBackFile(null);
                     reset();
                     
-                    // Reload user data to get updated image URLs
+                    // Reload user data to get updated pending status
                     router.reload({ only: ['user'] });
                 },
                 onError: (errors) => {
-                    if (onError) onError('Failed to update profile. Please try again.');
+                    if (onError) onError('Failed to submit profile update. Please try again.');
                     console.error('Update error:', errors);
                 },
                 onFinish: () => {
@@ -213,8 +266,8 @@ export default function UpdateProfileInformationForm({
         reader.readAsDataURL(file);
     };
 
-    // Handle ID verification upload with preview
-    const handleIdVerificationChange = (e) => {
+    // Handle ID Front upload with preview
+    const handleIdFrontChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -240,38 +293,69 @@ export default function UpdateProfileInformationForm({
             return;
         }
 
-        setIdFile(file);
+        setIdFrontFile(file);
         
         // Create preview for images only
         if (file.type.match('image.*')) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                setIdPreview(e.target.result);
+                setIdFrontPreview(e.target.result);
             };
             reader.readAsDataURL(file);
         } else {
-            setIdPreview(null);
+            setIdFrontPreview(null);
+        }
+    };
+
+    // Handle ID Back upload with preview
+    const handleIdBackChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.match('application/pdf|image.*')) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Invalid File',
+                detail: 'Please select a PDF or image file',
+                life: 3000
+            });
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'File Too Large',
+                detail: 'File must be less than 5MB',
+                life: 3000
+            });
+            return;
+        }
+
+        setIdBackFile(file);
+        
+        // Create preview for images only
+        if (file.type.match('image.*')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setIdBackPreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            setIdBackPreview(null);
         }
     };
 
     // Remove profile picture
     const removeProfilePicture = () => {
         setProfileFile(null);
-        setProfilePreview(null);
+        setProfilePreview(user.profile_picture ? `/storage/${user.profile_picture}` : null);
         
-        // Send request to remove from server
+        // Send request to remove pending profile picture
         const formData = new FormData();
-        const fields = [
-            'name', 'display_name', 'phone', 'email', 'date_of_birth',
-            'nationality', 'passport_number', 'address', 'city', 'country',
-            'postal_code', 'bio', 'preferred_payment_method', 
-            'emergency_contact', 'contact_phone'
-        ];
-        
-        fields.forEach(field => {
-            formData.append(field, data[field] || '');
-        });
-        formData.append('profile_picture', '');
+        formData.append('remove_pending_profile', 'true');
         formData.append('_method', 'PATCH');
         
         router.post(route('profile.update'), formData, {
@@ -282,29 +366,55 @@ export default function UpdateProfileInformationForm({
         });
     };
 
-    // Remove ID verification
-    const removeIdVerification = () => {
-        setIdFile(null);
-        setIdPreview(null);
+    // Remove ID Front
+    const removeIdFront = () => {
+        setIdFrontFile(null);
+        setIdFrontPreview(user.id_front ? `/storage/${user.id_front}` : null);
         
-        // Send request to remove from server
+        // Send request to remove pending ID front
         const formData = new FormData();
-        const fields = [
-            'name', 'display_name', 'phone', 'email', 'date_of_birth',
-            'nationality', 'passport_number', 'address', 'city', 'country',
-            'postal_code', 'bio', 'preferred_payment_method', 
-            'emergency_contact', 'contact_phone'
-        ];
-        
-        fields.forEach(field => {
-            formData.append(field, data[field] || '');
-        });
-        formData.append('id_verification', '');
+        formData.append('remove_pending_id_front', 'true');
         formData.append('_method', 'PATCH');
         
         router.post(route('profile.update'), formData, {
             preserveScroll: true,
             onSuccess: () => {
+                router.reload({ only: ['user'] });
+            }
+        });
+    };
+
+    // Remove ID Back
+    const removeIdBack = () => {
+        setIdBackFile(null);
+        setIdBackPreview(user.id_back ? `/storage/${user.id_back}` : null);
+        
+        // Send request to remove pending ID back
+        const formData = new FormData();
+        formData.append('remove_pending_id_back', 'true');
+        formData.append('_method', 'PATCH');
+        
+        router.post(route('profile.update'), formData, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload({ only: ['user'] });
+            }
+        });
+    };
+
+    // Cancel pending changes
+    const cancelPendingChanges = () => {
+        if (!confirm('Are you sure you want to cancel your pending changes?')) return;
+        
+        router.post(route('profile.cancel-pending'), {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.current?.show({
+                    severity: 'success',
+                    summary: 'Cancelled',
+                    detail: 'Pending changes have been cancelled',
+                    life: 3000
+                });
                 router.reload({ only: ['user'] });
             }
         });
@@ -314,12 +424,68 @@ export default function UpdateProfileInformationForm({
         <section className={className}>
             <Toast ref={toast} />
             
+            {/* Pending Changes Alert */}
+            {hasPendingChanges && (
+                <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center">
+                            <i className="pi pi-clock text-blue-500 text-xl mr-3"></i>
+                            <div className='flex flex-col'>
+                                <h4 className="font-semibold text-blue-800">Profile Update Pending Verification</h4>
+                                <p className="text-blue-600 text-sm mt-1">
+                                    Your profile changes are under review. You cannot make additional changes until the current request is processed.
+                                </p>
+                                {user.profile_status === 'rejected' && user.rejection_reason && (
+                                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                                        <p className="text-red-700 text-sm font-medium">Rejection Reason:</p>
+                                        <p className="text-red-600 text-sm">{user.rejection_reason}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <button
+                            onClick={cancelPendingChanges}
+                            className="text-sm text-blue-600 hover:text-blue-800 font-medium px-3 w-fit py-1 border border-blue-300 rounded hover:bg-blue-50 transition-colors"
+                        >
+                            Cancel Changes
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <form onSubmit={submit} className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Column 1: Basic Information */}
                     <div className="lg:col-span-2 space-y-6">
+                        {/* Status Badge */}
+                        {hasPendingChanges && (
+                            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-yellow-500">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                        <Badge 
+                                            value="PENDING" 
+                                            severity="warning"
+                                            className="mr-3"
+                                        />
+                                        <span className="text-sm text-gray-600">
+                                            Current values shown. Pending changes in review.
+                                        </span>
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                        <i className="pi pi-info-circle mr-1"></i>
+                                        Updates require verification
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                Personal Information
+                                {hasPendingChanges && (
+                                    <Badge value="Pending" severity="warning" className="ml-2" />
+                                )}
+                            </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <InputLabel htmlFor="name" value="Full Name *" />
@@ -330,6 +496,7 @@ export default function UpdateProfileInformationForm({
                                         onChange={(e) => setData('name', e.target.value)}
                                         required
                                         autoComplete="name"
+                                        disabled={hasPendingChanges}
                                     />
                                     <InputError message={errors.name} />
                                 </div>
@@ -342,6 +509,7 @@ export default function UpdateProfileInformationForm({
                                         value={data.display_name}
                                         onChange={(e) => setData('display_name', e.target.value)}
                                         autoComplete="nickname"
+                                        disabled={hasPendingChanges}
                                     />
                                     <InputError message={errors.display_name} />
                                 </div>
@@ -356,6 +524,7 @@ export default function UpdateProfileInformationForm({
                                         onChange={(e) => setData('email', e.target.value)}
                                         required
                                         autoComplete="email"
+                                        disabled
                                     />
                                     <InputError message={errors.email} />
                                 </div>
@@ -369,6 +538,7 @@ export default function UpdateProfileInformationForm({
                                         value={data.phone}
                                         onChange={(e) => setData('phone', e.target.value)}
                                         autoComplete="tel"
+                                        disabled={hasPendingChanges}
                                     />
                                     <InputError message={errors.phone} />
                                 </div>
@@ -384,6 +554,7 @@ export default function UpdateProfileInformationForm({
                                         showIcon
                                         maxDate={new Date()}
                                         placeholder="YYYY-MM-DD"
+                                        disabled={hasPendingChanges}
                                     />
                                     <InputError message={errors.date_of_birth} />
                                 </div>
@@ -401,6 +572,7 @@ export default function UpdateProfileInformationForm({
                                         placeholder="Select Country"
                                         filter
                                         filterBy="label"
+                                        disabled={hasPendingChanges}
                                     />
                                     <InputError message={errors.country} />
                                 </div>
@@ -414,6 +586,7 @@ export default function UpdateProfileInformationForm({
                                         onChange={(e) => handleNationalityChange(e.target.value)}
                                         list="nationality-options"
                                         autoComplete="off"
+                                        disabled={hasPendingChanges}
                                     />
                                     <datalist id="nationality-options">
                                         {countryOptions.map((country, index) => (
@@ -431,6 +604,7 @@ export default function UpdateProfileInformationForm({
                                         value={data.passport_number}
                                         onChange={(e) => setData('passport_number', e.target.value)}
                                         autoComplete="off"
+                                        disabled={hasPendingChanges}
                                     />
                                     <InputError message={errors.passport_number} />
                                 </div>
@@ -449,6 +623,7 @@ export default function UpdateProfileInformationForm({
                                         value={data.address}
                                         onChange={(e) => setData('address', e.target.value)}
                                         autoComplete="street-address"
+                                        disabled={hasPendingChanges}
                                     />
                                     <InputError message={errors.address} />
                                 </div>
@@ -461,6 +636,7 @@ export default function UpdateProfileInformationForm({
                                         value={data.city}
                                         onChange={(e) => setData('city', e.target.value)}
                                         autoComplete="address-level2"
+                                        disabled={hasPendingChanges}
                                     />
                                     <InputError message={errors.city} />
                                 </div>
@@ -473,6 +649,7 @@ export default function UpdateProfileInformationForm({
                                         value={data.postal_code}
                                         onChange={(e) => setData('postal_code', e.target.value)}
                                         autoComplete="postal-code"
+                                        disabled={hasPendingChanges}
                                     />
                                     <InputError message={errors.postal_code} />
                                 </div>
@@ -487,11 +664,12 @@ export default function UpdateProfileInformationForm({
                                     <InputLabel htmlFor="bio" value="Bio / About Me" />
                                     <textarea
                                         id="bio"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:text-gray-500"
                                         value={data.bio}
                                         onChange={(e) => setData('bio', e.target.value)}
                                         rows={4}
                                         placeholder="Tell us about yourself..."
+                                        disabled={hasPendingChanges}
                                     />
                                     <InputError message={errors.bio} />
                                 </div>
@@ -508,6 +686,7 @@ export default function UpdateProfileInformationForm({
                                             optionLabel="label"
                                             optionValue="value"
                                             placeholder="Select Payment Method"
+                                            disabled={hasPendingChanges}
                                         />
                                         <InputError message={errors.preferred_payment_method} />
                                     </div>
@@ -521,6 +700,7 @@ export default function UpdateProfileInformationForm({
                                             className="w-full"
                                             value={data.emergency_contact}
                                             onChange={(e) => setData('emergency_contact', e.target.value)}
+                                            disabled={hasPendingChanges}
                                         />
                                         <InputError message={errors.emergency_contact} />
                                     </div>
@@ -533,6 +713,7 @@ export default function UpdateProfileInformationForm({
                                             className="w-full"
                                             value={data.contact_phone}
                                             onChange={(e) => setData('contact_phone', e.target.value)}
+                                            disabled={hasPendingChanges}
                                         />
                                         <InputError message={errors.contact_phone} />
                                     </div>
@@ -545,7 +726,12 @@ export default function UpdateProfileInformationForm({
                     <div className="space-y-6">
                         {/* Profile Picture Section */}
                         <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Picture</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                Profile Picture
+                                {hasPendingChanges && user.pending_profile_picture && (
+                                    <Badge value="New" severity="warning" className="ml-2" />
+                                )}
+                            </h3>
                             
                             <div className="space-y-4">
                                 <div className="flex justify-center">
@@ -563,7 +749,7 @@ export default function UpdateProfileInformationForm({
                                                 </div>
                                             )}
                                         </div>
-                                        {profilePreview && (
+                                        {profilePreview && !hasPendingChanges && (
                                             <button
                                                 type="button"
                                                 onClick={removeProfilePicture}
@@ -576,83 +762,212 @@ export default function UpdateProfileInformationForm({
                                     </div>
                                 </div>
                                 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Upload New Photo
-                                    </label>
-                                    <label className="cursor-pointer flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors bg-gray-50">
-                                        <i className="pi pi-cloud-upload text-gray-400 text-xl mr-3"></i>
-                                        <span className="text-gray-600">Click to upload</span>
-                                        <input
-                                            type="file"
-                                            className="hidden"
-                                            accept="image/*"
-                                            onChange={handleProfilePictureChange}
-                                        />
-                                    </label>
-                                    <p className="text-xs text-gray-500 text-center">
-                                        JPG, PNG up to 2MB. Recommended: 400x400px
-                                    </p>
-                                </div>
+                                {hasPendingChanges && user.pending_profile_picture && (
+                                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                        <p className="text-yellow-700 text-sm font-medium mb-1">
+                                            <i className="pi pi-clock mr-1"></i>
+                                            New profile picture pending verification
+                                        </p>
+                                        <div className="flex items-center mt-2">
+                                            <div className="w-12 h-12 rounded-full overflow-hidden border border-yellow-300">
+                                                <img 
+                                                    src={pendingProfilePreview} 
+                                                    alt="Pending Profile" 
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="ml-3">
+                                                <p className="text-xs text-yellow-600">Pending review by admin</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {!hasPendingChanges && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Upload New Photo
+                                            </label>
+                                            <label className="cursor-pointer flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors bg-gray-50">
+                                                <i className="pi pi-cloud-upload text-gray-400 text-xl mr-3"></i>
+                                                <span className="text-gray-600">Click to upload</span>
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={handleProfilePictureChange}
+                                                    disabled={hasPendingChanges}
+                                                />
+                                            </label>
+                                            <p className="text-xs text-gray-500 text-center">
+                                                JPG, PNG up to 2MB. Recommended: 400x400px
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
-                        {/* ID Verification Section */}
+                        {/* ID Front Section */}
                         <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">ID Verification</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                ID Front
+                                {hasPendingChanges && user.pending_id_front && (
+                                    <Badge value="New" severity="warning" className="ml-2" />
+                                )}
+                            </h3>
                             
                             <div className="space-y-4">
                                 <div className="flex justify-center">
                                     <div className="relative w-full max-w-xs">
-                                        {idPreview ? (
+                                        {idFrontPreview ? (
                                             <div className="border rounded-lg overflow-hidden bg-gray-50">
                                                 <img 
-                                                    src={idPreview} 
-                                                    alt="ID Preview" 
+                                                    src={idFrontPreview} 
+                                                    alt="ID Front Preview" 
                                                     className="w-full h-48 object-contain"
                                                 />
-                                                <button
-                                                    type="button"
-                                                    onClick={removeIdVerification}
-                                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors text-xs"
-                                                >
-                                                    ×
-                                                </button>
+                                                {!hasPendingChanges && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={removeIdFront}
+                                                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full h-6 p-2 flex items-center justify-center hover:bg-red-600 transition-colors text-xs"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center bg-gray-50 p-4">
                                                 <i className="pi pi-id-card text-gray-400 text-3xl mb-2"></i>
                                                 <span className="text-gray-500 text-sm text-center">
-                                                    No ID document uploaded
+                                                    No ID front uploaded
                                                 </span>
                                             </div>
                                         )}
                                     </div>
                                 </div>
                                 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Upload ID Document
-                                    </label>
-                                    <label className="cursor-pointer flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors bg-gray-50">
-                                        <i className="pi pi-file-upload text-gray-400 text-xl mr-3"></i>
-                                        <span className="text-gray-600">Choose File</span>
-                                        <input
-                                            type="file"
-                                            className="hidden"
-                                            accept=".pdf,.jpg,.jpeg,.png"
-                                            onChange={handleIdVerificationChange}
-                                        />
-                                    </label>
-                                    <p className="text-xs text-gray-500 text-center">
-                                        PDF, JPG, PNG up to 5MB
-                                    </p>
-                                </div>
+                                {hasPendingChanges && user.pending_id_front && (
+                                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                        <p className="text-yellow-700 text-sm font-medium">
+                                            <i className="pi pi-clock mr-1"></i>
+                                            New ID front pending verification
+                                        </p>
+                                    </div>
+                                )}
                                 
-                                {user.id_verification && (
+                                {!hasPendingChanges && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Upload ID Front
+                                            </label>
+                                            <label className="cursor-pointer flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors bg-gray-50">
+                                                <i className="pi pi-file-upload text-gray-400 text-xl mr-3"></i>
+                                                <span className="text-gray-600">Choose File</span>
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept=".pdf,.jpg,.jpeg,.png"
+                                                    onChange={handleIdFrontChange}
+                                                    disabled={hasPendingChanges}
+                                                />
+                                            </label>
+                                            <p className="text-xs text-gray-500 text-center">
+                                                PDF, JPG, PNG up to 5MB
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
+                                
+                                {user.id_front && !hasPendingChanges && (
                                     <div className="flex items-center justify-center text-sm text-green-600 bg-green-50 p-3 rounded-lg">
                                         <i className="pi pi-check-circle mr-2"></i>
-                                        ID verification document uploaded
+                                        ID front uploaded
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* ID Back Section */}
+                        <div className="bg-white rounded-lg shadow-sm p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                ID Back
+                                {hasPendingChanges && user.pending_id_back && (
+                                    <Badge value="New" severity="warning" className="ml-2" />
+                                )}
+                            </h3>
+                            
+                            <div className="space-y-4">
+                                <div className="flex justify-center">
+                                    <div className="relative w-full max-w-xs">
+                                        {idBackPreview ? (
+                                            <div className="border rounded-lg overflow-hidden bg-gray-50">
+                                                <img 
+                                                    src={idBackPreview} 
+                                                    alt="ID Back Preview" 
+                                                    className="w-full h-48 object-contain"
+                                                />
+                                                {!hasPendingChanges && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={removeIdBack}
+                                                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full h-6 p-2 flex items-center justify-center hover:bg-red-600 transition-colors text-xs"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center bg-gray-50 p-4">
+                                                <i className="pi pi-id-card text-gray-400 text-3xl mb-2"></i>
+                                                <span className="text-gray-500 text-sm text-center">
+                                                    No ID back uploaded
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                {hasPendingChanges && user.pending_id_back && (
+                                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                        <p className="text-yellow-700 text-sm font-medium">
+                                            <i className="pi pi-clock mr-1"></i>
+                                            New ID back pending verification
+                                        </p>
+                                    </div>
+                                )}
+                                
+                                {!hasPendingChanges && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Upload ID Back
+                                            </label>
+                                            <label className="cursor-pointer flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors bg-gray-50">
+                                                <i className="pi pi-file-upload text-gray-400 text-xl mr-3"></i>
+                                                <span className="text-gray-600">Choose File</span>
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept=".pdf,.jpg,.jpeg,.png"
+                                                    onChange={handleIdBackChange}
+                                                    disabled={hasPendingChanges}
+                                                />
+                                            </label>
+                                            <p className="text-xs text-gray-500 text-center">
+                                                PDF, JPG, PNG up to 5MB
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
+                                
+                                {user.id_back && !hasPendingChanges && (
+                                    <div className="flex items-center justify-center text-sm text-green-600 bg-green-50 p-3 rounded-lg">
+                                        <i className="pi pi-check-circle mr-2"></i>
+                                        ID back uploaded
                                     </div>
                                 )}
                             </div>
@@ -691,19 +1006,24 @@ export default function UpdateProfileInformationForm({
                 <div className="flex items-center justify-between pt-6 border-t">
                     <div className="flex items-center space-x-3">
                         <PrimaryButton 
-                            disabled={processing || isUploading}
+                            disabled={processing || isUploading || hasPendingChanges}
                             type="submit"
                             className="px-6 py-3"
                         >
                             {processing || isUploading ? (
                                 <>
                                     <i className="pi pi-spin pi-spinner mr-2"></i>
-                                    Saving...
+                                    Submitting...
+                                </>
+                            ) : hasPendingChanges ? (
+                                <>
+                                    <i className="pi pi-clock mr-2"></i>
+                                    Changes Pending Review
                                 </>
                             ) : (
                                 <>
                                     <i className="pi pi-save mr-2"></i>
-                                    Save All Changes
+                                    Submit for Verification
                                 </>
                             )}
                         </PrimaryButton>
@@ -717,7 +1037,7 @@ export default function UpdateProfileInformationForm({
                         >
                             <div className="flex items-center text-green-600 text-sm bg-green-50 px-3 py-2 rounded-lg">
                                 <i className="pi pi-check-circle mr-2"></i>
-                                Saved successfully!
+                                Submitted for verification!
                             </div>
                         </Transition>
                     </div>
@@ -728,11 +1048,20 @@ export default function UpdateProfileInformationForm({
                             onClick={() => {
                                 reset();
                                 setProfileFile(null);
-                                setIdFile(null);
-                                setProfilePreview(user.profile_picture ? `/storage/${user.profile_picture}` : null);
-                                setIdPreview(user.id_verification ? `/storage/${user.id_verification}` : null);
+                                setIdFrontFile(null);
+                                setIdBackFile(null);
+                                if (hasPendingChanges) {
+                                    setProfilePreview(user.pending_profile_picture ? `/storage/${user.pending_profile_picture}` : (user.profile_picture ? `/storage/${user.profile_picture}` : null));
+                                    setIdFrontPreview(user.pending_id_front ? `/storage/${user.pending_id_front}` : (user.id_front ? `/storage/${user.id_front}` : null));
+                                    setIdBackPreview(user.pending_id_back ? `/storage/${user.pending_id_back}` : (user.id_back ? `/storage/${user.id_back}` : null));
+                                } else {
+                                    setProfilePreview(user.profile_picture ? `/storage/${user.profile_picture}` : null);
+                                    setIdFrontPreview(user.id_front ? `/storage/${user.id_front}` : null);
+                                    setIdBackPreview(user.id_back ? `/storage/${user.id_back}` : null);
+                                }
                             }}
                             className="text-gray-600 hover:text-gray-900 text-sm flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                            disabled={hasPendingChanges}
                         >
                             <i className="pi pi-times mr-2"></i>
                             Reset Changes

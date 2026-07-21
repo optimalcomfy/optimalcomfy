@@ -383,7 +383,7 @@ const MarkupIndex = () => {
                                                         {getItemTypeLabel(markup.type)}
                                                     </span>
                                                 </div>
-                                                <h3 className="font-semibold text-gray-900">
+                                                <h3 className="font-semibold text-gray-900 text-xl">
                                                     {markup.item.name}
                                                 </h3>
                                                 <div className="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">

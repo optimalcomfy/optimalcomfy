@@ -74,7 +74,7 @@ const TestimonialCarousel = () => {
         className="absolute left-0 p-2 transform -translate-y-1/2 bg-white rounded-full shadow-lg top-1/2 hover:bg-gray-100"
         disabled={isAnimating}
       >
-        <ChevronLeft className="w-6 h-6 text-gray-600" />
+        <ChevronLeft className="h-6 text-gray-600" />
       </button>
 
       <button
@@ -82,7 +82,7 @@ const TestimonialCarousel = () => {
         className="absolute right-0 p-2 transform -translate-y-1/2 bg-white rounded-full shadow-lg top-1/2 hover:bg-gray-100"
         disabled={isAnimating}
       >
-        <ChevronRight className="w-6 h-6 text-gray-600" />
+        <ChevronRight className="h-6 text-gray-600" />
       </button>
 
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">

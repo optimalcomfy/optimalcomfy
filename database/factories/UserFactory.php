@@ -29,7 +29,7 @@ class UserFactory extends Factory
             'country' => fake()->country(),
             'postal_code' => fake()->postcode(),
             'profile_picture' => 'uploads/profile_pictures/default.jpg',
-            'id_verification' => 'uploads/id_verifications/sample_id.jpg',
+            'id_front' => 'uploads/id_fronts/sample_id.jpg',
             'bio' => fake()->paragraph(),
             'preferred_payment_method' => fake()->randomElement(['paypal', 'bank_transfer', 'crypto']),
             'emergency_contact' => fake()->name(),

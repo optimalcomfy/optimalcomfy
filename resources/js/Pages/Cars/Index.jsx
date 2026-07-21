@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { usePage, Link, router, useForm } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
 import Swal from 'sweetalert2';
-import { Filter, X, FileText, FileSpreadsheet, Calendar, Loader2 } from 'lucide-react';
+import { Filter, X, FileText, FileSpreadsheet, Calendar, Loader2, Share2 } from 'lucide-react';
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from 'xlsx';
@@ -26,7 +26,14 @@ const CarsIndex = () => {
   // Date range state
   const getInitialDateRange = () => {
     const now = new Date();
-    return { range: [{ startDate: startOfMonth(now), endDate: endOfMonth(now), key: 'selection' }], active: false };
+    return { 
+      range: [{ 
+        startDate: startOfMonth(now), 
+        endDate: endOfMonth(now), 
+        key: 'selection' 
+      }], 
+      active: false 
+    };
   };
 
   const initialDateInfo = getInitialDateRange();
@@ -52,6 +59,8 @@ const CarsIndex = () => {
   };
 
   const getDateParams = () => {
+    if (!dateFilterActive) return {};
+    
     return {
       start_date: format(dateRange[0].startDate, 'yyyy-MM-dd'),
       end_date: format(dateRange[0].endDate, 'yyyy-MM-dd')
@@ -74,6 +83,7 @@ const CarsIndex = () => {
 
   const clearDateFilter = () => {
     setDateFilterActive(false);
+    setDateRange(initialDateInfo.range);
     setLoading(true);
 
     router.get(route('main-cars.index'), {
@@ -114,7 +124,10 @@ const CarsIndex = () => {
       }
 
       if (allData.length === 0) {
-        toast.error("No cars found matching the selected criteria for the PDF export.", { duration: 4000, position: 'top-center' });
+        toast.error("No cars found matching the selected criteria for the PDF export.", { 
+          duration: 4000, 
+          position: 'top-center' 
+        });
         setPdfLoading(false);
         return;
       }
@@ -126,14 +139,18 @@ const CarsIndex = () => {
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const today = new Date().toLocaleDateString('en-GB', {
-          year: 'numeric', month: 'long', day: 'numeric'
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric'
         });
 
         let dateRangeText = "Date Range: Current Month";
         if (exportFilters.start_date && exportFilters.end_date) {
             try {
-                 dateRangeText = `Date Range: ${format(new Date(exportFilters.start_date + 'T00:00:00'), 'MMM dd, yyyy')} - ${format(new Date(exportFilters.end_date + 'T00:00:00'), 'MMM dd, yyyy')}`;
-            } catch (e) { dateRangeText = "Date Range: Specified"; }
+              dateRangeText = `Date Range: ${format(new Date(exportFilters.start_date + 'T00:00:00'), 'MMM dd, yyyy')} - ${format(new Date(exportFilters.end_date + 'T00:00:00'), 'MMM dd, yyyy')}`;
+            } catch (e) { 
+              dateRangeText = "Date Range: Specified"; 
+            }
         }
 
         doc.addImage(logoImg, 'PNG', 10, 10, 50, 20);
@@ -182,7 +199,11 @@ const CarsIndex = () => {
           startY: 58,
           margin: { top: 58, bottom: 20 },
           styles: { fontSize: 9, cellPadding: 2 },
-          headStyles: { fillColor: [241, 104, 36], textColor: 255, halign: 'center' },
+          headStyles: { 
+            fillColor: [241, 104, 36], 
+            textColor: 255, 
+            halign: 'center' 
+          },
           didDrawPage: function (data) {
             const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
             doc.setFontSize(10);
@@ -190,12 +211,17 @@ const CarsIndex = () => {
           }
         });
 
-        const datePart = exportFilters.start_date ? `${exportFilters.start_date}_to_${exportFilters.end_date}` : 'current_month';
+        const datePart = exportFilters.start_date ? 
+          `${exportFilters.start_date}_to_${exportFilters.end_date}` : 
+          'current_month';
         doc.save(`cars_report_${datePart}.pdf`);
       };
 
       logoImg.onerror = () => {
-        toast.error("Error loading logo for PDF. PDF generation aborted.", { duration: 4000, position: 'top-center' });
+        toast.error("Error loading logo for PDF. PDF generation aborted.", { 
+          duration: 4000, 
+          position: 'top-center' 
+        });
       };
 
     } catch (error) {
@@ -228,7 +254,10 @@ const CarsIndex = () => {
         }
 
         if (allData.length === 0) {
-            toast.error("No cars found matching the selected criteria for the Excel export.", { duration: 4000, position: 'top-center' });
+            toast.error("No cars found matching the selected criteria for the Excel export.", { 
+              duration: 4000, 
+              position: 'top-center' 
+            });
             return;
         }
 
@@ -263,7 +292,9 @@ const CarsIndex = () => {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Cars');
 
-        const datePart = exportFilters.start_date ? `${exportFilters.start_date}_to_${exportFilters.end_date}` : 'current_month';
+        const datePart = exportFilters.start_date ? 
+          `${exportFilters.start_date}_to_${exportFilters.end_date}` : 
+          'current_month';
         XLSX.writeFile(wb, `cars_report_${datePart}.xlsx`);
 
     } catch (error) {
@@ -304,6 +335,91 @@ const CarsIndex = () => {
     });
   };
 
+  const handleShare = (car) => {
+    const shareUrl = `${window.location.origin}/rent-now?car_id=${car.id}`;
+    const shareText = `Check out "${car.name}" on Ristay - ${car.brand} ${car.model} (${car.year}) for KES ${car.platform_price}/day`;
+    const fullShareText = `${shareText}\n\n${shareUrl}`;
+
+    Swal.fire({
+      title: `Share "${car.name}"`,
+      html: `
+        <div class="text-left">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Share URL:</label>
+            <div class="flex items-center">
+              <input 
+                type="text" 
+                id="share-url" 
+                value="${shareUrl}" 
+                readonly 
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md text-sm bg-gray-50"
+                onclick="this.select()"
+              />
+              <button 
+                onclick="navigator.clipboard.writeText('${shareUrl}'); Swal.showValidationMessage('Link copied!');" 
+                class="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 text-sm"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        
+          
+          <div class="grid grid-cols-2 gap-2 mb-4">
+            <button 
+              onclick="window.open('https://wa.me/?text=${encodeURIComponent(fullShareText)}', '_blank');" 
+              class="flex items-center justify-center gap-2 px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm"
+            >
+              <span>📱</span> WhatsApp
+            </button>
+            <button 
+              onclick="window.open('https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}', '_blank');" 
+              class="flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+            >
+              <span>f</span> Facebook
+            </button>
+            <button 
+              onclick="window.open('https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}', '_blank');" 
+              class="flex items-center justify-center gap-2 px-3 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 text-sm"
+            >
+              <span>𝕏</span> Twitter
+            </button>
+            <button 
+              onclick="window.location.href='mailto:?subject=${encodeURIComponent(`Check out: ${car.name}`)}&body=${encodeURIComponent(fullShareText)}';" 
+              class="flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm"
+            >
+              <span>✉️</span> Email
+            </button>
+          </div>
+          
+          <div class="mt-4">
+            <a 
+              href="${shareUrl}" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-sm"
+            >
+              <span>🔗</span> Open Link
+            </a>
+          </div>
+        </div>
+      `,
+      width: 500,
+      showCloseButton: true,
+      showConfirmButton: false,
+      showCancelButton: true,
+      cancelButtonText: 'Close',
+      focusConfirm: false,
+      preConfirm: () => {
+        // Optional: Add any pre-confirm logic here
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Handle if needed
+      }
+    });
+  };
+
   const getPaginatedUrl = (url) => {
     if (!url) return null;
 
@@ -339,21 +455,21 @@ const CarsIndex = () => {
           >
             {mobileFiltersOpen ? (
               <>
-                <X className="w-5 h-5 mr-2" /> Close Filters
+                <X className="h-5 mr-2" /> Close Filters
               </>
             ) : (
               <>
-                <Filter className="w-5 h-5 mr-2" /> Open Filters
+                <Filter className="h-5 mr-2" /> Open Filters
               </>
             )}
           </button>
         </div>
 
         <Link
-        href={route('main-cars.create')}
-        className="inline-flex ml-auto my-4 items-center px-4 py-2 bg-peachDark text-white rounded-md hover:bg-peachDarker transition-colors"
+          href={route('main-cars.create')}
+          className="inline-flex ml-auto my-4 items-center px-4 py-2 bg-peachDark text-white rounded-md hover:bg-peachDarker transition-colors"
         >
-        Add New Ride
+          Add New Ride
         </Link>
 
         {/* Top Section - Responsive */}
@@ -367,20 +483,19 @@ const CarsIndex = () => {
             </h1>
 
             <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto">
-
               <button
                 onClick={generatePDF}
                 disabled={pagination.data?.length === 0}
                 className="flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
               >
-                  {pdfLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 my-auto animate-spin" />
-                  ) : (
-                    <FileText className="w-4 h-4 mr-2 my-auto" />
-                  )}
-                  <span className='my-auto'>
-                    {pdfLoading ? 'Generating...' : 'PDF (All)'}
-                  </span>
+                {pdfLoading ? (
+                  <Loader2 className="h-4 mr-2 my-auto animate-spin" />
+                ) : (
+                  <FileText className="h-4 mr-2 my-auto" />
+                )}
+                <span className='my-auto'>
+                  {pdfLoading ? 'Generating...' : 'PDF (All)'}
+                </span>
               </button>
 
               <button
@@ -388,14 +503,14 @@ const CarsIndex = () => {
                 disabled={pagination.data?.length === 0}
                 className="inline-flex cursor-pointer items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
               >
-                  {excelLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 my-auto animate-spin" />
-                  ) : (
-                    <FileSpreadsheet className="w-4 h-4 mr-2 my-auto" />
-                  )}
-                  <span className='my-auto'>
-                    {excelLoading ? 'Generating...' : 'Excel (All)'}
-                  </span>
+                {excelLoading ? (
+                  <Loader2 className="h-4 mr-2 my-auto animate-spin" />
+                ) : (
+                  <FileSpreadsheet className="h-4 mr-2 my-auto" />
+                )}
+                <span className='my-auto'>
+                  {excelLoading ? 'Generating...' : 'Excel (All)'}
+                </span>
               </button>
             </div>
           </div>
@@ -424,7 +539,7 @@ const CarsIndex = () => {
                     : 'Date Range Filter'
                   }
                 </span>
-                <Calendar className="w-5 h-5 text-gray-500" />
+                <Calendar className="h-5 text-gray-500" />
               </button>
 
               {dateFilterActive && (
@@ -432,7 +547,7 @@ const CarsIndex = () => {
                   onClick={clearDateFilter}
                   className="absolute right-10 top-2 text-gray-400 hover:text-gray-600"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="h-5" />
                 </button>
               )}
 
@@ -484,7 +599,7 @@ const CarsIndex = () => {
               onClick={clearDateFilter}
               className="text-blue-600 hover:text-blue-800"
             >
-              <X className="w-5 h-5" />
+              <X className="h-5" />
             </button>
           </div>
         )}
@@ -502,8 +617,8 @@ const CarsIndex = () => {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Price/Day</th>
                 {roleId === 1 &&
                 <>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Customer Price</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Platform charges</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Customer Price</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Platform charges</th>
                 </>}
                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
@@ -520,11 +635,18 @@ const CarsIndex = () => {
                     <td className="px-6 py-4 whitespace-wrap">KES {new Intl.NumberFormat('en-KE').format(car.amount)}</td>
                     {roleId === 1 &&
                     <>
-                    <td className="px-6 py-4 whitespace-wrap">KES {new Intl.NumberFormat('en-KE').format(car.platform_price)}</td>
-                    <td className="px-6 py-4 whitespace-wrap">KES {new Intl.NumberFormat('en-KE').format(car.platform_charges)}</td>
+                      <td className="px-6 py-4 whitespace-wrap">KES {new Intl.NumberFormat('en-KE').format(car.platform_price)}</td>
+                      <td className="px-6 py-4 whitespace-wrap">KES {new Intl.NumberFormat('en-KE').format(car.platform_charges)}</td>
                     </>}
                     <td className="px-6 py-4 whitespace-wrap text-right">
                       <div className="flex justify-end gap-3">
+                        <button
+                          onClick={() => handleShare(car)}
+                          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200"
+                        >
+                          <Share2 className="h-4 mr-2" />
+                          Share
+                        </button>
                         <Link
                           href={route('main-cars.show', car.id)}
                           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
@@ -549,7 +671,7 @@ const CarsIndex = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={roleId === 1 ? 9 : 7} className="text-center py-4">No rides found.</td>
+                  <td colSpan={roleId === 1 ? 10 : 8} className="text-center py-4">No rides found.</td>
                 </tr>
               )}
             </tbody>

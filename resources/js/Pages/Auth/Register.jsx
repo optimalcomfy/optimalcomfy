@@ -34,7 +34,8 @@ export default function Register() {
         country: '',
         postal_code: '',
         profile_picture: null,
-        id_verification: null,
+        id_front: null,
+        id_back: null,
         bio: '',
         preferred_payment_method: '',
         emergency_contact: '',
@@ -60,13 +61,16 @@ export default function Register() {
     const canvasRef = useRef(null);
     const streamRef = useRef(null);
 
-    // ID Verification state
-    const [idVerificationFile, setIdVerificationFile] = useState(null);
-    const [idVerificationPreview, setIdVerificationPreview] = useState(null);
+    // ID Verification state - now for both front and back
+    const [idFrontFile, setIdFrontFile] = useState(null);
+    const [idFrontPreview, setIdFrontPreview] = useState(null);
+    const [idBackFile, setIdBackFile] = useState(null);
+    const [idBackPreview, setIdBackPreview] = useState(null);
 
     // File input refs
     const profilePictureInputRef = useRef(null);
-    const idVerificationInputRef = useRef(null);
+    const idFrontInputRef = useRef(null);
+    const idBackInputRef = useRef(null);
 
     const { notification } = usePage().props;
 
@@ -189,9 +193,12 @@ export default function Register() {
                 break;
                 
             case 4:
-                if (!data.id_verification) {
+                if (!data.id_front) {
                     isValid = false;
-                    errorMessage = 'ID verification document is required';
+                    errorMessage = 'ID front verification document is required';
+                } else if (!data.id_back) {
+                    isValid = false;
+                    errorMessage = 'ID back verification document is required';
                 } else if (data.user_type === 'host' && !data.preferred_payment_method) {
                     isValid = false;
                     errorMessage = 'Preferred payment method is required for hosts';
@@ -445,8 +452,8 @@ export default function Register() {
         }
     };
 
-    // ID Verification upload - FIXED VERSION
-    const handleIdVerificationUpload = (e) => {
+    // ID Front upload
+    const handleIdFrontUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -471,23 +478,22 @@ export default function Register() {
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setIdVerificationPreview(reader.result);
-                // Set the file after preview is ready
-                setData('id_verification', file);
-                setIdVerificationFile(file);
+                setIdFrontPreview(reader.result);
+                setData('id_front', file);
+                setIdFrontFile(file);
                 
-                toast.success('ID verification file uploaded successfully!', {
+                toast.success('ID front uploaded successfully!', {
                     position: isMobile ? 'bottom-center' : 'top-center'
                 });
             };
             reader.readAsDataURL(file);
         } else {
-            // For PDF files, set immediately
-            setData('id_verification', file);
-            setIdVerificationFile(file);
-            setIdVerificationPreview('pdf');
+            // For PDF files
+            setData('id_front', file);
+            setIdFrontFile(file);
+            setIdFrontPreview('pdf');
             
-            toast.success('ID verification document uploaded successfully!', {
+            toast.success('ID front document uploaded successfully!', {
                 position: isMobile ? 'bottom-center' : 'top-center'
             });
         }
@@ -496,10 +502,67 @@ export default function Register() {
         setStepErrors(prev => ({ ...prev, [4]: '' }));
     };
 
-    // Trigger ID verification upload
-    const triggerIdVerificationUpload = () => {
-        if (idVerificationInputRef.current) {
-            idVerificationInputRef.current.click();
+    // ID Back upload
+    const handleIdBackUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Check file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error('Please select a valid file (JPEG, PNG, JPG, or PDF).', {
+                position: isMobile ? 'bottom-center' : 'top-center'
+            });
+            return;
+        }
+
+        // Check file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('File size should be less than 5MB.', {
+                position: isMobile ? 'bottom-center' : 'top-center'
+            });
+            return;
+        }
+
+        // Create preview if it's an image
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setIdBackPreview(reader.result);
+                setData('id_back', file);
+                setIdBackFile(file);
+                
+                toast.success('ID back uploaded successfully!', {
+                    position: isMobile ? 'bottom-center' : 'top-center'
+            });
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // For PDF files
+            setData('id_back', file);
+            setIdBackFile(file);
+            setIdBackPreview('pdf');
+            
+            toast.success('ID back document uploaded successfully!', {
+                position: isMobile ? 'bottom-center' : 'top-center'
+            });
+        }
+
+        // Clear validation error
+        setStepErrors(prev => ({ ...prev, [4]: '' }));
+    };
+
+    // Trigger ID front upload
+    const triggerIdFrontUpload = () => {
+        if (idFrontInputRef.current) {
+            idFrontInputRef.current.click();
+        }
+    };
+
+    // Trigger ID back upload
+    const triggerIdBackUpload = () => {
+        if (idBackInputRef.current) {
+            idBackInputRef.current.click();
         }
     };
 
@@ -511,11 +574,20 @@ export default function Register() {
         });
     };
 
-    const removeIdVerification = () => {
-        setData('id_verification', null);
-        setIdVerificationFile(null);
-        setIdVerificationPreview(null);
-        toast.info('ID verification document removed', {
+    const removeIdFront = () => {
+        setData('id_front', null);
+        setIdFrontFile(null);
+        setIdFrontPreview(null);
+        toast.info('ID front document removed', {
+            position: isMobile ? 'bottom-center' : 'top-center'
+        });
+    };
+
+    const removeIdBack = () => {
+        setData('id_back', null);
+        setIdBackFile(null);
+        setIdBackPreview(null);
+        toast.info('ID back document removed', {
             position: isMobile ? 'bottom-center' : 'top-center'
         });
     };
@@ -561,7 +633,7 @@ export default function Register() {
         
         // Append all form data
         Object.keys(data).forEach(key => {
-            if (key === 'profile_picture' || key === 'id_verification') {
+            if (key === 'profile_picture' || key === 'id_front' || key === 'id_back') {
                 if (data[key]) {
                     formData.append(key, data[key]);
                 }
@@ -590,8 +662,10 @@ export default function Register() {
                 reset();
                 setNameFields({ firstName: '', middleName: '', lastName: '' });
                 setCapturedImage(null);
-                setIdVerificationFile(null);
-                setIdVerificationPreview(null);
+                setIdFrontFile(null);
+                setIdFrontPreview(null);
+                setIdBackFile(null);
+                setIdBackPreview(null);
             },
             onError: (errors) => {
                 Object.keys(errors).forEach((field) => {
@@ -621,7 +695,7 @@ export default function Register() {
     // Get current step validation
     const { isValid: isCurrentStepValid } = validateStep(step);
 
-    // Custom styles for react-select - FIXED BLUE BORDER
+    // Custom styles for react-select
     const customStyles = {
         control: (base, state) => ({
             ...base,
@@ -1269,7 +1343,7 @@ export default function Register() {
                                                 </div>
                                             </div>
 
-                                            {/* ID Verification (Required for BOTH Hosts and Guests) */}
+                                            {/* ID Verification - Front and Back */}
                                             <div className="bg-gray-50 p-4 rounded-2xl">
                                                 <div className="flex items-center justify-between mb-4">
                                                     <h4 className="text-base font-semibold text-gray-900">
@@ -1279,97 +1353,167 @@ export default function Register() {
                                                         Required for all users
                                                     </span>
                                                 </div>
-                                                <div className="space-y-4">
-                                                    {idVerificationPreview && (
+                                                
+                                                {/* ID Front */}
+                                                <div className="mb-6 space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <h5 className="text-sm font-medium text-gray-700">Front Side *</h5>
+                                                        {idFrontPreview && (
+                                                            <span className="text-xs text-green-500 font-medium">✓ Uploaded</span>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {idFrontPreview && (
                                                         <div className="flex flex-col items-center">
                                                             <div className="relative">
-                                                                {idVerificationPreview === 'pdf' ? (
+                                                                {idFrontPreview === 'pdf' ? (
                                                                     <div className="w-48 h-32 bg-red-50 border-2 border-red-200 rounded-lg flex flex-col items-center justify-center">
                                                                         <svg className="w-12 h-12 text-red-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                                         </svg>
                                                                         <span className="text-xs font-medium text-gray-700">PDF Document</span>
-                                                                        <span className="text-xs text-gray-500">{idVerificationFile?.name}</span>
+                                                                        <span className="text-xs text-gray-500 truncate max-w-[180px]">{idFrontFile?.name}</span>
                                                                     </div>
                                                                 ) : (
                                                                     <img
-                                                                        src={idVerificationPreview}
-                                                                        alt="ID Verification preview"
+                                                                        src={idFrontPreview}
+                                                                        alt="ID Front preview"
                                                                         className="w-48 h-32 object-cover rounded-lg border-2 border-gray-300 shadow"
                                                                     />
                                                                 )}
                                                                 <button
                                                                     type="button"
-                                                                    onClick={removeIdVerification}
+                                                                    onClick={removeIdFront}
                                                                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
                                                                 >
                                                                     ✕
                                                                 </button>
                                                             </div>
-                                                            <p className="text-xs text-gray-500 mt-2">
-                                                                {idVerificationFile?.name || 'ID Verification Document'}
-                                                            </p>
                                                         </div>
                                                     )}
 
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            Upload ID Document *
-                                                        </label>
-                                                        <div>
-                                                            <input
-                                                                ref={idVerificationInputRef}
-                                                                type="file"
-                                                                onChange={handleIdVerificationUpload}
-                                                                accept="image/*,.pdf"
-                                                                className="hidden"
-                                                            />
-                                                            <button
-                                                                type="button"
-                                                                onClick={triggerIdVerificationUpload}
-                                                                className={`w-full h-32 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${
-                                                                    stepErrors[4] && !data.id_verification 
-                                                                        ? 'border-red-300 bg-red-50 hover:bg-red-100' 
-                                                                        : idVerificationPreview
-                                                                            ? 'border-green-300 bg-green-50 hover:bg-green-100'
-                                                                            : 'border-peach bg-white hover:bg-red-50'
-                                                                }`}
-                                                            >
-                                                                {idVerificationPreview ? (
-                                                                    <div className="text-center">
-                                                                        <svg className="w-10 h-10 text-green-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        <input
+                                                            ref={idFrontInputRef}
+                                                            type="file"
+                                                            onChange={handleIdFrontUpload}
+                                                            accept="image/*,.pdf"
+                                                            className="hidden"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={triggerIdFrontUpload}
+                                                            className={`w-full h-24 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${
+                                                                stepErrors[4] && !data.id_front 
+                                                                    ? 'border-red-300 bg-red-50 hover:bg-red-100' 
+                                                                    : idFrontPreview
+                                                                        ? 'border-green-300 bg-green-50 hover:bg-green-100'
+                                                                        : 'border-peach bg-white hover:bg-red-50'
+                                                            }`}
+                                                        >
+                                                            {idFrontPreview ? (
+                                                                <div className="text-center">
+                                                                    <p className="text-sm font-medium text-green-600">Front Side Uploaded</p>
+                                                                    <p className="text-xs text-gray-500 mt-1">Click to change document</p>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-center">
+                                                                    <svg className="w-8 h-8 text-peach mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                    </svg>
+                                                                    <p className="text-sm font-medium text-peach">Upload ID Front</p>
+                                                                </div>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* ID Back */}
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <h5 className="text-sm font-medium text-gray-700">Back Side *</h5>
+                                                        {idBackPreview && (
+                                                            <span className="text-xs text-green-500 font-medium">✓ Uploaded</span>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {idBackPreview && (
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="relative">
+                                                                {idBackPreview === 'pdf' ? (
+                                                                    <div className="w-48 h-32 bg-red-50 border-2 border-red-200 rounded-lg flex flex-col items-center justify-center">
+                                                                        <svg className="w-12 h-12 text-red-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                                         </svg>
-                                                                        <p className="text-sm font-medium text-green-600">Document Uploaded</p>
-                                                                        <p className="text-xs text-gray-500 mt-1">Click to change document</p>
+                                                                        <span className="text-xs font-medium text-gray-700">PDF Document</span>
+                                                                        <span className="text-xs text-gray-500 truncate max-w-[180px]">{idBackFile?.name}</span>
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="text-center">
-                                                                        <svg className="w-10 h-10 text-peach mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                        </svg>
-                                                                        <p className="text-sm font-medium text-peach">Upload ID Document</p>
-                                                                        <p className="text-xs text-gray-500 mt-1">
-                                                                            Click to upload Passport, National ID, or Driver's License
-                                                                        </p>
-                                                                    </div>
+                                                                    <img
+                                                                        src={idBackPreview}
+                                                                        alt="ID Back preview"
+                                                                        className="w-48 h-32 object-cover rounded-lg border-2 border-gray-300 shadow"
+                                                                    />
                                                                 )}
-                                                            </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={removeIdBack}
+                                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                        <div className="mt-2 space-y-1">
-                                                            <p className="text-xs text-gray-500">
-                                                                Accepted formats: JPEG, PNG, JPG, PDF (max 5MB)
-                                                            </p>
-                                                            <p className="text-xs text-gray-500">
-                                                                Required for verification and security purposes
-                                                            </p>
-                                                            {stepErrors[4] && !data.id_verification && (
-                                                                <p className="text-xs text-red-500">
-                                                                    Please upload your ID verification document
-                                                                </p>
+                                                    )}
+
+                                                    <div>
+                                                        <input
+                                                            ref={idBackInputRef}
+                                                            type="file"
+                                                            onChange={handleIdBackUpload}
+                                                            accept="image/*,.pdf"
+                                                            className="hidden"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={triggerIdBackUpload}
+                                                            className={`w-full h-24 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${
+                                                                stepErrors[4] && !data.id_back 
+                                                                    ? 'border-red-300 bg-red-50 hover:bg-red-100' 
+                                                                    : idBackPreview
+                                                                        ? 'border-green-300 bg-green-50 hover:bg-green-100'
+                                                                        : 'border-peach bg-white hover:bg-red-50'
+                                                            }`}
+                                                        >
+                                                            {idBackPreview ? (
+                                                                <div className="text-center">
+                                                                    <p className="text-sm font-medium text-green-600">Back Side Uploaded</p>
+                                                                    <p className="text-xs text-gray-500 mt-1">Click to change document</p>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-center">
+                                                                    <svg className="w-8 h-8 text-peach mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                    </svg>
+                                                                    <p className="text-sm font-medium text-peach">Upload ID Back</p>
+                                                                </div>
                                                             )}
-                                                        </div>
+                                                        </button>
                                                     </div>
+                                                </div>
+                                                
+                                                <div className="mt-4 space-y-1">
+                                                    <p className="text-xs text-gray-500">
+                                                        Upload both front and back sides of your ID, Passport, or Driver's License
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        Accepted formats: JPEG, PNG, JPG, PDF (max 5MB each)
+                                                    </p>
+                                                    {stepErrors[4] && (!data.id_front || !data.id_back) && (
+                                                        <p className="text-xs text-red-500">
+                                                            Please upload both front and back ID verification documents
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
 

@@ -1,7 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useForm, usePage, router } from "@inertiajs/react";
 import Layout from "@/Layouts/layout/layout.jsx";
-import { Plus, MapPin, ChevronRight, ChevronLeft, Home, Bed, Check } from 'lucide-react';
+import { 
+  Plus, 
+  MapPin, 
+  ChevronRight, 
+  ChevronLeft, 
+  Home, 
+  Bed, 
+  Check,
+  Bath,
+  DoorClosed,
+  Users,
+  Baby
+} from 'lucide-react';
 
 const PropertyCreateWizard = ({ errors, amenities }) => {
   const { company } = usePage().props;
@@ -28,6 +40,9 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
     max_adults: "",
     max_children: "",
     total_rooms: 1,
+    rooms: 1, // Added missing field
+    beds: 1, // Added missing field
+    baths: 1, // Added missing field
     status: "available",
     location: "",
     amenities: [],
@@ -91,6 +106,15 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
     }
   }, [hasVariations, data.total_rooms]);
 
+  // Update total rooms when beds or rooms change
+  useEffect(() => {
+    const bedsValue = parseInt(data.beds) || 0;
+    const roomsValue = parseInt(data.rooms) || 0;
+    const totalRoomsValue = Math.max(bedsValue, roomsValue);
+    setData('total_rooms', totalRoomsValue);
+    setTotalRooms(totalRoomsValue);
+  }, [data.beds, data.rooms]);
+
   const handleLocationSelect = (suggestion) => {
     setData('location', suggestion);
     setLocationSuggestions([]);
@@ -110,12 +134,15 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
       type: data.type,
       location: data.location,
       amount: data.amount,
-      max_adults: data.max_adults
+      max_adults: data.max_adults,
+      rooms: data.rooms,
+      beds: data.beds,
+      baths: data.baths
     };
 
     for (const [field, value] of Object.entries(requiredFields)) {
-      if (!value) {
-        alert(`Please fill in the ${field.replace('_', ' ')} field`);
+      if (!value || value < 1) {
+        alert(`Please fill in the ${field.replace('_', ' ')} field with a valid number`);
         return false;
       }
     }
@@ -149,6 +176,9 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
         max_adults: data.max_adults,
         max_children: data.max_children,
         total_rooms: data.total_rooms,
+        rooms: data.rooms, // Added missing field
+        beds: data.beds,   // Added missing field
+        baths: data.baths, // Added missing field
         status: data.status,
         location: data.location,
         wifi_password: data.wifi_password,
@@ -296,51 +326,114 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Total Bedrooms*</label>
+                  <label className="block text-sm font-medium mb-1 flex items-center">
+                    <DoorClosed className="h-4 mr-2 text-blue-500" />
+                    Total Rooms (excluding bathrooms)*
+                  </label>
                   <input
                     type="number"
                     min="1"
-                    value={data.total_rooms}
+                    max="50"
+                    value={data.rooms}
                     onChange={(e) => {
                       const rooms = parseInt(e.target.value) || 1;
-                      setData("total_rooms", rooms);
-                      setTotalRooms(rooms);
+                      setData("rooms", rooms);
                     }}
                     className="w-full border px-4 py-2 rounded-lg"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Total rooms including bedrooms, living rooms, dining rooms, etc.
+                  </p>
                 </div>
                 
-                {/* ADD MAX ADULTS INPUT */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Max Adults*</label>
+                  <label className="block text-sm font-medium mb-1 flex items-center">
+                    <Bed className="h-4 mr-2 text-green-500" />
+                    Number of Beds*
+                  </label>
                   <input
                     type="number"
                     min="1"
+                    max="50"
+                    value={data.beds}
+                    onChange={(e) => {
+                      const beds = parseInt(e.target.value) || 1;
+                      setData("beds", beds);
+                    }}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Total number of individual beds
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 flex items-center">
+                    <Bath className="h-4 mr-2 text-purple-500" />
+                    Number of Bathrooms*
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    step="0.5"
+                    value={data.baths}
+                    onChange={(e) => {
+                      const baths = parseFloat(e.target.value) || 1;
+                      setData("baths", baths);
+                    }}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Use decimals for half baths (e.g., 2.5 for two full bathrooms and one half bath)
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1 flex items-center">
+                    <Users className="h-4 mr-2 text-orange-500" />
+                    Max Adults*
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
                     value={data.max_adults}
                     onChange={(e) => setData("max_adults", e.target.value)}
                     className="w-full border px-4 py-2 rounded-lg"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Maximum number of adult guests
+                  </p>
                 </div>
                 
-                {/* ADD MAX CHILDREN INPUT */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Max Children</label>
+                  <label className="block text-sm font-medium mb-1 flex items-center">
+                    <Baby className="h-4 mr-2 text-pink-500" />
+                    Max Children
+                  </label>
                   <input
                     type="number"
                     min="0"
+                    max="100"
                     value={data.max_children}
                     onChange={(e) => setData("max_children", e.target.value)}
                     className="w-full border px-4 py-2 rounded-lg"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Maximum number of children guests (under 12 years)
+                  </p>
                 </div>
-              </div>
 
-              <div className="space-y-4">
                 <div className="relative">
                   <label className="block text-sm font-medium mb-1 flex items-center">
-                    <MapPin className="w-4 h-4 mr-2" />
+                    <MapPin className="h-4 mr-2" />
                     Location*
                   </label>
                   <input
@@ -366,29 +459,70 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Nightly Rate (KES)*</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={data.amount}
-                    onChange={(e) => setData("amount", parseFloat(e.target.value) || 0)}
-                    className="w-full border px-4 py-2 rounded-lg"
-                    required
-                  />
+            {/* Property Summary Section */}
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+              <h3 className="font-medium text-blue-800 mb-2">Property Summary</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center text-blue-600 mb-1">
+                    <DoorClosed className="h-5" />
+                  </div>
+                  <div className="text-lg font-semibold">{data.rooms}</div>
+                  <div className="text-xs text-gray-600">Rooms</div>
                 </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center text-green-600 mb-1">
+                    <Bed className="h-5" />
+                  </div>
+                  <div className="text-lg font-semibold">{data.beds}</div>
+                  <div className="text-xs text-gray-600">Beds</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center text-purple-600 mb-1">
+                    <Bath className="h-5" />
+                  </div>
+                  <div className="text-lg font-semibold">{data.baths}</div>
+                  <div className="text-xs text-gray-600">Baths</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center text-orange-600 mb-1">
+                    <Users className="h-5" />
+                  </div>
+                  <div className="text-lg font-semibold">{data.max_adults}</div>
+                  <div className="text-xs text-gray-600">Max Adults</div>
+                </div>
+              </div>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Guest Price (KES)</label>
-                  <input
-                    type="number"
-                    value={data.price_per_night}
-                    readOnly
-                    className="w-full border bg-gray-100 px-4 py-2 rounded-lg"
-                  />
-                </div>
+            {/* Pricing Section */}
+            <div className="grid md:grid-cols-2 gap-6 mt-6">
+              <div>
+                <label className="block text-sm font-medium mb-1">Your Desired Earnings (KES)*</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={data.amount}
+                  onChange={(e) => setData("amount", parseFloat(e.target.value) || 0)}
+                  className="w-full border px-4 py-2 rounded-lg"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Guest Price (KES)</label>
+                <input
+                  type="number"
+                  value={data.price_per_night}
+                  readOnly
+                  className="w-full border bg-gray-100 px-4 py-2 rounded-lg"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Includes platform fee of {company.percentage}%
+                </p>
               </div>
             </div>
 
@@ -397,7 +531,8 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                 type="button"
                 onClick={() => setStep(2)}
                 className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 flex items-center"
-                disabled={!data.property_name || !data.type || !data.location || !data.amount || !data.max_adults}
+                disabled={!data.property_name || !data.type || !data.location || !data.amount || 
+                         !data.rooms || !data.beds || !data.baths || !data.max_adults}
               >
                 Next: Property Details <ChevronRight className="ml-2" />
               </button>
@@ -533,6 +668,7 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                     <h3 className="text-sm font-medium text-blue-800">Standard Option</h3>
                     <div className="mt-1 text-sm text-blue-700">
                       <p>The entire property will be available for KES {data.price_per_night} per night.</p>
+                      <p className="mt-1">Property has {data.rooms} rooms, {data.beds} beds, and {data.baths} bathrooms.</p>
                     </div>
                   </div>
                 </div>
@@ -569,28 +705,28 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                           <div className="ml-3">
                             <h3 className="text-sm font-medium text-yellow-800">Suggested Room Options</h3>
                             <div className="mt-2 text-sm text-yellow-700">
-                              <p>Based on your property at KES {data.price_per_night} per night:</p>
+                              <p>Based on your property with {data.rooms} rooms and {data.beds} beds at KES {data.price_per_night} per night:</p>
                             </div>
                           </div>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {Array.from({ length: data.total_rooms - 1 }, (_, i) => i + 1).map(rooms => (
+                        {Array.from({ length: Math.min(data.total_rooms - 1, 4) }, (_, i) => i + 1).map(rooms => (
                           <div key={rooms} className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
                             onClick={() => {
                               setVariations([...variations, {
-                                type: `${rooms} Bedroom${rooms > 1 ? 's' : ''}`,
+                                type: `${rooms} Room${rooms > 1 ? 's' : ''} (${Math.floor(rooms / data.total_rooms * data.beds)} beds)`,
                                 price: (data.price_per_night * (rooms / data.total_rooms)).toFixed(2),
                                 rooms: rooms
                               }]);
                             }}>
                             <div className="flex items-center">
                               <Bed className="h-5 w-5 text-gray-500 mr-2" />
-                              <span className="font-medium">{rooms} Bedroom{rooms > 1 ? 's' : ''}</span>
+                              <span className="font-medium">{rooms} Room{rooms > 1 ? 's' : ''}</span>
                             </div>
                             <div className="mt-2 text-sm text-gray-600">
-                              KES {(data.price_per_night * (rooms / data.total_rooms)).toFixed(2)}/night
+                              Approx. {Math.floor(rooms / data.total_rooms * data.beds)} beds • KES {(data.price_per_night * (rooms / data.total_rooms)).toFixed(2)}/night
                             </div>
                           </div>
                         ))}
@@ -608,11 +744,11 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                           value={newVariation.type}
                           onChange={(e) => setNewVariation({...newVariation, type: e.target.value})}
                           className="w-full border px-4 py-2 rounded-lg"
-                          placeholder="e.g. Master Suite"
+                          placeholder="e.g. Master Suite, Single Room"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Bedrooms</label>
+                        <label className="block text-sm font-medium mb-1">Rooms</label>
                         <input
                           type="number"
                           min="1"
@@ -653,7 +789,7 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                             <div>
                               <span className="font-medium">{variation.type}</span>
                               <div className="text-sm text-gray-600">
-                                {variation.rooms} bedroom{variation.rooms > 1 ? 's' : ''} • KES {variation.price}/night
+                                {variation.rooms} room{variation.rooms > 1 ? 's' : ''} • KES {variation.price}/night
                               </div>
                             </div>
                             <button
@@ -765,7 +901,7 @@ const PropertyCreateWizard = ({ errors, amenities }) => {
                       />
                       <button
                         onClick={() => setImages(images.filter((_, i) => i !== index))}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         ×
                       </button>

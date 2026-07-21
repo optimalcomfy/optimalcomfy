@@ -48,7 +48,7 @@ class UpdateUserRequest extends FormRequest
             'country' => 'nullable',
             'postal_code' => 'nullable',
             'profile_picture' => 'nullable|file',
-            'id_verification' => 'nullable|file',
+            'id_front' => 'nullable|file',
             'bio' => 'nullable',
             'preferred_payment_method' => 'nullable',
             'emergency_contact' => 'nullable',
@@ -59,7 +59,8 @@ class UpdateUserRequest extends FormRequest
             'withdrawal_code'=> 'nullable',
             'Phone_verification_code'=> 'nullable',
             'referral_code'=> 'nullable',
-            'ristay_verified'=> 'nullable'
+            'ristay_verified'=> 'nullable',
+            'unverified_reason'=> 'nullable'
         ];
     }
 }

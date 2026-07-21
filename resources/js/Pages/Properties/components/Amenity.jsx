@@ -70,7 +70,7 @@ const Amenity = ({ property, amenities }) => {
                 className="form-checkbox text-blue-600 outline border rounded-md border-blue-400"
               />
               {loadingAmenities[amenity.id] ? (
-                <span className="loading-spinner w-5 h-5"></span>
+                <span className="loading-spinner h-5"></span>
               ) : (
                 <i className={`${amenity.icon} w-5`}></i>
               )}

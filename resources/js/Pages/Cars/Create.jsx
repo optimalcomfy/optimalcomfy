@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, usePage, router } from '@inertiajs/react';
 import Layout from "@/Layouts/layout/layout.jsx";
-import { Plus, MapPin, ChevronRight, ChevronLeft, Car, Check } from 'lucide-react';
+import { Plus, MapPin, ChevronRight, ChevronLeft, Car, Check, Truck } from 'lucide-react';
 import Select from 'react-select';
 
 const RideCreateWizard = ({ errors, features, categories }) => {
@@ -34,6 +34,9 @@ const RideCreateWizard = ({ errors, features, categories }) => {
     interior_color: "",
     host_earnings: "",
     price_per_day: "",
+    minimum_rental_days: 1, // Added missing field
+    delivery_toggle: false, // Added missing field
+    delivery_fee: "", // Added missing field
     description: "",
     is_available: 1,
     location_address: "",
@@ -168,12 +171,12 @@ const RideCreateWizard = ({ errors, features, categories }) => {
         
         {/* Progress Steps */}
         <div className="flex mb-8">
-          {[1, 2, 3, 4].map((stepNumber) => (
+          {[1, 2, 3, 4, 5].map((stepNumber) => (
             <div 
               key={stepNumber}
               className={`flex-1 border-b-2 pb-2 text-center ${step >= stepNumber ? 'border-blue-500 text-blue-500' : 'border-gray-300'}`}
             >
-              {['Basic Info', 'Specs', 'Features', 'Gallery'][stepNumber - 1]}
+              {['Basic Info', 'Specs', 'Rental Details', 'Features', 'Gallery'][stepNumber - 1]}
             </div>
           ))}
         </div>
@@ -452,41 +455,122 @@ const RideCreateWizard = ({ errors, features, categories }) => {
               </div>
             </div>
 
-            <div className="mt-6">
-              <h3 className="text-lg font-medium mb-4">Pricing Details</h3>
-              
-              <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Your Desired Earnings (KES)*</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={data.host_earnings}
-                      onChange={(e) => setData("host_earnings", e.target.value)}
-                      className="w-full border px-4 py-2 rounded-lg"
-                      required
-                    />
-                    {errors.host_earnings && <p className="text-red-500 text-sm">{errors.host_earnings}</p>}
+            <div className="flex justify-between mt-8">
+              <button
+                onClick={() => setStep(1)}
+                className="bg-gray-200 text-gray-800 py-2 px-6 rounded-lg hover:bg-gray-300 flex items-center"
+              >
+                <ChevronLeft className="mr-2" /> Back
+              </button>
+              <button
+                onClick={() => setStep(3)}
+                className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 flex items-center"
+                disabled={!data.seats || !data.doors || !data.luggage_capacity || !data.fuel_type || 
+                          !data.engine_capacity || !data.transmission || !data.drive_type || 
+                          !data.fuel_economy || !data.exterior_color || !data.interior_color}
+              >
+                Next: Rental Details <ChevronRight className="ml-2" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Rental Details (New Step) */}
+        {step === 3 && (
+          <div>
+            <h2 className="text-xl font-semibold mb-6">Rental Details</h2>
+            
+            <div className="bg-blue-50 p-4 rounded-lg mb-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Your Desired Earnings (KES)*</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={data.host_earnings}
+                    onChange={(e) => setData("host_earnings", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.host_earnings && <p className="text-red-500 text-sm">{errors.host_earnings}</p>}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Customer Price (KES)</label>
+                  <input
+                    type="number"
+                    value={data.price_per_day}
+                    readOnly
+                    className="w-full border bg-gray-100 px-4 py-2 rounded-lg"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Includes platform fee of {company.percentage}%</p>
+                  {errors.price_per_day && <p className="text-red-500 text-sm">{errors.price_per_day}</p>}
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Minimum Rental Days*</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={data.minimum_rental_days}
+                    onChange={(e) => setData("minimum_rental_days", e.target.value)}
+                    className="w-full border px-4 py-2 rounded-lg"
+                    required
+                  />
+                  {errors.minimum_rental_days && <p className="text-red-500 text-sm">{errors.minimum_rental_days}</p>}
+                  <p className="text-xs text-gray-500 mt-1">Minimum number of days for rental</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center">
+                    <label className="flex items-center space-x-3">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={data.delivery_toggle}
+                          onChange={(e) => {
+                            setData('delivery_toggle', e.target.checked);
+                            if (!e.target.checked) {
+                              setData('delivery_fee', '');
+                            }
+                          }}
+                          className="sr-only"
+                        />
+                        <div className={`block w-12 h-6 rounded-full ${data.delivery_toggle ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+                        <div className={`absolute left-1 top-1 bg-white h-4 rounded-full transition-transform ${data.delivery_toggle ? 'transform translate-x-6' : ''}`}></div>
+                      </div>
+                      <div className="flex items-center">
+                        <Truck className="h-4 mr-2" />
+                        <span className="font-medium">Offer Delivery</span>
+                      </div>
+                    </label>
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Customer Price (KES)</label>
-                    <input
-                      type="number"
-                      value={data.price_per_day}
-                      readOnly
-                      className="w-full border bg-gray-100 px-4 py-2 rounded-lg"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Includes platform fee of {company.percentage}%</p>
-                    {errors.price_per_day && <p className="text-red-500 text-sm">{errors.price_per_day}</p>}
-                  </div>
+
+                  {data.delivery_toggle && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Delivery Fee (KES)*</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={data.delivery_fee}
+                        onChange={(e) => setData("delivery_fee", e.target.value)}
+                        className="w-full border px-4 py-2 rounded-lg"
+                        placeholder="Enter delivery fee"
+                        required={data.delivery_toggle}
+                      />
+                      {errors.delivery_fee && <p className="text-red-500 text-sm">{errors.delivery_fee}</p>}
+                      <p className="text-xs text-gray-500 mt-1">Fee for delivering the car to customer</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div>
               <label className="block text-sm font-medium mb-1">Description*</label>
               <textarea
                 value={data.description}
@@ -500,18 +584,16 @@ const RideCreateWizard = ({ errors, features, categories }) => {
 
             <div className="flex justify-between mt-8">
               <button
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className="bg-gray-200 text-gray-800 py-2 px-6 rounded-lg hover:bg-gray-300 flex items-center"
               >
                 <ChevronLeft className="mr-2" /> Back
               </button>
               <button
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 flex items-center"
-                disabled={!data.seats || !data.doors || !data.luggage_capacity || !data.fuel_type || 
-                          !data.engine_capacity || !data.transmission || !data.drive_type || 
-                          !data.fuel_economy || !data.exterior_color || !data.interior_color ||
-                          !data.host_earnings || !data.description}
+                disabled={!data.host_earnings || !data.description || !data.minimum_rental_days || 
+                          (data.delivery_toggle && !data.delivery_fee)}
               >
                 Next: Features <ChevronRight className="ml-2" />
               </button>
@@ -519,8 +601,8 @@ const RideCreateWizard = ({ errors, features, categories }) => {
           </div>
         )}
 
-        {/* Step 3: Features */}
-        {step === 3 && (
+        {/* Step 4: Features */}
+        {step === 4 && (
           <div>
             <h2 className="text-xl font-semibold mb-6">Select Features</h2>
             
@@ -546,7 +628,7 @@ const RideCreateWizard = ({ errors, features, categories }) => {
               <div className="relative">
                 <label className="block text-sm mb-2">
                   <div className="flex text-left gap-4 items-center">
-                    <MapPin className="w-4 h-4 mr-1" />
+                    <MapPin className="h-4 mr-1" />
                     <span>Location address*</span>
                   </div>
                 </label>
@@ -591,13 +673,13 @@ const RideCreateWizard = ({ errors, features, categories }) => {
 
             <div className="flex justify-between mt-8">
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 className="bg-gray-200 text-gray-800 py-2 px-6 rounded-lg hover:bg-gray-300 flex items-center"
               >
                 <ChevronLeft className="mr-2" /> Back
               </button>
               <button
-                onClick={() => setStep(4)}
+                onClick={() => setStep(5)}
                 className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 flex items-center"
               >
                 Next: Gallery <ChevronRight className="ml-2" />
@@ -606,8 +688,8 @@ const RideCreateWizard = ({ errors, features, categories }) => {
           </div>
         )}
 
-        {/* Step 4: Gallery */}
-        {step === 4 && (
+        {/* Step 5: Gallery */}
+        {step === 5 && (
           <div>
             <h2 className="text-xl font-semibold mb-6">Ride Images</h2>
             
@@ -646,7 +728,7 @@ const RideCreateWizard = ({ errors, features, categories }) => {
                       />
                       <button
                         onClick={() => setImages(images.filter((_, i) => i !== index))}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         ×
                       </button>
@@ -658,7 +740,7 @@ const RideCreateWizard = ({ errors, features, categories }) => {
 
             <div className="flex justify-between mt-8">
               <button
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 className="bg-gray-200 text-gray-800 py-2 px-6 rounded-lg hover:bg-gray-300 flex items-center"
               >
                 <ChevronLeft className="mr-2" /> Back
